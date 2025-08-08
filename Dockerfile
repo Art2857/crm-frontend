@@ -22,6 +22,9 @@ RUN npm ci
 # Копируем исходный код
 COPY . .
 
+# Создаем папку public если её нет (для совместимости с Dockerfile)
+RUN mkdir -p public
+
 # ВАЖНО: Устанавливаем переменные окружения ДО сборки
 # Dokploy автоматически передаст переменные как build args
 ARG NEXT_PUBLIC_API_URL
