@@ -10,7 +10,7 @@ import {
   CalendarIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
-import { MyDebt, DutyDebt } from '../../types/payments';
+import { MyDebt, DutyDebt } from '../../services/analytics';
 
 interface MyDebtsTabProps {
   myDebts: MyDebt[];

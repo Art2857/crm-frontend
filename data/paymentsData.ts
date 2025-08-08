@@ -1,32 +1,55 @@
 // Моковые данные для системы выплат
-import { MyDebt, PaymentHistoryItem } from '../types/payments';
+import { MyDebt } from '../services/analytics';
+import { PaymentHistoryItem } from '../types/payments';
 
 export const myDebts: MyDebt[] = [
   {
     workId: '4',
     workName: 'Мобильное приложение',
     responsibleUser: {
+      id: 'resp-1',
       firstName: 'Алексей',
-      lastName: 'Сидоров',
-      email: 'alexey@example.com'
+      lastName: 'Сидоров'
     },
     totalDebt: 95000,
+    totalAccrued: 100000,
+    totalPaid: 5000,
     isPaymentDue: true,
     lastClosureDate: '2024-01-01',
     duties: [
       {
         dutyId: '6',
         dutyName: 'Backend разработка',
+        debt: 70000,
+        accrued: 75000,
+        paid: 5000,
         monthlyAmount: 80000,
-        dailyAmount: 2667,
-        debt: 70000
+        periods: [
+          {
+            startDate: '2024-01-01',
+            endDate: '2024-01-31',
+            daysInPeriod: 31,
+            debt: 70000,
+            accrued: 75000
+          }
+        ]
       },
       {
         dutyId: '7',
         dutyName: 'API дизайн',
+        debt: 25000,
+        accrued: 25000,
+        paid: 0,
         monthlyAmount: 30000,
-        dailyAmount: 1000,
-        debt: 25000
+        periods: [
+          {
+            startDate: '2024-01-01',
+            endDate: '2024-01-31',
+            daysInPeriod: 31,
+            debt: 25000,
+            accrued: 25000
+          }
+        ]
       }
     ]
   },
@@ -34,20 +57,32 @@ export const myDebts: MyDebt[] = [
     workId: '5',
     workName: 'Система аналитики',
     responsibleUser: {
+      id: 'resp-2',
       firstName: 'Елена',
-      lastName: 'Козлова',
-      email: 'elena@example.com'
+      lastName: 'Козлова'
     },
     totalDebt: 60000,
+    totalAccrued: 60000,
+    totalPaid: 0,
     isPaymentDue: false,
     lastClosureDate: '2024-01-15',
     duties: [
       {
         dutyId: '8',
         dutyName: 'Data Science',
+        debt: 60000,
+        accrued: 60000,
+        paid: 0,
         monthlyAmount: 90000,
-        dailyAmount: 3000,
-        debt: 60000
+        periods: [
+          {
+            startDate: '2024-01-15',
+            endDate: '2024-01-31',
+            daysInPeriod: 17,
+            debt: 60000,
+            accrued: 60000
+          }
+        ]
       }
     ]
   }

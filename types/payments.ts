@@ -62,29 +62,8 @@ export interface DutyDebt {
   }>;
 }
 
-export interface MyDebt {
-  workId: string;
-  workName: string;
-  responsibleUser: {
-    id: string;
-    firstName: string | null;
-    lastName: string | null;
-  };
-  duties: DutyDebt[];
-  totalDebt: number;
-  totalAccrued: number;
-  totalPaid: number;
-  isPaymentDue: boolean;
-  lastClosureDate: string;
-  payments: Array<{
-    id: string;
-    amount: number;
-    paymentType: 'SALARY' | 'ADVANCE' | 'BONUS' | 'EXTRA';
-    description: string | null;
-    paymentDate: string;
-    createdAt: string;
-  }>;
-}
+// MyDebt перенесен в services/analytics.ts для избежания дублирования
+// Импортируйте из: import { MyDebt } from '../services/analytics';
 
 export interface PaymentHistoryItem {
   id: string;

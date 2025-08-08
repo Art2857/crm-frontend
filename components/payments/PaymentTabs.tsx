@@ -7,7 +7,8 @@ import {
   UserIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
-import { ResponsibleUser, MyDebt } from '../../types/payments';
+import { MyDebt } from '../../services/analytics';
+import { ResponsibleUser } from '../../types/payments';
 
 interface PaymentTabsProps {
   activeTab: 'management' | 'debts' | 'history';
