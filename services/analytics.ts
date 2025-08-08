@@ -103,13 +103,19 @@ export interface DutyPeriod {
 }
 
 export interface DutyDebt {
-  dutyId: string;
-  dutyName: string;
-  debt: number;
-  accrued?: number;
-  paid?: number;
+  id: string;               // ← ПРАВИЛЬНО! Backend возвращает id
+  name: string;             // ← ПРАВИЛЬНО! Backend возвращает name
   monthlyAmount: number;
-  periods: DutyPeriod[];
+  totalAccrued: number;
+  totalDebt: number;
+  totalPaid: number;
+  calculatedPeriods: Array<{
+    accrued: number;
+    debt: number;
+    paid: number;
+    start: string;
+    end: string;
+  }>;
 }
 
 export interface ResponsibleUserDto {
@@ -128,6 +134,14 @@ export interface MyDebt {
   totalPaid: number;
   isPaymentDue: boolean;
   duties: DutyDebt[];
+  payments?: Array<{
+    id: string;
+    amount: number;
+    paymentType: 'SALARY' | 'ADVANCE' | 'BONUS' | 'EXTRA';
+    description: string | null;
+    paymentDate: string;
+    createdAt: string;
+  }>;
 }
 
 export interface MyDebtsResponse {

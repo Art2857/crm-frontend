@@ -31,13 +31,12 @@ import {
   WorkDetail,
   ResponsibleUser,
   DutyDetail,
-  PeriodCalculation, UserWorkDebt,
-  MyDebt,
-  DutyDebt
+  PeriodCalculation, 
+  UserWorkDebt
 } from '../../types/payments';
 import { fetchMyDebts, fetchPaymentHistory, makePayment, createPaymentAndClose } from '../../services/payment';
 import { PaymentType } from '../../types/payment';
-import { analyticsService } from '../../services/analytics';
+import { analyticsService, MyDebt, DutyDebt } from '../../services/analytics';
 import { useNotification } from '../../contexts/NotificationContext';
 
 export default function PaymentsPage() {

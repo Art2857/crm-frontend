@@ -16,38 +16,48 @@ export const myDebts: MyDebt[] = [
     totalPaid: 5000,
     isPaymentDue: true,
     lastClosureDate: '2024-01-01',
+    payments: [
+      {
+        id: 'payment-1',
+        amount: 5000,
+        paymentType: 'ADVANCE',
+        description: 'Аванс за январь',
+        paymentDate: '2024-01-10',
+        createdAt: '2024-01-10T10:00:00Z'
+      }
+    ],
     duties: [
       {
-        dutyId: '6',
-        dutyName: 'Backend разработка',
-        debt: 70000,
-        accrued: 75000,
-        paid: 5000,
+        id: '6',                           // ← ИСПРАВЛЕНО: id вместо dutyId
+        name: 'Backend разработка',        // ← ИСПРАВЛЕНО: name вместо dutyName
         monthlyAmount: 80000,
-        periods: [
+        totalAccrued: 75000,               // ← ИСПРАВЛЕНО: totalAccrued вместо accrued
+        totalDebt: 70000,                  // ← ИСПРАВЛЕНО: totalDebt вместо debt
+        totalPaid: 5000,                   // ← ИСПРАВЛЕНО: totalPaid вместо paid
+        calculatedPeriods: [               // ← ИСПРАВЛЕНО: calculatedPeriods вместо periods
           {
-            startDate: '2024-01-01',
-            endDate: '2024-01-31',
-            daysInPeriod: 31,
+            accrued: 75000,
             debt: 70000,
-            accrued: 75000
+            paid: 5000,
+            start: '2024-01-01',            // ← ИСПРАВЛЕНО: start вместо startDate
+            end: '2024-01-31'               // ← ИСПРАВЛЕНО: end вместо endDate
           }
         ]
       },
       {
-        dutyId: '7',
-        dutyName: 'API дизайн',
-        debt: 25000,
-        accrued: 25000,
-        paid: 0,
+        id: '7',                           // ← ИСПРАВЛЕНО: id вместо dutyId
+        name: 'API дизайн',                // ← ИСПРАВЛЕНО: name вместо dutyName
         monthlyAmount: 30000,
-        periods: [
+        totalAccrued: 25000,               // ← ИСПРАВЛЕНО: totalAccrued вместо accrued
+        totalDebt: 25000,                  // ← ИСПРАВЛЕНО: totalDebt вместо debt
+        totalPaid: 0,                      // ← ИСПРАВЛЕНО: totalPaid вместо paid
+        calculatedPeriods: [               // ← ИСПРАВЛЕНО: calculatedPeriods вместо periods
           {
-            startDate: '2024-01-01',
-            endDate: '2024-01-31',
-            daysInPeriod: 31,
+            accrued: 25000,
             debt: 25000,
-            accrued: 25000
+            paid: 0,
+            start: '2024-01-01',            // ← ИСПРАВЛЕНО: start вместо startDate
+            end: '2024-01-31'               // ← ИСПРАВЛЕНО: end вместо endDate
           }
         ]
       }
@@ -66,21 +76,22 @@ export const myDebts: MyDebt[] = [
     totalPaid: 0,
     isPaymentDue: false,
     lastClosureDate: '2024-01-15',
+    payments: [],
     duties: [
       {
-        dutyId: '8',
-        dutyName: 'Data Science',
-        debt: 60000,
-        accrued: 60000,
-        paid: 0,
+        id: '8',                           // ← ИСПРАВЛЕНО: id вместо dutyId
+        name: 'Data Science',              // ← ИСПРАВЛЕНО: name вместо dutyName
         monthlyAmount: 90000,
-        periods: [
+        totalAccrued: 60000,               // ← ИСПРАВЛЕНО: totalAccrued вместо accrued
+        totalDebt: 60000,                  // ← ИСПРАВЛЕНО: totalDebt вместо debt
+        totalPaid: 0,                      // ← ИСПРАВЛЕНО: totalPaid вместо paid
+        calculatedPeriods: [               // ← ИСПРАВЛЕНО: calculatedPeriods вместо periods
           {
-            startDate: '2024-01-15',
-            endDate: '2024-01-31',
-            daysInPeriod: 17,
+            accrued: 60000,
             debt: 60000,
-            accrued: 60000
+            paid: 0,
+            start: '2024-01-15',            // ← ИСПРАВЛЕНО: start вместо startDate
+            end: '2024-01-31'               // ← ИСПРАВЛЕНО: end вместо endDate
           }
         ]
       }
