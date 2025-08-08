@@ -1,0 +1,12 @@
+services:
+  crm_frontend:
+    image: node:22
+    container_name: crm_frontend
+    working_dir: /app
+    env_file: .env
+    ports:
+      - "${EXTERNAL_PORT}:3001"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: sh -c "npm ci && npm run dev"

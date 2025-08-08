@@ -1,0 +1,48 @@
+import { privateApi } from './ApiClient';
+
+export interface DutyData {
+  name: string;
+  calculatedValue: number;
+  assignedAt: string;
+  // Опциональные поля, доступные только для ответственного
+  price?: string | null;
+  percentage?: string | null;
+}
+
+export interface ResponsibleUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  email: string;
+}
+
+export interface WorkData {
+  name: string;
+  createdAt: string;
+  releaseDate?: string; // Date as ISO string
+  isResponsible: boolean;
+  // Опциональное поле, доступное только для ответственного
+  salary?: number;
+  duties: DutyData[];
+  // Информация об ответственном пользователе
+  responsibleUser: ResponsibleUser | null;
+}
+
+export interface DashboardData {
+  salary: number;
+  works: WorkData[];
+}
+
+export const dashboardService = {
+  // Получение данных главной страницы
+  async getDashboardData(): Promise<DashboardData> {
+    try {
+      const response = await privateApi.get<DashboardData>('/dashboard');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      throw error;
+    }
+  }
+}; 

@@ -1,0 +1,497 @@
+'use client';
+
+import React, { useEffect, useState, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from '../../../../hooks/useForm';
+import { useAppSelector, useAppDispatch } from '../../../../store';
+import Card from '../../../../components/ui/Card';
+import Button from '../../../../components/ui/Button';
+import Input from '../../../../components/ui/Input';
+import Select from '../../../../components/ui/Select';
+import { Role } from '../../../../types/user';
+import { createUser } from '../../../../store/slices/users';
+
+// Опции для выбора дня зарплаты
+const salaryDayOptions = [
+  { value: '', label: 'Не указано' },
+  ...Array.from({ length: 31 }, (_, i) => ({
+    value: String(i + 1),
+    label: String(i + 1),
+  })),
+];
+
+// Опции для выбора роли пользователя
+const roleOptions = [
+  { value: Role.WORKER, label: 'Работник' },
+  { value: Role.ADMIN, label: 'Администратор' },
+];
+
+type CreateUserFormData = {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
+  birthday?: string;
+  salaryDay?: string;
+  role?: string;
+};
+
+export default function CreateUserPage() {
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isLoading } = useAppSelector((state) => state.users);
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const [serverError, setServerError] = useState<string | ReactNode>('');
+  const [success, setSuccess] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  // Используем наш кастомный хук с улучшенной валидацией
+  const {
+    values,
+    errors,
+    handleChange,
+    handleBlur,
+    setValue,
+    resetForm,
+    handleSubmit,
+    validateForm
+  } = useForm<CreateUserFormData>(
+    {
+      email: '',
+      password: '',
+      firstName: '',
+      lastName: '',
+      middleName: '',
+      birthday: '',
+      salaryDay: '',
+      role: Role.WORKER
+    },
+    {
+      email: {
+        required: true,
+        pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        validate: (value) => 
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) || 
+          'Введите корректный email'
+      },
+      password: {
+        required: true,
+        minLength: 8,
+        validate: (value) => 
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value) || 
+          'Пароль должен содержать не менее 8 символов, включая цифры, специальные символы, заглавные и строчные буквы'
+      },
+      firstName: { 
+        required: true, 
+        minLength: 2, 
+        maxLength: 50
+      },
+      lastName: { 
+        required: true, 
+        minLength: 2, 
+        maxLength: 50
+      },
+      middleName: { 
+        maxLength: 50
+      },
+      birthday: { 
+        required: false,
+        isDate: true 
+      },
+      salaryDay: {
+        pattern: /^([1-9]|[12][0-9]|3[01])$/,
+        validate: (value) => 
+          value === '' || 
+          (/^([1-9]|[12][0-9]|3[01])$/.test(value) && 
+          parseInt(value) >= 1 && 
+          parseInt(value) <= 31) || 
+          'День зарплаты должен быть числом от 1 до 31'
+      },
+      role: {
+        required: true
+      }
+    }
+  );
+
+  // Генерация случайного пароля
+  const generateRandomPassword = () => {
+    // Используем специальные наборы символов для разных типов
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    const symbols = '@$!%*?&';
+
+    // Создаем пароль, содержащий минимум по одному символу каждого типа
+    let password = '';
+    password += randomChar(lowercase);
+    password += randomChar(uppercase);
+    password += randomChar(numbers);
+    password += randomChar(symbols);
+
+    // Дополняем пароль до необходимой длины
+    const remainingLength = 8 - password.length;
+    const allChars = lowercase + uppercase + numbers + symbols;
+    for (let i = 0; i < remainingLength; i++) {
+      password += randomChar(allChars);
+    }
+    
+    // Перемешиваем символы для большей случайности
+    password = password.split('').sort(() => 0.5 - Math.random()).join('');
+    
+    // Проверяем, что сгенерированный пароль соответствует всем требованиям
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      // В случае несоответствия (что маловероятно), генерируем снова
+      return generateRandomPassword();
+    }
+    
+    // Устанавливаем сгенерированный пароль в форму
+    setValue('password', password);
+    
+    // Делаем пароль видимым
+    setIsPasswordVisible(true);
+  };
+
+  // Функция для переключения видимости пароля
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
+  };
+
+  useEffect(() => {
+    // Проверка аутентификации и прав администратора
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    if (user?.role !== Role.ADMIN) {
+      router.push('/dashboard');
+      return;
+    }
+  }, [isAuthenticated, router, user]);
+
+  const onSubmit = async (data: CreateUserFormData) => {
+    try {
+      setServerError('');
+      setSuccess('');
+
+      // Проверяем валидность формы перед отправкой
+      if (!validateForm()) {
+        const errorMessages = Object.values(errors).filter(Boolean);
+        if (errorMessages.length > 0) {
+          setServerError(`Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`);
+          return;
+        }
+      }
+
+      // Создаем объект для отправки на сервер
+      const userData = { ...data } as any;
+
+      // Преобразуем дату рождения в формат ISO-8601 DateTime, если она указана
+      if (userData.birthday) {
+        try {
+          userData.birthday = new Date(`${userData.birthday}T00:00:00Z`).toISOString();
+        } catch(e) {
+          console.error('Ошибка при форматировании даты:', e);
+          setServerError('Некорректный формат даты. Используйте формат ГГГГ-ММ-ДД.');
+          return;
+        }
+      } else {
+        // Если поле даты пустое, отправляем null
+        userData.birthday = null;
+      }
+
+      // Преобразуем salaryDay из строки в число, если он указан
+      if (userData.salaryDay !== undefined && userData.salaryDay.trim() !== '') {
+        userData.salaryDay = parseInt(userData.salaryDay, 10);
+      } else {
+        userData.salaryDay = null;
+      }
+
+      // Отправляем запрос на создание пользователя
+      const resultAction = await dispatch(createUser(userData));
+
+      if (createUser.fulfilled.match(resultAction)) {
+        setSuccess('Пользователь успешно создан');
+        resetForm(); // Сбрасываем форму после успешного создания
+      } else if (createUser.rejected.match(resultAction) && resultAction.payload) {
+        // Обработка ошибок валидации и других ошибок
+        const errorMessage = resultAction.payload as string;
+        
+        // Проверяем, содержит ли сообщение информацию о валидации
+        if (errorMessage.includes('Ошибки валидации:')) {
+          // Разбиваем сообщение на отдельные строки с ошибками
+          const validationLines = errorMessage.split('\n')
+            .filter(line => line.trim() !== '')
+            .filter(line => !line.startsWith('Ошибки валидации:'));
+          
+          // Группируем ошибки по категориям
+          const fieldErrors: Record<string, string[]> = {};
+          const generalErrors: string[] = [];
+          
+          validationLines.forEach(line => {
+            // Проверяем, является ли строка ошибкой поля (формат "поле: сообщение")
+            const match = line.match(/^([^:]+):\s*(.+)$/);
+            if (match) {
+              const [, field, message] = match;
+              if (!fieldErrors[field]) {
+                fieldErrors[field] = [];
+              }
+              fieldErrors[field].push(message.trim());
+            } else {
+              // Если не удалось разобрать как ошибку поля, считаем общей ошибкой
+              generalErrors.push(line.trim());
+            }
+          });
+          
+          // Создаем структурированное отображение ошибок
+          setServerError(
+            <div className="text-sm text-red-600">
+              {generalErrors.length > 0 && (
+                <>
+                  <p className="font-medium mb-2">Общие ошибки:</p>
+                  <ul className="list-disc pl-4 mb-3">
+                    {generalErrors.map((error, index) => (
+                      <li key={index} className="mt-1">{error}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              
+              {Object.keys(fieldErrors).length > 0 && (
+                <>
+                  <p className="font-medium mb-2">Ошибки в полях формы:</p>
+                  <ul className="list-disc pl-4">
+                    {Object.entries(fieldErrors).map(([field, errors], index) => {
+                      // Удаляем дубликаты сообщений
+                      const uniqueErrors = Array.from(new Set(errors));
+                      return (
+                        <li key={index} className="mt-1">
+                          <span className="font-medium">{field}:</span> {uniqueErrors.join(', ')}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
+            </div>
+          );
+        } else {
+          // Обычная строковая ошибка
+          setServerError(errorMessage);
+        }
+      } else {
+        setServerError('Произошла ошибка при создании пользователя');
+      }
+    } catch (err) {
+      console.error('Ошибка при создании пользователя:', err);
+      setServerError('Произошла ошибка при создании пользователя');
+    }
+  };
+
+  if (!user || user.role !== Role.ADMIN) {
+    return null;
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="px-4 py-6 sm:px-0">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Создание пользователя</h1>
+          
+          <Button variant="secondary" onClick={() => router.push('/admin/users')}>
+            Назад к списку
+          </Button>
+        </div>
+
+        <Card>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div>
+                <Input
+                  id="email"
+                  name="email"
+                  label="Email"
+                  type="email"
+                  fullWidth
+                  value={values.email}
+                  onChange={handleChange}
+                  error={errors.email}
+                />
+              
+                <div className="mb-4">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Пароль
+                  </label>
+                  <div className="flex space-x-2">
+                    <div className="relative flex-grow">
+                      <input
+                        id="password"
+                        name="password"
+                        type={isPasswordVisible ? "text" : "password"}
+                        className={`block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm w-full ${errors.password ? 'border-red-300 text-red-900' : ''}`}
+                        value={values.password}
+                        onChange={handleChange}
+                      />
+                      {errors.password && (
+                        <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {isPasswordVisible ? 'Скрыть' : 'Показать'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={generateRandomPassword}
+                    >
+                      Сгенерировать
+                    </Button>
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    <p>Пароль должен содержать минимум 8 символов, включая:</p>
+                    <ul className="list-disc pl-5 mt-1">
+                      <li>Заглавные буквы (A-Z)</li>
+                      <li>Строчные буквы (a-z)</li>
+                      <li>Цифры (0-9)</li>
+                      <li>Специальные символы (@$!%*?&)</li>
+                    </ul>
+                  </div>
+                </div>
+              
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  label="Имя"
+                  fullWidth
+                  value={values.firstName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.firstName}
+                />
+              
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  label="Фамилия"
+                  fullWidth
+                  value={values.lastName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.lastName}
+                />
+              </div>
+              
+              <div>
+                <Input
+                  id="middleName"
+                  name="middleName"
+                  label="Отчество"
+                  fullWidth
+                  value={values.middleName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.middleName}
+                />
+              
+                <Input
+                  id="birthday"
+                  name="birthday"
+                  label="Дата рождения (необязательно)"
+                  type="date"
+                  fullWidth
+                  value={values.birthday}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.birthday}
+                />
+              
+                <label className="block text-sm font-medium text-gray-700 mb-1 mt-4">
+                  Роль пользователя
+                </label>
+                <select
+                  id="role"
+                  name="role"
+                  className="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  value={values.role}
+                  onChange={handleChange}
+                >
+                  <option value={Role.WORKER}>Работник</option>
+                  <option value={Role.ADMIN}>Администратор</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <Select
+                id="salaryDay"
+                name="salaryDay"
+                label="День выплаты зарплаты"
+                options={salaryDayOptions}
+                fullWidth
+                value={values.salaryDay}
+                onChange={handleChange}
+                error={errors.salaryDay}
+              />
+            </div>
+
+            {serverError && (
+              <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm leading-5 font-medium text-red-800">
+                      Ошибка при создании пользователя
+                    </h3>
+                    <div className="mt-1 text-sm leading-5 text-red-700">
+                      {serverError}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {success && (
+              <div className="bg-green-50 border-l-4 border-green-400 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <div className="text-sm leading-5 text-green-700">
+                      {success}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end mt-6">
+              <Button type="submit" isLoading={isLoading}>
+                Создать пользователя
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Генерация случайного символа из строки
+const randomChar = (str: string): string => {
+  return str.charAt(Math.floor(Math.random() * str.length));
+}; 
