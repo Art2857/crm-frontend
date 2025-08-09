@@ -173,12 +173,18 @@ export default function ProfilePage() {
         }
       }
 
-      // Валидация рабочего времени
-      if (data.workStart && data.workEnd) {
-        const startTime = data.workStart.split(':').map((n) => parseInt(n));
-        const endTime = data.workEnd.split(':').map((n) => parseInt(n));
-        const startMinutes = startTime[0] * 60 + startTime[1];
-        const endMinutes = endTime[0] * 60 + endTime[1];
+      // Валидация рабочего времени (отправляем только валидные значения)
+      const normalizeTime = (t?: string) =>
+        t && /^([01]\d|2[0-3]):[0-5]\d$/.test(t) ? t : undefined;
+
+      const start = normalizeTime(data.workStart);
+      const end = normalizeTime(data.workEnd);
+
+      if (start && end) {
+        const [sh, sm] = start.split(':').map((n) => parseInt(n));
+        const [eh, em] = end.split(':').map((n) => parseInt(n));
+        const startMinutes = sh * 60 + sm;
+        const endMinutes = eh * 60 + em;
 
         if (startMinutes >= endMinutes) {
           notification.showError(
@@ -188,6 +194,9 @@ export default function ProfilePage() {
           return;
         }
       }
+      // Если любое из значений невалидно/пусто — не отправляем поле вообще
+      data.workStart = start;
+      data.workEnd = end;
 
       if (data.birthday) {
         try {
@@ -212,7 +221,12 @@ export default function ProfilePage() {
       }
 
       data.status = status;
-      data.preferences = preferencesText || ('' as any);
+      // Бэкенд ожидает строку; не отправляем пустые значения
+      if (preferencesText && preferencesText.trim().length > 0) {
+        data.preferences = preferencesText.trim();
+      } else {
+        delete (data as any).preferences;
+      }
 
       if (currentTimezone) {
         data.timezone = currentTimezone;

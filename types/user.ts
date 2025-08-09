@@ -25,7 +25,7 @@ export interface User {
   workStart?: string | null;
   workEnd?: string | null;
   status?: UserStatus;
-  preferences?: Record<string, any> | null;
+  preferences?: string | null;
   characteristics?: string | null;
   isArchived?: boolean;
   archivedAt?: string | null;
@@ -55,7 +55,7 @@ export interface UpdateProfileDto {
   workStart?: string;
   workEnd?: string;
   status?: UserStatus;
-  preferences?: Record<string, any>;
+  preferences?: string;
 }
 
 export interface UpdateSensitiveDataDto {

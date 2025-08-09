@@ -64,14 +64,35 @@ export const userService = {
   },
 
   // Обновление профиля пользователя (неконфиденциальная информация)
-  updateProfile: async (id: string, data: UpdateProfileDto): Promise<User> => {
+  updateProfile: async (
+    id: string,
+    data: Partial<UpdateProfileDto>
+  ): Promise<User> => {
     try {
+      // Подготавливаем и санитизируем данные перед отправкой
+      const processedData: Record<string, any> = {};
+
+      // Копируем только непустые строковые поля
+      for (const [key, value] of Object.entries(data)) {
+        if (value === undefined || value === null) continue;
+
+        if (typeof value === 'string') {
+          const trimmed = value.trim();
+          if (trimmed.length === 0) continue; // пустые строки не отправляем
+          processedData[key] = trimmed;
+        } else {
+          processedData[key] = value;
+        }
+      }
+
       // Преобразуем дату рождения в ISO строку, если она есть
-      const processedData = { ...data };
       if (processedData.birthday) {
         const dateObj = toDateObject(processedData.birthday);
         if (dateObj) {
           processedData.birthday = dateObj.toISOString();
+        } else {
+          // если дата некорректна, удаляем поле, чтобы не сломать валидацию
+          delete processedData.birthday;
         }
       }
 
