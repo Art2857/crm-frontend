@@ -46,7 +46,10 @@ export default function PaymentModal({
     const defaultDescription = `Зарплата по работе ${payment.workName}`;
 
     const finalDescription = description.trim() || defaultDescription;
-    const date = paymentDate || new Date().toISOString();
+    // Если дата не задана, используем сегодняшнюю календарную дату (YYYY-MM-DD)
+    const today = new Date();
+    const fallback = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const date = paymentDate || fallback;
 
     onSubmit({
       amount: payment.amount,

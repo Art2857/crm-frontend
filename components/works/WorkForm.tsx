@@ -107,7 +107,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
               {formData.releaseDate && (
                 <p>
                   <span className="font-medium">Дата выхода:</span>{' '}
-                  {new Date(formData.releaseDate).toLocaleDateString('ru-RU')}
+                  {formData.releaseDate}
                 </p>
               )}
             </div>

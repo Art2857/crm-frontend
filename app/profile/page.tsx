@@ -15,6 +15,7 @@ import { useForm } from '../../hooks/useForm';
 import { useNotification } from '../../contexts/NotificationContext';
 import { authService } from '../../services/auth';
 import { getCurrentUser } from '../../store/slices/auth';
+import TimezoneSelector from '../../components/ui/TimezoneSelector';
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -239,6 +240,10 @@ export default function ProfilePage() {
                   <div className="mt-1 text-lg font-medium">
                     {age ? `${age} лет` : 'Не указан'}
                   </div>
+                </div>
+                <div className="col-span-1 md:col-span-2">
+                  <div className="text-sm font-medium text-gray-500 mb-1">Часовой пояс</div>
+                  <TimezoneSelector />
                 </div>
               </div>
             </div>

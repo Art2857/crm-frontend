@@ -27,16 +27,13 @@ export function useDashboard() {
 
   const calculateAge = (birthday: string | null): number | null => {
     if (!birthday) return null;
-    const birthDate = new Date(birthday);
+    // Нормализуем дату рождения без времени для корректного возраста
+    const birth = new Date(birthday);
+    if (isNaN(birth.getTime())) return null;
     const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDifference = today.getMonth() - birthDate.getMonth();
-    if (
-      monthDifference < 0 ||
-      (monthDifference === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
+    let age = today.getFullYear() - birth.getFullYear();
+    const md = today.getMonth() - birth.getMonth();
+    if (md < 0 || (md === 0 && today.getDate() < birth.getDate())) age--;
     return age;
   };
 
@@ -54,10 +51,7 @@ export function useDashboard() {
   };
 
   const fullName = useMemo(() => getFullName(user), [user]);
-  const age = useMemo(
-    () => calculateAge(user?.birthday ?? null),
-    [user?.birthday]
-  );
+  const age = useMemo(() => calculateAge(user?.birthday ?? null), [user?.birthday]);
 
   return {
     user,

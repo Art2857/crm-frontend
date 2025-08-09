@@ -6,6 +6,8 @@ interface Props {
   email: string;
   salary: number;
   salaryDayText: string;
+  birthdayText?: string;
+  ageText?: string;
 }
 
 export default function UserSummaryCard({
@@ -13,6 +15,8 @@ export default function UserSummaryCard({
   email,
   salary,
   salaryDayText,
+  birthdayText,
+  ageText,
 }: Props) {
   return (
     <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl overflow-hidden shadow-lg">
@@ -28,6 +32,18 @@ export default function UserSummaryCard({
                 {email}
               </span>
             </div>
+            {(birthdayText || ageText) && (
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-primary-100">
+                <div>
+                  <span className="text-primary-200">Дата рождения: </span>
+                  <span className="font-semibold">{birthdayText || 'Не указана'}</span>
+                </div>
+                <div>
+                  <span className="text-primary-200">Возраст: </span>
+                  <span className="font-semibold">{ageText || 'Не указан'}</span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex flex-col md:items-end">
             <div className="text-xl font-medium text-primary-100">Зарплата</div>

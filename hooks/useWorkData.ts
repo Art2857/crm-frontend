@@ -78,23 +78,15 @@ export const useWorkData = ({
         // При включении режима редактирования всегда обновляем данные
         const processedData = { ...initialData };
 
-        // Обработка даты выхода - преобразование в формат для input type="date"
+        // Обработка даты выхода - приводим к формату YYYY-MM-DD без учета TZ
         if (processedData.releaseDate) {
-          try {
-            console.log(
-              'Исходная дата releaseDate:',
-              processedData.releaseDate
-            );
-            const date = new Date(processedData.releaseDate);
-            if (!isNaN(date.getTime())) {
-              processedData.releaseDate = date.toISOString().split('T')[0];
-              console.log(
-                'Преобразованная дата releaseDate для формы:',
-                processedData.releaseDate
-              );
-            }
-          } catch (error) {
-            console.error('Ошибка при форматировании даты выхода:', error);
+          const date = new Date(processedData.releaseDate);
+          if (!isNaN(date.getTime())) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            processedData.releaseDate = `${y}-${m}-${d}`;
+          } else {
             processedData.releaseDate = '';
           }
         }

@@ -79,6 +79,7 @@ export const formatDateToISO = (
   const dateObj = toDateObject(date);
   if (!dateObj) return '';
 
+  // Гарантируем «дату без времени» независимо от TZ браузера
   const year = dateObj.getFullYear();
   const month = String(dateObj.getMonth() + 1).padStart(2, '0');
   const day = String(dateObj.getDate()).padStart(2, '0');

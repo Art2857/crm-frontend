@@ -43,6 +43,8 @@ export default function DashboardPage() {
             email={user.email}
             salary={data.salary}
             salaryDayText={formatSalaryDay(user.salaryDay)}
+            birthdayText={user.birthday || undefined}
+            ageText={age ? `${age} лет` : undefined}
           />
         </div>
 

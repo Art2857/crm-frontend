@@ -186,6 +186,17 @@ export class ApiClient {
     // Перехватчик запросов для добавления токена и управления отменой
     this.axiosInstance.interceptors.request.use(
       async (config) => {
+        // Пробрасываем выбранный пользователем часовой пояс
+        try {
+          const tz = typeof window !== 'undefined'
+            ? localStorage.getItem('app.timezone')
+            : null;
+          if (tz && config.headers) {
+            (config.headers as any)['X-Client-Timezone'] = tz;
+          } else if (config.headers && !(config.headers as any)['X-Client-Timezone']) {
+            (config.headers as any)['X-Client-Timezone'] = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+          }
+        } catch {}
         // Добавляем токен авторизации если требуется
         if (this.options.requiresAuth) {
           let token = this.getAuthToken();

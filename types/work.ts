@@ -76,7 +76,7 @@ export interface CreateWorkDto {
   name: string;
   responsibleUserId: string;
   salary: string; // Decimal represented as string
-  releaseDate?: string; // Date as ISO string
+  releaseDate: string; // Date as ISO string
 }
 
 /**

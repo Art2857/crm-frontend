@@ -69,6 +69,10 @@ export default function CreateWorkPage() {
       errors.salary = 'Зарплата должна быть больше 0';
     }
 
+    if (!formData.releaseDate || formData.releaseDate.trim() === '') {
+      errors.releaseDate = 'Дата выхода обязательна';
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -188,7 +192,7 @@ export default function CreateWorkPage() {
                   htmlFor="releaseDate"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Дата выхода (необязательно)
+                  Дата выхода
                 </label>
                 <Input
                   id="releaseDate"
@@ -198,6 +202,8 @@ export default function CreateWorkPage() {
                   onChange={handleChange}
                   className="mt-1"
                   placeholder="Выберите дату выхода"
+                  required
+                  error={formErrors.releaseDate}
                 />
               </div>
 

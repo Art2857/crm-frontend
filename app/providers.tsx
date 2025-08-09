@@ -7,14 +7,17 @@ import AuthChecker from './auth-checker';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import NotificationList from '../components/ui/NotificationList';
 import ModalProvider from '../contexts/ModalContext';
+import { TimezoneProvider } from '../contexts/TimezoneContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
       <NotificationProvider>
         <ModalProvider>
-          <AuthChecker>{children}</AuthChecker>
-          <NotificationList />
+          <TimezoneProvider>
+            <AuthChecker>{children}</AuthChecker>
+            <NotificationList />
+          </TimezoneProvider>
         </ModalProvider>
       </NotificationProvider>
     </Provider>
