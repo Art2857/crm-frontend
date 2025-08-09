@@ -185,9 +185,24 @@ export default function AccountsPage() {
             </ul>
           )}
 
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
             <Button variant="primary" onClick={handleAddNewAccount}>
               Добавить новый аккаунт
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                try {
+                  await authService.logoutFromServer();
+                  // Обнулим состояние и отправим на логин
+                  dispatch(logout());
+                  router.push('/login');
+                } catch (e) {
+                  console.error('Ошибка при выходе со всех устройств', e);
+                }
+              }}
+            >
+              Выйти на всех устройствах
             </Button>
           </div>
         </Card>

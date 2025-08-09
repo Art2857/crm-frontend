@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { useRouter } from 'next/navigation';
 // Используем общий layout app/layout.tsx, локальный Layout не требуется здесь
@@ -26,6 +26,10 @@ export default function ProfilePage() {
   const router = useRouter();
   const notification = useNotification();
   const { timezone: currentTimezone } = useTimezone();
+  const initializedRef = useRef(false);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
 
   const [status, setStatus] = useState<UserStatus>(UserStatus.WORKING);
   const [preferencesText, setPreferencesText] = useState<string>('');
@@ -114,16 +118,44 @@ export default function ProfilePage() {
       // Статус и предпочтения (редактируются пользователем в разделе Профиль)
       setStatus(((user as any).status as UserStatus) || UserStatus.WORKING);
       try {
-        setPreferencesText(
-          user && (user as any).preferences
-            ? JSON.stringify((user as any).preferences, null, 2)
-            : ''
-        );
+        setPreferencesText(((user as any).preferences as string) || '');
       } catch {
         setPreferencesText('');
       }
     }
+    // Отметим, что первоначальная инициализация завершена
+    initializedRef.current = true;
   }, [user, isAuthenticated, router, setValue]);
+
+  // Автосохранение статуса и часового пояса (рабочее время сохраняется только по кнопке)
+  useEffect(() => {
+    if (!initializedRef.current || !user) return;
+    // debounce 800мс
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setIsAutoSaving(true);
+        const partial: UpdateProfileDto = {
+          timezone: currentTimezone || undefined,
+          status: status,
+        };
+        await dispatch(updateUserProfile({ userId: user.id, data: partial }));
+        setAutoSavedAt(new Date());
+      } catch (e) {
+        // локально не показываем уведомление, чтобы не шуметь
+        console.error('Автосохранение статуса/ТЗ:', e);
+      } finally {
+        setIsAutoSaving(false);
+      }
+    }, 800);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, currentTimezone, user?.id]);
 
   const onSubmit = async (data: UpdateProfileDto) => {
     try {
@@ -165,29 +197,8 @@ export default function ProfilePage() {
 
       // Подмешиваем поля из локального раздела профиля
       data.status = status;
-      // Парсим JSON из текстового поля предпочтений; при пустом значении не отправляем поле
-      if (preferencesText && preferencesText.trim().length > 0) {
-        try {
-          const parsed = JSON.parse(preferencesText);
-          if (
-            parsed !== null &&
-            typeof parsed === 'object' &&
-            !Array.isArray(parsed)
-          ) {
-            data.preferences = parsed as Record<string, any>;
-          } else {
-            notification.showError(
-              'Поле «Предпочтения» должно содержать JSON-объект (например, {"theme": "dark"}).'
-            );
-            return;
-          }
-        } catch (e) {
-          notification.showError(
-            'Некорректный JSON в поле «Предпочтения». Пожалуйста, исправьте.'
-          );
-          return;
-        }
-      }
+      // Передаем как обычный текст
+      data.preferences = preferencesText || '';
       // Берём TZ из контекста, чтобы сохранить актуальный выбор пользователя
       if (currentTimezone) {
         data.timezone = currentTimezone;
@@ -273,11 +284,27 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="flex flex-col md:items-end">
-                  <div className="text-xl font-medium text-primary-100">
-                    Роль
-                  </div>
-                  <div className="text-xl font-bold capitalize">
-                    {user.role.toLowerCase()}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-primary-100">Роль</div>
+                      <div className="text-xl font-bold capitalize">{user.role.toLowerCase()}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-primary-100 mb-1">Статус</div>
+                      <select
+                        id="statusTop"
+                        name="statusTop"
+                        value={status as any}
+                        onChange={(e) => setStatus(e.target.value as unknown as UserStatus)}
+                        className="text-black rounded-md px-3 py-1 text-sm"
+                        title="Статус сохраняется автоматически"
+                      >
+                        <option value={UserStatus.WORKING}>На рабочем месте</option>
+                        <option value={UserStatus.AWAY}>Отсутствую</option>
+                        <option value={UserStatus.LUNCH}>Обедаю</option>
+                        <option value={UserStatus.SLEEP}>Сплю</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -306,34 +333,19 @@ export default function ProfilePage() {
                   <div className="text-sm font-medium text-gray-500 mb-1">
                     Часовой пояс
                   </div>
-                  <TimezoneSelector />
+                  <div className="flex items-center gap-3">
+                    <TimezoneSelector />
+                    {isAutoSaving && (
+                      <span className="text-xs text-gray-400">Сохранение…</span>
+                    )}
+                    {!isAutoSaving && autoSavedAt && (
+                      <span className="text-xs text-gray-400">
+                        Сохранено
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="col-span-1">
-                  <Input
-                    id="workStart"
-                    name="workStart"
-                    label="Начало рабочего дня"
-                    type="time"
-                    fullWidth
-                    value={values.workStart}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    error={errors.workStart}
-                  />
-                </div>
-                <div className="col-span-1">
-                  <Input
-                    id="workEnd"
-                    name="workEnd"
-                    label="Окончание рабочего дня"
-                    type="time"
-                    fullWidth
-                    value={values.workEnd}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    error={errors.workEnd}
-                  />
-                </div>
+                {/* Рабочее время вынесено в отдельную секцию ниже */}
               </div>
             </div>
           </div>
@@ -397,42 +409,49 @@ export default function ProfilePage() {
                   error={errors.birthday}
                 />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Статус
-                  </label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={status as any}
-                    onChange={(e) =>
-                      setStatus(e.target.value as unknown as UserStatus)
-                    }
-                    className="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  >
-                    <option value={UserStatus.WORKING}>На рабочем месте</option>
-                    <option value={UserStatus.AWAY}>Отсутствую</option>
-                    <option value={UserStatus.LUNCH}>Обедаю</option>
-                    <option value={UserStatus.SLEEP}>Сплю</option>
-                  </select>
+                {/* Рабочее время (сохраняется по кнопке) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    id="workStart"
+                    name="workStart"
+                    label="Начало рабочего дня"
+                    type="time"
+                    fullWidth
+                    value={values.workStart}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={errors.workStart}
+                  />
+
+                  <Input
+                    id="workEnd"
+                    name="workEnd"
+                    label="Окончание рабочего дня"
+                    type="time"
+                    fullWidth
+                    value={values.workEnd}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={errors.workEnd}
+                  />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Предпочтения (JSON)
+                    Предпочтения (текст)
                   </label>
                   <textarea
                     id="preferences"
                     name="preferences"
+                    rows={4}
+                    placeholder="Опишите ваши предпочтения, например: Люблю тёмную тему, получать уведомления на email"
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                     value={preferencesText}
                     onChange={(e) => setPreferencesText(e.target.value)}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                    rows={4}
-                    placeholder={`{\n  "theme": "dark"\n}`}
                   />
                 </div>
 
-                <div className="flex justify-end pt-4">
+                <div className="flex justify-between pt-4 gap-4 flex-col md:flex-row">
                   <Button
                     type="submit"
                     disabled={isLoading}
@@ -441,6 +460,7 @@ export default function ProfilePage() {
                   >
                     Сохранить изменения
                   </Button>
+                  {/* Кнопка выхода на всех устройствах перенесена на страницу Аккаунты */}
                 </div>
               </form>
             </div>
