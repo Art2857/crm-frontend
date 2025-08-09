@@ -348,27 +348,30 @@ export default function CalculationModal({
                                       {duty.dutyName}:
                                     </span>
                                     <span className="font-mono">
-                                      {formatCurrency(duty.monthlyAmount)} ×{' '}
-                                      {period.days || 0}/{period.monthDays || 0}{' '}
-                                      = {formatCurrency(duty.calculatedAmount)}
+                                      {formatCurrency(duty.monthlyAmount)} × {period.days || 0}/{period.monthDays || 0} = {formatCurrency(duty.calculatedAmount)}
                                     </span>
                                   </div>
                                 ))}
                               </div>
                             ))
-                          : // Если нет группировки - отображаем как раньше
+                          : // Если нет группировки - отображаем все обязанности
                             period.duties.map((duty) => (
                               <div
                                 key={duty.dutyId}
                                 className="flex items-center justify-between text-sm"
                               >
                                 <span className="text-gray-700">
-                                  {duty.dutyName}:
+                                  {duty.workName ? (
+                                    <>
+                                      <span className="text-gray-500 mr-1">{duty.workName}:</span>
+                                      {duty.dutyName}:
+                                    </>
+                                  ) : (
+                                    <>{duty.dutyName}:</>
+                                  )}
                                 </span>
                                 <span className="font-mono">
-                                  {formatCurrency(duty.monthlyAmount)} ×{' '}
-                                  {period.days || 0}/{period.monthDays || 0} ={' '}
-                                  {formatCurrency(duty.calculatedAmount)}
+                                  {formatCurrency(duty.monthlyAmount)} × {period.days || 0}/{period.monthDays || 0} = {formatCurrency(duty.calculatedAmount)}
                                 </span>
                               </div>
                             ))}

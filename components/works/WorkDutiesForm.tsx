@@ -399,14 +399,8 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
       newItems[index] = { ...newItems[index], [field]: value };
     }
 
-    // Особая обработка для полей price и percentage
-    if (field === 'price' && value && value !== '') {
-      // Если указана цена, сбрасываем процент
-      newItems[index].percentage = '';
-    } else if (field === 'percentage' && value && value !== '') {
-      // Если указан процент, сбрасываем цену
-      newItems[index].price = '';
-    }
+    // Ранее тут обнуляли второе поле при вводе одного из значений (фикс/процент).
+    // По новой логике разрешаем указывать одновременно фиксированную сумму И процент.
 
     // Обновляем состояние
     setDutyItems(newItems);

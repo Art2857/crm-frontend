@@ -7,12 +7,9 @@
     @apply bg-gray-100;
   }
   
-  /* Предотвращаем скролл страницы при открытом модальном окне на мобильных устройствах */
+  /* Блокируем скролл без смещения контента (без position: fixed) */
   body.modal-open {
     overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
   }
 }
 

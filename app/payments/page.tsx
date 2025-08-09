@@ -249,10 +249,6 @@ export default function PaymentsPage() {
     date: string,
     userId?: string
   ) => {
-    if (new Date(date) > new Date()) {
-      showError('Дата окончания не может быть в будущем');
-      return;
-    }
 
     // Сохраняем предыдущую дату для возможного отката
     const previousDate = getWorkPeriodDate(workId);
@@ -283,10 +279,6 @@ export default function PaymentsPage() {
   };
 
   const handleUserPeriodDateChange = async (userId: string, date: string) => {
-    if (new Date(date) > new Date()) {
-      showError('Дата окончания не может быть в будущем');
-      return;
-    }
 
     // Сохраняем предыдущую дату для возможного отката
     const previousDate = getUserPeriodDate(userId);

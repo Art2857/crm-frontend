@@ -14,7 +14,8 @@ interface PaymentHistoryItem {
   amount: number;
   type: 'SALARY' | 'ADVANCE' | 'BONUS' | 'EXTRA';
   description: string;
-  date: string;
+  date: string; // paymentDate
+  createdAt?: string;
 }
 
 interface PaymentHistorySectionProps {
@@ -92,9 +93,14 @@ export default function PaymentHistorySection({
                                 ? 'Доплата'
                                 : 'Аванс'}
                         </Badge>
-                        <span className="text-sm text-gray-600">
-                          {new Date(payment.date).toLocaleDateString('ru-RU')}
+                        <span className="text-sm text-gray-700 font-semibold">
+                          Закрытие: {new Date(payment.date).toLocaleDateString('ru-RU')}
                         </span>
+                        {payment.createdAt && (
+                          <span className="text-xs text-gray-500">
+                            (создано: {new Date(payment.createdAt).toLocaleString('ru-RU')})
+                          </span>
+                        )}
                       </div>
                       <p className="font-medium text-gray-900">
                         {payment.description}

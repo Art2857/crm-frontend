@@ -100,6 +100,9 @@ export interface PeriodCalculation {
     dutyName: string;
     monthlyAmount: number;
     calculatedAmount: number;
+    // Для общего расчёта пользователя отображаем источник обязанности
+    workId?: string;
+    workName?: string;
     periods?: DutyPeriod[];
   }>;
   // Новое поле для группировки по работам
@@ -160,6 +163,8 @@ export interface UserWorkDebt {
   lastName: string;
   email: string;
   totalDebt: number;
+  totalAccrued?: number;
+  totalPaid?: number;
   isPaymentDue: boolean;
   lastClosureDate: string | null;
   duties: DutyDetail[];

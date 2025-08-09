@@ -6,8 +6,13 @@ export function usePaymentStats(
   responsibleUsers: ResponsibleUser[],
   myDebts: MyDebt[]
 ) {
+  // Сумма к выплате ответственным: учитываем только положительные остатки
   const totalResponsibleDebt = useMemo(
-    () => responsibleUsers.reduce((sum, u) => sum + (u.totalDebt || 0), 0),
+    () =>
+      responsibleUsers.reduce(
+        (sum, u) => sum + Math.max(u.remainingDebt ?? u.totalDebt ?? 0, 0),
+        0
+      ),
     [responsibleUsers]
   );
 

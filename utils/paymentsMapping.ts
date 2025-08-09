@@ -142,10 +142,13 @@ export function mapAnalysisToUsers(
       return sum + Math.min(workPaid, workAccrued);
     }, 0);
 
-    // Общий остаток только по положительным остаткам работ
+    // Остаток по пользователю только по положительным остаткам его работ
     const remainingDebt = (works as any[]).reduce((sum, work) => {
-      const workRemaining = work.totalDebt;
-      return sum + (workRemaining > 0 ? workRemaining : 0);
+      const workRemaining = (work.users || []).reduce(
+        (s: number, u: any) => s + Math.max(u.totalAccrued - u.totalPaid, 0),
+        0
+      );
+      return sum + workRemaining;
     }, 0);
 
     return {
@@ -155,6 +158,8 @@ export function mapAnalysisToUsers(
       email,
       salaryDay: 15,
       works: works as any,
+      // totalDebt сохраняем как «сырое» (может быть отрицательным),
+      // remainingDebt — только положительные остатки, используется для «К выплате»
       totalDebt,
       totalAccrued,
       totalPaid: totalPaidCorrected,

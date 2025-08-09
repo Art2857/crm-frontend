@@ -328,7 +328,14 @@ export function buildUserDetailedCalculation(params: {
   userData.works.forEach((work) => {
     const userWork = work.users?.find((u) => u.userId === userId);
     if (userWork) {
-      allDuties.push(...userWork.duties);
+      // Копируем обязанности и помечаем источник работы
+      allDuties.push(
+        ...userWork.duties.map((d: any) => ({
+          ...d,
+          workId: work.workId,
+          workName: work.workName,
+        }))
+      );
       if (userWork.paymentHistory && userWork.paymentHistory.length > 0) {
         allPaymentHistory.push(...userWork.paymentHistory);
       }
@@ -387,6 +394,8 @@ export function buildUserDetailedCalculation(params: {
         dutyName: duty.dutyName,
         monthlyAmount: duty.monthlyAmount,
         calculatedAmount: duty.debt,
+        workId: duty.workId,
+        workName: duty.workName,
       })),
       // @ts-ignore - опциональная группировка для UI
       workGroups,

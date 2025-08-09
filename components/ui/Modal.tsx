@@ -17,35 +17,37 @@ interface ModalProps {
 
 // Функция для управления классом body, который блокирует прокрутку
 const useBodyScrollLock = (isLocked: boolean) => {
+  const savedScrollYRef = useRef<number>(0);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    const originalStyle = window.getComputedStyle(document.body).overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
 
     if (isLocked) {
-      // Сохраняем текущую позицию прокрутки
-      const scrollY = window.scrollY;
-      // Блокируем прокрутку
+      // Сохраняем позицию скролла и фиксируем body
+      savedScrollYRef.current = window.scrollY;
       document.body.classList.add('modal-open');
-      // Устанавливаем положение, чтобы избежать прыжка контента
-      document.body.style.top = `-${scrollY}px`;
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     } else {
-      // Снимаем блокировку
-      const scrollY = document.body.style.top
-        ? parseInt(document.body.style.top || '0', 10) * -1
-        : 0;
-
-      document.body.classList.remove('modal-open');
-      document.body.style.top = '';
-
-      // Возвращаем прокрутку в исходное положение
-      window.scrollTo(0, scrollY);
+      // Восстанавливаем прокрутку строго после снятия фиксации
+      const restore = () => {
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = originalBodyOverflow || '';
+        document.documentElement.style.overflow = originalHtmlOverflow || '';
+        // Восстанавливаем скролл в следующем кадре рендера, чтобы избежать прыжка
+        requestAnimationFrame(() => {
+          window.scrollTo(0, savedScrollYRef.current || 0);
+        });
+      };
+      restore();
     }
 
     return () => {
       document.body.classList.remove('modal-open');
-      document.body.style.overflow = originalStyle;
-      document.body.style.top = '';
+      document.body.style.overflow = originalBodyOverflow || '';
+      document.documentElement.style.overflow = originalHtmlOverflow || '';
     };
   }, [isLocked]);
 };
@@ -65,14 +67,31 @@ export const Modal: React.FC<ModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const isInitialRender = useRef(true);
 
-  // Блокируем прокрутку страницы при открытии модального окна
+  // Блокируем прокрутку страницы при открытии модального окна и сохраняем позицию скролла
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isOpen) {
+      (window as any).__modalSavedScrollY = window.scrollY;
+      // Возвращаем скролл на место сразу после открытия, чтобы исключить подскок
+      requestAnimationFrame(() => {
+        window.scrollTo(0, (window as any).__modalSavedScrollY || 0);
+      });
+    }
+  }, [isOpen]);
+
   useBodyScrollLock(isOpen);
 
   // Мемоизируем функцию закрытия модального окна
   const handleClose = useCallback(() => {
     // Введем задержку перед закрытием для избежания гонки событий
     setTimeout(() => {
+      // Перед вызовом onClose восстанавливаем сохранённый скролл, затем ещё раз после перерисовки
+      const saved = (window as any).__modalSavedScrollY || 0;
       onClose();
+      requestAnimationFrame(() => {
+        window.scrollTo(0, saved);
+        requestAnimationFrame(() => window.scrollTo(0, saved));
+      });
     }, 50);
   }, [onClose]);
 

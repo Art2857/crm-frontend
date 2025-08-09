@@ -61,7 +61,35 @@ export function usePaymentsData() {
               );
               return updatedWorkInNewResult || oldWorkData;
             });
-            return { ...updatedUserInNewResult, works };
+
+            // Пересчет агрегатов пользователя на основе всех его работ
+            const aggregate = works.reduce(
+              (acc, work) => {
+                const u = work.users?.find((wu) => wu.userId === user.userId);
+                if (u) {
+                  acc.totalAccrued += u.totalAccrued || 0;
+                  acc.totalPaid += u.totalPaid || 0;
+                  acc.totalDebt += (u.totalAccrued || 0) - (u.totalPaid || 0);
+                }
+                const workRemaining = (work.users || []).reduce(
+                  (s, wu) => s + Math.max((wu.totalAccrued || 0) - (wu.totalPaid || 0), 0),
+                  0
+                );
+                acc.remainingDebt += workRemaining;
+                return acc;
+              },
+              { totalAccrued: 0, totalPaid: 0, totalDebt: 0, remainingDebt: 0 }
+            );
+
+            return {
+              ...user,
+              works,
+              totalAccrued: aggregate.totalAccrued,
+              totalPaid: aggregate.totalPaid,
+              totalDebt: aggregate.totalDebt,
+              remainingDebt: aggregate.remainingDebt,
+              isPaymentDue: aggregate.remainingDebt > 0,
+            } as ResponsibleUser;
           }
           return user;
         });
