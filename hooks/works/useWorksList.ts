@@ -6,6 +6,8 @@ import { fetchAllUsers } from '../../store/slices/users';
 import { getCurrentUser } from '../../store/slices/auth';
 import { logger } from '../../utils/logger';
 import { Work } from '../../types/work';
+import { workService } from '../../services/work';
+import { useNotification } from '../../contexts/NotificationContext';
 import { User } from '../../types/user';
 
 export function useWorksList() {
@@ -25,6 +27,9 @@ export function useWorksList() {
   const [displayedWorks, setDisplayedWorks] = useState<Work[]>([]);
   const [viewType, setViewType] = useState<'all' | 'user'>('all');
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [archivedWorks, setArchivedWorks] = useState<Work[]>([]);
+  const notification = useNotification();
 
   const usersMap = useMemo(() => {
     const map: Record<string, User> = {};
@@ -84,11 +89,13 @@ export function useWorksList() {
   useEffect(() => {
     logger.debug('Updating displayed works:', {
       viewType,
+      showArchived,
       works: works.length,
       userWorks: userWorks.length,
     });
-    setDisplayedWorks(viewType === 'all' ? works : userWorks);
-  }, [viewType, works, userWorks]);
+    if (showArchived) setDisplayedWorks(archivedWorks);
+    else setDisplayedWorks(viewType === 'all' ? works : userWorks);
+  }, [viewType, showArchived, works, userWorks, archivedWorks]);
 
   const handleCreateWork = useCallback(() => {
     router.push('/works/create');
@@ -116,6 +123,52 @@ export function useWorksList() {
     }
   }, [dispatch, user, userWorks.length, viewType]);
 
+  const handleToggleArchived = useCallback(async () => {
+    const next = !showArchived;
+    setShowArchived(next);
+    if (next && archivedWorks.length === 0) {
+      try {
+        const list = await workService.getArchived();
+        setArchivedWorks(list);
+      } catch (e) {
+        notification.showError('Не удалось загрузить архивные работы');
+      }
+    }
+  }, [showArchived, archivedWorks.length, notification]);
+
+  const handleArchive = useCallback(
+    async (id: string) => {
+      try {
+        await workService.archive(id);
+        notification.showSuccess('Работа отправлена в архив');
+        if (showArchived) {
+          const list = await workService.getArchived();
+          setArchivedWorks(list);
+        } else {
+          dispatch(fetchAllWorks());
+        }
+      } catch (e) {
+        notification.showError('Ошибка при архивировании работы');
+      }
+    },
+    [dispatch, showArchived, notification]
+  );
+
+  const handleRestore = useCallback(
+    async (id: string) => {
+      try {
+        await workService.restore(id);
+        notification.showSuccess('Работа восстановлена из архива');
+        const list = await workService.getArchived();
+        setArchivedWorks(list);
+        dispatch(fetchAllWorks());
+      } catch (e) {
+        notification.showError('Ошибка при восстановлении работы');
+      }
+    },
+    [dispatch, notification]
+  );
+
   const getResponsibleName = useCallback(
     (work: Work): string => {
       const responsibleUser = usersMap[work.responsibleUserId];
@@ -142,12 +195,16 @@ export function useWorksList() {
     users,
     // local
     viewType,
+    showArchived,
     displayedWorks,
     isEmptyWorksList,
     // handlers
     handleCreateWork,
     handleViewWork,
     handleToggleView,
+    handleToggleArchived,
+    handleArchive,
+    handleRestore,
     // utils
     getResponsibleName,
   };

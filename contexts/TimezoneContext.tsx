@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 export type TimezoneContextValue = {
   timezone: string;
@@ -62,10 +68,16 @@ const buildTimezoneList = (): string[] => {
   ];
 };
 
-const TimezoneContext = createContext<TimezoneContextValue | undefined>(undefined);
+const TimezoneContext = createContext<TimezoneContextValue | undefined>(
+  undefined
+);
 
-export const TimezoneProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [timezone, setTimezoneState] = useState<string>(getStoredTimezone() || defaultTimezone);
+export const TimezoneProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [timezone, setTimezoneState] = useState<string>(
+    getStoredTimezone() || defaultTimezone
+  );
 
   const availableTimezones = useMemo(() => buildTimezoneList(), []);
 
@@ -84,7 +96,11 @@ export const TimezoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [timezone, availableTimezones]
   );
 
-  return <TimezoneContext.Provider value={value}>{children}</TimezoneContext.Provider>;
+  return (
+    <TimezoneContext.Provider value={value}>
+      {children}
+    </TimezoneContext.Provider>
+  );
 };
 
 export const useTimezone = () => {
@@ -99,6 +115,3 @@ export const TimezoneStorage = {
   set: setStoredTimezone,
   default: defaultTimezone,
 };
-
-
-

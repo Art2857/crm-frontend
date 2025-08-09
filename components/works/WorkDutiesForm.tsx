@@ -461,12 +461,13 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
 
   // Проверка валидности формы
   const validateForm = () => {
+    // Разрешаем сохранять пустое распределение (обнуление обязанностей)
     if (dutyItems.length === 0) {
-      setValidationError('Необходимо добавить хотя бы одну обязанность');
-      return false;
+      setValidationError(null);
+      return true;
     }
 
-    // Проверяем, что у каждой обязанности есть выбранные значения
+    // Проверяем, что у каждой непустой записи заполнены обязательные поля
     const invalidDuties = dutyItems.some(
       (item) =>
         !item.dutyId || !item.userId || (!item.price && !item.percentage)

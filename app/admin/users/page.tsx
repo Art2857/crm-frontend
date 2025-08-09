@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '../../../store';
 import Card from '../../../components/ui/Card';
@@ -8,10 +8,28 @@ import Button from '../../../components/ui/Button';
 import Link from 'next/link';
 import { User, Role } from '../../../types/user';
 import { fetchAllUsers } from '../../../store/slices/users';
+import { useConfirmation } from '../../../hooks/useConfirmation';
+import { privateApi } from '../../../services/ApiClient';
 
 export default function AdminUsersPage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { users, isLoading } = useAppSelector((state) => state.users);
+  const [showArchived, setShowArchived] = useState(false);
+  const archiveConfirm = useConfirmation<string>(async (id: string) => {
+    await privateApi.patch(`/users/${id}/archive`);
+    dispatch(fetchAllUsers());
+  });
+  const restoreConfirm = useConfirmation<string>(async (id: string) => {
+    await privateApi.patch(`/users/${id}/restore`);
+    dispatch(fetchAllUsers());
+  });
+  const displayedUsers = useMemo(
+    () =>
+      (users || []).filter(
+        (u) => !!u && !!(u as any).isArchived === showArchived
+      ),
+    [users, showArchived]
+  );
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -113,11 +131,19 @@ export default function AdminUsersPage() {
             Управление пользователями
           </h1>
 
-          <Button>
-            <Link href="/admin/users/create" className="text-white">
-              Добавить пользователя
-            </Link>
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              variant={showArchived ? 'primary' : 'secondary'}
+              onClick={() => setShowArchived((v) => !v)}
+            >
+              {showArchived ? 'Показать активных' : 'Показать архив'}
+            </Button>
+            <Button>
+              <Link href="/admin/users/create" className="text-white">
+                Добавить пользователя
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -164,8 +190,8 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users &&
-                  users
+                {displayedUsers &&
+                  displayedUsers
                     .filter((user) => user !== undefined)
                     .map((userItem) => (
                       <tr key={userItem?.id || 'unknown'}>
@@ -209,10 +235,44 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           {userItem?.id && (
-                            <>
+                            <div className="flex items-center justify-end gap-3">
+                              {!!(userItem as any)?.isArchived ? (
+                                <Button
+                                  onClick={() =>
+                                    restoreConfirm.confirmAndExecute(
+                                      userItem.id,
+                                      'Восстановить пользователя из архива?',
+                                      {
+                                        confirmText: 'Восстановить',
+                                        variant: 'primary',
+                                      }
+                                    )
+                                  }
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                  Восстановить
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  onClick={() =>
+                                    archiveConfirm.confirmAndExecute(
+                                      userItem.id,
+                                      'Пользователь будет снят из всех актуальных распределений. Продолжить?',
+                                      {
+                                        confirmText: 'Архивировать',
+                                        variant: 'danger',
+                                      }
+                                    )
+                                  }
+                                  className="border-red-300 text-red-700 hover:bg-red-50"
+                                >
+                                  Архивировать
+                                </Button>
+                              )}
                               <Link
                                 href={`/admin/users/${userItem.id}`}
-                                className="text-primary-600 hover:text-primary-900 mr-4"
+                                className="text-primary-600 hover:text-primary-900"
                               >
                                 Редактировать
                               </Link>
@@ -222,7 +282,7 @@ export default function AdminUsersPage() {
                               >
                                 История
                               </Link>
-                            </>
+                            </div>
                           )}
                         </td>
                       </tr>

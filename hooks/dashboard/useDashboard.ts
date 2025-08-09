@@ -51,7 +51,10 @@ export function useDashboard() {
   };
 
   const fullName = useMemo(() => getFullName(user), [user]);
-  const age = useMemo(() => calculateAge(user?.birthday ?? null), [user?.birthday]);
+  const age = useMemo(
+    () => calculateAge(user?.birthday ?? null),
+    [user?.birthday]
+  );
 
   return {
     user,

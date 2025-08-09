@@ -72,7 +72,9 @@ export function usePaymentsData() {
                   acc.totalDebt += (u.totalAccrued || 0) - (u.totalPaid || 0);
                 }
                 const workRemaining = (work.users || []).reduce(
-                  (s, wu) => s + Math.max((wu.totalAccrued || 0) - (wu.totalPaid || 0), 0),
+                  (s, wu) =>
+                    s +
+                    Math.max((wu.totalAccrued || 0) - (wu.totalPaid || 0), 0),
                   0
                 );
                 acc.remainingDebt += workRemaining;

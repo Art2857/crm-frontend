@@ -155,13 +155,10 @@ export function useWorkDetail(id: string) {
       }>,
       effectiveDate?: string
     ) => {
-      if (!duties.length) {
-        notification.showError('Необходимо добавить хотя бы одну обязанность');
-        return;
-      }
+      // Разрешаем пустой список для обнуления распределения
       createDistribution(duties, effectiveDate);
     },
-    [createDistribution, notification]
+    [createDistribution]
   );
 
   const handleFormSubmit = useCallback(

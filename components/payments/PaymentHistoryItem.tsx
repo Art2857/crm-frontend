@@ -58,7 +58,8 @@ export default function PaymentHistoryItem({
               {getPaymentTypeLabel(payment.paymentType)}
             </span>
             <span className="text-sm text-gray-700 font-semibold">
-              Закрытие: {new Date(payment.paymentDate).toLocaleDateString('ru-RU')}
+              Закрытие:{' '}
+              {new Date(payment.paymentDate).toLocaleDateString('ru-RU')}
             </span>
             {payment.createdAt && (
               <span className="text-xs text-gray-500 ml-2">

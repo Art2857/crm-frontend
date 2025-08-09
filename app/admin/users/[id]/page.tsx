@@ -8,7 +8,8 @@ import Card from '../../../../components/ui/Card';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
 import Select from '../../../../components/ui/Select';
-import { Role } from '../../../../types/user';
+import TimezoneSelector from '../../../../components/ui/TimezoneSelector';
+import { Role, UserStatus } from '../../../../types/user';
 import {
   fetchUserById,
   updateUserProfile,
@@ -30,6 +31,11 @@ type UpdateProfileFormData = {
   lastName?: string;
   middleName?: string;
   birthday?: string;
+  timezone?: string;
+  workStart?: string;
+  workEnd?: string;
+  status?: UserStatus;
+  preferences?: string;
 };
 
 type UpdateSensitiveFormData = {
@@ -67,6 +73,11 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       lastName: '',
       middleName: '',
       birthday: '',
+      timezone: '',
+      workStart: '',
+      workEnd: '',
+      status: UserStatus.WORKING,
+      preferences: '',
     },
     {
       firstName: {
@@ -85,6 +96,12 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       birthday: {
         required: false,
         isDate: true,
+      },
+      workStart: {
+        pattern: /^([01]\d|2[0-3]):[0-5]\d$/,
+      },
+      workEnd: {
+        pattern: /^([01]\d|2[0-3]):[0-5]\d$/,
       },
     }
   );
@@ -195,6 +212,18 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         setProfileValue('birthday', '');
       }
 
+      setProfileValue('timezone', currentUser.timezone || '');
+      setProfileValue('workStart', currentUser.workStart || '');
+      setProfileValue('workEnd', currentUser.workEnd || '');
+      setProfileValue(
+        'status',
+        (currentUser.status as any) || (UserStatus.WORKING as any)
+      );
+      setProfileValue(
+        'preferences',
+        currentUser.preferences ? JSON.stringify(currentUser.preferences) : ''
+      );
+
       // Заполнение формы чувствительных данных
       setSensitiveValue('email', currentUser.email);
       setSensitiveValue('role', currentUser.role);
@@ -270,12 +299,20 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       }
 
       // Создаем новый объект только с нужными полями
-      const updatedData = {
+      const updatedData: any = {
         firstName: data.firstName,
         lastName: data.lastName,
         middleName: data.middleName,
         birthday: data.birthday,
+        timezone: data.timezone,
+        workStart: data.workStart,
+        workEnd: data.workEnd,
+        status: data.status,
       };
+      // Предпочтения сохраняем как простой текст
+      if (data.preferences !== undefined) {
+        updatedData.preferences = data.preferences;
+      }
 
       // Преобразуем дату рождения в формат ISO-8601 DateTime, если она указана
       if (updatedData.birthday) {
@@ -523,6 +560,71 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 error={profileErrors.birthday}
               />
 
+              <div className="mb-4">
+                <TimezoneSelector
+                  label="Часовой пояс"
+                  value={profileValues.timezone || ''}
+                  onChange={(tz) => setProfileValue('timezone', tz)}
+                  selectClassName="w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  id="workStart"
+                  name="workStart"
+                  label="Начало рабочего дня"
+                  type="time"
+                  fullWidth
+                  value={profileValues.workStart || ''}
+                  onChange={handleProfileChange}
+                  onBlur={handleProfileBlur}
+                  error={profileErrors.workStart}
+                />
+                <Input
+                  id="workEnd"
+                  name="workEnd"
+                  label="Окончание рабочего дня"
+                  type="time"
+                  fullWidth
+                  value={profileValues.workEnd || ''}
+                  onChange={handleProfileChange}
+                  onBlur={handleProfileBlur}
+                  error={profileErrors.workEnd}
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Статус
+                </label>
+                <select
+                  name="status"
+                  value={profileValues.status as any}
+                  onChange={handleProfileChange}
+                  className="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                >
+                  <option value={UserStatus.WORKING}>На рабочем месте</option>
+                  <option value={UserStatus.AWAY}>Отсутствую</option>
+                  <option value={UserStatus.LUNCH}>Обедаю</option>
+                  <option value={UserStatus.SLEEP}>Сплю</option>
+                </select>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Предпочтения (JSON)
+                </label>
+                <textarea
+                  id="preferences"
+                  name="preferences"
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  rows={4}
+                  value={profileValues.preferences || ''}
+                  onChange={handleProfileChange}
+                />
+              </div>
+
               {((error && error !== 'REQUEST_CANCELLED') || serverError) && (
                 <div className="text-red-500 text-sm mt-4">
                   {error !== 'REQUEST_CANCELLED' ? error : ''}
@@ -585,6 +687,20 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 onChange={handleSensitiveChange}
                 error={sensitiveErrors.salaryDay}
               />
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Характеристика (видно только ADMIN/MANAGER/HR)
+                </label>
+                <textarea
+                  name="characteristics"
+                  value={(sensitiveValues as any).characteristics || ''}
+                  onChange={handleSensitiveChange}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  rows={4}
+                  placeholder="Краткая характеристика сотрудника"
+                />
+              </div>
 
               {((error && error !== 'REQUEST_CANCELLED') || serverError) && (
                 <div className="text-red-500 text-sm mt-4">

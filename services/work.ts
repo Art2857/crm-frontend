@@ -59,6 +59,45 @@ export const workService = {
     }
   },
 
+  // Архивировать работу
+  archive: async (id: string): Promise<Work> => {
+    try {
+      const response = await privateApi.post<Work>(
+        `${WORKS_ENDPOINTS.byId(id)}/archive`
+      );
+      return response.data;
+    } catch (error) {
+      logger.error(`Error archiving work ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Восстановить работу
+  restore: async (id: string): Promise<Work> => {
+    try {
+      const response = await privateApi.post<Work>(
+        `${WORKS_ENDPOINTS.byId(id)}/restore`
+      );
+      return response.data;
+    } catch (error) {
+      logger.error(`Error restoring work ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Список архивных работ
+  getArchived: async (): Promise<Work[]> => {
+    try {
+      const response = await privateApi.get<Work[]>(
+        `${WORKS_ENDPOINTS.base}/archived/list`
+      );
+      return response.data;
+    } catch (error) {
+      logger.error('Error fetching archived works:', error);
+      throw error;
+    }
+  },
+
   // createExtended/updateExtended удалены: в бэкенде нет /works/extended
 
   // Получить историю работы (исправленный путь)

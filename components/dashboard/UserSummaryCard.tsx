@@ -36,11 +36,15 @@ export default function UserSummaryCard({
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-primary-100">
                 <div>
                   <span className="text-primary-200">Дата рождения: </span>
-                  <span className="font-semibold">{birthdayText || 'Не указана'}</span>
+                  <span className="font-semibold">
+                    {birthdayText || 'Не указана'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-primary-200">Возраст: </span>
-                  <span className="font-semibold">{ageText || 'Не указан'}</span>
+                  <span className="font-semibold">
+                    {ageText || 'Не указан'}
+                  </span>
                 </div>
               </div>
             )}

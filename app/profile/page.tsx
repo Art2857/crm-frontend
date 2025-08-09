@@ -3,11 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { useRouter } from 'next/navigation';
-import Layout from '../../components/layout/Layout';
+// Используем общий layout app/layout.tsx, локальный Layout не требуется здесь
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { UpdateProfileDto } from '../../types/user';
+import { UpdateProfileDto, UserStatus } from '../../types/user';
 import { Role } from '../../types/user';
 import { updateUserProfile } from '../../store/slices/users';
 import { toDateObject, formatDateToISO } from '../../utils/date';
@@ -16,6 +16,8 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { authService } from '../../services/auth';
 import { getCurrentUser } from '../../store/slices/auth';
 import TimezoneSelector from '../../components/ui/TimezoneSelector';
+import Layout from '../../components/layout/Layout';
+import { useTimezone } from '../../contexts/TimezoneContext';
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -23,6 +25,10 @@ export default function ProfilePage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const notification = useNotification();
+  const { timezone: currentTimezone } = useTimezone();
+
+  const [status, setStatus] = useState<UserStatus>(UserStatus.WORKING);
+  const [preferencesText, setPreferencesText] = useState<string>('');
 
   // Используем наш кастомный хук с валидацией
   const {
@@ -39,6 +45,9 @@ export default function ProfilePage() {
       lastName: '',
       middleName: '',
       birthday: '',
+      timezone: '',
+      workStart: '',
+      workEnd: '',
     },
     {
       firstName: {
@@ -57,6 +66,12 @@ export default function ProfilePage() {
       birthday: {
         required: false,
         isDate: true,
+      },
+      workStart: {
+        pattern: /^([01]\d|2[0-3]):[0-5]\d$/,
+      },
+      workEnd: {
+        pattern: /^([01]\d|2[0-3]):[0-5]\d$/,
       },
     }
   );
@@ -90,6 +105,22 @@ export default function ProfilePage() {
       } catch (e) {
         console.error('Ошибка при обработке даты рождения:', e);
         setValue('birthday', '');
+      }
+
+      // Часовой пояс и рабочее время
+      setValue('timezone', user.timezone || '');
+      setValue('workStart', user.workStart || '');
+      setValue('workEnd', user.workEnd || '');
+      // Статус и предпочтения (редактируются пользователем в разделе Профиль)
+      setStatus(((user as any).status as UserStatus) || UserStatus.WORKING);
+      try {
+        setPreferencesText(
+          user && (user as any).preferences
+            ? JSON.stringify((user as any).preferences, null, 2)
+            : ''
+        );
+      } catch {
+        setPreferencesText('');
       }
     }
   }, [user, isAuthenticated, router, setValue]);
@@ -130,6 +161,14 @@ export default function ProfilePage() {
       } else {
         // Если поле даты пустое, отправляем null
         data.birthday = null;
+      }
+
+      // Подмешиваем поля из локального раздела профиля
+      data.status = status;
+      data.preferences = preferencesText || '';
+      // Берём TZ из контекста, чтобы сохранить актуальный выбор пользователя
+      if (currentTimezone) {
+        data.timezone = currentTimezone;
       }
 
       // Отправляем запрос на обновление профиля
@@ -242,8 +281,36 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="col-span-1 md:col-span-2">
-                  <div className="text-sm font-medium text-gray-500 mb-1">Часовой пояс</div>
+                  <div className="text-sm font-medium text-gray-500 mb-1">
+                    Часовой пояс
+                  </div>
                   <TimezoneSelector />
+                </div>
+                <div className="col-span-1">
+                  <Input
+                    id="workStart"
+                    name="workStart"
+                    label="Начало рабочего дня"
+                    type="time"
+                    fullWidth
+                    value={values.workStart}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={errors.workStart}
+                  />
+                </div>
+                <div className="col-span-1">
+                  <Input
+                    id="workEnd"
+                    name="workEnd"
+                    label="Окончание рабочего дня"
+                    type="time"
+                    fullWidth
+                    value={values.workEnd}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={errors.workEnd}
+                  />
                 </div>
               </div>
             </div>
@@ -307,6 +374,41 @@ export default function ProfilePage() {
                   onBlur={handleBlur}
                   error={errors.birthday}
                 />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Статус
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    value={status as any}
+                    onChange={(e) =>
+                      setStatus(e.target.value as unknown as UserStatus)
+                    }
+                    className="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  >
+                    <option value={UserStatus.WORKING}>На рабочем месте</option>
+                    <option value={UserStatus.AWAY}>Отсутствую</option>
+                    <option value={UserStatus.LUNCH}>Обедаю</option>
+                    <option value={UserStatus.SLEEP}>Сплю</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Предпочтения (JSON)
+                  </label>
+                  <textarea
+                    id="preferences"
+                    name="preferences"
+                    value={preferencesText}
+                    onChange={(e) => setPreferencesText(e.target.value)}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    rows={4}
+                    placeholder={`{\n  "theme": "dark"\n}`}
+                  />
+                </div>
 
                 <div className="flex justify-end pt-4">
                   <Button

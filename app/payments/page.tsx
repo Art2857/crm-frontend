@@ -249,7 +249,6 @@ export default function PaymentsPage() {
     date: string,
     userId?: string
   ) => {
-
     // Сохраняем предыдущую дату для возможного отката
     const previousDate = getWorkPeriodDate(workId);
 
@@ -279,7 +278,6 @@ export default function PaymentsPage() {
   };
 
   const handleUserPeriodDateChange = async (userId: string, date: string) => {
-
     // Сохраняем предыдущую дату для возможного отката
     const previousDate = getUserPeriodDate(userId);
     if (previousDate === date) return;

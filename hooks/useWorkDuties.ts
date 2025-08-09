@@ -187,7 +187,7 @@ export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
       effectiveDate?: string,
       workHistoryId?: string
     ) => {
-      if (!workId || duties.length === 0) return null;
+      if (!workId) return null;
 
       setIsLoading(true);
       clearMessages(); // Очищаем предыдущие сообщения
@@ -197,12 +197,6 @@ export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
 
         // Фильтруем элементы без обязательных полей
         const validDuties = duties.filter((duty) => duty.dutyId && duty.userId);
-
-        if (validDuties.length === 0) {
-          throw new Error(
-            'Необходимо указать обязанность и ответственного для каждого элемента'
-          );
-        }
 
         // Проверяем, есть ли уже текущее распределение
         const currentDistribution = getCurrentDistribution();
@@ -245,7 +239,7 @@ export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
         result = await dispatch(
           createDistribution({
             workHistoryId: historyId,
-            details: validDuties,
+            details: validDuties, // допускается [] для обнуления
             effectiveDate,
           })
         ).unwrap();

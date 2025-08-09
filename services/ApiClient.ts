@@ -188,13 +188,18 @@ export class ApiClient {
       async (config) => {
         // Пробрасываем выбранный пользователем часовой пояс
         try {
-          const tz = typeof window !== 'undefined'
-            ? localStorage.getItem('app.timezone')
-            : null;
+          const tz =
+            typeof window !== 'undefined'
+              ? localStorage.getItem('app.timezone')
+              : null;
           if (tz && config.headers) {
             (config.headers as any)['X-Client-Timezone'] = tz;
-          } else if (config.headers && !(config.headers as any)['X-Client-Timezone']) {
-            (config.headers as any)['X-Client-Timezone'] = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+          } else if (
+            config.headers &&
+            !(config.headers as any)['X-Client-Timezone']
+          ) {
+            (config.headers as any)['X-Client-Timezone'] =
+              Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
           }
         } catch {}
         // Добавляем токен авторизации если требуется

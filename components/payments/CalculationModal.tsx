@@ -348,7 +348,9 @@ export default function CalculationModal({
                                       {duty.dutyName}:
                                     </span>
                                     <span className="font-mono">
-                                      {formatCurrency(duty.monthlyAmount)} × {period.days || 0}/{period.monthDays || 0} = {formatCurrency(duty.calculatedAmount)}
+                                      {formatCurrency(duty.monthlyAmount)} ×{' '}
+                                      {period.days || 0}/{period.monthDays || 0}{' '}
+                                      = {formatCurrency(duty.calculatedAmount)}
                                     </span>
                                   </div>
                                 ))}
@@ -363,7 +365,9 @@ export default function CalculationModal({
                                 <span className="text-gray-700">
                                   {duty.workName ? (
                                     <>
-                                      <span className="text-gray-500 mr-1">{duty.workName}:</span>
+                                      <span className="text-gray-500 mr-1">
+                                        {duty.workName}:
+                                      </span>
                                       {duty.dutyName}:
                                     </>
                                   ) : (
@@ -371,7 +375,9 @@ export default function CalculationModal({
                                   )}
                                 </span>
                                 <span className="font-mono">
-                                  {formatCurrency(duty.monthlyAmount)} × {period.days || 0}/{period.monthDays || 0} = {formatCurrency(duty.calculatedAmount)}
+                                  {formatCurrency(duty.monthlyAmount)} ×{' '}
+                                  {period.days || 0}/{period.monthDays || 0} ={' '}
+                                  {formatCurrency(duty.calculatedAmount)}
                                 </span>
                               </div>
                             ))}

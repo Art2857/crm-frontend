@@ -94,11 +94,16 @@ export default function PaymentHistorySection({
                                 : 'Аванс'}
                         </Badge>
                         <span className="text-sm text-gray-700 font-semibold">
-                          Закрытие: {new Date(payment.date).toLocaleDateString('ru-RU')}
+                          Закрытие:{' '}
+                          {new Date(payment.date).toLocaleDateString('ru-RU')}
                         </span>
                         {payment.createdAt && (
                           <span className="text-xs text-gray-500">
-                            (создано: {new Date(payment.createdAt).toLocaleString('ru-RU')})
+                            (создано:{' '}
+                            {new Date(payment.createdAt).toLocaleString(
+                              'ru-RU'
+                            )}
+                            )
                           </span>
                         )}
                       </div>

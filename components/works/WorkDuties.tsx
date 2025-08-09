@@ -37,10 +37,15 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   const latestDistribution = useMemo(() => {
     if (!distributions || distributions.length === 0) return null;
 
-    return [...distributions].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )[0];
+    return [...distributions].sort((a, b) => {
+      const aDate = new Date(
+        a.workHistory.effectiveDate || a.createdAt || a.workHistory.date
+      ).getTime();
+      const bDate = new Date(
+        b.workHistory.effectiveDate || b.createdAt || b.workHistory.date
+      ).getTime();
+      return bDate - aDate;
+    })[0];
   }, [distributions]);
 
   // Фильтруем детали распределения по текущему пользователю, если нужно
@@ -94,7 +99,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
             <p className="text-sm text-gray-500">
               Обновлено:{' '}
               {formatDateForDisplay(
-                latestDistribution.workHistory.date ||
+                latestDistribution.workHistory.effectiveDate ||
                   latestDistribution.createdAt
               )}
             </p>

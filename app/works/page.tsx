@@ -9,6 +9,7 @@ import { formatCurrency } from '../../utils/currency';
 import { formatDateForDisplay } from '../../utils/date';
 import { logger } from '../../utils/logger';
 import { useWorksList } from '../../hooks/works/useWorksList';
+import { useConfirmation } from '../../hooks/useConfirmation';
 
 const WorksPage = () => {
   const {
@@ -19,13 +20,24 @@ const WorksPage = () => {
     error,
     users,
     viewType,
+    showArchived,
     displayedWorks,
     isEmptyWorksList,
     handleCreateWork,
     handleViewWork,
     handleToggleView,
+    handleToggleArchived,
+    handleArchive,
+    handleRestore,
     getResponsibleName,
   } = useWorksList();
+
+  const archiveConfirm = useConfirmation<string>(async (id: string) => {
+    await handleArchive(id);
+  });
+  const restoreConfirm = useConfirmation<string>(async (id: string) => {
+    await handleRestore(id);
+  });
 
   // Показываем индикатор загрузки если аутентификация еще проверяется
   if (authLoading) {
@@ -59,9 +71,7 @@ const WorksPage = () => {
     <Layout>
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8 border-b pb-4">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {viewType === 'all' ? 'Все работы' : 'Мои работы'}
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">Работы</h1>
           <div className="flex space-x-3">
             {user?.role === 'ADMIN' && (
               <Button
@@ -73,6 +83,16 @@ const WorksPage = () => {
                 {viewType === 'all'
                   ? 'Показать мои работы'
                   : 'Показать все работы'}
+              </Button>
+            )}
+            {user?.role === 'ADMIN' && (
+              <Button
+                variant={showArchived ? 'primary' : 'secondary'}
+                onClick={handleToggleArchived}
+                className="rounded-lg px-4 py-2 shadow-sm"
+                disabled={isLoading}
+              >
+                {showArchived ? 'Показать активные' : 'Показать архив'}
               </Button>
             )}
             {user?.role === 'ADMIN' && (
@@ -143,9 +163,16 @@ const WorksPage = () => {
               >
                 <div className="border-b border-gray-100">
                   <div className="px-6 py-4">
-                    <h3 className="text-xl font-bold text-gray-900 truncate">
-                      {work.name}
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-gray-900 truncate">
+                        {work.name}
+                      </h3>
+                      {'isArchived' in work && (work as any).isArchived && (
+                        <span className="ml-3 px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                          Архив
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="p-6">
@@ -177,13 +204,47 @@ const WorksPage = () => {
                       </span>
                     </div>
                   </div>
-                  <Button
-                    variant="secondary"
-                    onClick={() => handleViewWork(work.id)}
-                    className="w-full mt-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 py-2"
-                  >
-                    Просмотр
-                  </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleViewWork(work.id)}
+                      className="w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 py-2"
+                    >
+                      Просмотр
+                    </Button>
+                    {user?.role === 'ADMIN' &&
+                      (showArchived ? (
+                        <Button
+                          onClick={() =>
+                            restoreConfirm.confirmAndExecute(
+                              work.id,
+                              'Восстановить работу из архива?',
+                              {
+                                variant: 'primary',
+                                confirmText: 'Восстановить',
+                              }
+                            )
+                          }
+                          className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          Восстановить
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            archiveConfirm.confirmAndExecute(
+                              work.id,
+                              'Работа будет перемещена в архив и все обязанности будут сняты. Продолжить?',
+                              { variant: 'danger', confirmText: 'Архивировать' }
+                            )
+                          }
+                          className="w-full border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          Архивировать
+                        </Button>
+                      ))}
+                  </div>
                 </div>
               </div>
             ))}
