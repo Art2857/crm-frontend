@@ -165,7 +165,29 @@ export default function ProfilePage() {
 
       // Подмешиваем поля из локального раздела профиля
       data.status = status;
-      data.preferences = preferencesText || '';
+      // Парсим JSON из текстового поля предпочтений; при пустом значении не отправляем поле
+      if (preferencesText && preferencesText.trim().length > 0) {
+        try {
+          const parsed = JSON.parse(preferencesText);
+          if (
+            parsed !== null &&
+            typeof parsed === 'object' &&
+            !Array.isArray(parsed)
+          ) {
+            data.preferences = parsed as Record<string, any>;
+          } else {
+            notification.showError(
+              'Поле «Предпочтения» должно содержать JSON-объект (например, {"theme": "dark"}).'
+            );
+            return;
+          }
+        } catch (e) {
+          notification.showError(
+            'Некорректный JSON в поле «Предпочтения». Пожалуйста, исправьте.'
+          );
+          return;
+        }
+      }
       // Берём TZ из контекста, чтобы сохранить актуальный выбор пользователя
       if (currentTimezone) {
         data.timezone = currentTimezone;

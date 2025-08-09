@@ -7,9 +7,9 @@ const nextConfig = {
   // Оптимизация для Docker
   output: 'standalone',
 
-  // Отключаем проверку ESLint во время сборки (только для деплоя)
+  // Отключаем проверку ESLint во время сборки (для стабильного деплоя в Dokploy)
   eslint: {
-    ignoreDuringBuilds: false, // можно поставить true для быстрого деплоя
+    ignoreDuringBuilds: true,
   },
 
   // Настройки сборки

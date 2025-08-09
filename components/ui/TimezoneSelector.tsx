@@ -55,7 +55,13 @@ function getTzOffset(tz: string): number {
   }
 }
 
-const TimezoneSelector: React.FC<Props> = ({ className, value, onChange, label = 'Часовой пояс', selectClassName }) => {
+const TimezoneSelector: React.FC<Props> = ({
+  className,
+  value,
+  onChange,
+  label = 'Часовой пояс',
+  selectClassName,
+}) => {
   const { timezone, setTimezone, availableTimezones } = useTimezone();
 
   const options = useMemo(() => {
@@ -76,12 +82,16 @@ const TimezoneSelector: React.FC<Props> = ({ className, value, onChange, label =
 
   return (
     <div className={`flex items-center ${className || ''}`}>
-      <span className="mr-2 text-xs text-gray-500 whitespace-nowrap">{label}</span>
+      <span className="mr-2 text-xs text-gray-500 whitespace-nowrap">
+        {label}
+      </span>
       <select
         id="tz"
         value={currentValue}
         onChange={(e) => handleChange(e.target.value)}
-        className={`block text-sm border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white ${selectClassName || 'max-w-[280px]'}`}
+        className={`block text-sm border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white ${
+          selectClassName || 'max-w-[280px]'
+        }`}
         title={label}
       >
         {options.map((opt) => (
