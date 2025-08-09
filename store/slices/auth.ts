@@ -51,9 +51,7 @@ export const getCurrentUser = createAsyncThunk(
       return { user, token };
     } catch (error: any) {
       // При ошибке получения текущего пользователя, очищаем токен
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-      }
+      // токен будет очищен централизованно через ApiClient/tryRefreshTokens при 401
       return rejectWithValue(error.message || 'Не удалось получить текущего пользователя');
     }
   }

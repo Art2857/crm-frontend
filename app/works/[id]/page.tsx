@@ -70,7 +70,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
       
       return work;
     } catch (error) {
-      console.error('Failed to load initial data:', error);
+      // Тихая ошибка, UI отрисует стандартный блок с ошибкой
       throw error;
     }
   }, [dispatch, id, user?.role]);
@@ -171,7 +171,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
           const response = await privateApi.get<User>(`/users/${workData.responsibleUserId}`);
           setResponsibleUserData(response.data);
         } catch (error) {
-          console.error('Ошибка при загрузке данных ответственного:', error);
+          // Тихая ошибка, не блокирует остальной контент
         }
       };
       
@@ -204,7 +204,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
         forceReloadDuties();
       }, 100); // Небольшая задержка для гарантии последовательности операций
     } catch (error) {
-      console.error('Failed to update work:', error);
+      // Ошибку покажет компонент/форма
     }
   }, [handleSubmit, reloadWorkData, forceReloadDuties]);
 
@@ -236,7 +236,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
       // Также перезагружаем распределения
       forceReloadDuties();
     } catch (error) {
-      console.error('Failed to load duties history:', error);
+      // Ошибку отобразит UI через notification
       notification.showError('Ошибка при загрузке истории обязанностей');
     } finally {
       setIsLoadingHistory(false);

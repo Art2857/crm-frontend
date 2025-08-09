@@ -14,6 +14,7 @@ import { Work } from '../../types/work';
 import { User } from '../../types/user';
 import { formatCurrency } from '../../utils/currency';
 import { formatDateForDisplay } from '../../utils/date';
+import { logger } from '../../utils/logger';
 
 const WorksPage = () => {
   const router = useRouter();
@@ -53,7 +54,7 @@ const WorksPage = () => {
         try {
           await dispatch(getCurrentUser()).unwrap();
         } catch (error) {
-          console.error('Ошибка при получении пользователя:', error);
+          logger.error('Ошибка при получении пользователя:', error);
           router.push('/login');
           return;
         }
@@ -71,8 +72,8 @@ const WorksPage = () => {
     }
 
     const loadData = async () => {
-      try {
-        console.log('Loading data for authenticated user:', { userId: user.id, userRole: user.role });
+        try {
+          logger.debug('Loading data for authenticated user:', { userId: user.id, userRole: user.role });
         
         // Загружаем пользователей и работы параллельно
         const promises = [];
@@ -85,7 +86,7 @@ const WorksPage = () => {
           promises.push(dispatch(fetchAllWorks()));
           setViewType('all');
         } else {
-          console.log('Fetching user works for userId:', user.id);
+          logger.debug('Fetching user works for userId:', user.id);
           promises.push(dispatch(fetchUserWorks(user.id)));
           setViewType('user');
         }
@@ -93,8 +94,8 @@ const WorksPage = () => {
         // Ждем завершения всех запросов
         await Promise.all(promises);
         setDataLoaded(true);
-      } catch (error) {
-        console.error('Ошибка при загрузке данных:', error);
+        } catch (error) {
+          logger.error('Ошибка при загрузке данных:', error);
       }
     };
 
@@ -103,7 +104,7 @@ const WorksPage = () => {
 
   useEffect(() => {
     // Обновляем отображаемые работы при изменении viewType или загрузке данных
-    console.log('Updating displayed works:', { viewType, works: works.length, userWorks: userWorks.length });
+    logger.debug('Updating displayed works:', { viewType, works: works.length, userWorks: userWorks.length });
     setDisplayedWorks(viewType === 'all' ? works : userWorks);
   }, [viewType, works, userWorks]);
 
@@ -121,11 +122,11 @@ const WorksPage = () => {
       
       // Если переключаемся на пользовательские работы и они еще не загружены
       if (newViewType === 'user' && userWorks.length === 0) {
-        console.log('Loading user works for admin:', user.id);
+        logger.debug('Loading user works for admin:', user.id);
         try {
           await dispatch(fetchUserWorks(user.id));
         } catch (error) {
-          console.error('Ошибка при загрузке пользовательских работ:', error);
+          logger.error('Ошибка при загрузке пользовательских работ:', error);
         }
       }
       

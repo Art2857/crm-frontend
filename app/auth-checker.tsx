@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { getCurrentUser } from '../store/slices/auth';
 import { authService } from '../services/auth';
+import { tokenStorage } from '../services/tokenStorage';
+import { logger } from '../utils/logger';
 
 export default function AuthChecker({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
@@ -24,7 +26,7 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
       try {
         const hasToken = authService.isAuthenticated();
         
-        console.log('AuthChecker: проверка аутентификации', { 
+        logger.debug('AuthChecker: проверка аутентификации', { 
           hasToken, 
           isAuthenticated, 
           hasUser: !!user,
@@ -34,32 +36,24 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
         if (hasToken && (!isAuthenticated || !user)) {
           // Если токен есть в localStorage, но состояние не аутентифицировано 
           // или данные пользователя не загружены - получаем текущего пользователя
-          console.log('AuthChecker: загружаем данные пользователя');
+          logger.debug('AuthChecker: загружаем данные пользователя');
           await dispatch(getCurrentUser()).unwrap();
         } else if (!hasToken && isAuthenticated) {
           // Если токена нет, но состояние показывает аутентификацию - очищаем состояние
-          console.log('AuthChecker: токен отсутствует, но состояние аутентифицировано - очищаем');
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('refresh_token');
-          }
+          logger.debug('AuthChecker: токен отсутствует, но состояние аутентифицировано - очищаем');
+          tokenStorage.clearAll();
         }
       } catch (error: any) {
-        console.error('AuthChecker: ошибка при проверке аутентификации:', error);
+        logger.error('AuthChecker: ошибка при проверке аутентификации:', error);
         
         // Игнорируем отмененные запросы
         if (error.message === 'REQUEST_CANCELLED') {
-          console.log('AuthChecker: запрос был отменен, игнорируем');
+          // Тихо игнорируем отмену
           return;
         }
         
         // Если произошла ошибка при проверке токена, очищаем localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          localStorage.removeItem('refresh_token');
-        }
+        tokenStorage.clearAll();
       } finally {
         // Завершаем инициализацию в любом случае
         setIsInitializing(false);

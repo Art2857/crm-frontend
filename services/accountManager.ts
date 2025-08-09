@@ -1,4 +1,5 @@
 import { User } from '../types/user';
+import { tokenStorage } from './tokenStorage';
 
 export interface SavedAccount {
   id: string;
@@ -116,7 +117,7 @@ export const accountManagerService = {
     
     // Обновляем текущий аккаунт и токен
     this.setCurrentAccountId(accountId);
-    localStorage.setItem('token', account.token);
+    tokenStorage.setAccessToken(account.token);
 
     // Dispatch a custom event to notify the app that the account has changed
     if (typeof window !== 'undefined') {

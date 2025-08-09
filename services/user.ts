@@ -1,7 +1,9 @@
 import { UpdateProfileDto, UpdateSensitiveDataDto, User, UserWithHistory, UserHistory } from '../types/user';
 import { privateApi, authApi, ApiClient } from './ApiClient';
+import { USERS_ENDPOINTS, AUTH_ENDPOINTS } from './endpoints';
 import { AuthResponse } from '../types/auth';
 import { toDateObject } from '../utils/date';
+import { logger } from '../utils/logger';
 
 // Интерфейс для создания пользователя
 interface CreateUserDto {
@@ -20,12 +22,12 @@ export const userService = {
   // Получение списка всех пользователей (только для админа)
   getAll: async (): Promise<User[]> => {
     try {
-      const response = await privateApi.get<User[]>('/users', {
+      const response = await privateApi.get<User[]>(USERS_ENDPOINTS.base, {
         headers: ApiClient.getNoCacheHeaders()
       });
       return response.data;
     } catch (error) {
-      console.error('Error fetching users:', error);
+      logger.error('Error fetching users:', error);
       throw error;
     }
   },
@@ -41,13 +43,13 @@ export const userService = {
       console.log(`Запрос пользователя с ID: ${id}`);
       
       // Делаем запрос к API без параметров в URL, которые могут вызывать проблемы с CORS
-      const response = await privateApi.get<UserWithHistory>(`/users/${id}`, {
+      const response = await privateApi.get<UserWithHistory>(USERS_ENDPOINTS.byId(id), {
         headers: ApiClient.getNoCacheHeaders()
       });
       
       return response.data;
     } catch (error) {
-      console.error(`Error fetching user with ID ${id}:`, error);
+      logger.error(`Error fetching user with ID ${id}:`, error);
       throw error;
     }
   },
@@ -65,13 +67,13 @@ export const userService = {
       }
       
       // Отправляем запрос на обновление профиля
-      const response = await privateApi.patch<User>(`/users/${id}/profile`, processedData, {
+      const response = await privateApi.patch<User>(USERS_ENDPOINTS.profile(id), processedData, {
         headers: ApiClient.getNoCacheHeaders()
       });
       
       return response.data;
     } catch (error) {
-      console.error(`Error updating user profile with ID ${id}:`, error);
+      logger.error(`Error updating user profile with ID ${id}:`, error);
       throw error;
     }
   },
@@ -79,12 +81,12 @@ export const userService = {
   // Обновление конфиденциальной информации (только для админа)
   updateSensitiveData: async (id: string, data: UpdateSensitiveDataDto): Promise<User> => {
     try {
-      const response = await privateApi.patch<User>(`/users/${id}/sensitive`, data, {
+      const response = await privateApi.patch<User>(USERS_ENDPOINTS.sensitive(id), data, {
         headers: ApiClient.getNoCacheHeaders()
       });
       return response.data;
     } catch (error) {
-      console.error(`Error updating sensitive data for user ID ${id}:`, error);
+      logger.error(`Error updating sensitive data for user ID ${id}:`, error);
       throw error;
     }
   },
@@ -96,11 +98,11 @@ export const userService = {
       const userData = await userService.getById(userId);
       
       try {
-        console.log(`Запрос истории пользователя с ID: ${userId}`);
+        logger.debug(`Запрос истории пользователя с ID: ${userId}`);
         
         // Получаем историю пользователя без кеш-параметров в URL
         const historyResponse = await privateApi.get<UserHistory[]>(
-          `/users/${userId}/history`,
+          USERS_ENDPOINTS.history(userId),
           {
             headers: ApiClient.getNoCacheHeaders()
           }
@@ -114,7 +116,7 @@ export const userService = {
         
         return userWithHistory;
       } catch (error) {
-        console.error(`Ошибка при загрузке истории пользователя ${userId}:`, error);
+        logger.error(`Ошибка при загрузке истории пользователя ${userId}:`, error);
         // Если не удалось загрузить историю, возвращаем пользователя с пустой историей
         return {
           ...userData,
@@ -122,7 +124,7 @@ export const userService = {
         };
       }
     } catch (error) {
-      console.error(`Ошибка при загрузке пользователя и истории ${userId}:`, error);
+      logger.error(`Ошибка при загрузке пользователя и истории ${userId}:`, error);
       throw error;
     }
   },
@@ -130,11 +132,11 @@ export const userService = {
   // Создание нового пользователя (только для админа)
   createUser: async (data: CreateUserDto): Promise<User> => {
     try {
-      const response = await authApi.post<AuthResponse>('/auth/register', data);
+      const response = await authApi.post<AuthResponse>(AUTH_ENDPOINTS.register, data);
       return response.data.user;
     } catch (error: any) {
       // Подробное логирование для отладки
-      console.error('Ошибка при создании пользователя:', {
+      logger.error('Ошибка при создании пользователя:', {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
@@ -155,7 +157,7 @@ export const userService = {
       
       // Структурированная обработка ошибок валидации
       if (error.isValidationError) {
-        console.log('Обработка ошибки валидации:', error);
+        logger.debug('Обработка ошибки валидации:', error);
         // Если у нас есть детализированные ошибки валидации по полям
         if (error.validationErrors && Object.keys(error.validationErrors).length > 0) {
           // Генерируем понятное пользователю сообщение об ошибке

@@ -1,4 +1,5 @@
 import { privateApi } from './ApiClient';
+import { PAYMENTS_ENDPOINTS, ANALYTICS_ENDPOINTS } from './endpoints';
 import {
   PaymentDebts,
   PaymentCalculation,
@@ -13,59 +14,29 @@ import {
   CreatePaymentAndCloseDto,
   CreatePaymentAndCloseResponseDto
 } from '../types/payment';
+import { logger } from '../utils/logger';
 
 /**
  * Получает задолженности по выплатам (для ответственных)
  */
-export async function fetchPaymentDebts(periodEnd?: string): Promise<PaymentDebts> {
-  const params = new URLSearchParams();
-  if (periodEnd) {
-    params.append('periodEnd', periodEnd);
-  }
-  
-  const url = `/payments/debts${params.toString() ? `?${params.toString()}` : ''}`;
-  const response = await privateApi.get<PaymentDebts>(url);
-  
-  return response.data;
-}
+// Прежний fetchPaymentDebts был завязан на отсутствующий /payments/debts —
+// при необходимости следует использовать аналитику; удалено из экспорта.
 
 /**
  * Рассчитывает выплату для конкретного сотрудника
  */
-export const calculatePayment = async (params: CalculatePaymentDto): Promise<PaymentCalculation> => {
-  try {
-    const searchParams = new URLSearchParams({
-      workId: params.workId,
-      userId: params.userId,
-    });
-
-    if (params.periodStart) {
-      searchParams.append('periodStart', params.periodStart);
-    }
-    if (params.periodEnd) {
-      searchParams.append('periodEnd', params.periodEnd);
-    }
-    if (params.dutyId) {
-      searchParams.append('dutyId', params.dutyId);
-    }
-
-    const response = await privateApi.get<PaymentCalculation>(`/payments/calculate?${searchParams.toString()}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error calculating payment:', error);
-    throw error;
-  }
-};
+// Прежний calculatePayment был завязан на отсутствующий /payments/calculate —
+// при необходимости перенести на аналитику и реализовать на бэке; удалено из экспорта.
 
 /**
  * Производит выплату сотруднику
  */
 export const makePayment = async (paymentData: MakePaymentDto): Promise<PaymentResponse> => {
   try {
-    const response = await privateApi.post<PaymentResponse>('/payments', paymentData);
+    const response = await privateApi.post<PaymentResponse>(PAYMENTS_ENDPOINTS.base, paymentData);
     return response.data;
   } catch (error) {
-    console.error('Error making payment:', error);
+    logger.error('Error making payment:', error);
     throw error;
   }
 };
@@ -86,13 +57,13 @@ export const fetchPaymentHistory = async (params?: PaymentHistoryDto): Promise<P
     if (params?.limit) searchParams.append('limit', params.limit.toString());
 
     const url = searchParams.toString() 
-      ? `/payments/history?${searchParams.toString()}`
-      : `/payments/history`;
+      ? `${PAYMENTS_ENDPOINTS.history}?${searchParams.toString()}`
+      : PAYMENTS_ENDPOINTS.history;
 
     const response = await privateApi.get<PaymentHistory>(url);
     return response.data;
   } catch (error) {
-    console.error('Error fetching payment history:', error);
+    logger.error('Error fetching payment history:', error);
     throw error;
   }
 };
@@ -102,10 +73,10 @@ export const fetchPaymentHistory = async (params?: PaymentHistoryDto): Promise<P
  */
 export const fetchMyDebts = async (): Promise<MyDebts> => {
   try {
-    const response = await privateApi.get<MyDebts>('/analytics/user/my-debts');
+    const response = await privateApi.get<MyDebts>(ANALYTICS_ENDPOINTS.myDebts);
     return response.data;
   } catch (error) {
-    console.error('Error fetching my debts:', error);
+    logger.error('Error fetching my debts:', error);
     throw error;
   }
 };
@@ -115,10 +86,44 @@ export const fetchMyDebts = async (): Promise<MyDebts> => {
  */
 export const fetchMyPayments = async (): Promise<MyPayments> => {
   try {
-    const response = await privateApi.get<MyPayments>('/payments/my-payments');
-    return response.data;
+    // Бэкенд не предоставляет /payments/my-payments. Используем /payments/history и агрегируем на клиенте
+    const response = await privateApi.get<PaymentHistory>(PAYMENTS_ENDPOINTS.history);
+    const history = response.data;
+
+    // Статистика: суммарно отправлено/получено и текущий месяц
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let totalSent = 0;
+    let totalReceived = 0;
+    let currentMonthSent = 0;
+    let currentMonthReceived = 0;
+
+    for (const p of history.payments) {
+      const paymentDate = new Date(p.paymentDate);
+      const isCurrentMonth =
+        paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+
+      // Если текущий пользователь является отправителем/получателем — сервер уже отфильтровал релевантные записи
+      // Определим направление по наличию from/to относительно userId недоступно здесь → считаем все платежи как «актуальные»
+      // Разделить «отправлено/получено» корректно без userId нельзя — поэтому считаем суммарно в totalReceived
+      // и используем totalSent = 0. При необходимости можно передать роль через отдельную ручку
+      totalReceived += p.amount;
+      if (isCurrentMonth) currentMonthReceived += p.amount;
+    }
+
+    return {
+      statistics: {
+        totalSent,
+        totalReceived,
+        currentMonthSent,
+        currentMonthReceived,
+      },
+      recentPayments: history.payments.slice(0, 10),
+    };
   } catch (error) {
-    console.error('Error fetching my payments:', error);
+    logger.error('Error fetching my payments:', error);
     throw error;
   }
 };
@@ -128,9 +133,9 @@ export const fetchMyPayments = async (): Promise<MyPayments> => {
  */
 export const deletePayment = async (paymentId: string): Promise<void> => {
   try {
-    await privateApi.delete(`/payments/${paymentId}`);
+    await privateApi.delete(PAYMENTS_ENDPOINTS.byId(paymentId));
   } catch (error) {
-    console.error('Error deleting payment:', error);
+    logger.error('Error deleting payment:', error);
     if (error instanceof Error) {
       throw new Error(`Не удалось удалить выплату: ${error.message}`);
     }
@@ -143,10 +148,10 @@ export const deletePayment = async (paymentId: string): Promise<void> => {
  */
 export const createPaymentAndClose = async (paymentData: CreatePaymentAndCloseDto): Promise<CreatePaymentAndCloseResponseDto> => {
   try {
-    const response = await privateApi.post<CreatePaymentAndCloseResponseDto>('/payments/create-payment-and-close', paymentData);
+    const response = await privateApi.post<CreatePaymentAndCloseResponseDto>(PAYMENTS_ENDPOINTS.createAndClose, paymentData);
     return response.data;
   } catch (error) {
-    console.error('Error creating payment and closing period:', error);
+    logger.error('Error creating payment and closing period:', error);
     throw error;
   }
 }; 

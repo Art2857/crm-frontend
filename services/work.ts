@@ -2,23 +2,22 @@ import {
   Work, 
   CreateWorkDto, 
   UpdateWorkDto,
-  WorkExtended,
-  CreateWorkExtendedDto,
-  UpdateWorkExtendedDto,
   WorkHistory,
   WorkWithHistory
 } from '../types/work';
 import { privateApi } from './ApiClient';
+import { WORKS_ENDPOINTS, WORK_HISTORY_ENDPOINTS } from './endpoints';
+import { logger } from '../utils/logger';
 
 // Сервис для работы с работами
 export const workService = {
   // Получить все работы
   getAll: async (): Promise<Work[]> => {
     try {
-      const response = await privateApi.get<Work[]>('/works');
+      const response = await privateApi.get<Work[]>(WORKS_ENDPOINTS.base);
       return response.data;
     } catch (error) {
-      console.error('Error fetching works:', error);
+      logger.error('Error fetching works:', error);
       throw error;
     }
   },
@@ -26,10 +25,10 @@ export const workService = {
   // Получить работы по пользователю (где пользователь является ответственным)
   getByUserId: async (userId: string): Promise<Work[]> => {
     try {
-      const response = await privateApi.get<Work[]>(`/works/responsible/${userId}`);
+      const response = await privateApi.get<Work[]>(WORKS_ENDPOINTS.responsible(userId));
       return response.data;
     } catch (error) {
-      console.error(`Error fetching works for user ${userId}:`, error);
+      logger.error(`Error fetching works for user ${userId}:`, error);
       throw error;
     }
   },
@@ -39,10 +38,10 @@ export const workService = {
   // Получить одну работу с историей
   getById: async (id: string): Promise<WorkWithHistory> => {
     try {
-      const response = await privateApi.get<WorkWithHistory>(`/works/${id}`);
+      const response = await privateApi.get<WorkWithHistory>(WORKS_ENDPOINTS.byId(id));
       return response.data;
     } catch (error) {
-      console.error(`Error fetching work with ID ${id}:`, error);
+      logger.error(`Error fetching work with ID ${id}:`, error);
       throw error;
     }
   },
@@ -50,36 +49,27 @@ export const workService = {
   // Создать новую работу
   create: async (data: CreateWorkDto): Promise<Work> => {
     try {
-      const response = await privateApi.post<Work>('/works', data);
+      const response = await privateApi.post<Work>(WORKS_ENDPOINTS.base, data);
       return response.data;
     } catch (error) {
-      console.error('Error creating work:', error);
+      logger.error('Error creating work:', error);
       throw error;
     }
   },
 
 
 
-  // Создать расширенную работу
-  createExtended: async (data: CreateWorkExtendedDto): Promise<WorkExtended> => {
-    try {
-      const response = await privateApi.post<WorkExtended>('/works/extended', data);
-      return response.data;
-    } catch (error) {
-      console.error('Error creating extended work:', error);
-      throw error;
-    }
-  },
+  // createExtended/updateExtended удалены: в бэкенде нет /works/extended
 
 
 
   // Получить историю работы (исправленный путь)
   getHistory: async (id: string): Promise<WorkHistory[]> => {
     try {
-      const response = await privateApi.get<WorkHistory[]>(`/work-history/work/${id}`);
+      const response = await privateApi.get<WorkHistory[]>(WORK_HISTORY_ENDPOINTS.work(id));
       return response.data;
     } catch (error) {
-      console.error(`Error fetching history for work ${id}:`, error);
+      logger.error(`Error fetching history for work ${id}:`, error);
       throw error;
     }
   },
@@ -87,32 +77,23 @@ export const workService = {
   // Обновить работу
   update: async (id: string, data: UpdateWorkDto): Promise<WorkHistory> => {
     try {
-      const response = await privateApi.patch<WorkHistory>(`/works/${id}`, data);
+      const response = await privateApi.patch<WorkHistory>(WORKS_ENDPOINTS.byId(id), data);
       return response.data;
     } catch (error) {
-      console.error(`Error updating work ${id}:`, error);
+      logger.error(`Error updating work ${id}:`, error);
       throw error;
     }
   },
 
-  // Обновить расширенную работу
-  updateExtended: async (id: string, data: UpdateWorkExtendedDto): Promise<WorkExtended> => {
-    try {
-      const response = await privateApi.patch<WorkExtended>(`/works/extended/${id}`, data);
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating extended work ${id}:`, error);
-      throw error;
-    }
-  },
+  
 
   // Получение последней записи истории работы
   getLatestWorkHistory: async (workId: string): Promise<WorkHistory> => {
     try {
-      const response = await privateApi.get<WorkHistory>(`/work-history/work/${workId}/latest`);
+      const response = await privateApi.get<WorkHistory>(WORK_HISTORY_ENDPOINTS.latest(workId));
       return response.data;
     } catch (error) {
-      console.error(`Error fetching latest work history for work ${workId}:`, error);
+      logger.error(`Error fetching latest work history for work ${workId}:`, error);
       throw error;
     }
   },
@@ -120,10 +101,10 @@ export const workService = {
   // Обновление записи истории работы
   updateWorkHistory: async (workHistoryId: string, data: { effectiveDate?: string }): Promise<WorkHistory> => {
     try {
-      const response = await privateApi.patch<WorkHistory>(`/work-history/${workHistoryId}`, data);
+      const response = await privateApi.patch<WorkHistory>(WORK_HISTORY_ENDPOINTS.byId(workHistoryId), data);
       return response.data;
     } catch (error) {
-      console.error(`Error updating work history ${workHistoryId}:`, error);
+      logger.error(`Error updating work history ${workHistoryId}:`, error);
       throw error;
     }
   },

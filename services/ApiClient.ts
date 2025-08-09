@@ -7,31 +7,13 @@ import axios, {
   CreateAxiosDefaults
 } from 'axios';
 import https from 'https';
+import { env, isDevelopment } from '../config/env';
+import { isJwtExpired } from '../utils/jwt';
+import { tokenStorage } from './tokenStorage';
+import { logger } from '../utils/logger';
 
-const getApiUrl = () => {
-  // Используем переменную окружения NEXT_PUBLIC_API_URL
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  // Добавляем отладочную информацию
-  console.log('🔧 Environment check:', {
-    NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_API_URL: apiUrl,
-  });
-
-  if (apiUrl) {
-    console.log('✅ Using NEXT_PUBLIC_API_URL:', apiUrl);
-    return apiUrl;
-  }
-
-  console.log('⚠️ NEXT_PUBLIC_API_URL not found, using fallback');
-  return "http://localhost:3000";
-
-  // Fallback
-  // return 'http://localhost:3000';
-};
-
-// API URL should be configurable in production
-const API_URL = getApiUrl();
+// Централизованный baseURL
+const API_URL = env.apiBaseUrl;
 
 // Maximum timeout for requests (in milliseconds)
 const REQUEST_TIMEOUT = 30000;
@@ -160,9 +142,9 @@ export class ApiClient {
     };
     
     // Проверяем, нужно ли игнорировать SSL сертификаты
-    const ignoreSSL = process.env.NEXT_PUBLIC_IGNORE_SSL === 'true';
+    const ignoreSSL = env.ignoreSsl;
     if (ignoreSSL) {
-      console.log('⚠️ SSL certificate validation disabled for development');
+      logger.warn('⚠️ SSL certificate validation disabled for development');
     }
 
     const createAxiosDefaults: CreateAxiosDefaults  = {
@@ -188,7 +170,7 @@ export class ApiClient {
     
     // Add debug log for development
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`API configured for: ${this.options.baseURL}`);
+      logger.info(`API configured for: ${this.options.baseURL}`);
     }
   }
   
@@ -201,14 +183,25 @@ export class ApiClient {
       async (config) => {
         // Добавляем токен авторизации если требуется
         if (this.options.requiresAuth) {
-          const token = this.getAuthToken();
+          let token = this.getAuthToken();
+          // Автообновление истёкшего токена
+          try {
+            if (token && isJwtExpired(token)) {
+              if (isDevelopment) logger.info('🔄 Access token expired, trying to refresh');
+              const refreshed = await this.tryRefreshTokens();
+              if (refreshed) token = refreshed;
+            }
+          } catch (e) {
+            // Если рефреш не удался — дадим 401 обработать ниже
+            if (isDevelopment) logger.warn('⚠️ Token refresh failed before request', e);
+          }
           if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
             if (process.env.NODE_ENV !== 'production') {
-              console.log('🔐 Добавляем токен в заголовок для:', config.url);
+              logger.debug('🔐 Добавляем токен в заголовок для:', config.url);
             }
           } else {
-            console.warn('⚠️ Токен не найден для авторизованного запроса:', config.url);
+            logger.warn('⚠️ Токен не найден для авторизованного запроса:', config.url);
           }
         }
         
@@ -217,20 +210,23 @@ export class ApiClient {
           config.data = sanitizeRequestData(config.data);
         }
         
-        // Создаем ключ для запроса
-        const requestKey = this.getRequestKey(config);
-        
-        // Отменяем предыдущий запрос с таким же ключом ТОЛЬКО если это действительно дублированный запрос
-        // Не отменяем разные типы запросов (GET /users и GET /works - это разные запросы)
-        if (this.pendingRequests[requestKey]) {
-          console.log('🔄 Отменяем предыдущий дублированный запрос:', requestKey);
-          this.cancelPendingRequest(requestKey);
+        // Для GET запросов не используем отмену дубликатов — избегаем ложных ошибок при параллельных загрузках
+        const method = (config.method || 'GET').toUpperCase();
+        if (method !== 'GET') {
+          // Создаем ключ для запроса
+          const requestKey = this.getRequestKey(config);
+          
+          // Отменяем предыдущий запрос с таким же ключом
+          if (this.pendingRequests[requestKey]) {
+            logger.debug('🔄 Отменяем предыдущий дублированный запрос:', requestKey);
+            this.cancelPendingRequest(requestKey);
+          }
+          
+          // Создаем новый токен отмены для запроса
+          const source = axios.CancelToken.source();
+          config.cancelToken = source.token;
+          this.pendingRequests[requestKey] = source;
         }
-        
-        // Создаем новый токен отмены для запроса
-        const source = axios.CancelToken.source();
-        config.cancelToken = source.token;
-        this.pendingRequests[requestKey] = source;
         
         return config;
       },
@@ -240,37 +236,72 @@ export class ApiClient {
     // Перехватчик ответов для обработки ошибок
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        // Удаляем запрос из списка ожидающих после успешного ответа
-        if (response.config) {
+        // Удаляем запрос из списка ожидающих после успешного ответа (для non-GET)
+        if (response.config && response.config.method && response.config.method.toUpperCase() !== 'GET') {
           const requestKey = this.getRequestKey(response.config);
           delete this.pendingRequests[requestKey];
         }
         
         return response;
       },
-      (error: any) => {
-        // Удаляем запрос из списка ожидающих в случае ошибки
-        if (error.config) {
+      async (error: any) => {
+        // Удаляем запрос из списка ожидающих в случае ошибки (для non-GET)
+        if (error.config && error.config.method && error.config.method.toUpperCase() !== 'GET') {
           const requestKey = this.getRequestKey(error.config);
           delete this.pendingRequests[requestKey];
         }
         
         // Игнорируем ошибки отмены запроса и не показываем их пользователю
         if (axios.isCancel(error)) {
-          console.log('🚫 Запрос был отменен:', error.message);
-          // Возвращаем специальную ошибку которая будет обработана без показа пользователю
-          return Promise.reject(
-            new ApiError('REQUEST_CANCELLED', {
-              isNetworkError: false,
-              originalError: error,
-              status: 0
-            })
-          );
+          // Тихо возвращаем исходную отмену без формирования ApiError, чтобы не шуметь в UI
+          return Promise.reject(error);
         }
         
+        // Попытка авто-рефреша по факту 401
+        if (error.response?.status === 401 && this.options.requiresAuth) {
+          try {
+            if (isDevelopment) logger.info('🔄 Got 401, trying to refresh and retry');
+            const newToken = await this.tryRefreshTokens();
+            if (newToken && error.config?.headers) {
+              error.config.headers.Authorization = `Bearer ${newToken}`;
+              return this.axiosInstance.request(error.config);
+            }
+          } catch (refreshErr) {
+            if (isDevelopment) logger.warn('❌ Refresh on 401 failed', refreshErr);
+          }
+        }
+
         return Promise.reject(this.handleError(error as AxiosError));
       }
     );
+  }
+
+  /**
+   * Пытается обновить токен доступа через refresh_token
+   * Возвращает новый access_token или null
+   */
+  private async tryRefreshTokens(): Promise<string | null> {
+    if (typeof window === 'undefined') return null;
+    const refreshToken = tokenStorage.getRefreshToken();
+    if (!refreshToken) return null;
+
+    try {
+      const response = await axios.post<{ access_token: string; refresh_token?: string }>(
+        `${API_URL}/auth/refresh`,
+        { refreshToken },
+        { withCredentials: true }
+      );
+      const { access_token, refresh_token } = response.data || (response as any).data || {};
+      if (access_token) tokenStorage.setAccessToken(access_token);
+      if (refresh_token) tokenStorage.setRefreshToken(refresh_token);
+      return access_token || null;
+    } catch (e) {
+      // На неуспех — очищаем локальные токены
+      try {
+        tokenStorage.clearAll();
+      } catch {}
+      return null;
+    }
   }
   
   /**
@@ -314,9 +345,10 @@ export class ApiClient {
   private handleUnauthorized(): void {
     // Очищаем данные авторизации
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('refresh_token');
+      try {
+        tokenStorage.clearAll();
+        // user/account список оставляем — это ответственность accountManager
+      } catch {}
       
       // Перенаправление на страницу входа, если не на странице авторизации
       if (!window.location.pathname.startsWith('/login') && 
@@ -334,7 +366,7 @@ export class ApiClient {
   private async handleError(error: AxiosError): Promise<ApiError> {
     let errorMessage = 'Произошла неизвестная ошибка';
     
-    console.log('Получена ошибка API:', {
+    logger.warn('Получена ошибка API:', {
       status: error.response?.status,
       statusText: error.response?.statusText,
       config: {
@@ -350,7 +382,7 @@ export class ApiClient {
     
     // Обработка CORS ошибок и ошибок сети
     if (error.message === 'Network Error') {
-      console.error('Вероятная ошибка CORS или сетевая проблема:', error);
+      logger.error('Вероятная ошибка CORS или сетевая проблема:', error);
       return new ApiError('Ошибка соединения с сервером. Возможно, проблема с CORS настройками или сетевое соединение прервано.', {
         isNetworkError: true,
         originalError: error
@@ -361,7 +393,7 @@ export class ApiClient {
       // Ошибка запроса с ответом сервера
       const { status, data } = error.response;
       
-      console.log('Детали ответа с ошибкой:', {
+      logger.debug('Детали ответа с ошибкой:', {
         status,
         statusText: error.response.statusText,
         data,
@@ -462,14 +494,14 @@ export class ApiClient {
       });
     } else if (error.request) {
       // Запрос был сделан, но ответ не получен
-      console.error('Запрос сделан, но ответ не получен:', error.request);
+      logger.error('Запрос сделан, но ответ не получен:', error.request);
       return new ApiError('Сервер не отвечает. Проверьте подключение к интернету.', {
         isNetworkError: true,
         originalError: error
       });
     } else {
       // Что-то еще пошло не так
-      console.error('Неизвестная ошибка при настройке запроса:', error.message);
+      logger.error('Неизвестная ошибка при настройке запроса:', error.message);
       return new ApiError(error.message || errorMessage, {
         originalError: error
       });
@@ -481,14 +513,11 @@ export class ApiClient {
    * @returns токен или null
    */
   private getAuthToken(): string | null {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🔑 Получение токена из localStorage:', token ? 'токен найден' : 'токен отсутствует');
-      }
-      return token;
+    const token = tokenStorage.getAccessToken();
+    if (process.env.NODE_ENV !== 'production') {
+      logger.debug('🔑 Получение токена:', token ? 'токен найден' : 'токен отсутствует');
     }
-    return null;
+    return token;
   }
   
   /**
@@ -577,13 +606,7 @@ export class ApiClient {
    * @param token - токен авторизации
    */
   public setAuthToken(token: string | null): void {
-    if (typeof window !== 'undefined') {
-      if (token) {
-        localStorage.setItem('token', token);
-      } else {
-        localStorage.removeItem('token');
-      }
-    }
+    tokenStorage.setAccessToken(token);
   }
   
   /**

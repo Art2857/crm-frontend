@@ -57,11 +57,7 @@ export default function DashboardPage() {
   const formatReleaseDate = (releaseDate: string | null | undefined): string => {
     if (!releaseDate) return 'Не указана';
     
-    // Отладочная информация
-    console.log('🗓️ Форматирование даты выхода:', releaseDate);
-    
     const formattedDate = formatDateForDisplay(releaseDate);
-    console.log('🗓️ Результат форматирования:', formattedDate);
     
     return formattedDate || 'Не указана';
   };

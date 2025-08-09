@@ -24,7 +24,7 @@ export const fetchAllUsers = createAsyncThunk('users/fetchAll', async (_, { reje
   } catch (error: any) {
     // Игнорируем отмененные запросы
     if (error.message === 'REQUEST_CANCELLED') {
-      console.log('Запрос пользователей был отменен, игнорируем ошибку');
+      // тихий skip
       // Возвращаем пустой массив вместо ошибки для отмененных запросов
       return [];
     }
@@ -39,7 +39,7 @@ export const fetchUserById = createAsyncThunk('users/fetchById', async (id: stri
   } catch (error: any) {
     // Игнорируем отмененные запросы
     if (error.message === 'REQUEST_CANCELLED') {
-      console.log('Запрос пользователя по ID был отменен, игнорируем ошибку');
+      // тихий skip
       // Возвращаем null для отмененных запросов
       return null;
     }
@@ -56,7 +56,7 @@ export const updateUserProfile = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос обновления профиля был отменен, игнорируем ошибку');
+        // тихий skip
         return null;
       }
       return rejectWithValue(error.message || 'Не удалось обновить профиль пользователя');
@@ -73,7 +73,7 @@ export const updateUserSensitiveData = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос обновления конфиденциальных данных был отменен, игнорируем ошибку');
+        // тихий skip
         return null;
       }
       return rejectWithValue(error.message || 'Не удалось обновить данные пользователя');
@@ -90,7 +90,7 @@ export const createUser = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос создания пользователя был отменен, игнорируем ошибку');
+        // тихий skip
         return null;
       }
       
@@ -160,7 +160,7 @@ export const fetchUserHistory = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос истории пользователя был отменен, игнорируем ошибку');
+        // тихий skip
         return null;
       }
       return rejectWithValue(error.message || 'Не удалось загрузить историю пользователя');

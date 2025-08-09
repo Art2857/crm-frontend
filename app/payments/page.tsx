@@ -38,6 +38,8 @@ import { fetchMyDebts, fetchPaymentHistory, makePayment, createPaymentAndClose }
 import { PaymentType } from '../../types/payment';
 import { analyticsService, MyDebt, DutyDebt } from '../../services/analytics';
 import { useNotification } from '../../contexts/NotificationContext';
+import { logger } from '../../utils/logger';
+import { mapAnalysisToUsers } from '../../utils/paymentsMapping';
 
 export default function PaymentsPage() {
   // Получаем данные текущего пользователя из Redux store
@@ -74,150 +76,7 @@ export default function PaymentsPage() {
     return usersData;
   }, [usersData]);
 
-  /**
-   * Преобразует результат аналитики в формат ResponsibleUser[]
-   */
-  const mapAnalysisToUsers = (analysis: any): ResponsibleUser[] => {
-    if (!analysis || !Array.isArray(analysis.users)) return [];
-
-    return analysis.users.map((user: any) => {
-      const { userId, firstName, lastName, email } = user;
-
-      let totalDebt = 0;
-      let totalAccrued = 0;
-      let totalPaid = 0;
-      const works: any[] = [];
-
-      user.works?.forEach((work: any) => {
-        const salary = Number(work.salary) || 0;
-        const workUsers: any[] = [];
-
-        work.usersClosuresWithPeriods.forEach((closureWrap: any) => {
-          const { closure, userPeriods, paymentHistory } = closureWrap;
-
-          // Build duty map for this user
-          const dutyMap: Record<string, DutyDetail> = {} as any;
-
-          userPeriods?.dutiesPeriods?.forEach((period: any) => {
-            period.distributionDetails?.forEach((dd: any) => {
-              const dutyId = dd.dutyId;
-              if (!dutyMap[dutyId]) {
-                const price = Number(dd.price) || 0;
-                const perc = Number(dd.percentage) || 0;
-                const monthlyAmount = price + (salary * perc) / 100;
-                dutyMap[dutyId] = {
-                  dutyId,
-                  dutyName: dd.duty?.name || '—',
-                  monthlyAmount,
-                  dailyAmount: monthlyAmount / 30,
-                  debt: 0,
-                } as any;
-              }
-              dutyMap[dutyId].debt += Number(dd.calculatedValuePeriod || 0);
-            });
-          });
-
-          const dutiesArr = Object.values(dutyMap);
-          const totalAccruedUser = dutiesArr.reduce((s, d) => s + d.debt, 0);
-          const totalPaidUser = (paymentHistory || []).reduce((s, p) => s + p.amount, 0);
-          totalAccrued += totalAccruedUser;
-          totalPaid += totalPaidUser;
-          totalDebt += (totalAccruedUser - totalPaidUser);
-
-          const toIso = (dStr: string | null) => {
-            if (!dStr) return null;
-            if (dStr.includes('.')) {
-              const [day, month, year] = dStr.split('.');
-              return `${year}-${month}-${day}`;
-            }
-            return dStr;
-          };
-
-          // Преобразуем историю выплат в правильный формат
-          const formattedPaymentHistory = (paymentHistory || []).map((payment: any) => {
-            // Отладочная информация
-            console.log('Payment from backend:', payment);
-            console.log('payment.paymentType:', payment.paymentType);
-            console.log('payment.type:', payment.type);
-
-            const paymentType = payment.paymentType || payment.type || 'ADVANCE';
-            console.log('Final paymentType:', paymentType);
-
-            return {
-              id: payment.id,
-              amount: payment.amount,
-              type: paymentType,
-              description: payment.description || '',
-              date: payment.paymentDate,
-            };
-          });
-
-          workUsers.push({
-            userId,
-            firstName: firstName || '',
-            lastName: lastName || '',
-            email,
-            totalDebt: totalAccruedUser - totalPaidUser,
-            totalAccrued: totalAccruedUser,
-            totalPaid: totalPaidUser,
-            remainingDebt: totalAccruedUser - totalPaidUser,
-            isPaymentDue: (totalAccruedUser - totalPaidUser) > 0,
-            lastClosureDate: toIso(closure.closureDate),
-            duties: dutiesArr,
-            paymentHistory: formattedPaymentHistory,
-            userPeriods,
-          });
-        });
-
-        // Вычисляем общие суммы для работы
-        const totalWorkDebt = workUsers.reduce((sum, u) => sum + (u.totalAccrued - u.totalPaid), 0);
-        const totalWorkPaid = workUsers.reduce((sum, u) => sum + u.totalPaid, 0);
-
-        works.push({
-          workId: work.workId,
-          workName: work.workName,
-          duties: [],
-          totalDebt: totalWorkDebt,
-          paidAmount: totalWorkPaid,
-          isPaymentDue: totalWorkDebt > 0,
-          lastClosureDate: work.createdAt,
-          users: workUsers,
-          salary: salary,
-          rawClosureWraps: work.usersClosuresWithPeriods,
-        });
-      });
-
-      // Рассчитываем общую выплаченную сумму (не больше начисленного по каждой работе)
-      const totalPaidCorrected = works.reduce((sum, work) => {
-        const workAccrued = work.users?.reduce((userSum, user) => userSum + user.totalAccrued, 0) || 0;
-        const workPaid = work.paidAmount;
-        // Учитываем выплаты только в пределах начисленного
-        return sum + Math.min(workPaid, workAccrued);
-      }, 0);
-
-      // Рассчитываем общий остаток как сумму только положительных остатков по работам
-      const remainingDebt = works.reduce((sum, work) => {
-        const workRemaining = work.totalDebt;
-        return sum + (workRemaining > 0 ? workRemaining : 0);
-      }, 0);
-
-              return {
-          userId,
-          firstName,
-          lastName,
-          email,
-          salaryDay: 15,
-          works,
-          totalDebt,
-          totalAccrued,
-          totalPaid: totalPaidCorrected,
-          remainingDebt,
-          isPaymentDue: remainingDebt > 0,
-          lastPaymentDate: null,
-          lastPaymentAmount: null,
-        };
-    });
-  };
+  // mapAnalysisToUsers вынесен в utils/paymentsMapping.ts
 
   const getWorksData = async (data: { endDate?: string, targetWorkId?: string, targetUserId?: string } = {}) => {
     const { endDate, targetWorkId, targetUserId } = data;
@@ -280,8 +139,14 @@ export default function PaymentsPage() {
 
   // Загрузка данных при монтировании компонента
   useEffect(() => {
-    fetchWorksData().catch((err) => console.error('Ошибка инициализации выплат', err));
-    fetchMyDebtsData().catch((err) => console.error('Ошибка загрузки моих задолженностей', err));
+    fetchWorksData().catch((err) => {
+      logger.error('Ошибка инициализации выплат', err);
+      notification.showError('Не удалось загрузить данные по выплатам');
+    });
+    fetchMyDebtsData().catch((err) => {
+      logger.error('Ошибка загрузки моих задолженностей', err);
+      notification.showError('Не удалось загрузить данные о задолженностях');
+    });
   }, []);
 
   // Загрузка данных о задолженностях текущего пользователя
@@ -577,7 +442,7 @@ export default function PaymentsPage() {
       setIsDutyCalculation(!!dutyId);
       setCalculationModalOpen(true);
 
-      console.log('dutyId: ', dutyId);
+      logger.debug('dutyId: ', dutyId);
       if (dutyId) {
         setCalculationModalShowPaymentHistory(false)
       } else {
@@ -656,9 +521,7 @@ export default function PaymentsPage() {
       const endDateObj = new Date(endDate);
 
       // Отладочная информация
-      console.log('Расчет дней для общего расчета пользователя:');
-      console.log('startDate:', startDate, 'startDateObj:', startDateObj);
-      console.log('endDate:', endDate, 'endDateObj:', endDateObj);
+      logger.debug('Расчет дней для общего расчета пользователя:', { startDate, endDate });
 
       // Более надежный способ расчета дней
       const startYear = startDateObj.getFullYear();
@@ -676,10 +539,7 @@ export default function PaymentsPage() {
       const timeDiff = endDateOnly.getTime() - startDateOnly.getTime();
       const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1; // +1 для включительного подсчета
 
-      console.log('startDateOnly:', startDateOnly);
-      console.log('endDateOnly:', endDateOnly);
-      console.log('timeDiff (мс):', timeDiff);
-      console.log('days:', days);
+      logger.debug('Подробности расчета дней', { startDateOnly, endDateOnly, timeDiff, days });
 
       // Получаем количество дней в месяце для конечной даты
       const monthDays = new Date(
@@ -727,7 +587,7 @@ export default function PaymentsPage() {
       setCalculationType('user');
       setCalculationModalOpen(true);
     } catch (error) {
-      console.error('Ошибка при загрузке расчета пользователя:', error);
+      logger.error('Ошибка при загрузке расчета пользователя:', error);
     } finally {
       setLoading(false);
     }
@@ -966,7 +826,7 @@ export default function PaymentsPage() {
         });
       }
     } catch (e) {
-      console.error('Ошибка создания выплаты', e);
+      logger.error('Ошибка создания выплаты', e);
     } finally {
       setPaymentModalOpen(false);
       setSelectedPayment(null);
@@ -1025,7 +885,7 @@ export default function PaymentsPage() {
         }
       }
     } catch (e) {
-      console.error('Ошибка создания произвольной выплаты', e);
+      logger.error('Ошибка создания произвольной выплаты', e);
     } finally {
       setCustomPaymentModalOpen(false);
     }

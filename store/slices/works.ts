@@ -5,9 +5,6 @@ import {
   WorkWithHistory, 
   CreateWorkDto, 
   UpdateWorkDto, 
-  WorkExtended,
-  CreateWorkExtendedDto,
-  UpdateWorkExtendedDto,
   WorkHistory
 } from '../../types/work';
 
@@ -33,11 +30,11 @@ const initialState: WorksState = {
  * Обработчик ошибок для thunks
  */
 const handleThunkError = (error: unknown, defaultMessage: string): string => {
-  console.error(`Ошибка в thunk: ${defaultMessage}`, error);
+  // Ошибки протаскиваем в state, лишние логи не нужны
   
   // Игнорируем отмененные запросы
   if (error instanceof Error && error.message === 'REQUEST_CANCELLED') {
-    console.log('Запрос был отменен, игнорируем ошибку');
+    // тихий skip
     throw new Error('REQUEST_CANCELLED'); // Прокидываем специальную ошибку
   }
   
@@ -118,17 +115,6 @@ export const createWork = createAsyncThunk(
   }
 );
 
-export const createWorkExtended = createAsyncThunk(
-  'works/createExtended',
-  async (data: CreateWorkExtendedDto, { rejectWithValue }) => {
-    try {
-      return await workService.createExtended(data);
-    } catch (error) {
-      return rejectWithValue(handleThunkError(error, 'Не удалось создать работу'));
-    }
-  }
-);
-
 export const updateWork = createAsyncThunk(
   'works/update',
   async ({ id, data }: { id: string; data: UpdateWorkDto }, { rejectWithValue }) => {
@@ -140,16 +126,7 @@ export const updateWork = createAsyncThunk(
   }
 );
 
-export const updateWorkExtended = createAsyncThunk(
-  'works/updateExtended',
-  async ({ id, data }: { id: string; data: UpdateWorkExtendedDto }, { rejectWithValue }) => {
-    try {
-      return await workService.updateExtended(id, data);
-    } catch (error) {
-      return rejectWithValue(handleThunkError(error, 'Не удалось обновить работу'));
-    }
-  }
-);
+// Удалены расширенные операции: на бэкенде нет /works/extended
 
 // Вспомогательная функция для добавления обработчиков стандартных асинхронных операций
 const addLoadingStateHandlers = <T>(
@@ -185,7 +162,6 @@ const worksSlice = createSlice({
 
     // Обработчики для загрузки работ пользователя
     addLoadingStateHandlers<Work[]>(builder, fetchUserWorks, (state, action) => {
-      console.log('Redux: fetchUserWorks fulfilled with data:', action.payload);
       state.userWorks = action.payload;
     });
 
@@ -202,13 +178,6 @@ const worksSlice = createSlice({
     // Обработчики для создания работы
     addLoadingStateHandlers<Work>(builder, createWork, (state, action) => {
       state.works.push(action.payload);
-    });
-
-    // Обработчики для создания расширенной работы
-    addLoadingStateHandlers<WorkExtended>(builder, createWorkExtended, (state, action) => {
-      // Здесь мы могли бы обрабатывать созданную расширенную работу иначе,
-      // но пока просто обновляем состояние загрузки
-      // В будущем здесь может понадобиться дополнительная логика для обработки расширенных работ
     });
 
     // Обработчики для обновления работы
@@ -241,15 +210,11 @@ const worksSlice = createSlice({
           updatedAt: workFromHistory.updatedAt,
         };
         
-        // Выводим информацию об обновлении для отладки
-        console.log('✅ Store: Данные работы успешно обновлены:', state.currentWork);
+        // тихо обновляем
       }
     });
 
-    // Обработчики для обновления расширенной работы
-    addLoadingStateHandlers<WorkExtended>(builder, updateWorkExtended, (state, action) => {
-      // В будущем здесь может понадобиться дополнительная логика для обработки обновленных расширенных работ
-    });
+    // Удалены обработчики createWorkExtended/updateWorkExtended
   },
 });
 

@@ -1,4 +1,6 @@
 import { privateApi } from './ApiClient';
+import { DASHBOARD_ENDPOINTS } from './endpoints';
+import { logger } from '../utils/logger';
 
 export interface DutyData {
   name: string;
@@ -38,10 +40,10 @@ export const dashboardService = {
   // Получение данных главной страницы
   async getDashboardData(): Promise<DashboardData> {
     try {
-      const response = await privateApi.get<DashboardData>('/dashboard');
+      const response = await privateApi.get<DashboardData>(DASHBOARD_ENDPOINTS.base);
       return response.data;
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      logger.error('Error fetching dashboard data:', error);
       throw error;
     }
   }

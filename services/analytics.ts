@@ -1,4 +1,6 @@
 import { privateApi } from './ApiClient';
+import { ANALYTICS_ENDPOINTS } from './endpoints';
+import { logger } from '../utils/logger';
 
 // ==========================
 // Types returned by backend
@@ -168,9 +170,9 @@ export const analyticsService = {
         endDate = date.toISOString().split('T')[0];
       }
 
-      console.log('params: ', { endDate, worksId: worksIds, workerId: targetUserId });
+      logger.debug('params: ', { endDate, worksId: worksIds, workerId: targetUserId });
       const response = await privateApi.get<UsersWorksClosurePeriodsAnalysisResult>(
-        `/analytics/user/works-closure-periods-analysis`,
+        ANALYTICS_ENDPOINTS.worksClosurePeriodsAnalysis,
         {
           params: {
             endDate,
@@ -182,7 +184,7 @@ export const analyticsService = {
 
       return response.data;
     } catch (error) {
-      console.error('Error fetching works-closure periods analysis:', error);
+      logger.error('Error fetching works-closure periods analysis:', error);
       throw error;
     }
   },
@@ -192,10 +194,10 @@ export const analyticsService = {
    */
   async getMyDebts(): Promise<MyDebtsResponse> {
     try {
-      const response = await privateApi.get<MyDebtsResponse>('/analytics/user/my-debts');
+      const response = await privateApi.get<MyDebtsResponse>(ANALYTICS_ENDPOINTS.myDebts);
       return response.data;
     } catch (error) {
-      console.error('Error fetching my debts:', error);
+      logger.error('Error fetching my debts:', error);
       throw error;
     }
   },

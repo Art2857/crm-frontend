@@ -14,7 +14,7 @@ export async function GET() {
       environment: process.env.NODE_ENV || 'development'
     }, { status: 200 });
   } catch (error) {
-    console.error('Health check failed:', error);
+    // Не шумим в логах: этот эндпойнт используется инфраструктурой
     return NextResponse.json({
       status: 'error',
       timestamp: new Date().toISOString(),
