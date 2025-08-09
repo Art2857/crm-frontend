@@ -81,26 +81,19 @@ const TimezoneSelector: React.FC<Props> = ({
   };
 
   return (
-    <div className={`flex items-center ${className || ''}`}>
-      <span className="mr-2 text-xs text-gray-500 whitespace-nowrap">
-        {label}
-      </span>
-      <select
-        id="tz"
-        value={currentValue}
-        onChange={(e) => handleChange(e.target.value)}
-        className={`block text-sm border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white ${
-          selectClassName || 'max-w-[280px]'
-        }`}
-        title={label}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
+    <select
+      id="tz"
+      value={currentValue}
+      onChange={(e) => handleChange(e.target.value)}
+      className="w-full px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 transition-all duration-200 text-sm"
+      title={label}
+    >
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
   );
 };
 
