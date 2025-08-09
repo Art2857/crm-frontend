@@ -16,9 +16,10 @@ interface PaymentHistoryFiltersProps {
 export default function PaymentHistoryFilters({
   filters,
   onFiltersChange,
-  onClearFilters
+  onClearFilters,
 }: PaymentHistoryFiltersProps) {
-  const hasActiveFilters = filters.paymentType || filters.startDate || filters.endDate;
+  const hasActiveFilters =
+    filters.paymentType || filters.startDate || filters.endDate;
 
   return (
     <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
@@ -36,7 +37,7 @@ export default function PaymentHistoryFilters({
           </Button>
         )}
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Тип выплаты */}
         <div>
@@ -45,20 +46,24 @@ export default function PaymentHistoryFilters({
           </label>
           <Select
             value={filters.paymentType || ''}
-            onChange={(e) => onFiltersChange({ 
-              paymentType: e.target.value ? e.target.value as PaymentType : undefined 
-            })}
+            onChange={(e) =>
+              onFiltersChange({
+                paymentType: e.target.value
+                  ? (e.target.value as PaymentType)
+                  : undefined,
+              })
+            }
             options={[
               { value: '', label: 'Все типы' },
               { value: PaymentType.SALARY, label: 'Зарплата' },
               { value: PaymentType.BONUS, label: 'Премия' },
               { value: PaymentType.ADVANCE, label: 'Аванс' },
-              { value: PaymentType.EXTRA, label: 'Доплата' }
+              { value: PaymentType.EXTRA, label: 'Доплата' },
             ]}
             className="w-full"
           />
         </div>
-        
+
         {/* Начальная дата */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -67,13 +72,15 @@ export default function PaymentHistoryFilters({
           <Input
             type="date"
             value={filters.startDate || ''}
-            onChange={(e) => onFiltersChange({ 
-              startDate: e.target.value || undefined 
-            })}
+            onChange={(e) =>
+              onFiltersChange({
+                startDate: e.target.value || undefined,
+              })
+            }
             className="w-full"
           />
         </div>
-        
+
         {/* Конечная дата */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -82,14 +89,16 @@ export default function PaymentHistoryFilters({
           <Input
             type="date"
             value={filters.endDate || ''}
-            onChange={(e) => onFiltersChange({ 
-              endDate: e.target.value || undefined 
-            })}
+            onChange={(e) =>
+              onFiltersChange({
+                endDate: e.target.value || undefined,
+              })
+            }
             className="w-full"
           />
         </div>
       </div>
-      
+
       {/* Размер страницы */}
       <div className="mt-4 pt-4 border-t border-gray-200">
         <div className="flex items-center space-x-4">
@@ -98,15 +107,17 @@ export default function PaymentHistoryFilters({
           </label>
           <Select
             value={filters.limit?.toString() || '20'}
-            onChange={(e) => onFiltersChange({ 
-              limit: parseInt(e.target.value),
-              page: 1 // Сбрасываем на первую страницу при изменении размера
-            })}
+            onChange={(e) =>
+              onFiltersChange({
+                limit: parseInt(e.target.value),
+                page: 1, // Сбрасываем на первую страницу при изменении размера
+              })
+            }
             options={[
               { value: '10', label: '10' },
               { value: '20', label: '20' },
               { value: '50', label: '50' },
-              { value: '100', label: '100' }
+              { value: '100', label: '100' },
             ]}
             className="w-20"
           />
@@ -114,4 +125,4 @@ export default function PaymentHistoryFilters({
       </div>
     </div>
   );
-} 
+}

@@ -16,7 +16,9 @@ interface PaymentHistoryTabProps {
   currentUserId?: string;
 }
 
-export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabProps) {
+export default function PaymentHistoryTab({
+  currentUserId,
+}: PaymentHistoryTabProps) {
   const {
     payments,
     total,
@@ -27,10 +29,12 @@ export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabPr
     error,
     filters,
     setFilters,
-    refetch
+    refetch,
   } = usePaymentHistory();
 
-  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
+  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(
+    null
+  );
 
   const handleFiltersChange = (newFilters: Partial<PaymentHistoryDto>) => {
     setFilters(newFilters);
@@ -60,7 +64,9 @@ export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabPr
         await refetch(); // Перезагружаем данные после удаления
       } catch (error) {
         console.error('Error deleting payment:', error);
-        alert(error instanceof Error ? error.message : 'Ошибка при удалении выплаты');
+        alert(
+          error instanceof Error ? error.message : 'Ошибка при удалении выплаты'
+        );
       } finally {
         setDeletingPaymentId(null);
       }
@@ -73,16 +79,24 @@ export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabPr
       <Card className="p-6">
         <div className="text-center py-8">
           <div className="text-red-600 mb-2">
-            <svg className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            <svg
+              className="h-16 w-16 mx-auto"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             Ошибка загрузки
           </h3>
-          <p className="text-gray-600 mb-4">
-            {error}
-          </p>
+          <p className="text-gray-600 mb-4">{error}</p>
           <Button onClick={refetch} variant="primary">
             Попробовать снова
           </Button>
@@ -103,7 +117,9 @@ export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabPr
       <Card className="overflow-hidden">
         <div className="p-6 pb-0">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">История выплат</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              История выплат
+            </h2>
             {loading && (
               <div className="flex items-center space-x-2 text-gray-500">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
@@ -112,7 +128,7 @@ export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabPr
             )}
           </div>
         </div>
-        
+
         {/* Основной контент */}
         <div className="px-6 pb-6">
           {loading && payments.length === 0 ? (
@@ -126,7 +142,7 @@ export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabPr
             <div className="space-y-3">
               {payments.map((payment) => (
                 <PaymentHistoryItem
-                  key={payment.id} 
+                  key={payment.id}
                   payment={payment}
                   currentUserId={currentUserId}
                   onDelete={handleDeletePayment}
@@ -139,18 +155,18 @@ export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabPr
             <div className="text-center py-8">
               <DocumentTextIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {filters.paymentType || filters.startDate || filters.endDate 
+                {filters.paymentType || filters.startDate || filters.endDate
                   ? 'Выплаты не найдены'
-                  : 'История пуста'
-                }
+                  : 'История пуста'}
               </h3>
               <p className="text-gray-600">
                 {filters.paymentType || filters.startDate || filters.endDate
                   ? 'По заданным фильтрам выплат не найдено. Попробуйте изменить критерии поиска.'
-                  : 'Пока не было совершено ни одной выплаты.'
-                }
+                  : 'Пока не было совершено ни одной выплаты.'}
               </p>
-              {(filters.paymentType || filters.startDate || filters.endDate) && (
+              {(filters.paymentType ||
+                filters.startDate ||
+                filters.endDate) && (
                 <Button
                   onClick={handleClearFilters}
                   variant="outline"
@@ -162,7 +178,7 @@ export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabPr
             </div>
           )}
         </div>
-        
+
         {/* Пагинация - показываем только если есть данные или если загружаем не первую страницу */}
         {(payments.length > 0 || (loading && page > 1)) && (
           <Pagination
@@ -177,4 +193,4 @@ export default function PaymentHistoryTab({ currentUserId }: PaymentHistoryTabPr
       </Card>
     </div>
   );
-} 
+}

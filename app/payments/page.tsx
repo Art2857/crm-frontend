@@ -2,10 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Button from '../../components/ui/Button';
-import {
-  CurrencyDollarIcon,
-  BanknotesIcon
-} from '@heroicons/react/24/outline';
+import { CurrencyDollarIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../../store';
 
 // Импорт новых компонентов
@@ -28,27 +25,34 @@ import {
   PaymentFormData,
   PaymentModalData,
   CustomPaymentFormData,
-  WorkDetail,
-  ResponsibleUser,
-  DutyDetail,
-  PeriodCalculation, 
-  UserWorkDebt
 } from '../../types/payments';
-import { fetchMyDebts, fetchPaymentHistory, makePayment, createPaymentAndClose } from '../../services/payment';
+import { makePayment, createPaymentAndClose } from '../../services/payment';
 import { PaymentType } from '../../types/payment';
-import { analyticsService, MyDebt, DutyDebt } from '../../services/analytics';
 import { useNotification } from '../../contexts/NotificationContext';
 import { logger } from '../../utils/logger';
-import { mapAnalysisToUsers } from '../../utils/paymentsMapping';
+import {
+  buildUserDetailedCalculation,
+  buildWorkDetailedCalculation,
+} from '../../utils/paymentCalculations';
+import { usePaymentsData } from '../../hooks/payments/usePaymentsData';
+import { usePeriodDates } from '../../hooks/payments/usePeriodDates';
 
 export default function PaymentsPage() {
   // Получаем данные текущего пользователя из Redux store
   const { user } = useAppSelector((state) => state.auth);
   const notification = useNotification();
 
-  const [activeTab, setActiveTab] = useState<'management' | 'debts' | 'history'>('management');
-  const [workPeriodDates, setWorkPeriodDates] = useState<Record<string, string>>({});
-  const [userPeriodDates, setUserPeriodDates] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<
+    'management' | 'debts' | 'history'
+  >('management');
+  const {
+    workPeriodDates,
+    setWorkPeriodDates,
+    userPeriodDates,
+    setUserPeriodDates,
+    getWorkPeriodDate,
+    getUserPeriodDate,
+  } = usePeriodDates();
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [expandedWorks, setExpandedWorks] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
@@ -57,85 +61,65 @@ export default function PaymentsPage() {
   const [calculationModalOpen, setCalculationModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [customPaymentModalOpen, setCustomPaymentModalOpen] = useState(false);
-  const [selectedCalculation, setSelectedCalculation] = useState<DetailedCalculation | null>(null);
-  const [selectedPayment, setSelectedPayment] = useState<PaymentFormData | null>(null);
+  const [selectedCalculation, setSelectedCalculation] =
+    useState<DetailedCalculation | null>(null);
+  const [selectedPayment, setSelectedPayment] =
+    useState<PaymentFormData | null>(null);
   const [isUserCalculation, setIsUserCalculation] = useState(false);
-  const [calculationType, setCalculationType] = useState<'work' | 'user'>('work');
+  const [calculationType, setCalculationType] = useState<'work' | 'user'>(
+    'work'
+  );
   const [isDutyCalculation, setIsDutyCalculation] = useState(false);
-  const [calculationModalShowPaymentHistory, setCalculationModalShowPaymentHistory] = useState(true);
+  const [
+    calculationModalShowPaymentHistory,
+    setCalculationModalShowPaymentHistory,
+  ] = useState(true);
 
   // Данные работ с вложенными пользователями (новый формат отображения)
-  const [worksData, setWorksData] = useState<WorkDetail[]>([]);
-  // Данные пользователей с вложенными работами (новый формат)
-  const [usersData, setUsersData] = useState<ResponsibleUser[]>([]);
-  // Данные о задолженностях текущего пользователя
-  const [myDebts, setMyDebts] = useState<MyDebt[]>([]);
+  const {
+    usersData,
+    setUsersData,
+    myDebts,
+    setMyDebts,
+    responsibleUsersSummary,
+    fetchWorksData: fetchWorksDataRaw,
+    updateWorksData: updateWorksDataRaw,
+    fetchMyDebtsData: fetchMyDebtsDataRaw,
+  } = usePaymentsData();
 
-  // Сводный массив пользователей для статистики/бейджей, рассчитывается из worksData
-  const responsibleUsersSummary: ResponsibleUser[] = React.useMemo(() => {
-    return usersData;
-  }, [usersData]);
+  // summary берём из хука
 
   // mapAnalysisToUsers вынесен в utils/paymentsMapping.ts
 
-  const getWorksData = async (data: { endDate?: string, targetWorkId?: string, targetUserId?: string } = {}) => {
-    const { endDate, targetWorkId, targetUserId } = data;
-
-    const analysis = await analyticsService.getUserWorksClosurePeriodsAnalysis(
-        endDate,
-        targetWorkId ? [targetWorkId] : undefined,
-        targetUserId
-    );
-    const mappedUsers = mapAnalysisToUsers(analysis);
-
-    const sortByName = (arr: ResponsibleUser[]) =>
-        arr.slice().sort((a, b) => {
-          const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim();
-          const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim();
-          return nameA.localeCompare(nameB, 'ru');
-        });
-
-    return sortByName(mappedUsers);
-  }
-
-  const fetchWorksData = async (data: { endDate?: string, targetWorkId?: string, targetUserId?: string } = {}) => {
+  const fetchWorksData = async (
+    data: {
+      endDate?: string;
+      targetWorkId?: string;
+      targetUserId?: string;
+    } = {}
+  ) => {
     setLoading(true);
     try {
-      const mappedUsers = await getWorksData(data);
-      setUsersData(mappedUsers);
+      await fetchWorksDataRaw(data);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateWorksData = async (data: { endDate?: string, targetWorkId?: string, targetUserId?: string } = {}) => {
+  const updateWorksData = async (
+    data: {
+      endDate?: string;
+      targetWorkId?: string;
+      targetUserId?: string;
+    } = {}
+  ) => {
     setLoading(true);
     try {
-      const mappedUsers = await getWorksData(data);
-      const updatedUsers = usersData.map((user) => {
-        const updatedUserInNewResult = mappedUsers.find((mappedUser) => {
-          return mappedUser.userId === user.userId;
-        })
-        if (updatedUserInNewResult) {
-          const works = user.works.map((oldWorkData) => {
-            const updatedWorkInNewResult = updatedUserInNewResult.works.find((newWorkData) => {
-              return oldWorkData.workId === newWorkData.workId;
-            });
-            if (updatedWorkInNewResult) return updatedWorkInNewResult;
-            return oldWorkData;
-          })
-          return {
-            ...updatedUserInNewResult,
-            works,
-          };
-        }
-        return user;
-      })
-      setUsersData(updatedUsers);
+      await updateWorksDataRaw(data);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   // Загрузка данных при монтировании компонента
   useEffect(() => {
@@ -143,311 +127,39 @@ export default function PaymentsPage() {
       logger.error('Ошибка инициализации выплат', err);
       notification.showError('Не удалось загрузить данные по выплатам');
     });
-    fetchMyDebtsData().catch((err) => {
+    fetchMyDebtsDataRaw().catch((err) => {
       logger.error('Ошибка загрузки моих задолженностей', err);
       notification.showError('Не удалось загрузить данные о задолженностях');
     });
   }, []);
 
-  // Загрузка данных о задолженностях текущего пользователя
-  const fetchMyDebtsData = async () => {
-    try {
-      const myDebtsData = await analyticsService.getMyDebts();
-      setMyDebts(myDebtsData.debts as unknown as MyDebt[]);
-    } catch (error) {
-      console.error('Ошибка загрузки моих задолженностей:', error);
-      notification.showError('Не удалось загрузить данные о задолженностях');
-    }
-  };
+  // Загрузка данных о задолженностях текущего пользователя теперь в хуке usePaymentsData
 
-  // Утилита: возвращает выбранную дату периода для работы
-  function getWorkPeriodDate(workId: string): string {
-    if (workPeriodDates[workId]) return workPeriodDates[workId];
-
-    const d = new Date();
-    d.setDate(d.getDate() - 1); // вчера
-    return d.toISOString().split('T')[0];
-  }
-
-  // Утилита: возвращает выбранную дату периода для пользователя
-  function getUserPeriodDate(userId: string): string {
-    if (userPeriodDates[userId]) return userPeriodDates[userId];
-
-    const d = new Date();
-    d.setDate(d.getDate() - 1); // вчера
-    return d.toISOString().split('T')[0];
-  }
+  // getWorkPeriodDate/getUserPeriodDate предоставлены хуком usePeriodDates
 
   // Обработчик показа детального расчета
-  const handleShowCalculation = async (userId: string, workId: string, dutyId?: string) => {
+  const handleShowCalculation = async (
+    userId: string,
+    workId: string,
+    dutyId?: string
+  ) => {
     try {
       setLoading(true);
-
-      let work: { workId: string, workName: string, lastClosureDate: string, salary: number} | null = null;
-      let userWorkEntry: UserWorkDebt | null = null
-      let workEntry: WorkDetail | null = null;
-      let myDebtData: MyDebt | null = null;
-
-      // Найти пользователя и работу в usersData
-      const userData = usersData.find((user) => user.userId === userId);
-      if (userData) {
-        workEntry = userData.works?.find((work) => work.workId === workId);
-        if (workEntry) {
-          work = { workId: workEntry.workId, workName: workEntry.workName, lastClosureDate: workEntry.lastClosureDate, salary: workEntry.salary };
-          userWorkEntry = workEntry.users?.find((user) => user.userId === userId);
-        }
-      }
-
-      // Если не нашли – попробуем долги текущего пользователя
-      if (!work) {
-        const debt = myDebts.find(d => d.workId === workId);
-        if (debt) {
-          work = { workId: debt.workId, workName: debt.workName, salary: 0 } as any;
-          myDebtData = debt;
-        }
-      }
-
-      if (!work) return;
-
-      // История выплат
-      let rawPaymentHistory: any[] = [];
-      let paymentHistoryData: any[] = [];
-      
-      if (userWorkEntry) {
-        // История выплат из worksData
-        rawPaymentHistory = userWorkEntry.paymentHistory || [];
-        paymentHistoryData = rawPaymentHistory.map((payment) => ({
-        id: payment.id,
-        amount: payment.amount,
-        type: payment.type,
-        description: payment.description || '',
-        date: payment.date,
-      }));
-      } else if (myDebtData) {
-        // Для данных из myDebts используем данные о платежах из myDebtData.payments
-        paymentHistoryData = (myDebtData.payments || []).map((payment) => ({
-          id: payment.id,
-          amount: payment.amount,
-          type: payment.paymentType,
-          description: payment.description || '',
-          date: payment.paymentDate,
-        }));
-      }
-
-      const totalPaidAmount = paymentHistoryData.reduce((sum, p: any) => sum + p.amount, 0);
-
-      // 1. Получаем endDate (до которой смотрим периоды)
-      const calculationDate = getWorkPeriodDate(workId);
-
-      // 2. Берём анализ периодов из сохранённых данных worksData, т.к. он уже обновляется при смене даты
-
-      let userPeriodsSource: any | null = null;
-
-      if (userData && workEntry) {
-        // Найдём wrap, соответствующий пользователю
-        const closureWrap = (workEntry as any).rawClosureWraps?.find((cw: any) => cw.closure.userId === userId);
-        if (closureWrap) {
-          userPeriodsSource = closureWrap.userPeriods;
-        }
-      }
-
-      // Функция-парсер даты в формате DD.MM.YYYY -> Date
-      const parseRuDate = (dStr: string): Date => {
-        const [day, month, year] = dStr.split('.').map(Number);
-        return new Date(year, month - 1, day);
-      };
-
-      // Подготовка данных периодов
-      const periods: PeriodCalculation[] = [];
-
-      // Если это данные из myDebts (для текущего пользователя), используем их
-      if (myDebtData) {
-        if (dutyId) {
-          // Расчет по конкретной обязанности
-          const duty = myDebtData.duties.find(d => d.id === dutyId);
-          if (duty && duty.calculatedPeriods) {
-            // Создаем отдельные периоды для каждого периода из duty.calculatedPeriods
-            duty.calculatedPeriods.forEach((period: any) => {
-              const startDate = new Date(period.start);
-              const endDate = new Date(period.end);
-              const daysInPeriod = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-              const monthDays = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
-              periods.push({
-                startDate: startDate.toISOString().split('T')[0],
-                endDate: endDate.toISOString().split('T')[0],
-                days: daysInPeriod,
-                monthDays,
-                duties: [{
-                  dutyId: duty.id,
-                  dutyName: duty.name,
-                  monthlyAmount: duty.monthlyAmount,
-                  calculatedAmount: period.accrued,
-                }],
-                totalAmount: period.accrued,
-              });
-            });
-          }
-        } else {
-          // Расчет по всей работе - собираем все уникальные периоды из всех обязанностей
-          const allPeriods: any[] = [];
-          myDebtData.duties.forEach((duty) => {
-            (duty.calculatedPeriods || []).forEach((period: any) => {
-              allPeriods.push({
-                duty,
-                period,
-              });
-            });
-          });
-          // Группируем периоды по start/end
-          const periodMap = new Map<string, any>();
-          allPeriods.forEach(({duty, period}) => {
-            const key = period.start + '|' + period.end;
-            if (!periodMap.has(key)) {
-              periodMap.set(key, []);
-            }
-            periodMap.get(key).push({ duty, period });
-          });
-          Array.from(periodMap.entries()).forEach(([key, dutyPeriods]) => {
-            const [start, end] = key.split('|');
-            const startDate = new Date(start);
-            const endDate = new Date(end);
-            const daysInPeriod = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-            const monthDays = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
-            const dutiesForPeriod = dutyPeriods.map(({duty, period}: any) => ({
-              dutyId: duty.id,
-              dutyName: duty.name,
-              monthlyAmount: duty.monthlyAmount,
-              calculatedAmount: period.accrued,
-            }));
-            const totalAmount = dutiesForPeriod.reduce((sum, d) => sum + d.calculatedAmount, 0);
-            periods.push({
-              startDate: startDate.toISOString().split('T')[0],
-              endDate: endDate.toISOString().split('T')[0],
-              days: daysInPeriod,
-              monthDays,
-              duties: dutiesForPeriod,
-              totalAmount,
-            });
-          });
-        }
-      } else if (userPeriodsSource && userPeriodsSource.dutiesPeriods?.length) {
-        const salary = Number(work.salary) || 0;
-
-        userPeriodsSource.dutiesPeriods.forEach((p: any) => {
-          const periodStartDate = parseRuDate(p.startDate);
-          const periodEndDate = parseRuDate(p.endDate);
-
-          const monthDays = new Date(
-            periodEndDate.getFullYear(),
-            periodEndDate.getMonth() + 1,
-            0
-          ).getDate();
-
-          const dutiesCalc = p.distributionDetails.map((dd: any) => {
-            const price = Number(dd.price) || 0;
-            const perc = Number(dd.percentage) || 0;
-            const monthlyAmount = price + (salary * perc) / 100;
-            return {
-              dutyId: dd.dutyId,
-              dutyName: dd.duty?.name || '—',
-              monthlyAmount,
-              calculatedAmount: Math.round(Number(dd.calculatedValuePeriod) || 0),
-            };
-          });
-
-          // При фильтрации по конкретной dutyId оставляем только нужную обязанность
-          const filteredDuties = dutyId
-            ? dutiesCalc.filter((d: any) => d.dutyId === dutyId)
-            : dutiesCalc;
-
-          if (filteredDuties.length === 0) return; // если после фильтра ничего не осталось
-
-          const totalAmount = filteredDuties.reduce((s: number, d: any) => s + d.calculatedAmount, 0);
-
-          periods.push({
-            startDate: p.startDate.split('.').reverse().join('-'), // to ISO YYYY-MM-DD
-            endDate: p.endDate.split('.').reverse().join('-'),
-            days: p.daysInPeriod,
-            monthDays,
-            duties: filteredDuties,
-            totalAmount,
-          });
-        });
-      }
-
-      // Если по каким-то причинам периодов нет — fallback на пустой расчёт
-      if (periods.length === 0) {
-        periods.push({
-          startDate: work.lastClosureDate || '2024-01-01',
-          endDate: calculationDate,
-          days: 0,
-          monthDays: 0,
-          duties: [],
-          totalAmount: 0,
-        });
-      }
-
-      // Для данных из myDebts используем поля из обязанности или работы
-      let totalAccrued, totalPaid, remainingDebt;
-      
-      if (myDebtData) {
-        if (dutyId) {
-          // Расчет по конкретной обязанности
-          const duty = myDebtData.duties.find(d => d.id === dutyId);
-          if (duty) {
-            totalAccrued = duty.totalAccrued || periods.reduce((sum, pr) => sum + pr.totalAmount, 0);
-            totalPaid = duty.totalPaid || 0;
-            remainingDebt = duty.totalDebt || (totalAccrued - totalPaid);
-          } else {
-            totalAccrued = periods.reduce((sum, pr) => sum + pr.totalAmount, 0);
-            totalPaid = totalPaidAmount;
-            remainingDebt = totalAccrued - totalPaidAmount;
-          }
-        } else {
-          // Расчет по всей работе
-          totalAccrued = myDebtData.totalAccrued || periods.reduce((sum, pr) => sum + pr.totalAmount, 0);
-          totalPaid = myDebtData.totalPaid || totalPaidAmount;
-          remainingDebt = myDebtData.totalDebt || (totalAccrued - totalPaid);
-        }
-      } else {
-        totalAccrued = periods.reduce((sum, pr) => sum + pr.totalAmount, 0);
-        totalPaid = totalPaidAmount;
-        remainingDebt = totalAccrued - totalPaidAmount;
-      }
-
-      // Получаем имя пользователя
-      let userName = 'Пользователь';
-      let workName = work.workName;
-      
-      if (userData) {
-        userName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Пользователь';
-      }
-
-      const detailedCalc: DetailedCalculation = {
+      const result = buildWorkDetailedCalculation({
+        usersData,
+        myDebts,
         userId,
         workId,
-        userName,
-        workName,
-        periods,
-        totalAccrued,
-        totalPaid,
-        remainingDebt,
-        lastClosureDate: work.lastClosureDate || null,
-        paymentHistory: paymentHistoryData,
-      };
-
-      setSelectedCalculation(detailedCalc);
+        dutyId,
+        getWorkPeriodDate,
+      });
+      if (!result) return;
+      setSelectedCalculation(result.calculation);
       setIsUserCalculation(false);
       setCalculationType('work');
       setIsDutyCalculation(!!dutyId);
       setCalculationModalOpen(true);
-
-      logger.debug('dutyId: ', dutyId);
-      if (dutyId) {
-        setCalculationModalShowPaymentHistory(false)
-      } else {
-        setCalculationModalShowPaymentHistory(true)
-      }
+      setCalculationModalShowPaymentHistory(result.showPaymentHistory);
     } catch (error) {
       console.error('Ошибка при загрузке расчета:', error);
     } finally {
@@ -459,129 +171,12 @@ export default function PaymentsPage() {
   const handleShowUserCalculation = async (userId: string) => {
     try {
       setLoading(true);
-
-      const userData = usersData.find(u => u.userId === userId);
-      if (!userData || !userData.works || userData.works.length === 0) return;
-
-      // Берем первую работу как основную для отображения
-      const firstWork = userData.works[0];
-
-      // Используем уже правильно рассчитанные данные из userData
-      const totalAccrued = userData.totalAccrued;
-      const totalPaid = userData.totalPaid;
-      // Рассчитываем общий остаток как сумму только положительных остатков по работам
-      const remainingDebt = userData.works.reduce((sum, work) => {
-        const workRemaining = work.totalDebt;
-        return sum + (workRemaining > 0 ? workRemaining : 0);
-      }, 0);
-
-      // Собираем все обязанности пользователя из всех работ с группировкой по работам
-      const allDuties: any[] = [];
-      const allPaymentHistory: any[] = [];
-      const workGroups: any[] = [];
-
-      userData.works.forEach(work => {
-        const userWork = work.users?.find(u => u.userId === userId);
-        if (userWork) {
-          allDuties.push(...userWork.duties);
-          // Собираем историю выплат из всех работ
-          if (userWork.paymentHistory && userWork.paymentHistory.length > 0) {
-            allPaymentHistory.push(...userWork.paymentHistory);
-          }
-
-          // Создаем группу для каждой работы
-          if (userWork.duties && userWork.duties.length > 0) {
-            workGroups.push({
-              workId: work.workId,
-              workName: work.workName,
-              duties: userWork.duties.map((duty: any, index: number) => ({
-                dutyId: `${duty.dutyId}-${index}`, // Добавляем индекс для уникальности ключа
-                dutyName: duty.dutyName,
-                monthlyAmount: duty.monthlyAmount,
-                calculatedAmount: duty.debt,
-              }))
-            });
-          }
-        }
-      });
-
-      // Сортируем историю выплат по дате (новые сначала)
-      const sortedPaymentHistory = allPaymentHistory.sort((a, b) => {
-        const dateA = new Date(a.date || a.paymentDate || 0);
-        const dateB = new Date(b.date || b.paymentDate || 0);
-        return dateB.getTime() - dateA.getTime();
-      });
-
-      // Создаем один период с общими обязанностями
-      const startDate = firstWork.lastClosureDate || '2024-01-01';
-      const endDate = getWorkPeriodDate(firstWork.workId);
-
-      // Рассчитываем количество дней между датами (включительно)
-      const startDateObj = new Date(startDate);
-      const endDateObj = new Date(endDate);
-
-      // Отладочная информация
-      logger.debug('Расчет дней для общего расчета пользователя:', { startDate, endDate });
-
-      // Более надежный способ расчета дней
-      const startYear = startDateObj.getFullYear();
-      const startMonth = startDateObj.getMonth();
-      const startDay = startDateObj.getDate();
-
-      const endYear = endDateObj.getFullYear();
-      const endMonth = endDateObj.getMonth();
-      const endDay = endDateObj.getDate();
-
-      // Создаем даты без времени для точного расчета
-      const startDateOnly = new Date(startYear, startMonth, startDay);
-      const endDateOnly = new Date(endYear, endMonth, endDay);
-
-      const timeDiff = endDateOnly.getTime() - startDateOnly.getTime();
-      const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1; // +1 для включительного подсчета
-
-      logger.debug('Подробности расчета дней', { startDateOnly, endDateOnly, timeDiff, days });
-
-      // Получаем количество дней в месяце для конечной даты
-      const monthDays = new Date(
-        endDateObj.getFullYear(),
-        endDateObj.getMonth() + 1,
-        0
-      ).getDate();
-
-      const periods: PeriodCalculation[] = [{
-        startDate,
-        endDate,
-        days,
-        monthDays,
-        duties: allDuties.map((duty, index) => ({
-          dutyId: `${duty.dutyId}-${index}`, // Добавляем индекс для уникальности ключа
-          dutyName: duty.dutyName,
-          monthlyAmount: duty.monthlyAmount,
-          calculatedAmount: duty.debt,
-        })),
-        workGroups: workGroups, // Добавляем группировку по работам
-        totalAmount: totalAccrued,
-      }];
-
-      // Получаем имя пользователя
-      let userName = 'Пользователь';
-      if (userData) {
-        userName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Пользователь';
-      }
-
-      const detailedCalc: DetailedCalculation = {
+      const detailedCalc = buildUserDetailedCalculation({
+        usersData,
         userId,
-        workId: firstWork.workId,
-        userName,
-        workName: firstWork.workName,
-        periods,
-        totalAccrued,
-        totalPaid,
-        remainingDebt,
-        lastClosureDate: firstWork.lastClosureDate || null,
-        paymentHistory: sortedPaymentHistory, // Общая история выплат из всех работ
-      };
-
+        getWorkPeriodDate,
+      });
+      if (!detailedCalc) return;
       setSelectedCalculation(detailedCalc);
       setIsUserCalculation(true);
       setCalculationType('user');
@@ -594,7 +189,14 @@ export default function PaymentsPage() {
   };
 
   // Обработчик создания выплаты
-  const handleCreatePayment = (userId: string, workId: string, amount: number, userName: string, workName: string, dutyId?: string) => {
+  const handleCreatePayment = (
+    userId: string,
+    workId: string,
+    amount: number,
+    userName: string,
+    workName: string,
+    dutyId?: string
+  ) => {
     // Устанавливаем данные для PaymentModal
     setSelectedPayment({
       userId,
@@ -608,7 +210,11 @@ export default function PaymentsPage() {
   };
 
   // состояние для предзаполнения произвольной выплаты
-  const [customPaymentPrefill, setCustomPaymentPrefill] = useState<{ workId: string; userId: string; amount: number } | null>(null);
+  const [customPaymentPrefill, setCustomPaymentPrefill] = useState<{
+    workId: string;
+    userId: string;
+    amount: number;
+  } | null>(null);
 
   // Обработчики раскрытия/скрытия
   const toggleUserExpanded = (userId: string) => {
@@ -638,7 +244,11 @@ export default function PaymentsPage() {
 
   const { showError } = useNotification();
 
-  const handleWorkPeriodDateChange = async (workId: string, date: string, userId?: string) => {
+  const handleWorkPeriodDateChange = async (
+    workId: string,
+    date: string,
+    userId?: string
+  ) => {
     if (new Date(date) > new Date()) {
       showError('Дата окончания не может быть в будущем');
       return;
@@ -655,7 +265,11 @@ export default function PaymentsPage() {
 
     // Пытаемся получить свежие данные
     try {
-      await updateWorksData({ endDate: date, targetWorkId: workId, targetUserId: userId });
+      await updateWorksData({
+        endDate: date,
+        targetWorkId: workId,
+        targetUserId: userId,
+      });
     } catch (err: any) {
       // Откатываем дату назад
       setWorkPeriodDates((prev) => ({
@@ -689,8 +303,8 @@ export default function PaymentsPage() {
       setWorkPeriodDates((prev) => ({
         ...prev,
         [work.workId]: date,
-      }))
-    })
+      }));
+    });
 
     // Пытаемся получить свежие данные
     try {
@@ -718,13 +332,16 @@ export default function PaymentsPage() {
   ) => {
     try {
       // Обновляем данные для всех работ пользователя, чтобы не потерять другие работы
-      const userData = usersData.find(u => u.userId === userId);
+      const userData = usersData.find((u) => u.userId === userId);
       if (!userData || !userData.works) return;
 
       // Получаем самую раннюю дату из всех работ пользователя
-      const dates = userData.works.map(work => getWorkPeriodDate(work.workId));
-      const earliestDate = dates.reduce((earliest, current) =>
-        current < earliest ? current : earliest, dates[0]
+      const dates = userData.works.map((work) =>
+        getWorkPeriodDate(work.workId)
+      );
+      const earliestDate = dates.reduce(
+        (earliest, current) => (current < earliest ? current : earliest),
+        dates[0]
       );
 
       // Обновляем все данные, так как API не поддерживает фильтрацию по пользователю
@@ -743,20 +360,23 @@ export default function PaymentsPage() {
     }
 
     // Обновляем данные о задолженностях текущего пользователя
-    await fetchMyDebtsData();
+    await fetchMyDebtsDataRaw();
   };
 
   // Функция для обновления данных после выплаты через общий расчет пользователя
   const refreshAfterUserPayment = async (userId: string) => {
     try {
       // Обновляем данные для всех работ пользователя
-      const userData = usersData.find(u => u.userId === userId);
+      const userData = usersData.find((u) => u.userId === userId);
       if (!userData || !userData.works) return;
 
       // Получаем самую раннюю дату из всех работ пользователя
-      const dates = userData.works.map(work => getWorkPeriodDate(work.workId));
-      const earliestDate = dates.reduce((earliest, current) =>
-        current < earliest ? current : earliest, dates[0]
+      const dates = userData.works.map((work) =>
+        getWorkPeriodDate(work.workId)
+      );
+      const earliestDate = dates.reduce(
+        (earliest, current) => (current < earliest ? current : earliest),
+        dates[0]
       );
 
       // Обновляем все данные, так как API не поддерживает фильтрацию по пользователю
@@ -769,18 +389,21 @@ export default function PaymentsPage() {
         } else {
           // Если это был расчет конкретной работы, но мы обновляем пользователя,
           // то нужно найти эту работу и обновить расчет
-          const userData = usersData.find(u => u.userId === userId);
+          const userData = usersData.find((u) => u.userId === userId);
           if (userData && selectedCalculation.workId) {
             await handleShowCalculation(userId, selectedCalculation.workId);
           }
         }
       }
     } catch (err) {
-      console.error('Не удалось обновить данные после выплаты пользователя', err);
+      console.error(
+        'Не удалось обновить данные после выплаты пользователя',
+        err
+      );
     }
 
     // Обновляем данные о задолженностях текущего пользователя
-    await fetchMyDebtsData();
+    await fetchMyDebtsDataRaw();
   };
 
   // Обработчики модальных окон
@@ -821,7 +444,10 @@ export default function PaymentsPage() {
             ...prev,
             paymentHistory,
             totalPaid,
-            remainingDebt: Math.max(prev.remainingDebt - result.payment.amount, 0),
+            remainingDebt: Math.max(
+              prev.remainingDebt - result.payment.amount,
+              0
+            ),
           };
         });
       }
@@ -901,8 +527,12 @@ export default function PaymentsPage() {
               <CurrencyDollarIcon className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Система выплат</h1>
-              <p className="text-gray-600">Управление выплатами и задолженностями</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Система выплат
+              </h1>
+              <p className="text-gray-600">
+                Управление выплатами и задолженностями
+              </p>
             </div>
           </div>
 
@@ -974,18 +604,26 @@ export default function PaymentsPage() {
 
                         {/* Обязанности пользователя */}
                         <div>
-                          <h5 className="text-sm font-semibold text-gray-700 mb-2">Обязанности:</h5>
+                          <h5 className="text-sm font-semibold text-gray-700 mb-2">
+                            Обязанности:
+                          </h5>
                           <div className="space-y-2">
-                            {work.users?.find(u => u.userId === user.userId)?.duties.map((duty, index) => (
-                              <DutyCard
-                                key={duty.dutyId}
-                                duty={duty}
-                                index={index}
-                                onShowCalculation={(dutyId) => {
-                                  handleShowCalculation(user.userId, work.workId, dutyId);
-                                }}
-                              />
-                            ))}
+                            {work.users
+                              ?.find((u) => u.userId === user.userId)
+                              ?.duties.map((duty, index) => (
+                                <DutyCard
+                                  key={duty.dutyId}
+                                  duty={duty}
+                                  index={index}
+                                  onShowCalculation={(dutyId) => {
+                                    handleShowCalculation(
+                                      user.userId,
+                                      work.workId,
+                                      dutyId
+                                    );
+                                  }}
+                                />
+                              ))}
                           </div>
                         </div>
                       </div>
@@ -1018,8 +656,16 @@ export default function PaymentsPage() {
           }}
           calculation={selectedCalculation}
           onCreatePayment={handleCreatePayment}
-          isDebtsView={myDebts.some(debt => debt.workId === selectedCalculation?.workId) && !isDutyCalculation}
-          calculationDate={selectedCalculation ? getWorkPeriodDate(selectedCalculation.workId) : undefined}
+          isDebtsView={
+            myDebts.some(
+              (debt) => debt.workId === selectedCalculation?.workId
+            ) && !isDutyCalculation
+          }
+          calculationDate={
+            selectedCalculation
+              ? getWorkPeriodDate(selectedCalculation.workId)
+              : undefined
+          }
           isUserCalculation={isUserCalculation}
           showPaymentHistory={calculationModalShowPaymentHistory}
         />
@@ -1031,7 +677,11 @@ export default function PaymentsPage() {
             setSelectedPayment(null);
           }}
           payment={selectedPayment}
-          paymentDate={selectedCalculation ? getWorkPeriodDate(selectedCalculation.workId) : null}
+          paymentDate={
+            selectedCalculation
+              ? getWorkPeriodDate(selectedCalculation.workId)
+              : null
+          }
           onSubmit={handlePaymentSubmit}
         />
 
@@ -1049,4 +699,4 @@ export default function PaymentsPage() {
       </div>
     </div>
   );
-} 
+}

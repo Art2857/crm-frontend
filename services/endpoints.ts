@@ -42,7 +42,8 @@ export const DUTIES_ENDPOINTS = {
 export const DISTRIBUTIONS_ENDPOINTS = {
   base: '/distributions',
   byId: (id: string) => `/distributions/${id}`,
-  byWorkHistoryId: (workHistoryId: string) => `/distributions/work-history/${workHistoryId}`,
+  byWorkHistoryId: (workHistoryId: string) =>
+    `/distributions/work-history/${workHistoryId}`,
   byWorkId: (workId: string) => `/distributions/work/${workId}`,
 } as const;
 
@@ -72,5 +73,3 @@ export const DASHBOARD_ENDPOINTS = {
 export const HEALTH_ENDPOINTS = {
   base: '/health',
 } as const;
-
-

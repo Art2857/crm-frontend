@@ -40,11 +40,13 @@ export const dashboardService = {
   // Получение данных главной страницы
   async getDashboardData(): Promise<DashboardData> {
     try {
-      const response = await privateApi.get<DashboardData>(DASHBOARD_ENDPOINTS.base);
+      const response = await privateApi.get<DashboardData>(
+        DASHBOARD_ENDPOINTS.base
+      );
       return response.data;
     } catch (error) {
       logger.error('Error fetching dashboard data:', error);
       throw error;
     }
-  }
-}; 
+  },
+};

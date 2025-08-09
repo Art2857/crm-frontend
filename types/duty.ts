@@ -79,4 +79,4 @@ export interface DistributionWithDetails extends Distribution {
       email: string;
     };
   })[];
-} 
+}

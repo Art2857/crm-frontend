@@ -15,11 +15,11 @@ interface AccountMenuProps {
   triggerRef?: React.RefObject<HTMLElement>;
 }
 
-const AccountMenu: React.FC<AccountMenuProps> = ({ 
-  currentUserId, 
-  isOpen, 
+const AccountMenu: React.FC<AccountMenuProps> = ({
+  currentUserId,
+  isOpen,
   onClose,
-  triggerRef
+  triggerRef,
 }) => {
   const [accounts, setAccounts] = useState<SavedAccount[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,7 +54,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
       const rect = triggerRef.current.getBoundingClientRect();
       setPosition({
         top: rect.bottom + window.scrollY,
-        right: window.innerWidth - rect.right - window.scrollX
+        right: window.innerWidth - rect.right - window.scrollX,
       });
     }
   };
@@ -66,93 +66,108 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
   };
 
   // Переключение на другой аккаунт - мемоизированная функция для предотвращения повторного создания
-  const handleSwitchAccount = useCallback(async (accountId: string, e?: React.MouseEvent | React.TouchEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    if (accountId === currentUserId) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const account = authService.switchAccount(accountId);
-      if (account) {
-        // Сначала закрываем меню и применяем данные аккаунта
-        onClose();
-        
-        // Затем обновляем состояние приложения
-        dispatch(setCredentials({
-          user: account.user,
-          token: account.token
-        }));
-        
-        // И только после этого переходим на страницу аккаунтов с некоторой задержкой
-        setTimeout(() => {
-          router.push('/accounts');
-        }, 150);
+  const handleSwitchAccount = useCallback(
+    async (accountId: string, e?: React.MouseEvent | React.TouchEvent) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
       }
-    } catch (error) {
-      console.error('Ошибка при переключении аккаунта:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentUserId, dispatch, onClose, router]);
+
+      if (accountId === currentUserId) {
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const account = authService.switchAccount(accountId);
+        if (account) {
+          // Сначала закрываем меню и применяем данные аккаунта
+          onClose();
+
+          // Затем обновляем состояние приложения
+          dispatch(
+            setCredentials({
+              user: account.user,
+              token: account.token,
+            })
+          );
+
+          // И только после этого переходим на страницу аккаунтов с некоторой задержкой
+          setTimeout(() => {
+            router.push('/accounts');
+          }, 150);
+        }
+      } catch (error) {
+        console.error('Ошибка при переключении аккаунта:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [currentUserId, dispatch, onClose, router]
+  );
 
   // Удаление аккаунта
-  const handleRemoveAccount = useCallback((e: React.MouseEvent, accountId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    authService.removeAccount(accountId);
-    loadAccounts();
-  }, []);
+  const handleRemoveAccount = useCallback(
+    (e: React.MouseEvent, accountId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      authService.removeAccount(accountId);
+      loadAccounts();
+    },
+    []
+  );
 
   // Переход на страницу логина - мемоизированный обработчик
-  const navigateToLogin = useCallback(async (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Спрашиваем пользователя, хочет ли он добавить новый аккаунт
-    const isConfirmed = await confirm({
-      title: 'Добавление нового аккаунта',
-      message: 'Вы хотите добавить новый аккаунт? Для этого вам нужно будет войти в него, но вы останетесь в своем текущем аккаунте.',
-      confirmText: 'Добавить',
-      cancelText: 'Отмена'
-    });
-    
-    if (isConfirmed) {
-      // Сохраняем идентификатор текущего аккаунта для возможности восстановления
-      accountNavigation.saveCurrentAccountId(currentUserId);
-      
-      // Сначала закрываем меню
-      onClose();
-      
-      // Устанавливаем флаг возврата к аккаунтам
-      accountNavigation.setReturnToAccounts(true);
-      
-      // Переходим на страницу логина без выхода из текущего аккаунта
-      setTimeout(() => {
-        router.push('/login?mode=add');
-      }, 150);
-    }
-  }, [dispatch, onClose, router, currentUserId, confirm]);
+  const navigateToLogin = useCallback(
+    async (e: React.MouseEvent | React.TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Спрашиваем пользователя, хочет ли он добавить новый аккаунт
+      const isConfirmed = await confirm({
+        title: 'Добавление нового аккаунта',
+        message:
+          'Вы хотите добавить новый аккаунт? Для этого вам нужно будет войти в него, но вы останетесь в своем текущем аккаунте.',
+        confirmText: 'Добавить',
+        cancelText: 'Отмена',
+      });
+
+      if (isConfirmed) {
+        // Сохраняем идентификатор текущего аккаунта для возможности восстановления
+        accountNavigation.saveCurrentAccountId(currentUserId);
+
+        // Сначала закрываем меню
+        onClose();
+
+        // Устанавливаем флаг возврата к аккаунтам
+        accountNavigation.setReturnToAccounts(true);
+
+        // Переходим на страницу логина без выхода из текущего аккаунта
+        setTimeout(() => {
+          router.push('/login?mode=add');
+        }, 150);
+      }
+    },
+    [dispatch, onClose, router, currentUserId, confirm]
+  );
 
   // Переход на страницу управления аккаунтами - мемоизированный обработчик
-  const navigateToAccounts = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Сначала закрываем меню
-    onClose();
-    
-    // Затем с небольшой задержкой переходим на страницу аккаунтов
-    setTimeout(() => {
-      router.push('/accounts');
-    }, 150);
-  }, [onClose, router]);
+  const navigateToAccounts = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Сначала закрываем меню
+      onClose();
+
+      // Затем с небольшой задержкой переходим на страницу аккаунтов
+      setTimeout(() => {
+        router.push('/accounts');
+      }, 150);
+    },
+    [onClose, router]
+  );
 
   return (
     <Modal
@@ -160,21 +175,25 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
       onClose={onClose}
       position={{
         top: position.top,
-        right: position.right
+        right: position.right,
       }}
       className="w-72 overflow-hidden"
     >
       <div className="py-2 px-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700">Переключение аккаунтов</h3>
+        <h3 className="text-sm font-medium text-gray-700">
+          Переключение аккаунтов
+        </h3>
       </div>
-      
+
       <div className="max-h-72 overflow-y-auto">
         {accounts.length === 0 ? (
-          <p className="text-sm text-gray-500 p-4 text-center">Нет сохраненных аккаунтов</p>
+          <p className="text-sm text-gray-500 p-4 text-center">
+            Нет сохраненных аккаунтов
+          </p>
         ) : (
           <ul className="py-1">
             {accounts.map((account) => (
-              <li 
+              <li
                 key={account.id}
                 className={`account-menu-item flex items-center justify-between px-4 py-2 hover:bg-gray-50 cursor-pointer ${
                   account.id === currentUserId ? 'bg-primary-50' : ''
@@ -187,7 +206,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
                 onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  
+
                   if (account.id !== currentUserId) {
                     handleSwitchAccount(account.id, e);
                   }
@@ -195,7 +214,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  
+
                   if (account.id !== currentUserId) {
                     handleSwitchAccount(account.id, e);
                   }
@@ -203,11 +222,13 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
               >
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-gray-800">
-                    {(account.user.firstName || account.user.lastName) ? 
-                      `${account.user.firstName || ''} ${account.user.lastName || ''}`.trim() : 
-                      account.user.email.split('@')[0]}
+                    {account.user.firstName || account.user.lastName
+                      ? `${account.user.firstName || ''} ${account.user.lastName || ''}`.trim()
+                      : account.user.email.split('@')[0]}
                   </span>
-                  <span className="text-xs text-gray-500">{account.user.email}</span>
+                  <span className="text-xs text-gray-500">
+                    {account.user.email}
+                  </span>
                 </div>
                 {account.id !== currentUserId && (
                   <button
@@ -215,8 +236,19 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
                     className="text-gray-400 hover:text-red-500"
                     title="Удалить аккаунт"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
                     </svg>
                   </button>
                 )}
@@ -225,7 +257,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
           </ul>
         )}
       </div>
-      
+
       <div className="py-2 px-4 border-t border-gray-200">
         <div className="flex flex-col space-y-2">
           <button
@@ -250,7 +282,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
           >
             Добавить новый аккаунт
           </button>
-          
+
           <button
             className="account-menu-button"
             onTouchStart={(e) => {
@@ -279,4 +311,4 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
   );
 };
 
-export default AccountMenu; 
+export default AccountMenu;

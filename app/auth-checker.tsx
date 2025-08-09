@@ -6,10 +6,19 @@ import { getCurrentUser } from '../store/slices/auth';
 import { authService } from '../services/auth';
 import { tokenStorage } from '../services/tokenStorage';
 import { logger } from '../utils/logger';
+import { isJwtExpired } from '../utils/jwt';
 
-export default function AuthChecker({ children }: { children: React.ReactNode }) {
+export default function AuthChecker({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const dispatch = useAppDispatch();
-  const { isAuthenticated, user, isLoading: authLoading } = useAppSelector((state) => state.auth);
+  const {
+    isAuthenticated,
+    user,
+    isLoading: authLoading,
+  } = useAppSelector((state) => state.auth);
   const [isInitializing, setIsInitializing] = useState(true);
   const initializationRef = useRef(false); // Предотвращаем множественные инициализации
 
@@ -22,36 +31,59 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
     // Проверяем наличие токена в localStorage
     const checkAuthentication = async () => {
       initializationRef.current = true;
-      
+
       try {
         const hasToken = authService.isAuthenticated();
-        
-        logger.debug('AuthChecker: проверка аутентификации', { 
-          hasToken, 
-          isAuthenticated, 
+        const token = tokenStorage.getAccessToken();
+
+        logger.debug('AuthChecker: проверка аутентификации', {
+          hasToken,
+          isAuthenticated,
           hasUser: !!user,
-          authLoading 
+          authLoading,
         });
-        
+
+        // Если токен есть, но истёк — попробуем рефрешнуть заранее
+        if (token && isJwtExpired(token)) {
+          try {
+            logger.info('🔄 AuthChecker: access token истёк, пробуем refresh');
+            await authService.refreshTokens();
+          } catch (e) {
+            logger.warn('❌ AuthChecker: refresh не удался, выходим');
+            // Очистка и редирект
+            tokenStorage.clearAll();
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(
+                'redirectAfterLogin',
+                window.location.pathname
+              );
+              window.location.href = '/login';
+              return;
+            }
+          }
+        }
+
         if (hasToken && (!isAuthenticated || !user)) {
-          // Если токен есть в localStorage, но состояние не аутентифицировано 
+          // Если токен есть в localStorage, но состояние не аутентифицировано
           // или данные пользователя не загружены - получаем текущего пользователя
           logger.debug('AuthChecker: загружаем данные пользователя');
           await dispatch(getCurrentUser()).unwrap();
         } else if (!hasToken && isAuthenticated) {
           // Если токена нет, но состояние показывает аутентификацию - очищаем состояние
-          logger.debug('AuthChecker: токен отсутствует, но состояние аутентифицировано - очищаем');
+          logger.debug(
+            'AuthChecker: токен отсутствует, но состояние аутентифицировано - очищаем'
+          );
           tokenStorage.clearAll();
         }
       } catch (error: any) {
         logger.error('AuthChecker: ошибка при проверке аутентификации:', error);
-        
+
         // Игнорируем отмененные запросы
         if (error.message === 'REQUEST_CANCELLED') {
           // Тихо игнорируем отмену
           return;
         }
-        
+
         // Если произошла ошибка при проверке токена, очищаем localStorage
         tokenStorage.clearAll();
       } finally {
@@ -62,6 +94,35 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
 
     checkAuthentication();
   }, [dispatch, isAuthenticated, user, authLoading]);
+
+  // На переключение вкладки/возврат в приложение — проверяем срок действия токена
+  useEffect(() => {
+    const onVisibilityChange = async () => {
+      if (document.visibilityState !== 'visible') return;
+      const token = tokenStorage.getAccessToken();
+      if (!token) return;
+      if (isJwtExpired(token)) {
+        try {
+          logger.info(
+            '🔄 AuthChecker: вкладка активирована, token истёк — refresh'
+          );
+          await authService.refreshTokens();
+        } catch (e) {
+          tokenStorage.clearAll();
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(
+              'redirectAfterLogin',
+              window.location.pathname
+            );
+            window.location.href = '/login';
+          }
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, []);
 
   // Если инициализация еще не завершена, показываем индикатор загрузки
   if (isInitializing || authLoading) {
@@ -74,4 +135,4 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
   }
 
   return <>{children}</>;
-} 
+}

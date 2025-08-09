@@ -6,13 +6,13 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import TextArea from '../ui/TextArea';
 import { formatCurrency } from '../../utils/payments';
-import { 
+import {
   BanknotesIcon,
   CurrencyDollarIcon,
   DocumentTextIcon,
   UserIcon,
   BuildingOfficeIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { PaymentFormData, PaymentModalData } from '../../types/payments';
 
@@ -29,7 +29,7 @@ export default function PaymentModal({
   onClose,
   payment,
   paymentDate,
-  onSubmit
+  onSubmit,
 }: PaymentModalProps) {
   const [description, setDescription] = useState('');
 
@@ -52,7 +52,7 @@ export default function PaymentModal({
       amount: payment.amount,
       type: 'SALARY',
       description: finalDescription,
-      date
+      date,
     });
   };
 
@@ -77,13 +77,23 @@ export default function PaymentModal({
               onClick={onClose}
               className="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
         </div>
-        
+
         {/* Форма */}
         <div className="p-4 overflow-y-auto max-h-[75vh]">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -92,19 +102,25 @@ export default function PaymentModal({
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <UserIcon className="h-4 w-4 text-blue-500" />
-                  <span className="text-xs font-medium text-gray-600">Получатель:</span>
-                  <span className="font-semibold text-gray-900 text-sm">{payment.userName}</span>
+                  <span className="text-xs font-medium text-gray-600">
+                    Получатель:
+                  </span>
+                  <span className="font-semibold text-gray-900 text-sm">
+                    {payment.userName}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <BuildingOfficeIcon className="h-4 w-4 text-green-500" />
-                  <span className="text-xs font-medium text-gray-600">Работа:</span>
-                  <span className="font-semibold text-gray-900 text-sm">{payment.workName}</span>
+                  <span className="text-xs font-medium text-gray-600">
+                    Работа:
+                  </span>
+                  <span className="font-semibold text-gray-900 text-sm">
+                    {payment.workName}
+                  </span>
                 </div>
               </div>
             </div>
-          
 
-          
             {/* Тип выплаты */}
             <div className="space-y-2">
               <label className="flex items-center text-sm font-semibold text-gray-700">
@@ -112,19 +128,26 @@ export default function PaymentModal({
                 Тип выплаты
               </label>
               <div className="p-3 rounded-lg border-2 border-purple-500 bg-purple-50 shadow-md">
-                    <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2">
                   <span className="text-sm">💰</span>
-                      <div>
-                    <p className="font-medium text-gray-900 text-sm">Зарплата</p>
-                    <p className="text-xs text-gray-500">Влияет на закрытие долга</p>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">
+                      Зарплата
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Влияет на закрытие долга
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
-          
+
             {/* Описание */}
             <div className="space-y-2">
-              <label htmlFor="description" className="flex items-center text-sm font-semibold text-gray-700">
+              <label
+                htmlFor="description"
+                className="flex items-center text-sm font-semibold text-gray-700"
+              >
                 <DocumentTextIcon className="h-4 w-4 mr-2 text-indigo-500" />
                 Описание
               </label>
@@ -139,32 +162,32 @@ export default function PaymentModal({
             </div>
 
             {/* Сводка */}
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3 border border-green-200">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="bg-green-100 p-1 rounded">
-                    <CheckCircleIcon className="h-4 w-4 text-green-600" />
-                  </div>
-                  <h4 className="font-semibold text-green-900 text-sm">Итоговая сумма выплаты</h4>
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3 border border-green-200">
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="bg-green-100 p-1 rounded">
+                  <CheckCircleIcon className="h-4 w-4 text-green-600" />
                 </div>
-                <p className="text-xl font-bold text-green-700">
-                {formatCurrency(payment.amount)}
-                </p>
-                <p className="text-xs text-gray-600 mt-1">
-                Тип: 💰 Зарплата
-                </p>
+                <h4 className="font-semibold text-green-900 text-sm">
+                  Итоговая сумма выплаты
+                </h4>
               </div>
-          
+              <p className="text-xl font-bold text-green-700">
+                {formatCurrency(payment.amount)}
+              </p>
+              <p className="text-xs text-gray-600 mt-1">Тип: 💰 Зарплата</p>
+            </div>
+
             {/* Кнопки */}
             <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 onClick={onClose}
                 className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-all"
               >
                 Отмена
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
               >
                 <BanknotesIcon className="h-4 w-4 mr-2" />
@@ -176,4 +199,4 @@ export default function PaymentModal({
       </div>
     </Modal>
   );
-} 
+}

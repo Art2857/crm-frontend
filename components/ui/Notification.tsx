@@ -17,7 +17,7 @@ const Notification: React.FC<NotificationProps> = ({
   errorMessage,
   onClearSuccess,
   onClearError,
-  autoHideDuration = 5000 // По умолчанию 5 секунд для всех уведомлений
+  autoHideDuration = 5000, // По умолчанию 5 секунд для всех уведомлений
 }) => {
   useEffect(() => {
     // Если есть сообщение об успехе и обработчик для очистки, устанавливаем таймер
@@ -25,7 +25,7 @@ const Notification: React.FC<NotificationProps> = ({
       const timer = setTimeout(() => {
         onClearSuccess();
       }, autoHideDuration);
-      
+
       // Очищаем таймер при размонтировании компонента или изменении сообщения
       return () => clearTimeout(timer);
     }
@@ -37,7 +37,7 @@ const Notification: React.FC<NotificationProps> = ({
       const timer = setTimeout(() => {
         onClearError();
       }, autoHideDuration);
-      
+
       // Очищаем таймер при размонтировании компонента или изменении сообщения
       return () => clearTimeout(timer);
     }
@@ -46,14 +46,14 @@ const Notification: React.FC<NotificationProps> = ({
   if (!successMessage && !errorMessage) {
     return null;
   }
-  
+
   return (
     <div className="mb-4 space-y-2">
       {successMessage && (
         <Alert type="success">
           {successMessage}
           {onClearSuccess && (
-            <button 
+            <button
               onClick={onClearSuccess}
               className="float-right text-green-700 hover:text-green-900"
               aria-label="Закрыть уведомление об успехе"
@@ -63,12 +63,12 @@ const Notification: React.FC<NotificationProps> = ({
           )}
         </Alert>
       )}
-      
+
       {errorMessage && (
         <Alert type="error">
           {errorMessage}
           {onClearError && (
-            <button 
+            <button
               onClick={onClearError}
               className="float-right text-red-700 hover:text-red-900"
               aria-label="Закрыть уведомление об ошибке"
@@ -82,4 +82,4 @@ const Notification: React.FC<NotificationProps> = ({
   );
 };
 
-export default Notification; 
+export default Notification;

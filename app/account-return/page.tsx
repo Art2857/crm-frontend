@@ -17,16 +17,16 @@ export default function AccountReturnPage() {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [redirecting, setRedirecting] = useState(false);
   const [hasSavedAccounts, setHasSavedAccounts] = useState(false);
-  
+
   // Проверяем наличие сохраненных аккаунтов при загрузке страницы
   useEffect(() => {
     const accounts = authService.getSavedAccounts();
     setHasSavedAccounts(accounts.length > 0);
   }, []);
-  
+
   // Проверяем статус авторизации и перенаправляем соответственно
   useEffect(() => {
-    // Если пользователь авторизован или есть сохраненные аккаунты, 
+    // Если пользователь авторизован или есть сохраненные аккаунты,
     // перенаправляем на страницу аккаунтов
     if (isAuthenticated || hasSavedAccounts) {
       setRedirecting(true);
@@ -38,18 +38,18 @@ export default function AccountReturnPage() {
       }, 100);
     }
   }, [isAuthenticated, hasSavedAccounts, router]);
-  
+
   // Обработчик возврата к списку аккаунтов
   const handleLogin = () => {
     router.push('/login');
   };
-  
+
   // Обработчик продолжения с добавлением нового аккаунта
   const handleContinue = () => {
     // Перенаправляем пользователя на страницу логина
     router.push('/login');
   };
-  
+
   return (
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-100">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -57,9 +57,11 @@ export default function AccountReturnPage() {
           Управление аккаунтами
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          {redirecting ? 'Перенаправление на страницу аккаунтов...' : 
-           (hasSavedAccounts ? 'У вас уже есть сохраненные аккаунты, перенаправление...' : 
-           'Для возврата к списку аккаунтов необходимо войти в один из ваших аккаунтов')}
+          {redirecting
+            ? 'Перенаправление на страницу аккаунтов...'
+            : hasSavedAccounts
+              ? 'У вас уже есть сохраненные аккаунты, перенаправление...'
+              : 'Для возврата к списку аккаунтов необходимо войти в один из ваших аккаунтов'}
         </p>
       </div>
 
@@ -75,19 +77,19 @@ export default function AccountReturnPage() {
                 {hasSavedAccounts ? (
                   <p>Перенаправление на страницу управления аккаунтами...</p>
                 ) : (
-                  <p>У вас нет активных аккаунтов. Чтобы увидеть список ваших аккаунтов, необходимо сначала войти в один из них.</p>
+                  <p>
+                    У вас нет активных аккаунтов. Чтобы увидеть список ваших
+                    аккаунтов, необходимо сначала войти в один из них.
+                  </p>
                 )}
               </div>
-              
+
               {!hasSavedAccounts && (
                 <div className="space-y-3">
-                  <Button
-                    width="full"
-                    onClick={handleLogin}
-                  >
+                  <Button width="full" onClick={handleLogin}>
                     Войти в аккаунт
                   </Button>
-                  
+
                   <div className="text-center">
                     <button
                       onClick={handleContinue}
@@ -104,4 +106,4 @@ export default function AccountReturnPage() {
       </div>
     </div>
   );
-} 
+}

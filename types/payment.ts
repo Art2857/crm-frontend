@@ -164,7 +164,7 @@ export interface PaymentHistoryDto {
   endDate?: string;
   page?: number;
   limit?: number;
-} 
+}
 
 // Новые типы для create-payment-and-close
 export interface CreatePaymentAndCloseDto {
@@ -185,4 +185,4 @@ export interface PaymentClosureResponseDto {
 export interface CreatePaymentAndCloseResponseDto {
   payment: Payment;
   updatedClosure: PaymentClosureResponseDto;
-} 
+}

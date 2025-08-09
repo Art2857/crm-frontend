@@ -21,5 +21,11 @@ class EventBus {
 
 export const eventBus = new EventBus();
 
-export const emit = eventBus.emit.bind(eventBus) as <T = any>(eventName: string, detail?: T) => void;
-export const on = eventBus.on.bind(eventBus) as <T = any>(eventName: string, handler: EventHandler<T>) => () => void; 
+export const emit = eventBus.emit.bind(eventBus) as <T = any>(
+  eventName: string,
+  detail?: T
+) => void;
+export const on = eventBus.on.bind(eventBus) as <T = any>(
+  eventName: string,
+  handler: EventHandler<T>
+) => () => void;

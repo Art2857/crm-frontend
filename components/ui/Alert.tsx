@@ -14,10 +14,13 @@ const Alert: React.FC<AlertProps> = ({ children, type }) => {
   };
 
   return (
-    <div className={`p-4 mb-4 text-sm rounded-lg border ${colors[type]}`} role="alert">
+    <div
+      className={`p-4 mb-4 text-sm rounded-lg border ${colors[type]}`}
+      role="alert"
+    >
       {children}
     </div>
   );
 };
 
-export default Alert; 
+export default Alert;

@@ -7,7 +7,7 @@ import { DistributionDetail } from './duty';
 export enum WorkType {
   BUG = 'BUG',
   FEATURE = 'FEATURE',
-  TASK = 'TASK'
+  TASK = 'TASK',
 }
 
 /**
@@ -17,7 +17,7 @@ export enum WorkPriority {
   LOW = 'LOW',
   MEDIUM = 'MEDIUM',
   HIGH = 'HIGH',
-  CRITICAL = 'CRITICAL'
+  CRITICAL = 'CRITICAL',
 }
 
 /**
@@ -28,7 +28,7 @@ export enum WorkStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   TESTING = 'TESTING',
   DONE = 'DONE',
-  CANCELED = 'CANCELED'
+  CANCELED = 'CANCELED',
 }
 
 export interface Work {
@@ -115,4 +115,4 @@ export interface UpdateWorkExtendedDto {
 
 export interface WorkWithHistory extends Work {
   history: WorkHistory[];
-} 
+}

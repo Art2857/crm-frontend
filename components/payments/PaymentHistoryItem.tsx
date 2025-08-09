@@ -3,9 +3,7 @@
 import React from 'react';
 import Button from '../ui/Button';
 import { formatCurrency, getPaymentTypeColor } from '../../utils/payments';
-import { 
-  TrashIcon
-} from '@heroicons/react/24/outline';
+import { TrashIcon } from '@heroicons/react/24/outline';
 import { Payment } from '../../types/payment';
 
 interface PaymentHistoryItemProps {
@@ -15,7 +13,12 @@ interface PaymentHistoryItemProps {
   isDeleting: boolean;
 }
 
-export default function PaymentHistoryItem({ payment, currentUserId, onDelete, isDeleting }: PaymentHistoryItemProps) {
+export default function PaymentHistoryItem({
+  payment,
+  currentUserId,
+  onDelete,
+  isDeleting,
+}: PaymentHistoryItemProps) {
   // Определяем направление выплаты для текущего пользователя
   const isReceived = payment.toUserId === currentUserId;
   const isSent = payment.fromUserId === currentUserId;
@@ -23,11 +26,16 @@ export default function PaymentHistoryItem({ payment, currentUserId, onDelete, i
   // Функция для получения названия типа выплаты
   const getPaymentTypeLabel = (type: string) => {
     switch (type) {
-      case 'SALARY': return 'Зарплата';
-      case 'BONUS': return 'Премия';
-      case 'ADVANCE': return 'Аванс';
-      case 'EXTRA': return 'Доплата';
-      default: return type;
+      case 'SALARY':
+        return 'Зарплата';
+      case 'BONUS':
+        return 'Премия';
+      case 'ADVANCE':
+        return 'Аванс';
+      case 'EXTRA':
+        return 'Доплата';
+      default:
+        return type;
     }
   };
 
@@ -35,36 +43,40 @@ export default function PaymentHistoryItem({ payment, currentUserId, onDelete, i
     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
       <div className="flex items-center space-x-4 flex-1">
         {/* Индикатор направления */}
-        <div className={`w-4 h-4 rounded-full ${
-          isReceived ? 'bg-green-400' : isSent ? 'bg-blue-400' : 'bg-gray-400'
-        }`} />
-        
+        <div
+          className={`w-4 h-4 rounded-full ${
+            isReceived ? 'bg-green-400' : isSent ? 'bg-blue-400' : 'bg-gray-400'
+          }`}
+        />
+
         {/* Основная информация */}
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-1">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentTypeColor(payment.paymentType)}`}>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentTypeColor(payment.paymentType)}`}
+            >
               {getPaymentTypeLabel(payment.paymentType)}
             </span>
             <span className="text-sm text-gray-600">
               {new Date(payment.paymentDate).toLocaleDateString('ru-RU')}
             </span>
           </div>
-          
+
           <p className="font-medium text-gray-900 mb-1">
-            {payment.description || `${getPaymentTypeLabel(payment.paymentType)} по работе "${payment.work.name}"`}
+            {payment.description ||
+              `${getPaymentTypeLabel(payment.paymentType)} по работе "${payment.work.name}"`}
           </p>
-          
+
           <div className="text-sm text-gray-600">
             <span className="font-medium">
-              {isReceived ? 'От' : isSent ? 'Для' : 'Между'}: 
+              {isReceived ? 'От' : isSent ? 'Для' : 'Между'}:
             </span>
             <span className="ml-1">
-              {isReceived 
+              {isReceived
                 ? `${payment.fromUser.firstName} ${payment.fromUser.lastName}`
-                : isSent 
+                : isSent
                   ? `${payment.toUser.firstName} ${payment.toUser.lastName}`
-                  : `${payment.fromUser.firstName} ${payment.fromUser.lastName} → ${payment.toUser.firstName} ${payment.toUser.lastName}`
-              }
+                  : `${payment.fromUser.firstName} ${payment.fromUser.lastName} → ${payment.toUser.firstName} ${payment.toUser.lastName}`}
             </span>
             <span className="mx-2">•</span>
             <span className="text-blue-600">{payment.work.name}</span>
@@ -77,17 +89,25 @@ export default function PaymentHistoryItem({ payment, currentUserId, onDelete, i
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center space-x-3">
         <div className="text-right">
-          <p className={`text-lg font-bold ${
-            isReceived ? 'text-green-600' : isSent ? 'text-blue-600' : 'text-gray-600'
-          }`}>
-            {isReceived ? '+' : isSent ? '-' : ''}{formatCurrency(payment.amount)}
+          <p
+            className={`text-lg font-bold ${
+              isReceived
+                ? 'text-green-600'
+                : isSent
+                  ? 'text-blue-600'
+                  : 'text-gray-600'
+            }`}
+          >
+            {isReceived ? '+' : isSent ? '-' : ''}
+            {formatCurrency(payment.amount)}
           </p>
           {payment.periodStart && payment.periodEnd && (
             <p className="text-xs text-gray-500">
-              {new Date(payment.periodStart).toLocaleDateString('ru-RU')} - {new Date(payment.periodEnd).toLocaleDateString('ru-RU')}
+              {new Date(payment.periodStart).toLocaleDateString('ru-RU')} -{' '}
+              {new Date(payment.periodEnd).toLocaleDateString('ru-RU')}
             </p>
           )}
         </div>
@@ -109,4 +129,4 @@ export default function PaymentHistoryItem({ payment, currentUserId, onDelete, i
       </div>
     </div>
   );
-} 
+}

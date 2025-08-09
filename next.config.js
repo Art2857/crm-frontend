@@ -3,15 +3,15 @@ const nextConfig = {
   // Основные настройки
   poweredByHeader: false,
   reactStrictMode: true,
-  
+
   // Оптимизация для Docker
   output: 'standalone',
-  
+
   // Отключаем проверку ESLint во время сборки (только для деплоя)
   eslint: {
     ignoreDuringBuilds: false, // можно поставить true для быстрого деплоя
   },
-  
+
   // Настройки сборки
   webpack: (config, { isServer }) => {
     // Оптимизации для production
@@ -21,10 +21,10 @@ const nextConfig = {
         fs: false,
       };
     }
-    
+
     return config;
   },
-  
+
   // Настройки для Dokploy/Docker
   async headers() {
     return [

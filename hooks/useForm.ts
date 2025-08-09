@@ -39,30 +39,29 @@ export const useForm = <T extends Record<string, any>>(
    */
   const isValidDate = (dateString: string): boolean => {
     if (!dateString) return true; // Пустая дата считается валидной (если нет required)
-    
+
     // Проверка формата DD.MM.YYYY
     if (!/^\d{2}\.\d{2}\.\d{4}$/.test(dateString)) {
       return false;
     }
-    
+
     // Разбивка на компоненты
     const parts = dateString.split('.');
     const day = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10) - 1; // Месяцы в JavaScript начинаются с 0
     const year = parseInt(parts[2], 10);
-    
+
     // Создание и валидация объекта Date
     const date = new Date(year, month, day);
-    const isValidDateObject = (
+    const isValidDateObject =
       date.getFullYear() === year &&
       date.getMonth() === month &&
-      date.getDate() === day
-    );
-    
+      date.getDate() === day;
+
     // Проверка, что дата не в будущем (для даты рождения)
     const today = new Date();
     const isFutureDate = date > today;
-    
+
     // Дата считается невалидной, если она некорректна или находится в будущем
     return isValidDateObject && !isFutureDate;
   };
@@ -80,33 +79,58 @@ export const useForm = <T extends Record<string, any>>(
 
       // Для строк автоматически удаляем пробелы при валидации
       const trimmedValue = typeof value === 'string' ? value.trim() : value;
-      
+
       // Если поле пустое и не обязательное, не валидируем его дальше
       if (!trimmedValue && !rules.required) {
         return '';
       }
 
-      if (rules.required && (!trimmedValue || (Array.isArray(trimmedValue) && trimmedValue.length === 0))) {
+      if (
+        rules.required &&
+        (!trimmedValue ||
+          (Array.isArray(trimmedValue) && trimmedValue.length === 0))
+      ) {
         return 'Поле обязательно для заполнения';
       }
 
-      if (rules.minLength && typeof trimmedValue === 'string' && trimmedValue.length < rules.minLength) {
+      if (
+        rules.minLength &&
+        typeof trimmedValue === 'string' &&
+        trimmedValue.length < rules.minLength
+      ) {
         return `Минимальная длина ${rules.minLength} символов`;
       }
 
-      if (rules.maxLength && typeof trimmedValue === 'string' && trimmedValue.length > rules.maxLength) {
+      if (
+        rules.maxLength &&
+        typeof trimmedValue === 'string' &&
+        trimmedValue.length > rules.maxLength
+      ) {
         return `Максимальная длина ${rules.maxLength} символов`;
       }
 
-      if (rules.min && typeof trimmedValue === 'number' && trimmedValue < rules.min) {
+      if (
+        rules.min &&
+        typeof trimmedValue === 'number' &&
+        trimmedValue < rules.min
+      ) {
         return `Минимальное значение ${rules.min}`;
       }
 
-      if (rules.max && typeof trimmedValue === 'number' && trimmedValue > rules.max) {
+      if (
+        rules.max &&
+        typeof trimmedValue === 'number' &&
+        trimmedValue > rules.max
+      ) {
         return `Максимальное значение ${rules.max}`;
       }
 
-      if (rules.pattern && typeof trimmedValue === 'string' && trimmedValue && !rules.pattern.test(trimmedValue)) {
+      if (
+        rules.pattern &&
+        typeof trimmedValue === 'string' &&
+        trimmedValue &&
+        !rules.pattern.test(trimmedValue)
+      ) {
         return 'Значение не соответствует формату';
       }
 
@@ -120,17 +144,17 @@ export const useForm = <T extends Record<string, any>>(
             // Проверяем, что дата не в будущем
             const today = new Date();
             today.setHours(0, 0, 0, 0); // Сбрасываем время
-            
+
             if (dateObj > today) {
               return 'Дата рождения не может быть в будущем';
             }
-            
+
             // Дата валидна, формат правильный
             return '';
           } catch (e) {
             return 'Некорректная дата рождения';
           }
-        } 
+        }
         // Для дат в формате DD.MM.YYYY используем существующую логику
         else if (!isValidDate(trimmedValue)) {
           // Проверяем, не является ли это датой в будущем для формата DD.MM.YYYY
@@ -141,7 +165,7 @@ export const useForm = <T extends Record<string, any>>(
             const year = parseInt(parts[2], 10);
             const date = new Date(year, month, day);
             const today = new Date();
-            
+
             if (date > today) {
               return 'Дата рождения не может быть в будущем';
             }
@@ -170,7 +194,9 @@ export const useForm = <T extends Record<string, any>>(
    * @param e - событие изменения
    */
   const handleChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    (
+      e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    ) => {
       const { name, value, type } = e.target;
       let parsedValue: any = value;
 
@@ -189,19 +215,23 @@ export const useForm = <T extends Record<string, any>>(
     },
     []
   );
-  
+
   /**
    * Обработчик потери фокуса полем формы
    */
   const handleBlur = useCallback(
-    (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    (
+      e: React.FocusEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >
+    ) => {
       const { name } = e.target;
-      
+
       // Отмечаем поле как "тронутое"
       if (!touched[name]) {
         setTouched((prev) => ({ ...prev, [name]: true }));
       }
-      
+
       // Валидируем поле только при потере фокуса
       const error = validateField(name, values[name]);
       setErrors((prev) => ({
@@ -217,13 +247,10 @@ export const useForm = <T extends Record<string, any>>(
    * @param name - имя поля
    * @param value - новое значение
    */
-  const setValue = useCallback(
-    (name: string, value: any) => {
-      setValues((prev) => ({ ...prev, [name]: value }));
-      // Не выполняем валидацию при программной установке значения
-    },
-    []
-  );
+  const setValue = useCallback((name: string, value: any) => {
+    setValues((prev) => ({ ...prev, [name]: value }));
+    // Не выполняем валидацию при программной установке значения
+  }, []);
 
   /**
    * Валидация всей формы
@@ -243,7 +270,7 @@ export const useForm = <T extends Record<string, any>>(
     }
 
     setErrors(newErrors);
-    
+
     // Отмечаем все поля как "тронутые" при валидации формы
     const newTouched: Record<string, boolean> = {};
     for (const fieldName in validationRules) {
@@ -259,13 +286,13 @@ export const useForm = <T extends Record<string, any>>(
    */
   const prepareValuesForSubmit = useCallback((): T => {
     const preparedValues = { ...values };
-    
+
     for (const key in preparedValues) {
       if (typeof preparedValues[key] === 'string') {
         preparedValues[key] = preparedValues[key].trim();
       }
     }
-    
+
     return preparedValues;
   }, [values]);
 
@@ -319,4 +346,4 @@ export const useForm = <T extends Record<string, any>>(
     handleSubmit,
     resetForm,
   };
-}; 
+};

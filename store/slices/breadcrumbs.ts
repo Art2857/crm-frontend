@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { 
-  Breadcrumb, 
-  BreadcrumbState, 
-  BreadcrumbConfig
+import {
+  Breadcrumb,
+  BreadcrumbState,
+  BreadcrumbConfig,
 } from '../../types/breadcrumb';
 import { RootState } from '..';
 
@@ -10,7 +10,7 @@ import { RootState } from '..';
 const initialState: BreadcrumbState = {
   breadcrumbs: [],
   isLoading: false,
-  error: null
+  error: null,
 };
 
 // Конфигурация хлебных крошек для различных маршрутов
@@ -22,8 +22,8 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/dashboard',
       isActive: true,
       isClickable: false,
-      icon: '🏠'
-    }
+      icon: '🏠',
+    },
   ],
   '/profile': [
     {
@@ -32,7 +32,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/dashboard',
       isActive: false,
       isClickable: true,
-      icon: '🏠'
+      icon: '🏠',
     },
     {
       id: 'profile',
@@ -40,8 +40,8 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/profile',
       isActive: true,
       isClickable: false,
-      icon: '👤'
-    }
+      icon: '👤',
+    },
   ],
   '/works': [
     {
@@ -50,7 +50,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/dashboard',
       isActive: false,
       isClickable: true,
-      icon: '🏠'
+      icon: '🏠',
     },
     {
       id: 'works',
@@ -58,8 +58,8 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/works',
       isActive: true,
       isClickable: false,
-      icon: '📋'
-    }
+      icon: '📋',
+    },
   ],
   '/works/create': [
     {
@@ -68,7 +68,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/dashboard',
       isActive: false,
       isClickable: true,
-      icon: '🏠'
+      icon: '🏠',
     },
     {
       id: 'works',
@@ -76,7 +76,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/works',
       isActive: false,
       isClickable: true,
-      icon: '📋'
+      icon: '📋',
     },
     {
       id: 'create-work',
@@ -84,8 +84,8 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/works/create',
       isActive: true,
       isClickable: false,
-      icon: '➕'
-    }
+      icon: '➕',
+    },
   ],
   // Общий шаблон для страниц с деталями работы
   // Фактические хлебные крошки для конкретной работы будут созданы динамически
@@ -97,7 +97,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/dashboard',
       isActive: false,
       isClickable: true,
-      icon: '🏠'
+      icon: '🏠',
     },
     {
       id: 'works',
@@ -105,7 +105,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/works',
       isActive: false,
       isClickable: true,
-      icon: '📋'
+      icon: '📋',
     },
     {
       id: 'work-detail',
@@ -113,8 +113,8 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '#',
       isActive: true,
       isClickable: false,
-      icon: '📄'
-    }
+      icon: '📄',
+    },
   ],
   '/accounts': [
     {
@@ -123,7 +123,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/dashboard',
       isActive: false,
       isClickable: true,
-      icon: '🏠'
+      icon: '🏠',
     },
     {
       id: 'accounts',
@@ -131,8 +131,8 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/accounts',
       isActive: true,
       isClickable: false,
-      icon: '👤'
-    }
+      icon: '👤',
+    },
   ],
   '/admin/users': [
     {
@@ -141,7 +141,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/dashboard',
       isActive: false,
       isClickable: true,
-      icon: '🏠'
+      icon: '🏠',
     },
     {
       id: 'admin',
@@ -149,7 +149,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '#',
       isActive: false,
       isClickable: false,
-      icon: '⚙️'
+      icon: '⚙️',
     },
     {
       id: 'users',
@@ -157,8 +157,8 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/admin/users',
       isActive: true,
       isClickable: false,
-      icon: '👥'
-    }
+      icon: '👥',
+    },
   ],
   '/admin/duties': [
     {
@@ -167,7 +167,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/dashboard',
       isActive: false,
       isClickable: true,
-      icon: '🏠'
+      icon: '🏠',
     },
     {
       id: 'admin',
@@ -175,7 +175,7 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '#',
       isActive: false,
       isClickable: false,
-      icon: '⚙️'
+      icon: '⚙️',
     },
     {
       id: 'duties',
@@ -183,9 +183,9 @@ export const breadcrumbConfig: BreadcrumbConfig = {
       path: '/admin/duties',
       isActive: true,
       isClickable: false,
-      icon: '📝'
-    }
-  ]
+      icon: '📝',
+    },
+  ],
 };
 
 // Создание слайса
@@ -199,24 +199,24 @@ const breadcrumbsSlice = createSlice({
       state.isLoading = false;
       state.error = null;
     },
-    
+
     // Очистка хлебных крошек
     clearBreadcrumbs: (state) => {
       state.breadcrumbs = [];
     },
-    
+
     // Добавление хлебной крошки
     addBreadcrumb: (state, action: PayloadAction<Breadcrumb>) => {
       state.breadcrumbs.push(action.payload);
     },
-    
+
     // Удаление хлебной крошки по id
     removeBreadcrumb: (state, action: PayloadAction<string>) => {
       state.breadcrumbs = state.breadcrumbs.filter(
         (breadcrumb) => breadcrumb.id !== action.payload
       );
     },
-    
+
     // Обновление хлебной крошки
     updateBreadcrumb: (state, action: PayloadAction<Breadcrumb>) => {
       const index = state.breadcrumbs.findIndex(
@@ -226,33 +226,34 @@ const breadcrumbsSlice = createSlice({
         state.breadcrumbs[index] = action.payload;
       }
     },
-    
+
     // Установка ошибки
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;
       state.isLoading = false;
     },
-    
+
     // Установка загрузки
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
-    }
-  }
+    },
+  },
 });
 
 // Экспорт actions
-export const { 
+export const {
   setBreadcrumbs,
   clearBreadcrumbs,
   addBreadcrumb,
   removeBreadcrumb,
   updateBreadcrumb,
   setError,
-  setLoading
+  setLoading,
 } = breadcrumbsSlice.actions;
 
 // Селектор для получения хлебных крошек
-export const selectBreadcrumbs = (state: RootState) => state.breadcrumbs.breadcrumbs;
+export const selectBreadcrumbs = (state: RootState) =>
+  state.breadcrumbs.breadcrumbs;
 
 // Экспорт reducer
-export default breadcrumbsSlice.reducer; 
+export default breadcrumbsSlice.reducer;

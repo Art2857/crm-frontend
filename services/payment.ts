@@ -12,7 +12,7 @@ import {
   MakePaymentDto,
   PaymentHistoryDto,
   CreatePaymentAndCloseDto,
-  CreatePaymentAndCloseResponseDto
+  CreatePaymentAndCloseResponseDto,
 } from '../types/payment';
 import { logger } from '../utils/logger';
 
@@ -31,9 +31,14 @@ import { logger } from '../utils/logger';
 /**
  * Производит выплату сотруднику
  */
-export const makePayment = async (paymentData: MakePaymentDto): Promise<PaymentResponse> => {
+export const makePayment = async (
+  paymentData: MakePaymentDto
+): Promise<PaymentResponse> => {
   try {
-    const response = await privateApi.post<PaymentResponse>(PAYMENTS_ENDPOINTS.base, paymentData);
+    const response = await privateApi.post<PaymentResponse>(
+      PAYMENTS_ENDPOINTS.base,
+      paymentData
+    );
     return response.data;
   } catch (error) {
     logger.error('Error making payment:', error);
@@ -44,19 +49,22 @@ export const makePayment = async (paymentData: MakePaymentDto): Promise<PaymentR
 /**
  * Получает историю выплат
  */
-export const fetchPaymentHistory = async (params?: PaymentHistoryDto): Promise<PaymentHistory> => {
+export const fetchPaymentHistory = async (
+  params?: PaymentHistoryDto
+): Promise<PaymentHistory> => {
   try {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.workId) searchParams.append('workId', params.workId);
     if (params?.userId) searchParams.append('userId', params.userId);
-    if (params?.paymentType) searchParams.append('paymentType', params.paymentType);
+    if (params?.paymentType)
+      searchParams.append('paymentType', params.paymentType);
     if (params?.startDate) searchParams.append('startDate', params.startDate);
     if (params?.endDate) searchParams.append('endDate', params.endDate);
     if (params?.page) searchParams.append('page', params.page.toString());
     if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-    const url = searchParams.toString() 
+    const url = searchParams.toString()
       ? `${PAYMENTS_ENDPOINTS.history}?${searchParams.toString()}`
       : PAYMENTS_ENDPOINTS.history;
 
@@ -87,7 +95,9 @@ export const fetchMyDebts = async (): Promise<MyDebts> => {
 export const fetchMyPayments = async (): Promise<MyPayments> => {
   try {
     // Бэкенд не предоставляет /payments/my-payments. Используем /payments/history и агрегируем на клиенте
-    const response = await privateApi.get<PaymentHistory>(PAYMENTS_ENDPOINTS.history);
+    const response = await privateApi.get<PaymentHistory>(
+      PAYMENTS_ENDPOINTS.history
+    );
     const history = response.data;
 
     // Статистика: суммарно отправлено/получено и текущий месяц
@@ -103,7 +113,8 @@ export const fetchMyPayments = async (): Promise<MyPayments> => {
     for (const p of history.payments) {
       const paymentDate = new Date(p.paymentDate);
       const isCurrentMonth =
-        paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+        paymentDate.getMonth() === currentMonth &&
+        paymentDate.getFullYear() === currentYear;
 
       // Если текущий пользователь является отправителем/получателем — сервер уже отфильтровал релевантные записи
       // Определим направление по наличию from/to относительно userId недоступно здесь → считаем все платежи как «актуальные»
@@ -146,12 +157,17 @@ export const deletePayment = async (paymentId: string): Promise<void> => {
 /**
  * Создает выплату и закрывает период
  */
-export const createPaymentAndClose = async (paymentData: CreatePaymentAndCloseDto): Promise<CreatePaymentAndCloseResponseDto> => {
+export const createPaymentAndClose = async (
+  paymentData: CreatePaymentAndCloseDto
+): Promise<CreatePaymentAndCloseResponseDto> => {
   try {
-    const response = await privateApi.post<CreatePaymentAndCloseResponseDto>(PAYMENTS_ENDPOINTS.createAndClose, paymentData);
+    const response = await privateApi.post<CreatePaymentAndCloseResponseDto>(
+      PAYMENTS_ENDPOINTS.createAndClose,
+      paymentData
+    );
     return response.data;
   } catch (error) {
     logger.error('Error creating payment and closing period:', error);
     throw error;
   }
-}; 
+};

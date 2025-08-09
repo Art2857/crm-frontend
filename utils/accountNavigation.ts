@@ -68,17 +68,17 @@ export const accountNavigation = {
   getReturnPath(): string {
     return '/account-return';
   },
-  
+
   /**
    * Выполняет переход на страницу-мост
    * Эта функция должна быть вызвана только в обработчиках событий
    */
   returnToAccounts(): void {
     // Не сбрасываем флаг возврата, чтобы страница-мост могла проверить его
-    
+
     // Перенаправляем на страницу-мост для возврата к аккаунтам
     window.location.href = this.getReturnPath();
-  }
+  },
 };
 
-export default accountNavigation; 
+export default accountNavigation;

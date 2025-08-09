@@ -6,11 +6,19 @@ import { useAppSelector, useAppDispatch } from '../../../../../store';
 import Card from '../../../../../components/ui/Card';
 import Button from '../../../../../components/ui/Button';
 import { Role } from '../../../../../types/user';
-import { fetchUserById, fetchUserHistory, clearCurrentUser } from '../../../../../store/slices/users';
+import {
+  fetchUserById,
+  fetchUserHistory,
+  clearCurrentUser,
+} from '../../../../../store/slices/users';
 import { formatDateForDisplay } from '../../../../../utils/date';
 import { toDateObject } from '../../../../../utils/date';
 
-export default function UserHistoryPage({ params }: { params: { id: string } }) {
+export default function UserHistoryPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { currentUser, isLoading } = useAppSelector((state) => state.users);
   const dispatch = useAppDispatch();
@@ -30,7 +38,11 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
       console.log('История пользователя обновлена');
     } catch (error) {
       console.error('Ошибка при обновлении истории:', error);
-      setError(error instanceof Error ? error.message : 'Произошла ошибка при обновлении истории');
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Произошла ошибка при обновлении истории'
+      );
     } finally {
       setRefreshing(false);
     }
@@ -58,9 +70,13 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
       .then(() => {
         setHasLoaded(true);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Ошибка при загрузке истории:', error);
-        setError(error instanceof Error ? error.message : 'Произошла ошибка при загрузке истории');
+        setError(
+          error instanceof Error
+            ? error.message
+            : 'Произошла ошибка при загрузке истории'
+        );
         setHasLoaded(true);
       });
 
@@ -85,7 +101,9 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
         <div className="px-4 py-6 sm:px-0">
           <Card>
             <div className="text-center py-6">
-              <div className="text-red-500 text-lg font-medium mb-2">Ошибка загрузки данных</div>
+              <div className="text-red-500 text-lg font-medium mb-2">
+                Ошибка загрузки данных
+              </div>
               <div className="text-gray-600 mb-4">{error}</div>
               <button
                 onClick={refreshUserHistory}
@@ -109,9 +127,12 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
             <h1 className="text-2xl font-semibold text-gray-900">
               История изменений
             </h1>
-            
+
             <div className="flex space-x-4">
-              <Button variant="secondary" onClick={() => router.push('/admin/users')}>
+              <Button
+                variant="secondary"
+                onClick={() => router.push('/admin/users')}
+              >
                 Назад к списку
               </Button>
             </div>
@@ -151,30 +172,38 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
   // Вычисление возраста на основе даты рождения
   const calculateAge = (birthdayString: string | null): number | null => {
     if (!birthdayString) return null;
-    
+
     // Трассировка для отладки
     console.log('Calculating age from birthday:', birthdayString);
-    
+
     // Попытка преобразовать дату с использованием toDateObject
     const birthday = toDateObject(birthdayString);
     if (!birthday) {
       console.warn('Failed to parse birthday:', birthdayString);
       return null;
     }
-    
+
     try {
       const today = new Date();
       let age = today.getFullYear() - birthday.getFullYear();
       const monthDiff = today.getMonth() - birthday.getMonth();
-      
+
       // Если день рождения в этом году еще не наступил
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthday.getDate())) {
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthday.getDate())
+      ) {
         age--;
       }
-      
+
       // Отладочный вывод
-      console.log('Calculated age:', age, 'from birthday:', birthday.toISOString());
-      
+      console.log(
+        'Calculated age:',
+        age,
+        'from birthday:',
+        birthday.toISOString()
+      );
+
       return age;
     } catch (error) {
       console.error(`Ошибка расчета возраста: ${birthdayString}`, error);
@@ -193,22 +222,26 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
       <div className="px-4 py-6 sm:px-0">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">
-            История изменений: {currentUser?.firstName || ''} {currentUser?.lastName || ''}
+            История изменений: {currentUser?.firstName || ''}{' '}
+            {currentUser?.lastName || ''}
           </h1>
-          
+
           <div className="flex space-x-4">
-            <Button 
+            <Button
               variant="primary"
               onClick={refreshUserHistory}
               isLoading={refreshing}
             >
               Обновить историю
             </Button>
-            <Button variant="secondary" onClick={() => router.push('/admin/users')}>
+            <Button
+              variant="secondary"
+              onClick={() => router.push('/admin/users')}
+            >
               Назад к списку
             </Button>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => router.push(`/admin/users/${userId}`)}
             >
               Редактировать пользователя
@@ -217,27 +250,45 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
         </div>
 
         <Card>
-          {(currentUser?.history && currentUser.history.length > 0) ? (
+          {currentUser?.history && currentUser.history.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Дата изменения
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Email
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       ФИО
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Возраст / Дата рождения
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       День зарплаты
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Роль
                     </th>
                   </tr>
@@ -246,21 +297,29 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
                   {currentUser.history.map((historyItem) => (
                     <tr key={historyItem.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {historyItem.updatedAt ? formatDateForDisplay(historyItem.updatedAt, true) : 'Нет даты'}
+                        {historyItem.updatedAt
+                          ? formatDateForDisplay(historyItem.updatedAt, true)
+                          : 'Нет даты'}
                         <div className="text-xs text-gray-400">
-                          {historyItem.updatedAt ? new Date(historyItem.updatedAt).toLocaleString() : ''}
+                          {historyItem.updatedAt
+                            ? new Date(historyItem.updatedAt).toLocaleString()
+                            : ''}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{historyItem.email}</div>
+                        <div className="text-sm text-gray-900">
+                          {historyItem.email}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {[
                             historyItem.lastName || '',
                             historyItem.firstName || '',
-                            historyItem.middleName || ''
-                          ].filter(Boolean).join(' ') || 'Не указано'}
+                            historyItem.middleName || '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ') || 'Не указано'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -269,21 +328,29 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
                             // Проверяем и форматируем информацию о возрасте и дате рождения
                             const age = calculateAge(historyItem.birthday);
                             let birthdayDisplay = '';
-                            
+
                             // Если день рождения есть, пытаемся его отформатировать
                             if (historyItem.birthday) {
                               try {
-                                birthdayDisplay = formatDateForDisplay(historyItem.birthday);
-                                console.log('Formatted birthday:', birthdayDisplay, 'from:', historyItem.birthday);
+                                birthdayDisplay = formatDateForDisplay(
+                                  historyItem.birthday
+                                );
+                                console.log(
+                                  'Formatted birthday:',
+                                  birthdayDisplay,
+                                  'from:',
+                                  historyItem.birthday
+                                );
                               } catch (e) {
                                 console.error('Error formatting birthday:', e);
                               }
                             }
-                            
+
                             // Собираем финальный вывод
                             return (
                               <>
-                                {age ? `${age} лет` : '-'} / {birthdayDisplay || '-'}
+                                {age ? `${age} лет` : '-'} /{' '}
+                                {birthdayDisplay || '-'}
                               </>
                             );
                           })()}
@@ -295,10 +362,16 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          historyItem.role === Role.ADMIN ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {historyItem.role === Role.ADMIN ? 'Администратор' : 'Работник'}
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            historyItem.role === Role.ADMIN
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}
+                        >
+                          {historyItem.role === Role.ADMIN
+                            ? 'Администратор'
+                            : 'Работник'}
                         </span>
                       </td>
                     </tr>
@@ -323,4 +396,4 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
       </div>
     </div>
   );
-} 
+}

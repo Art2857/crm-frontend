@@ -14,8 +14,8 @@ export const createBaseBreadcrumbs = (): Breadcrumb[] => {
       path: '/dashboard',
       isActive: false,
       isClickable: true,
-      icon: '🏠'
-    }
+      icon: '🏠',
+    },
   ];
 };
 
@@ -26,16 +26,16 @@ export const createBaseBreadcrumbs = (): Breadcrumb[] => {
  */
 export const createProfileBreadcrumbs = (user?: User): Breadcrumb[] => {
   const breadcrumbs = createBaseBreadcrumbs();
-  
+
   breadcrumbs.push({
     id: 'profile',
     title: user ? `Профиль ${user.lastName} ${user.firstName}` : 'Профиль',
     path: '/profile',
     isActive: true,
     isClickable: false,
-    icon: '👤'
+    icon: '👤',
   });
-  
+
   return breadcrumbs;
 };
 
@@ -45,16 +45,16 @@ export const createProfileBreadcrumbs = (user?: User): Breadcrumb[] => {
  */
 export const createWorksBreadcrumbs = (): Breadcrumb[] => {
   const breadcrumbs = createBaseBreadcrumbs();
-  
+
   breadcrumbs.push({
     id: 'works',
     title: 'Работы',
     path: '/works',
     isActive: true,
     isClickable: false,
-    icon: '📋'
+    icon: '📋',
   });
-  
+
   return breadcrumbs;
 };
 
@@ -67,16 +67,16 @@ export const createCreateWorkBreadcrumbs = (): Breadcrumb[] => {
   // Изменяем статус последнего элемента, чтобы он был кликабельным
   breadcrumbs[breadcrumbs.length - 1].isActive = false;
   breadcrumbs[breadcrumbs.length - 1].isClickable = true;
-  
+
   breadcrumbs.push({
     id: 'create-work',
     title: 'Создание работы',
     path: '/works/create',
     isActive: true,
     isClickable: false,
-    icon: '➕'
+    icon: '➕',
   });
-  
+
   return breadcrumbs;
 };
 
@@ -93,7 +93,7 @@ export const createWorkDetailBreadcrumbs = (
   // Изменяем статус последнего элемента, чтобы он был кликабельным
   breadcrumbs[breadcrumbs.length - 1].isActive = false;
   breadcrumbs[breadcrumbs.length - 1].isClickable = true;
-  
+
   // Определяем название работы
   let workTitle = 'Детали работы';
   if (work && 'name' in work) {
@@ -103,16 +103,16 @@ export const createWorkDetailBreadcrumbs = (
   } else if (workId) {
     workTitle = `Работа №${workId}`;
   }
-  
+
   breadcrumbs.push({
     id: `work-${workId || work?.id || 'detail'}`,
     title: workTitle,
     path: `/works/${workId || work?.id || ''}`,
     isActive: true,
     isClickable: false,
-    icon: '📄'
+    icon: '📄',
   });
-  
+
   return breadcrumbs;
 };
 
@@ -122,25 +122,25 @@ export const createWorkDetailBreadcrumbs = (
  */
 export const createUsersAdminBreadcrumbs = (): Breadcrumb[] => {
   const breadcrumbs = createBaseBreadcrumbs();
-  
+
   breadcrumbs.push({
     id: 'admin',
     title: 'Администрирование',
     path: '#',
     isActive: false,
     isClickable: false,
-    icon: '⚙️'
+    icon: '⚙️',
   });
-  
+
   breadcrumbs.push({
     id: 'users',
     title: 'Пользователи',
     path: '/admin/users',
     isActive: true,
     isClickable: false,
-    icon: '👥'
+    icon: '👥',
   });
-  
+
   return breadcrumbs;
 };
 
@@ -150,25 +150,25 @@ export const createUsersAdminBreadcrumbs = (): Breadcrumb[] => {
  */
 export const createDutiesAdminBreadcrumbs = (): Breadcrumb[] => {
   const breadcrumbs = createBaseBreadcrumbs();
-  
+
   breadcrumbs.push({
     id: 'admin',
     title: 'Администрирование',
     path: '#',
     isActive: false,
     isClickable: false,
-    icon: '⚙️'
+    icon: '⚙️',
   });
-  
+
   breadcrumbs.push({
     id: 'duties',
     title: 'Обязанности',
     path: '/admin/duties',
     isActive: true,
     isClickable: false,
-    icon: '📝'
+    icon: '📝',
   });
-  
+
   return breadcrumbs;
 };
 
@@ -178,25 +178,25 @@ export const createDutiesAdminBreadcrumbs = (): Breadcrumb[] => {
  */
 export const createDistributionsAdminBreadcrumbs = (): Breadcrumb[] => {
   const breadcrumbs = createBaseBreadcrumbs();
-  
+
   breadcrumbs.push({
     id: 'admin',
     title: 'Администрирование',
     path: '#',
     isActive: false,
     isClickable: false,
-    icon: '⚙️'
+    icon: '⚙️',
   });
-  
+
   breadcrumbs.push({
     id: 'distributions',
     title: 'Распределения',
     path: '/admin/distributions',
     isActive: true,
     isClickable: false,
-    icon: '📊'
+    icon: '📊',
   });
-  
+
   return breadcrumbs;
 };
 
@@ -206,15 +206,15 @@ export const createDistributionsAdminBreadcrumbs = (): Breadcrumb[] => {
  */
 export const createAccountsBreadcrumbs = (): Breadcrumb[] => {
   const breadcrumbs = createBaseBreadcrumbs();
-  
+
   breadcrumbs.push({
     id: 'accounts',
     title: 'Аккаунты',
     path: '/accounts',
     isActive: true,
     isClickable: false,
-    icon: '👤'
+    icon: '👤',
   });
-  
+
   return breadcrumbs;
-}; 
+};

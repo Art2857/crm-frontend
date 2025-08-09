@@ -8,15 +8,25 @@ interface PaymentTypeSelectorProps {
   onTypeChange: (type: string) => void;
 }
 
-export default function PaymentTypeSelector({ 
-  selectedType, 
-  onTypeChange 
+export default function PaymentTypeSelector({
+  selectedType,
+  onTypeChange,
 }: PaymentTypeSelectorProps) {
   const paymentTypes = [
-    { value: 'SALARY', label: 'Зарплата', icon: '💰', desc: 'Влияет на закрытие долга' },
-    { value: 'ADVANCE', label: 'Аванс', icon: '⚡', desc: 'Влияет на закрытие долга' },
+    {
+      value: 'SALARY',
+      label: 'Зарплата',
+      icon: '💰',
+      desc: 'Влияет на закрытие долга',
+    },
+    {
+      value: 'ADVANCE',
+      label: 'Аванс',
+      icon: '⚡',
+      desc: 'Влияет на закрытие долга',
+    },
     { value: 'BONUS', label: 'Премия', icon: '🎁', desc: 'Не влияет на долг' },
-    { value: 'EXTRA', label: 'Доплата', icon: '➕', desc: 'Не влияет на долг' }
+    { value: 'EXTRA', label: 'Доплата', icon: '➕', desc: 'Не влияет на долг' },
   ];
 
   return (
@@ -39,7 +49,9 @@ export default function PaymentTypeSelector({
             <div className="flex items-center space-x-2">
               <span className="text-sm">{option.icon}</span>
               <div>
-                <p className="font-medium text-gray-900 text-sm">{option.label}</p>
+                <p className="font-medium text-gray-900 text-sm">
+                  {option.label}
+                </p>
                 <p className="text-xs text-gray-500">{option.desc}</p>
               </div>
             </div>
@@ -48,4 +60,4 @@ export default function PaymentTypeSelector({
       </div>
     </div>
   );
-} 
+}

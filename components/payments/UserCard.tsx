@@ -3,14 +3,14 @@
 import React from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { 
+import {
   UserIcon,
   ExclamationTriangleIcon,
   CalendarIcon,
   BuildingOfficeIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  EyeIcon
+  EyeIcon,
 } from '@heroicons/react/24/outline';
 import { ResponsibleUser } from '../../types/payments';
 import FinancialSummary from './FinancialSummary';
@@ -23,45 +23,51 @@ interface UserCardProps {
   children?: React.ReactNode;
 }
 
-export default function UserCard({ 
-  user, 
-  isExpanded, 
-  onToggleExpanded, 
+export default function UserCard({
+  user,
+  isExpanded,
+  onToggleExpanded,
   onShowCalculation,
-  children 
+  children,
 }: UserCardProps) {
   return (
     <div className="relative">
       <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-r from-white via-gray-50 to-white">
-        <div 
+        <div
           className="p-6 cursor-pointer relative"
           onClick={() => onToggleExpanded(user.userId)}
         >
           {/* Декоративная линия сверху */}
-          <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
-            user.isPaymentDue 
-              ? 'from-red-400 via-orange-400 to-red-400' 
-              : 'from-blue-400 via-indigo-400 to-purple-400'
-          }`} />
-          
+          <div
+            className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
+              user.isPaymentDue
+                ? 'from-red-400 via-orange-400 to-red-400'
+                : 'from-blue-400 via-indigo-400 to-purple-400'
+            }`}
+          />
+
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {/* Аватар пользователя */}
-              <div className={`relative p-4 rounded-2xl shadow-lg ${
-                user.isPaymentDue 
-                  ? 'bg-gradient-to-br from-red-100 to-orange-100' 
-                  : 'bg-gradient-to-br from-blue-100 to-indigo-100'
-              }`}>
-                <UserIcon className={`h-7 w-7 ${
-                  user.isPaymentDue ? 'text-red-600' : 'text-blue-600'
-                }`} />
+              <div
+                className={`relative p-4 rounded-2xl shadow-lg ${
+                  user.isPaymentDue
+                    ? 'bg-gradient-to-br from-red-100 to-orange-100'
+                    : 'bg-gradient-to-br from-blue-100 to-indigo-100'
+                }`}
+              >
+                <UserIcon
+                  className={`h-7 w-7 ${
+                    user.isPaymentDue ? 'text-red-600' : 'text-blue-600'
+                  }`}
+                />
                 {user.isPaymentDue && (
                   <div className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center">
                     <ExclamationTriangleIcon className="h-3 w-3 text-white" />
                   </div>
                 )}
               </div>
-              
+
               {/* Информация о пользователе */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center space-x-3 mb-2">
@@ -88,7 +94,7 @@ export default function UserCard({
                 </div>
               </div>
             </div>
-            
+
             {/* Финансовая информация и управление */}
             <div className="flex items-center space-x-4">
               <FinancialSummary
@@ -97,7 +103,7 @@ export default function UserCard({
                 remainingDebt={user.remainingDebt}
                 isPaymentDue={user.isPaymentDue}
               />
-              
+
               <div className="flex items-center space-x-2">
                 {onShowCalculation && (
                   <Button
@@ -111,7 +117,7 @@ export default function UserCard({
                     <EyeIcon className="h-4 w-4" />
                   </Button>
                 )}
-                
+
                 {isExpanded ? (
                   <ChevronDownIcon className="h-5 w-5 text-gray-400" />
                 ) : (
@@ -120,14 +126,15 @@ export default function UserCard({
               </div>
             </div>
           </div>
-          
+
           {user.lastPaymentDate && (
             <div className="mt-2 text-xs text-gray-400 text-center">
-              Последняя выплата: {new Date(user.lastPaymentDate).toLocaleDateString('ru-RU')}
+              Последняя выплата:{' '}
+              {new Date(user.lastPaymentDate).toLocaleDateString('ru-RU')}
             </div>
           )}
         </div>
-        
+
         {/* Раскрываемый контент */}
         {isExpanded && (
           <div className="border-t border-gray-100 bg-gray-50/50">
@@ -146,4 +153,4 @@ export default function UserCard({
       </Card>
     </div>
   );
-} 
+}

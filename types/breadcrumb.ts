@@ -24,8 +24,6 @@ export interface BreadcrumbConfig {
   [route: string]: Breadcrumb[];
 }
 
-
-
 /**
  * Состояние хлебных крошек в хранилище
  */
@@ -33,4 +31,4 @@ export interface BreadcrumbState {
   breadcrumbs: Breadcrumb[];
   isLoading: boolean;
   error: string | null;
-} 
+}

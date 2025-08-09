@@ -20,7 +20,7 @@ export default function AccountsPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { confirm, alert } = useModal();
-  
+
   // Инициализируем хук хлебных крошек
   useBreadcrumbs();
 
@@ -32,7 +32,7 @@ export default function AccountsPage() {
 
     // Загружаем список аккаунтов
     loadAccounts();
-    
+
     // Очищаем флаг возврата, если он был установлен
     accountNavigation.setReturnToAccounts(false);
   }, [isAuthenticated, router]);
@@ -51,10 +51,12 @@ export default function AccountsPage() {
     try {
       const account = authService.switchAccount(accountId);
       if (account) {
-        dispatch(setCredentials({
-          user: account.user,
-          token: account.token
-        }));
+        dispatch(
+          setCredentials({
+            user: account.user,
+            token: account.token,
+          })
+        );
         router.push('/accounts');
       }
     } catch (error) {
@@ -69,8 +71,9 @@ export default function AccountsPage() {
     if (user && accountId === user.id) {
       await alert({
         title: 'Невозможно удалить аккаунт',
-        message: 'Невозможно удалить текущий аккаунт. Сначала переключитесь на другой аккаунт.',
-        variant: 'danger'
+        message:
+          'Невозможно удалить текущий аккаунт. Сначала переключитесь на другой аккаунт.',
+        variant: 'danger',
       });
       return;
     }
@@ -83,9 +86,10 @@ export default function AccountsPage() {
     // Спрашиваем пользователя, хочет ли он добавить новый аккаунт
     const isConfirmed = await confirm({
       title: 'Добавление нового аккаунта',
-      message: 'Вы хотите добавить новый аккаунт? Для этого вам нужно будет войти в него, но вы останетесь в своем текущем аккаунте.',
+      message:
+        'Вы хотите добавить новый аккаунт? Для этого вам нужно будет войти в него, но вы останетесь в своем текущем аккаунте.',
       confirmText: 'Добавить',
-      cancelText: 'Отмена'
+      cancelText: 'Отмена',
     });
 
     if (isConfirmed) {
@@ -93,10 +97,10 @@ export default function AccountsPage() {
       if (user) {
         accountNavigation.saveCurrentAccountId(user.id);
       }
-      
+
       // Устанавливаем флаг возврата к аккаунтам
       accountNavigation.setReturnToAccounts(true);
-      
+
       // Перенаправляем на страницу входа (но не выходим из текущего аккаунта)
       router.push('/login?mode=add');
     }
@@ -110,51 +114,55 @@ export default function AccountsPage() {
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">Управление аккаунтами</h1>
-        
+
         <Card className="mb-6">
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-lg font-medium">Ваши аккаунты</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Здесь вы можете управлять всеми сохраненными аккаунтами и быстро переключаться между ними.
+              Здесь вы можете управлять всеми сохраненными аккаунтами и быстро
+              переключаться между ними.
             </p>
           </div>
-          
+
           {accounts.length === 0 ? (
             <div className="p-6 text-center">
-              <p className="text-gray-500 mb-4">У вас пока нет сохраненных аккаунтов</p>
-              <Button onClick={handleAddNewAccount}>
-                Добавить аккаунт
-              </Button>
+              <p className="text-gray-500 mb-4">
+                У вас пока нет сохраненных аккаунтов
+              </p>
+              <Button onClick={handleAddNewAccount}>Добавить аккаунт</Button>
             </div>
           ) : (
             <ul className="divide-y divide-gray-200">
               {accounts.map((account) => (
-                <li 
-                  key={account.id} 
+                <li
+                  key={account.id}
                   className={`p-4 hover:bg-gray-50 ${account.id === user.id ? 'bg-primary-50' : ''}`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">
-                        {(account.user.firstName || account.user.lastName) ? 
-                          `${account.user.firstName || ''} ${account.user.lastName || ''}`.trim() : 
-                          account.user.email.split('@')[0]}
+                        {account.user.firstName || account.user.lastName
+                          ? `${account.user.firstName || ''} ${account.user.lastName || ''}`.trim()
+                          : account.user.email.split('@')[0]}
                         {account.id === user.id && (
                           <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             Текущий
                           </span>
                         )}
                       </p>
-                      <p className="text-sm text-gray-500">{account.user.email}</p>
+                      <p className="text-sm text-gray-500">
+                        {account.user.email}
+                      </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        Последний вход: {new Date(account.lastUsed).toLocaleString()}
+                        Последний вход:{' '}
+                        {new Date(account.lastUsed).toLocaleString()}
                       </p>
                     </div>
                     <div className="flex space-x-2">
                       {account.id !== user.id && (
                         <>
                           <Button
-                            variant="outline" 
+                            variant="outline"
                             size="sm"
                             onClick={() => handleSwitchAccount(account.id)}
                             isLoading={isLoading}
@@ -176,12 +184,9 @@ export default function AccountsPage() {
               ))}
             </ul>
           )}
-          
+
           <div className="p-4 border-t border-gray-200">
-            <Button 
-              variant="primary"
-              onClick={handleAddNewAccount}
-            >
+            <Button variant="primary" onClick={handleAddNewAccount}>
               Добавить новый аккаунт
             </Button>
           </div>
@@ -189,4 +194,4 @@ export default function AccountsPage() {
       </div>
     </Layout>
   );
-} 
+}

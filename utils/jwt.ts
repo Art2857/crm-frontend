@@ -19,9 +19,11 @@ export function decodeJWT(token: string): any {
       // atob ожидает base64 без url-safe символов
       const normalized = b64.replace(/-/g, '+').replace(/_/g, '/');
       return decodeURIComponent(
-        Array.prototype
-          .map
-          .call(atob(normalized), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        Array.prototype.map
+          .call(
+            atob(normalized),
+            (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+          )
           .join('')
       );
     };
@@ -46,5 +48,3 @@ export function isJwtExpired(token: string, skewSeconds: number = 30): boolean {
   const nowSeconds = Math.floor(Date.now() / 1000);
   return nowSeconds >= exp - skewSeconds;
 }
-
- 

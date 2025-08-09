@@ -76,19 +76,24 @@ export function mapAnalysisToUsers(
 
         const dutiesArr = Object.values(dutyMap);
         const totalAccruedUser = dutiesArr.reduce((s, d) => s + d.debt, 0);
-        const totalPaidUser = (paymentHistory || []).reduce((s: number, p: any) => s + p.amount, 0);
+        const totalPaidUser = (paymentHistory || []).reduce(
+          (s: number, p: any) => s + p.amount,
+          0
+        );
         totalAccrued += totalAccruedUser;
         totalPaid += totalPaidUser;
         totalDebt += totalAccruedUser - totalPaidUser;
 
         // Преобразуем историю выплат
-        const formattedPaymentHistory = (paymentHistory || []).map((payment: any) => ({
-          id: payment.id,
-          amount: payment.amount,
-          type: payment.paymentType || payment.type || 'ADVANCE',
-          description: payment.description || '',
-          date: payment.paymentDate,
-        }));
+        const formattedPaymentHistory = (paymentHistory || []).map(
+          (payment: any) => ({
+            id: payment.id,
+            amount: payment.amount,
+            type: payment.paymentType || payment.type || 'ADVANCE',
+            description: payment.description || '',
+            date: payment.paymentDate,
+          })
+        );
 
         workUsers.push({
           userId,
@@ -107,7 +112,10 @@ export function mapAnalysisToUsers(
         });
       });
 
-      const totalWorkDebt = workUsers.reduce((sum, u) => sum + (u.totalAccrued - u.totalPaid), 0);
+      const totalWorkDebt = workUsers.reduce(
+        (sum, u) => sum + (u.totalAccrued - u.totalPaid),
+        0
+      );
       const totalWorkPaid = workUsers.reduce((sum, u) => sum + u.totalPaid, 0);
 
       works.push({
@@ -171,5 +179,3 @@ export function parseRuDate(dStr: string): Date {
   const [day, month, year] = dStr.split('.').map(Number);
   return new Date(year, month - 1, day);
 }
-
-

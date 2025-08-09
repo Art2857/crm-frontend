@@ -9,27 +9,27 @@ interface UseDataLoaderParams<T> {
    * Функция для загрузки данных
    */
   loadData: () => Promise<T>;
-  
+
   /**
    * Зависимости для повторной загрузки данных
    */
   dependencies?: any[];
-  
+
   /**
    * Начальное значение данных
    */
   initialData?: T | null;
-  
+
   /**
    * Флаг для отключения автоматической загрузки при монтировании
    */
   skipInitialLoad?: boolean;
-  
+
   /**
    * Автоматически отображать ошибки через систему уведомлений
    */
   autoDisplayErrors?: boolean;
-  
+
   /**
    * Обработчик ошибок (устаревший параметр, используйте handleError из useErrorHandler)
    * @deprecated Используйте handleError из useErrorHandler
@@ -45,32 +45,32 @@ interface UseDataLoaderResult<T> {
    * Загруженные данные
    */
   data: T | null;
-  
+
   /**
    * Флаг загрузки
    */
   isLoading: boolean;
-  
+
   /**
    * Сообщение об ошибке
    */
   error: string | null;
-  
+
   /**
    * Структурированная информация об ошибке
    */
   errorInfo: StructuredError | null;
-  
+
   /**
    * Функция для повторной загрузки данных
    */
   reload: () => Promise<T | null>;
-  
+
   /**
    * Функция для ручной установки данных
    */
   setData: React.Dispatch<React.SetStateAction<T | null>>;
-  
+
   /**
    * Функция для очистки ошибки
    */
@@ -79,7 +79,7 @@ interface UseDataLoaderResult<T> {
 
 /**
  * Хук для загрузки данных с обработкой ошибок и состояний загрузки
- * 
+ *
  * @example
  * const {
  *   data: users,
@@ -97,24 +97,24 @@ export const useDataLoader = <T>({
   initialData = null,
   skipInitialLoad = false,
   autoDisplayErrors = false,
-  onError
+  onError,
 }: UseDataLoaderParams<T>): UseDataLoaderResult<T> => {
   const [data, setData] = useState<T | null>(initialData);
   const [isLoading, setIsLoading] = useState(!skipInitialLoad);
   const [error, setError] = useState<string | null>(null);
   const [errorInfo, setErrorInfo] = useState<StructuredError | null>(null);
-  
+
   // Используем улучшенный обработчик ошибок
   const { handleError } = useErrorHandler(
     'Произошла ошибка при загрузке данных',
     autoDisplayErrors
   );
-  
+
   // Используем рефы для отслеживания состояния компонента
   const isMountedRef = useRef(true);
   const shouldLoadRef = useRef(!skipInitialLoad);
   const abortControllerRef = useRef<AbortController | null>(null);
-  
+
   /**
    * Очищает сообщение об ошибке
    */
@@ -122,83 +122,86 @@ export const useDataLoader = <T>({
     setError(null);
     setErrorInfo(null);
   }, []);
-  
+
   /**
    * Основная функция загрузки данных
    */
-  const fetchDataInternal = useCallback(async (isReload = false): Promise<T | null> => {
-    // Отменяем предыдущий запрос, если он был
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    // Создаем новый контроллер для отмены
-    abortControllerRef.current = new AbortController();
-    
-    if (!isMountedRef.current) return null;
-    
-    setIsLoading(true);
-    clearError();
-    
-    try {
-      const result = await loadData();
-      
-      if (isMountedRef.current) {
-        setData(result);
-        setIsLoading(false);
-        return result;
+  const fetchDataInternal = useCallback(
+    async (isReload = false): Promise<T | null> => {
+      // Отменяем предыдущий запрос, если он был
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
-      return null;
-    } catch (err) {
-      // Игнорируем ошибки отмены запроса
-      if (err instanceof DOMException && err.name === 'AbortError') {
+
+      // Создаем новый контроллер для отмены
+      abortControllerRef.current = new AbortController();
+
+      if (!isMountedRef.current) return null;
+
+      setIsLoading(true);
+      clearError();
+
+      try {
+        const result = await loadData();
+
+        if (isMountedRef.current) {
+          setData(result);
+          setIsLoading(false);
+          return result;
+        }
+        return null;
+      } catch (err) {
+        // Игнорируем ошибки отмены запроса
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return null;
+        }
+
+        // Обрабатываем ошибку используя структурированный обработчик
+        if (isMountedRef.current) {
+          const structuredError = handleError(err);
+          setErrorInfo(structuredError);
+
+          // Для обратной совместимости также устанавливаем строковое сообщение
+          const errorMessage = onError ? onError(err) : structuredError.message;
+          setError(errorMessage);
+
+          setIsLoading(false);
+          setData(null);
+        }
         return null;
       }
-      
-      // Обрабатываем ошибку используя структурированный обработчик
-      if (isMountedRef.current) {
-        const structuredError = handleError(err);
-        setErrorInfo(structuredError);
-        
-        // Для обратной совместимости также устанавливаем строковое сообщение
-        const errorMessage = onError ? onError(err) : structuredError.message;
-        setError(errorMessage);
-        
-        setIsLoading(false);
-        setData(null);
-      }
-      return null;
-    }
-  }, [loadData, onError, handleError, clearError]);
-  
+    },
+    [loadData, onError, handleError, clearError]
+  );
+
   /**
    * Инициирует принудительную перезагрузку данных
    */
   const reload = useCallback(async (): Promise<T | null> => {
     return fetchDataInternal(true);
   }, [fetchDataInternal]);
-  
+
   // Загружаем данные при монтировании компонента или изменении зависимостей
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     if (shouldLoadRef.current) {
       shouldLoadRef.current = false;
       fetchDataInternal();
     }
-    
+
     // Очистка при размонтировании
     return () => {
       isMountedRef.current = false;
-      
+
       // Отменяем запрос при размонтировании
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skipInitialLoad, ...dependencies]);
-  
+
   return {
     data,
     isLoading,
@@ -206,6 +209,6 @@ export const useDataLoader = <T>({
     errorInfo,
     reload,
     setData,
-    clearError
+    clearError,
   };
-}; 
+};

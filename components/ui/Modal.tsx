@@ -19,9 +19,9 @@ interface ModalProps {
 const useBodyScrollLock = (isLocked: boolean) => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const originalStyle = window.getComputedStyle(document.body).overflow;
-    
+
     if (isLocked) {
       // Сохраняем текущую позицию прокрутки
       const scrollY = window.scrollY;
@@ -31,17 +31,17 @@ const useBodyScrollLock = (isLocked: boolean) => {
       document.body.style.top = `-${scrollY}px`;
     } else {
       // Снимаем блокировку
-      const scrollY = document.body.style.top 
-        ? parseInt(document.body.style.top || '0', 10) * -1 
+      const scrollY = document.body.style.top
+        ? parseInt(document.body.style.top || '0', 10) * -1
         : 0;
-      
+
       document.body.classList.remove('modal-open');
       document.body.style.top = '';
-      
+
       // Возвращаем прокрутку в исходное положение
       window.scrollTo(0, scrollY);
     }
-    
+
     return () => {
       document.body.classList.remove('modal-open');
       document.body.style.overflow = originalStyle;
@@ -64,10 +64,10 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const isInitialRender = useRef(true);
-  
+
   // Блокируем прокрутку страницы при открытии модального окна
   useBodyScrollLock(isOpen);
-  
+
   // Мемоизируем функцию закрытия модального окна
   const handleClose = useCallback(() => {
     // Введем задержку перед закрытием для избежания гонки событий
@@ -77,13 +77,16 @@ export const Modal: React.FC<ModalProps> = ({
   }, [onClose]);
 
   // Обработчик клика на фон
-  const handleBackdropClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (closeOnBackdropClick) {
-      e.preventDefault();
-      e.stopPropagation();
-      handleClose();
-    }
-  }, [closeOnBackdropClick, handleClose]);
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (closeOnBackdropClick) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleClose();
+      }
+    },
+    [closeOnBackdropClick, handleClose]
+  );
 
   // Обработчик клика вне модального окна
   useEffect(() => {
@@ -97,7 +100,7 @@ export const Modal: React.FC<ModalProps> = ({
         isInitialRender.current = false;
         return;
       }
-      
+
       // Функция для обработки нажатия Escape
       const handleEscapeKey = (event: KeyboardEvent) => {
         if (event.key === 'Escape') {
@@ -111,7 +114,9 @@ export const Modal: React.FC<ModalProps> = ({
 
       // Очищаем обработчики при размонтировании
       return () => {
-        document.removeEventListener('keydown', handleEscapeKey, { capture: true });
+        document.removeEventListener('keydown', handleEscapeKey, {
+          capture: true,
+        });
       };
     }, 100); // Увеличиваем задержку для правильного рендеринга
 
@@ -122,17 +127,19 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   // Формируем стили для позиционирования (мемоизируем на основе position)
-  const modalStyle: React.CSSProperties = position ? {
-    position: 'fixed',
-    zIndex: 9999,
-    ...position,
-  } : {
-    position: 'fixed',
-    zIndex: 9999,
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-  };
+  const modalStyle: React.CSSProperties = position
+    ? {
+        position: 'fixed',
+        zIndex: 9999,
+        ...position,
+      }
+    : {
+        position: 'fixed',
+        zIndex: 9999,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+      };
 
   const modalContent = (
     <>
@@ -177,4 +184,4 @@ export const Modal: React.FC<ModalProps> = ({
   return null;
 };
 
-export default Modal; 
+export default Modal;

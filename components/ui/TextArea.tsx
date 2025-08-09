@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 
-export interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextAreaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   id: string;
   label?: string;
   error?: string;
@@ -13,7 +14,10 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor={id}
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             {label}
           </label>
         )}
@@ -35,4 +39,4 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
 
 TextArea.displayName = 'TextArea';
 
-export default TextArea; 
+export default TextArea;

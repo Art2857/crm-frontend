@@ -4,7 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { register as registerUser, getCurrentUser, setCredentials } from '../../store/slices/auth';
+import {
+  register as registerUser,
+  getCurrentUser,
+  setCredentials,
+} from '../../store/slices/auth';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -25,13 +29,15 @@ export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAddMode = searchParams.get('mode') === 'add';
-  const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isLoading, error, isAuthenticated } = useAppSelector(
+    (state) => state.auth
+  );
   const [serverError, setServerError] = useState('');
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Проверяем, нужно ли показать кнопку "Вернуться назад"
   const [showBackButton, setShowBackButton] = useState(false);
-  
+
   // Загружаем состояние флага возврата при монтировании компонента
   useEffect(() => {
     setShowBackButton(accountNavigation.shouldShowBackButton() || isAddMode);
@@ -55,7 +61,7 @@ export default function RegisterPage() {
         setIsCheckingAuth(false);
       }
     }, 500);
-    
+
     return () => clearTimeout(timer);
   }, [router, isAuthenticated, showBackButton, isAddMode]);
 
@@ -79,36 +85,43 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setServerError('');
-      
+
       // Если мы в режиме добавления аккаунта, используем специальный метод
       if (isAddMode) {
         try {
           // Используем метод addAccountRegister, который не изменяет текущий токен
           const response = await authService.addAccountRegister(data);
-          
+
           // Обновляем Redux store с данными нового аккаунта
-          dispatch(setCredentials({
-            user: response.user,
-            token: response.access_token
-          }));
-          
+          dispatch(
+            setCredentials({
+              user: response.user,
+              token: response.access_token,
+            })
+          );
+
           // Загружаем полные данные пользователя
           await dispatch(getCurrentUser());
-          
+
           // После успешной регистрации перенаправляем на страницу аккаунтов
           router.push('/accounts');
         } catch (error: any) {
-          setServerError(error.response?.data?.message || 'Произошла ошибка при регистрации');
+          setServerError(
+            error.response?.data?.message || 'Произошла ошибка при регистрации'
+          );
         }
       } else {
         // Стандартный процесс регистрации через Redux
         const resultAction = await dispatch(registerUser(data));
-        
+
         if (registerUser.fulfilled.match(resultAction)) {
           // Второй шаг - получить полные данные пользователя
           await dispatch(getCurrentUser());
           router.push('/profile');
-        } else if (registerUser.rejected.match(resultAction) && resultAction.payload) {
+        } else if (
+          registerUser.rejected.match(resultAction) &&
+          resultAction.payload
+        ) {
           setServerError(resultAction.payload as string);
         }
       }
@@ -130,7 +143,9 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-100">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {isAddMode || showBackButton ? 'Регистрация нового аккаунта' : 'Регистрация в системе'}
+          {isAddMode || showBackButton
+            ? 'Регистрация нового аккаунта'
+            : 'Регистрация в системе'}
         </h2>
       </div>
 
@@ -138,9 +153,9 @@ export default function RegisterPage() {
         <Card>
           {showBackButton && (
             <div className="mb-4 pb-4 border-b border-gray-200">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleBackToAccounts}
                 className="w-full"
               >
@@ -215,11 +230,7 @@ export default function RegisterPage() {
             )}
 
             <div>
-              <Button
-                type="submit"
-                width="full"
-                isLoading={isLoading}
-              >
+              <Button type="submit" width="full" isLoading={isLoading}>
                 Зарегистрироваться
               </Button>
             </div>
@@ -227,8 +238,8 @@ export default function RegisterPage() {
 
           <div className="mt-6">
             <div className="text-sm text-center">
-              <Link 
-                href={isAddMode ? "/login?mode=add" : "/login"}
+              <Link
+                href={isAddMode ? '/login?mode=add' : '/login'}
                 className="font-medium text-primary-600 hover:text-primary-500"
                 onClick={() => {
                   // Если включен режим возврата к аккаунтам, сохраняем его при переходе на логин
@@ -245,4 +256,4 @@ export default function RegisterPage() {
       </div>
     </div>
   );
-} 
+}

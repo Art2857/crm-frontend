@@ -3,7 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '../../../../store';
-import { fetchDutyById, updateDuty, clearCurrentDuty } from '../../../../store/slices/duties';
+import {
+  fetchDutyById,
+  updateDuty,
+  clearCurrentDuty,
+} from '../../../../store/slices/duties';
 import Card from '../../../../components/ui/Card';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
@@ -12,7 +16,9 @@ import { Role } from '../../../../types/user';
 
 export default function EditDutyPage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  const { currentDuty, isLoading, error } = useAppSelector((state) => state.duties);
+  const { currentDuty, isLoading, error } = useAppSelector(
+    (state) => state.duties
+  );
   const dispatch = useAppDispatch();
   const router = useRouter();
   const dutyId = params.id;
@@ -72,7 +78,10 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       return false;
     }
 
-    if (basePercentage && (parseFloat(basePercentage) < 0 || parseFloat(basePercentage) > 100)) {
+    if (
+      basePercentage &&
+      (parseFloat(basePercentage) < 0 || parseFloat(basePercentage) > 100)
+    ) {
       setFormError('Базовый процент должен быть от 0 до 100');
       return false;
     }
@@ -81,12 +90,12 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       setFormError('Минимальное значение должно быть числом');
       return false;
     }
-    
+
     if (maxValue && isNaN(parseFloat(maxValue))) {
       setFormError('Максимальное значение должно быть числом');
       return false;
     }
-    
+
     if (minValue && maxValue && parseFloat(minValue) > parseFloat(maxValue)) {
       setFormError('Минимальное значение не может быть больше максимального');
       return false;
@@ -104,12 +113,12 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
     // Функция для безопасного форматирования числовых значений
     const formatNumberValue = (value: string | null): string | null => {
       if (!value || value.trim() === '') return null;
-      
+
       try {
         // Проверяем, что это валидное число
         const numValue = parseFloat(value);
         if (isNaN(numValue)) return null;
-        
+
         // Форматируем до 2-х знаков после запятой
         return numValue.toFixed(2);
       } catch (error) {
@@ -128,7 +137,9 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
 
     console.log('Отправляемые данные:', dutyData);
 
-    const resultAction = await dispatch(updateDuty({ id: dutyId, data: dutyData }));
+    const resultAction = await dispatch(
+      updateDuty({ id: dutyId, data: dutyData })
+    );
     if (updateDuty.fulfilled.match(resultAction)) {
       router.push('/admin/duties');
     }
@@ -150,7 +161,9 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Редактирование обязанности</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Редактирование обязанности
+          </h1>
         </div>
 
         <Card>
@@ -163,7 +176,10 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Название обязанности *
                 </label>
                 <Input
@@ -176,7 +192,10 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
               </div>
 
               <div>
-                <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="basePrice"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Базовая цена (тыс. руб.)
                 </label>
                 <Input
@@ -194,7 +213,10 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
               </div>
 
               <div>
-                <label htmlFor="basePercentage" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="basePercentage"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Базовый процент от зарплаты (%)
                 </label>
                 <Input
@@ -214,7 +236,10 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="minValue" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="minValue"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Минимальное значение суммы
                   </label>
                   <Input
@@ -232,7 +257,10 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label htmlFor="maxValue" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="maxValue"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Максимальное значение суммы
                   </label>
                   <Input
@@ -264,4 +292,4 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       </div>
     </div>
   );
-} 
+}

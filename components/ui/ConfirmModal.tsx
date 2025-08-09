@@ -27,7 +27,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   message,
   confirmText = 'Подтвердить',
   cancelText = 'Отмена',
-  variant = 'primary'
+  variant = 'primary',
 }) => {
   // Обработчик подтверждения
   const handleConfirm = () => {
@@ -44,20 +44,12 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       <div className="p-6">
         <h2 className="text-lg font-medium text-gray-900 mb-2">{title}</h2>
         <p className="text-sm text-gray-500 mb-6">{message}</p>
-        
+
         <div className="flex justify-end space-x-3">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onClose}
-          >
+          <Button variant="outline" size="sm" onClick={onClose}>
             {cancelText}
           </Button>
-          <Button 
-            variant={variant} 
-            size="sm" 
-            onClick={handleConfirm}
-          >
+          <Button variant={variant} size="sm" onClick={handleConfirm}>
             {confirmText}
           </Button>
         </div>
@@ -66,4 +58,4 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   );
 };
 
-export default ConfirmModal; 
+export default ConfirmModal;

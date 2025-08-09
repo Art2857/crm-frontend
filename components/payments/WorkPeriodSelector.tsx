@@ -14,7 +14,7 @@ export default function WorkPeriodSelector({
   userId,
   workId,
   selectedDate,
-  onDateChange 
+  onDateChange,
 }: WorkPeriodSelectorProps) {
   return (
     <div className="flex items-center space-x-3">
@@ -29,4 +29,4 @@ export default function WorkPeriodSelector({
       />
     </div>
   );
-} 
+}

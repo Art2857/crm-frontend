@@ -13,12 +13,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <Provider store={store}>
       <NotificationProvider>
         <ModalProvider>
-          <AuthChecker>
-            {children}
-          </AuthChecker>
+          <AuthChecker>{children}</AuthChecker>
           <NotificationList />
         </ModalProvider>
       </NotificationProvider>
     </Provider>
   );
-} 
+}

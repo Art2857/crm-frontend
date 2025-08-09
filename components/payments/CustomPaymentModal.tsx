@@ -6,12 +6,12 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import TextArea from '../ui/TextArea';
-import { 
+import {
   BanknotesIcon,
   CurrencyDollarIcon,
   DocumentTextIcon,
   UserIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
 import { CustomPaymentFormData } from '../../types/payments';
 import { Work } from '../../types/work';
@@ -43,10 +43,16 @@ export default function CustomPaymentModal({
 
   const [selectedWorkId, setSelectedWorkId] = useState(defaultWorkId || '');
   const [selectedUserId, setSelectedUserId] = useState(defaultUserId || '');
-  const [amount, setAmount] = useState(defaultAmount ? String(defaultAmount) : '');
+  const [amount, setAmount] = useState(
+    defaultAmount ? String(defaultAmount) : ''
+  );
   const [type, setType] = useState('SALARY');
-  const [description, setDescription] = useState(defaultAmount ? 'Выплата' : '');
-  const [paymentDate, setPaymentDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
+  const [description, setDescription] = useState(
+    defaultAmount ? 'Выплата' : ''
+  );
+  const [paymentDate, setPaymentDate] = useState(() =>
+    format(new Date(), 'yyyy-MM-dd')
+  );
 
   // Текущий пользователь
   const { user } = useAppSelector((state) => state.auth);
@@ -103,7 +109,9 @@ export default function CustomPaymentModal({
     e.preventDefault();
     if (!selectedUserId || !selectedWorkId || !amount) return;
 
-    const userName = selectedUser ? `${selectedUser.firstName || ''} ${selectedUser.lastName || ''}`.trim() : '';
+    const userName = selectedUser
+      ? `${selectedUser.firstName || ''} ${selectedUser.lastName || ''}`.trim()
+      : '';
     const workName = selectedWork?.name || '';
 
     // Маппинг для отображаемого названия типа выплаты
@@ -148,20 +156,32 @@ export default function CustomPaymentModal({
               </div>
               <div>
                 <h3 className="text-xl font-bold">Создать выплату</h3>
-                <p className="text-purple-100 text-sm">Произвольная выплата сотруднику</p>
+                <p className="text-purple-100 text-sm">
+                  Произвольная выплата сотруднику
+                </p>
               </div>
             </div>
             <button
               onClick={onClose}
               className="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
         </div>
-        
+
         {/* Форма */}
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -180,17 +200,17 @@ export default function CustomPaymentModal({
                   }}
                   options={[
                     { value: '', label: 'Выберите работу...' },
-                    ...works.map(work => ({
+                    ...works.map((work) => ({
                       value: work.id,
-                      label: work.name
-                    }))
+                      label: work.name,
+                    })),
                   ]}
                   className="pl-4 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                   required
                 />
               </div>
             </div>
-          
+
             {/* Получатель */}
             {selectedWorkId && (
               <div className="space-y-2">
@@ -204,10 +224,10 @@ export default function CustomPaymentModal({
                     onChange={(e) => setSelectedUserId(e.target.value)}
                     options={[
                       { value: '', label: 'Выберите получателя...' },
-                      ...executers.map(user => ({
+                      ...executers.map((user) => ({
                         value: user.id,
-                        label: `${user.firstName || ''} ${user.lastName || ''} (${user.email})`
-                      }))
+                        label: `${user.firstName || ''} ${user.lastName || ''} (${user.email})`,
+                      })),
                     ]}
                     className="pl-4 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
                     required
@@ -215,11 +235,14 @@ export default function CustomPaymentModal({
                 </div>
               </div>
             )}
-            
+
             {/* Сумма */}
             {selectedUserId && (
               <div className="space-y-2">
-                <label htmlFor="customAmount" className="flex items-center text-sm font-semibold text-gray-700">
+                <label
+                  htmlFor="customAmount"
+                  className="flex items-center text-sm font-semibold text-gray-700"
+                >
                   <CurrencyDollarIcon className="h-4 w-4 mr-2 text-green-500" />
                   Сумма выплаты
                 </label>
@@ -240,7 +263,7 @@ export default function CustomPaymentModal({
                 {/* TODO: показать долг, когда будет API */}
               </div>
             )}
-            
+
             {/* Тип выплаты */}
             {selectedUserId && (
               <div className="space-y-2">
@@ -250,10 +273,30 @@ export default function CustomPaymentModal({
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { value: 'SALARY', label: 'Зарплата', icon: '💰', desc: 'Влияет на закрытие долга' },
-                    { value: 'ADVANCE', label: 'Аванс', icon: '⚡', desc: 'Влияет на закрытие долга' },
-                    { value: 'BONUS', label: 'Премия', icon: '🎁', desc: 'Не влияет на закрытие долга' },
-                    { value: 'EXTRA', label: 'Доплата', icon: '➕', desc: 'Не влияет на закрытие долга' }
+                    {
+                      value: 'SALARY',
+                      label: 'Зарплата',
+                      icon: '💰',
+                      desc: 'Влияет на закрытие долга',
+                    },
+                    {
+                      value: 'ADVANCE',
+                      label: 'Аванс',
+                      icon: '⚡',
+                      desc: 'Влияет на закрытие долга',
+                    },
+                    {
+                      value: 'BONUS',
+                      label: 'Премия',
+                      icon: '🎁',
+                      desc: 'Не влияет на закрытие долга',
+                    },
+                    {
+                      value: 'EXTRA',
+                      label: 'Доплата',
+                      icon: '➕',
+                      desc: 'Не влияет на закрытие долга',
+                    },
                   ].map((option) => (
                     <div
                       key={option.value}
@@ -267,7 +310,9 @@ export default function CustomPaymentModal({
                       <div className="flex items-center space-x-2">
                         <span className="text-lg">{option.icon}</span>
                         <div>
-                          <p className="font-medium text-gray-900">{option.label}</p>
+                          <p className="font-medium text-gray-900">
+                            {option.label}
+                          </p>
                           <p className="text-xs text-gray-500">{option.desc}</p>
                         </div>
                       </div>
@@ -276,11 +321,14 @@ export default function CustomPaymentModal({
                 </div>
               </div>
             )}
-            
+
             {/* Описание */}
             {selectedUserId && (
               <div className="space-y-2">
-                <label htmlFor="customDescription" className="flex items-center text-sm font-semibold text-gray-700">
+                <label
+                  htmlFor="customDescription"
+                  className="flex items-center text-sm font-semibold text-gray-700"
+                >
                   <DocumentTextIcon className="h-4 w-4 mr-2 text-indigo-500" />
                   Описание выплаты
                 </label>
@@ -294,11 +342,14 @@ export default function CustomPaymentModal({
                 />
               </div>
             )}
-            
+
             {/* Выплата от */}
             {selectedUserId && (
               <div className="space-y-2">
-                <label htmlFor="paymentDate" className="flex items-center text-sm font-semibold text-gray-700">
+                <label
+                  htmlFor="paymentDate"
+                  className="flex items-center text-sm font-semibold text-gray-700"
+                >
                   <DocumentTextIcon className="h-4 w-4 mr-2 text-blue-500" />
                   Выплата от
                 </label>
@@ -306,24 +357,24 @@ export default function CustomPaymentModal({
                   id="paymentDate"
                   type="date"
                   value={paymentDate}
-                  onChange={e => setPaymentDate(e.target.value)}
+                  onChange={(e) => setPaymentDate(e.target.value)}
                   className="pl-4 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all w-full"
                   required
                 />
               </div>
             )}
-            
+
             {/* Кнопки */}
             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-100">
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 onClick={onClose}
                 className="px-6 py-3 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-all"
               >
                 Отмена
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 disabled={!selectedUserId || !selectedWorkId || !amount}
               >
@@ -336,4 +387,4 @@ export default function CustomPaymentModal({
       </div>
     </Modal>
   );
-} 
+}

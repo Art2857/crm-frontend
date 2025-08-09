@@ -1,9 +1,9 @@
 'use client';
 
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { CalendarIcon, ClockIcon } from '@heroicons/react/24/outline';
 import Button from '../ui/Button';
-import {formatDateToISO} from "../../utils/date";
+import { formatDateToISO } from '../../utils/date';
 
 interface UserPeriodSelectorProps {
   userId: string;
@@ -11,17 +11,19 @@ interface UserPeriodSelectorProps {
   onDateSet: (userId: string, date: string) => void;
 }
 
-export default function UserPeriodSelector({ 
-  userId, 
-  selectedDate, 
-  onDateSet
+export default function UserPeriodSelector({
+  userId,
+  selectedDate,
+  onDateSet,
 }: UserPeriodSelectorProps) {
   const [date, setDate] = useState<string>(selectedDate);
 
   return (
     <div className="flex items-center space-x-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
       <CalendarIcon className="h-5 w-5 text-blue-600" />
-      <span className="text-sm font-medium text-blue-800">Расчет задолженности до даты:</span>
+      <span className="text-sm font-medium text-blue-800">
+        Расчет задолженности до даты:
+      </span>
       <input
         type="date"
         value={formatDateToISO(date)}
@@ -38,4 +40,4 @@ export default function UserPeriodSelector({
       </Button>
     </div>
   );
-} 
+}

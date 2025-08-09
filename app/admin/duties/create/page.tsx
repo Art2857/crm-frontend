@@ -53,21 +53,24 @@ export default function CreateDutyPage() {
       return false;
     }
 
-    if (basePercentage && (parseFloat(basePercentage) < 0 || parseFloat(basePercentage) > 100)) {
+    if (
+      basePercentage &&
+      (parseFloat(basePercentage) < 0 || parseFloat(basePercentage) > 100)
+    ) {
       setFormError('Базовый процент должен быть от 0 до 100');
       return false;
     }
-    
+
     if (minValue && isNaN(parseFloat(minValue))) {
       setFormError('Минимальное значение должно быть числом');
       return false;
     }
-    
+
     if (maxValue && isNaN(parseFloat(maxValue))) {
       setFormError('Максимальное значение должно быть числом');
       return false;
     }
-    
+
     if (minValue && maxValue && parseFloat(minValue) > parseFloat(maxValue)) {
       setFormError('Минимальное значение не может быть больше максимального');
       return false;
@@ -112,20 +115,23 @@ export default function CreateDutyPage() {
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Добавление новой обязанности</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Добавление новой обязанности
+          </h1>
         </div>
 
         <Card>
           <form onSubmit={handleSubmit} className="space-y-6">
             {(formError || error) && (
-              <Alert type="error">
-                {formError || error}
-              </Alert>
+              <Alert type="error">{formError || error}</Alert>
             )}
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Название обязанности *
                 </label>
                 <Input
@@ -138,7 +144,10 @@ export default function CreateDutyPage() {
               </div>
 
               <div>
-                <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="basePrice"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Базовая цена (тыс. руб.)
                 </label>
                 <Input
@@ -156,7 +165,10 @@ export default function CreateDutyPage() {
               </div>
 
               <div>
-                <label htmlFor="basePercentage" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="basePercentage"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Базовый процент от зарплаты (%)
                 </label>
                 <Input
@@ -177,7 +189,10 @@ export default function CreateDutyPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="minValue" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="minValue"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Минимальное значение суммы
                 </label>
                 <Input
@@ -195,7 +210,10 @@ export default function CreateDutyPage() {
               </div>
 
               <div>
-                <label htmlFor="maxValue" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="maxValue"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Максимальное значение суммы
                 </label>
                 <Input
@@ -203,7 +221,7 @@ export default function CreateDutyPage() {
                   value={maxValue}
                   onChange={(e) => setMaxValue(e.target.value)}
                   placeholder="50000"
-                  type="number" 
+                  type="number"
                   step="0.01"
                   min="0"
                 />
@@ -226,4 +244,4 @@ export default function CreateDutyPage() {
       </div>
     </div>
   );
-} 
+}

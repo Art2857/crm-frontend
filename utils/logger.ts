@@ -22,5 +22,3 @@ const makeLogger = () => {
 };
 
 export const logger = makeLogger();
-
-

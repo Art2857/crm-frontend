@@ -55,7 +55,7 @@ export default function CreateUserPage() {
     setValue,
     resetForm,
     handleSubmit,
-    validateForm
+    validateForm,
   } = useForm<CreateUserFormData>(
     {
       email: '',
@@ -65,52 +65,54 @@ export default function CreateUserPage() {
       middleName: '',
       birthday: '',
       salaryDay: '',
-      role: Role.WORKER
+      role: Role.WORKER,
     },
     {
       email: {
         required: true,
         pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-        validate: (value) => 
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) || 
-          'Введите корректный email'
+        validate: (value) =>
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) ||
+          'Введите корректный email',
       },
       password: {
         required: true,
         minLength: 8,
-        validate: (value) => 
-          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value) || 
-          'Пароль должен содержать не менее 8 символов, включая цифры, специальные символы, заглавные и строчные буквы'
+        validate: (value) =>
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+            value
+          ) ||
+          'Пароль должен содержать не менее 8 символов, включая цифры, специальные символы, заглавные и строчные буквы',
       },
-      firstName: { 
-        required: true, 
-        minLength: 2, 
-        maxLength: 50
+      firstName: {
+        required: true,
+        minLength: 2,
+        maxLength: 50,
       },
-      lastName: { 
-        required: true, 
-        minLength: 2, 
-        maxLength: 50
+      lastName: {
+        required: true,
+        minLength: 2,
+        maxLength: 50,
       },
-      middleName: { 
-        maxLength: 50
+      middleName: {
+        maxLength: 50,
       },
-      birthday: { 
+      birthday: {
         required: false,
-        isDate: true 
+        isDate: true,
       },
       salaryDay: {
         pattern: /^([1-9]|[12][0-9]|3[01])$/,
-        validate: (value) => 
-          value === '' || 
-          (/^([1-9]|[12][0-9]|3[01])$/.test(value) && 
-          parseInt(value) >= 1 && 
-          parseInt(value) <= 31) || 
-          'День зарплаты должен быть числом от 1 до 31'
+        validate: (value) =>
+          value === '' ||
+          (/^([1-9]|[12][0-9]|3[01])$/.test(value) &&
+            parseInt(value) >= 1 &&
+            parseInt(value) <= 31) ||
+          'День зарплаты должен быть числом от 1 до 31',
       },
       role: {
-        required: true
-      }
+        required: true,
+      },
     }
   );
 
@@ -135,20 +137,24 @@ export default function CreateUserPage() {
     for (let i = 0; i < remainingLength; i++) {
       password += randomChar(allChars);
     }
-    
+
     // Перемешиваем символы для большей случайности
-    password = password.split('').sort(() => 0.5 - Math.random()).join('');
-    
+    password = password
+      .split('')
+      .sort(() => 0.5 - Math.random())
+      .join('');
+
     // Проверяем, что сгенерированный пароль соответствует всем требованиям
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
       // В случае несоответствия (что маловероятно), генерируем снова
       return generateRandomPassword();
     }
-    
+
     // Устанавливаем сгенерированный пароль в форму
     setValue('password', password);
-    
+
     // Делаем пароль видимым
     setIsPasswordVisible(true);
   };
@@ -180,7 +186,9 @@ export default function CreateUserPage() {
       if (!validateForm()) {
         const errorMessages = Object.values(errors).filter(Boolean);
         if (errorMessages.length > 0) {
-          setServerError(`Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`);
+          setServerError(
+            `Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`
+          );
           return;
         }
       }
@@ -191,10 +199,14 @@ export default function CreateUserPage() {
       // Преобразуем дату рождения в формат ISO-8601 DateTime, если она указана
       if (userData.birthday) {
         try {
-          userData.birthday = new Date(`${userData.birthday}T00:00:00Z`).toISOString();
-        } catch(e) {
+          userData.birthday = new Date(
+            `${userData.birthday}T00:00:00Z`
+          ).toISOString();
+        } catch (e) {
           console.error('Ошибка при форматировании даты:', e);
-          setServerError('Некорректный формат даты. Используйте формат ГГГГ-ММ-ДД.');
+          setServerError(
+            'Некорректный формат даты. Используйте формат ГГГГ-ММ-ДД.'
+          );
           return;
         }
       } else {
@@ -203,7 +215,10 @@ export default function CreateUserPage() {
       }
 
       // Преобразуем salaryDay из строки в число, если он указан
-      if (userData.salaryDay !== undefined && userData.salaryDay.trim() !== '') {
+      if (
+        userData.salaryDay !== undefined &&
+        userData.salaryDay.trim() !== ''
+      ) {
         userData.salaryDay = parseInt(userData.salaryDay, 10);
       } else {
         userData.salaryDay = null;
@@ -215,22 +230,26 @@ export default function CreateUserPage() {
       if (createUser.fulfilled.match(resultAction)) {
         setSuccess('Пользователь успешно создан');
         resetForm(); // Сбрасываем форму после успешного создания
-      } else if (createUser.rejected.match(resultAction) && resultAction.payload) {
+      } else if (
+        createUser.rejected.match(resultAction) &&
+        resultAction.payload
+      ) {
         // Обработка ошибок валидации и других ошибок
         const errorMessage = resultAction.payload as string;
-        
+
         // Проверяем, содержит ли сообщение информацию о валидации
         if (errorMessage.includes('Ошибки валидации:')) {
           // Разбиваем сообщение на отдельные строки с ошибками
-          const validationLines = errorMessage.split('\n')
-            .filter(line => line.trim() !== '')
-            .filter(line => !line.startsWith('Ошибки валидации:'));
-          
+          const validationLines = errorMessage
+            .split('\n')
+            .filter((line) => line.trim() !== '')
+            .filter((line) => !line.startsWith('Ошибки валидации:'));
+
           // Группируем ошибки по категориям
           const fieldErrors: Record<string, string[]> = {};
           const generalErrors: string[] = [];
-          
-          validationLines.forEach(line => {
+
+          validationLines.forEach((line) => {
             // Проверяем, является ли строка ошибкой поля (формат "поле: сообщение")
             const match = line.match(/^([^:]+):\s*(.+)$/);
             if (match) {
@@ -244,7 +263,7 @@ export default function CreateUserPage() {
               generalErrors.push(line.trim());
             }
           });
-          
+
           // Создаем структурированное отображение ошибок
           setServerError(
             <div className="text-sm text-red-600">
@@ -253,25 +272,30 @@ export default function CreateUserPage() {
                   <p className="font-medium mb-2">Общие ошибки:</p>
                   <ul className="list-disc pl-4 mb-3">
                     {generalErrors.map((error, index) => (
-                      <li key={index} className="mt-1">{error}</li>
+                      <li key={index} className="mt-1">
+                        {error}
+                      </li>
                     ))}
                   </ul>
                 </>
               )}
-              
+
               {Object.keys(fieldErrors).length > 0 && (
                 <>
                   <p className="font-medium mb-2">Ошибки в полях формы:</p>
                   <ul className="list-disc pl-4">
-                    {Object.entries(fieldErrors).map(([field, errors], index) => {
-                      // Удаляем дубликаты сообщений
-                      const uniqueErrors = Array.from(new Set(errors));
-                      return (
-                        <li key={index} className="mt-1">
-                          <span className="font-medium">{field}:</span> {uniqueErrors.join(', ')}
-                        </li>
-                      );
-                    })}
+                    {Object.entries(fieldErrors).map(
+                      ([field, errors], index) => {
+                        // Удаляем дубликаты сообщений
+                        const uniqueErrors = Array.from(new Set(errors));
+                        return (
+                          <li key={index} className="mt-1">
+                            <span className="font-medium">{field}:</span>{' '}
+                            {uniqueErrors.join(', ')}
+                          </li>
+                        );
+                      }
+                    )}
                   </ul>
                 </>
               )}
@@ -298,9 +322,14 @@ export default function CreateUserPage() {
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Создание пользователя</h1>
-          
-          <Button variant="secondary" onClick={() => router.push('/admin/users')}>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Создание пользователя
+          </h1>
+
+          <Button
+            variant="secondary"
+            onClick={() => router.push('/admin/users')}
+          >
             Назад к списку
           </Button>
         </div>
@@ -319,9 +348,12 @@ export default function CreateUserPage() {
                   onChange={handleChange}
                   error={errors.email}
                 />
-              
+
                 <div className="mb-4">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Пароль
                   </label>
                   <div className="flex space-x-2">
@@ -329,13 +361,15 @@ export default function CreateUserPage() {
                       <input
                         id="password"
                         name="password"
-                        type={isPasswordVisible ? "text" : "password"}
+                        type={isPasswordVisible ? 'text' : 'password'}
                         className={`block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm w-full ${errors.password ? 'border-red-300 text-red-900' : ''}`}
                         value={values.password}
                         onChange={handleChange}
                       />
                       {errors.password && (
-                        <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.password}
+                        </p>
                       )}
                     </div>
                     <Button
@@ -365,7 +399,7 @@ export default function CreateUserPage() {
                     </ul>
                   </div>
                 </div>
-              
+
                 <Input
                   id="firstName"
                   name="firstName"
@@ -376,7 +410,7 @@ export default function CreateUserPage() {
                   onBlur={handleBlur}
                   error={errors.firstName}
                 />
-              
+
                 <Input
                   id="lastName"
                   name="lastName"
@@ -388,7 +422,7 @@ export default function CreateUserPage() {
                   error={errors.lastName}
                 />
               </div>
-              
+
               <div>
                 <Input
                   id="middleName"
@@ -400,7 +434,7 @@ export default function CreateUserPage() {
                   onBlur={handleBlur}
                   error={errors.middleName}
                 />
-              
+
                 <Input
                   id="birthday"
                   name="birthday"
@@ -412,7 +446,7 @@ export default function CreateUserPage() {
                   onBlur={handleBlur}
                   error={errors.birthday}
                 />
-              
+
                 <label className="block text-sm font-medium text-gray-700 mb-1 mt-4">
                   Роль пользователя
                 </label>
@@ -446,8 +480,16 @@ export default function CreateUserPage() {
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    <svg
+                      className="h-5 w-5 text-red-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                   <div className="ml-3">
@@ -461,13 +503,21 @@ export default function CreateUserPage() {
                 </div>
               </div>
             )}
-            
+
             {success && (
               <div className="bg-green-50 border-l-4 border-green-400 p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    <svg
+                      className="h-5 w-5 text-green-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                   <div className="ml-3">
@@ -494,4 +544,4 @@ export default function CreateUserPage() {
 // Генерация случайного символа из строки
 const randomChar = (str: string): string => {
   return str.charAt(Math.floor(Math.random() * str.length));
-}; 
+};

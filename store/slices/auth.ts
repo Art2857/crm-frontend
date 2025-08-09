@@ -46,13 +46,15 @@ export const getCurrentUser = createAsyncThunk(
       if (!token) {
         return rejectWithValue('Токен не найден');
       }
-      
+
       const user = await authService.getCurrentUser();
       return { user, token };
     } catch (error: any) {
       // При ошибке получения текущего пользователя, очищаем токен
       // токен будет очищен централизованно через ApiClient/tryRefreshTokens при 401
-      return rejectWithValue(error.message || 'Не удалось получить текущего пользователя');
+      return rejectWithValue(
+        error.message || 'Не удалось получить текущего пользователя'
+      );
     }
   }
 );
@@ -69,7 +71,10 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
     },
-    setCredentials: (state, action: PayloadAction<{ user: User; token: string }>) => {
+    setCredentials: (
+      state,
+      action: PayloadAction<{ user: User; token: string }>
+    ) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
@@ -77,7 +82,6 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-
   },
   extraReducers: (builder) => {
     // Логин
@@ -148,4 +152,4 @@ const authSlice = createSlice({
 });
 
 export const { logout, setCredentials, clearError } = authSlice.actions;
-export default authSlice.reducer; 
+export default authSlice.reducer;

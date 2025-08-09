@@ -30,18 +30,22 @@ export const useConfirmation = <T = void>(
   action: ConfirmAction<T>
 ): UseConfirmationResult<T> => {
   const { confirm } = useModal();
-  
+
   const confirmAndExecute = useCallback(
-    async (params: T, message: string, options?: ConfirmOptions): Promise<void> => {
+    async (
+      params: T,
+      message: string,
+      options?: ConfirmOptions
+    ): Promise<void> => {
       // Запрашиваем подтверждение у пользователя через модальное окно
       const isConfirmed = await confirm({
         title: options?.title || 'Подтверждение действия',
         message,
         confirmText: options?.confirmText || 'Подтвердить',
         cancelText: options?.cancelText || 'Отмена',
-        variant: options?.variant || 'primary'
+        variant: options?.variant || 'primary',
       });
-      
+
       // Если пользователь подтвердил действие, выполняем его
       if (isConfirmed) {
         await action(params);
@@ -49,6 +53,6 @@ export const useConfirmation = <T = void>(
     },
     [action, confirm]
   );
-  
+
   return { confirmAndExecute };
-}; 
+};

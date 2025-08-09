@@ -8,4 +8,4 @@ export default function PaymentsLayout({
   children: React.ReactNode;
 }) {
   return <Layout>{children}</Layout>;
-} 
+}

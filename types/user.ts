@@ -1,6 +1,6 @@
 export enum Role {
   ADMIN = 'ADMIN',
-  WORKER = 'WORKER'
+  WORKER = 'WORKER',
 }
 
 export interface User {
@@ -44,4 +44,4 @@ export interface UpdateSensitiveDataDto {
 
 export interface UserWithHistory extends User {
   history: UserHistory[];
-} 
+}

@@ -4,7 +4,7 @@
 
 /**
  * Базовая функция форматирования числа с разделителями разрядов
- * 
+ *
  * @param value Числовое значение
  * @param decimals Количество знаков после запятой
  * @param useComma Использовать запятую вместо точки
@@ -17,60 +17,61 @@ function formatNumber(
 ): string {
   // Обработка null/undefined и NaN
   if (value === null || value === undefined || isNaN(Number(value))) {
-    return useComma 
-      ? "0" + (decimals > 0 ? "," + "0".repeat(decimals) : "")
-      : "0" + (decimals > 0 ? "." + "0".repeat(decimals) : "");
+    return useComma
+      ? '0' + (decimals > 0 ? ',' + '0'.repeat(decimals) : '')
+      : '0' + (decimals > 0 ? '.' + '0'.repeat(decimals) : '');
   }
-  
+
   try {
     // Преобразуем в число
     const numValue = Number(value);
-    
+
     // Форматируем с нужным количеством знаков после запятой
     const formatted = numValue.toFixed(decimals);
-    
+
     // Разделяем целую и дробную часть
     const parts = formatted.split('.');
-    
+
     // Добавляем разделители между разрядами в целой части
     if (parts[0].length > 3) {
       parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     }
-    
+
     // Возвращаем с запятой или точкой в зависимости от флага
-    return useComma 
-      ? parts.join(',') 
-      : parts.join('.');
+    return useComma ? parts.join(',') : parts.join('.');
   } catch (error) {
     console.error('Ошибка при форматировании числа:', error);
-    return useComma 
-      ? "0" + (decimals > 0 ? "," + "0".repeat(decimals) : "")
-      : "0" + (decimals > 0 ? "." + "0".repeat(decimals) : "");
+    return useComma
+      ? '0' + (decimals > 0 ? ',' + '0'.repeat(decimals) : '')
+      : '0' + (decimals > 0 ? '.' + '0'.repeat(decimals) : '');
   }
 }
 
 /**
  * Форматирует денежное значение для отображения
- * 
+ *
  * @param value Значение в рублях (число или строка)
  * @param showDecimals Показывать ли десятичную часть
  * @returns Отформатированная строка (например, "180 000 ₽" или "180 ₽")
  */
-export function formatCurrency(value: number | string | null | undefined, showDecimals = true): string {
+export function formatCurrency(
+  value: number | string | null | undefined,
+  showDecimals = true
+): string {
   try {
     // Если передана строка, преобразуем в число
     let numValue: number | null | undefined;
-    
+
     if (typeof value === 'string') {
       const parsed = parseFloat(value);
       numValue = isNaN(parsed) ? null : parsed;
     } else {
       numValue = value as number | null | undefined;
     }
-    
+
     // Больше не делим на 1000, так как отображаем в рублях, а не в тыс. руб.
     // ВАЖНО: В базе данных хранятся значения в рублях, и теперь мы отображаем их напрямую
-    
+
     const formattedValue = formatNumber(numValue, showDecimals ? 0 : 0, true);
     return `${formattedValue} ₽`;
   } catch (error) {
@@ -81,42 +82,53 @@ export function formatCurrency(value: number | string | null | undefined, showDe
 
 /**
  * Форматирует процентное значение для отображения
- * 
+ *
  * @param value Процентное значение
  * @param showDecimals Показывать ли десятичную часть
  * @returns Отформатированная строка (например, "20,0000%" или "20%")
  */
-export function formatPercentage(value: number | string | null | undefined, showDecimals = true): string {
+export function formatPercentage(
+  value: number | string | null | undefined,
+  showDecimals = true
+): string {
   try {
     // Преобразуем строковое значение в число
     let numValue: number | null | undefined;
-    
+
     if (typeof value === 'string') {
       const parsed = parseFloat(value);
       numValue = isNaN(parsed) ? null : parsed;
     } else {
       numValue = value as number | null | undefined;
     }
-    
+
     // Если нужно показать десятичную часть, используем 4 знака, иначе округляем
-    const valueToFormat = showDecimals 
-      ? numValue 
-      : numValue !== null && numValue !== undefined ? Math.round(Number(numValue)) : numValue;
-    
+    const valueToFormat = showDecimals
+      ? numValue
+      : numValue !== null && numValue !== undefined
+        ? Math.round(Number(numValue))
+        : numValue;
+
     // Проверка на NaN после преобразования
-    if (valueToFormat !== null && valueToFormat !== undefined && isNaN(Number(valueToFormat))) {
+    if (
+      valueToFormat !== null &&
+      valueToFormat !== undefined &&
+      isNaN(Number(valueToFormat))
+    ) {
       return '0%';
     }
-    
-    const formattedValue = formatNumber(valueToFormat, showDecimals ? 4 : 0, true);
+
+    const formattedValue = formatNumber(
+      valueToFormat,
+      showDecimals ? 4 : 0,
+      true
+    );
     return `${formattedValue}%`;
   } catch (error) {
     console.error('Ошибка при форматировании процента:', error);
     return '0%';
   }
 }
-
-
 
 /**
  * Форматирует полное представление оплаты с расчетом
@@ -135,30 +147,30 @@ export function formatPayment(
 ): string {
   try {
     if (price === null && percentage === null) return 'Остаточная';
-    
+
     const parts: string[] = [];
-    
+
     // Добавляем фиксированную цену, если указана
     if (price !== null && price !== undefined) {
       parts.push(formatCurrency(price, true));
     }
-    
+
     // Добавляем процент, если указан
     if (percentage !== null && percentage !== undefined) {
       parts.push(formatPercentage(percentage, false));
     }
-    
+
     // Собираем текст с компонентами расчета
     let text = parts.join(' + ');
-    
+
     // Добавляем итоговое значение, если указано
     if (calculatedValue !== null && calculatedValue !== undefined) {
       text += ` = ${formatCurrency(calculatedValue, true)}`;
     }
-    
+
     return text;
   } catch (error) {
     console.error('Ошибка при форматировании оплаты:', error);
     return 'Ошибка расчета';
   }
-} 
+}

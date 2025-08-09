@@ -17,39 +17,52 @@ const initialState: UsersState = {
 };
 
 // Асинхронные thunks
-export const fetchAllUsers = createAsyncThunk('users/fetchAll', async (_, { rejectWithValue }) => {
-  try {
-    const users = await userService.getAllUsers();
-    return users;
-  } catch (error: any) {
-    // Игнорируем отмененные запросы
-    if (error.message === 'REQUEST_CANCELLED') {
-      // тихий skip
-      // Возвращаем пустой массив вместо ошибки для отмененных запросов
-      return [];
+export const fetchAllUsers = createAsyncThunk(
+  'users/fetchAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      const users = await userService.getAllUsers();
+      return users;
+    } catch (error: any) {
+      // Игнорируем отмененные запросы
+      if (error.message === 'REQUEST_CANCELLED') {
+        // тихий skip
+        // Возвращаем пустой массив вместо ошибки для отмененных запросов
+        return [];
+      }
+      return rejectWithValue(
+        error.message || 'Не удалось загрузить пользователей'
+      );
     }
-    return rejectWithValue(error.message || 'Не удалось загрузить пользователей');
   }
-});
+);
 
-export const fetchUserById = createAsyncThunk('users/fetchById', async (id: string, { rejectWithValue }) => {
-  try {
-    const user = await userService.getById(id);
-    return user;
-  } catch (error: any) {
-    // Игнорируем отмененные запросы
-    if (error.message === 'REQUEST_CANCELLED') {
-      // тихий skip
-      // Возвращаем null для отмененных запросов
-      return null;
+export const fetchUserById = createAsyncThunk(
+  'users/fetchById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const user = await userService.getById(id);
+      return user;
+    } catch (error: any) {
+      // Игнорируем отмененные запросы
+      if (error.message === 'REQUEST_CANCELLED') {
+        // тихий skip
+        // Возвращаем null для отмененных запросов
+        return null;
+      }
+      return rejectWithValue(
+        error.message || 'Не удалось загрузить пользователя'
+      );
     }
-    return rejectWithValue(error.message || 'Не удалось загрузить пользователя');
   }
-});
+);
 
 export const updateUserProfile = createAsyncThunk(
   'users/updateProfile',
-  async ({ userId, data }: { userId: string, data: any }, { rejectWithValue }) => {
+  async (
+    { userId, data }: { userId: string; data: any },
+    { rejectWithValue }
+  ) => {
     try {
       const user = await userService.updateProfile(userId, data);
       return user;
@@ -59,14 +72,19 @@ export const updateUserProfile = createAsyncThunk(
         // тихий skip
         return null;
       }
-      return rejectWithValue(error.message || 'Не удалось обновить профиль пользователя');
+      return rejectWithValue(
+        error.message || 'Не удалось обновить профиль пользователя'
+      );
     }
   }
 );
 
 export const updateUserSensitiveData = createAsyncThunk(
   'users/updateSensitiveData',
-  async ({ userId, data }: { userId: string, data: any }, { rejectWithValue }) => {
+  async (
+    { userId, data }: { userId: string; data: any },
+    { rejectWithValue }
+  ) => {
     try {
       const user = await userService.updateSensitiveData(userId, data);
       return user;
@@ -76,7 +94,9 @@ export const updateUserSensitiveData = createAsyncThunk(
         // тихий skip
         return null;
       }
-      return rejectWithValue(error.message || 'Не удалось обновить данные пользователя');
+      return rejectWithValue(
+        error.message || 'Не удалось обновить данные пользователя'
+      );
     }
   }
 );
@@ -93,21 +113,26 @@ export const createUser = createAsyncThunk(
         // тихий skip
         return null;
       }
-      
+
       // Более детальная обработка ошибок
-      
+
       // Проверка на валидационные ошибки с детальной структурой
       if (error.isValidationError) {
         // Если ошибка уже отформатирована как строка с ошибками валидации, используем её
         if (error.message.includes('Ошибки валидации:')) {
           return rejectWithValue(error.message);
         }
-        
+
         // Если есть структурированные ошибки валидации, форматируем их
-        if (error.validationErrors && Object.keys(error.validationErrors).length > 0) {
+        if (
+          error.validationErrors &&
+          Object.keys(error.validationErrors).length > 0
+        ) {
           const fieldErrors = [];
-          
-          for (const [field, messages] of Object.entries(error.validationErrors)) {
+
+          for (const [field, messages] of Object.entries(
+            error.validationErrors
+          )) {
             // Избегаем дублирования сообщений, проверяя, является ли messages массивом или строкой
             if (Array.isArray(messages)) {
               // Получаем уникальные сообщения из массива, удаляя дубликаты
@@ -117,36 +142,42 @@ export const createUser = createAsyncThunk(
               fieldErrors.push(`${field}: ${messages}`);
             }
           }
-          
+
           if (fieldErrors.length > 0) {
-            return rejectWithValue(`Ошибки валидации:\n${fieldErrors.join('\n')}`);
+            return rejectWithValue(
+              `Ошибки валидации:\n${fieldErrors.join('\n')}`
+            );
           }
         }
-        
+
         // Если у нас есть общие ошибки
         if (error.errorMessages && error.errorMessages.length > 0) {
           // Получаем уникальные сообщения
           const uniqueMessages = Array.from(new Set(error.errorMessages));
-          return rejectWithValue(`Ошибки валидации:\n${uniqueMessages.join('\n')}`);
+          return rejectWithValue(
+            `Ошибки валидации:\n${uniqueMessages.join('\n')}`
+          );
         }
-        
+
         // Если ничего из вышеперечисленного не сработало, используем общее сообщение
         return rejectWithValue(error.message);
       }
-      
+
       // Если есть структурированное сообщение об ошибке, используем его
       if (error.response && error.response.data) {
         const responseData = error.response.data;
-        
+
         if (Array.isArray(responseData.message)) {
           return rejectWithValue(responseData.message.join('\n'));
         } else if (typeof responseData.message === 'string') {
           return rejectWithValue(responseData.message);
         }
       }
-      
+
       // Если нет структурированного сообщения, используем общее сообщение
-      return rejectWithValue(error.message || 'Не удалось создать пользователя');
+      return rejectWithValue(
+        error.message || 'Не удалось создать пользователя'
+      );
     }
   }
 );
@@ -163,7 +194,9 @@ export const fetchUserHistory = createAsyncThunk(
         // тихий skip
         return null;
       }
-      return rejectWithValue(error.message || 'Не удалось загрузить историю пользователя');
+      return rejectWithValue(
+        error.message || 'Не удалось загрузить историю пользователя'
+      );
     }
   }
 );
@@ -237,7 +270,7 @@ const usersSlice = createSlice({
         state.error = action.payload as string;
       }
     });
-    
+
     // Обновление конфиденциальных данных
     builder.addCase(updateUserSensitiveData.pending, (state) => {
       state.isLoading = true;
@@ -263,7 +296,7 @@ const usersSlice = createSlice({
         state.error = action.payload as string;
       }
     });
-    
+
     // Создание пользователя
     builder.addCase(createUser.pending, (state) => {
       state.isLoading = true;
@@ -283,7 +316,7 @@ const usersSlice = createSlice({
         state.error = action.payload as string;
       }
     });
-    
+
     // Загрузка истории пользователя
     builder.addCase(fetchUserHistory.pending, (state) => {
       state.isLoading = true;
@@ -307,4 +340,4 @@ const usersSlice = createSlice({
 });
 
 export const { clearCurrentUser } = usersSlice.actions;
-export default usersSlice.reducer; 
+export default usersSlice.reducer;

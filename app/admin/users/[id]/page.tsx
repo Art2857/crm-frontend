@@ -9,7 +9,12 @@ import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
 import Select from '../../../../components/ui/Select';
 import { Role } from '../../../../types/user';
-import { fetchUserById, updateUserProfile, updateUserSensitiveData, clearCurrentUser } from '../../../../store/slices/users';
+import {
+  fetchUserById,
+  updateUserProfile,
+  updateUserSensitiveData,
+  clearCurrentUser,
+} from '../../../../store/slices/users';
 
 // Опции для выбора дня зарплаты
 const salaryDayOptions = [
@@ -35,12 +40,16 @@ type UpdateSensitiveFormData = {
 
 export default function EditUserPage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  const { currentUser, isLoading, error } = useAppSelector((state) => state.users);
+  const { currentUser, isLoading, error } = useAppSelector(
+    (state) => state.users
+  );
   const dispatch = useAppDispatch();
   const router = useRouter();
   const [success, setSuccess] = useState('');
   const [serverError, setServerError] = useState('');
-  const [activeTab, setActiveTab] = useState<'profile' | 'sensitive'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'sensitive'>(
+    'profile'
+  );
 
   const userId = params.id;
 
@@ -51,32 +60,32 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     handleBlur: handleProfileBlur,
     setValue: setProfileValue,
     handleSubmit: handleSubmitProfile,
-    validateForm: validateProfileForm
+    validateForm: validateProfileForm,
   } = useForm<UpdateProfileFormData>(
     {
       firstName: '',
       lastName: '',
       middleName: '',
-      birthday: ''
+      birthday: '',
     },
     {
-      firstName: { 
-        required: true, 
-        minLength: 2, 
-        maxLength: 50
+      firstName: {
+        required: true,
+        minLength: 2,
+        maxLength: 50,
       },
-      lastName: { 
-        required: true, 
-        minLength: 2, 
-        maxLength: 50
+      lastName: {
+        required: true,
+        minLength: 2,
+        maxLength: 50,
       },
-      middleName: { 
-        maxLength: 50
+      middleName: {
+        maxLength: 50,
       },
-      birthday: { 
+      birthday: {
         required: false,
-        isDate: true 
-      }
+        isDate: true,
+      },
     }
   );
 
@@ -86,33 +95,33 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     handleChange: handleSensitiveChange,
     setValue: setSensitiveValue,
     handleSubmit: handleSubmitSensitive,
-    validateForm: validateSensitiveForm
+    validateForm: validateSensitiveForm,
   } = useForm<UpdateSensitiveFormData>(
     {
       email: '',
       role: '',
-      salaryDay: ''
+      salaryDay: '',
     },
     {
       email: {
         required: true,
         pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-        validate: (value) => 
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) || 
-          'Введите корректный email'
+        validate: (value) =>
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) ||
+          'Введите корректный email',
       },
       role: {
-        required: true
+        required: true,
       },
       salaryDay: {
         pattern: /^([1-9]|[12][0-9]|3[01])$/,
-        validate: (value) => 
-          value === '' || 
-          (/^([1-9]|[12][0-9]|3[01])$/.test(value) && 
-          parseInt(value) >= 1 && 
-          parseInt(value) <= 31) || 
-          'День зарплаты должен быть числом от 1 до 31'
-      }
+        validate: (value) =>
+          value === '' ||
+          (/^([1-9]|[12][0-9]|3[01])$/.test(value) &&
+            parseInt(value) >= 1 &&
+            parseInt(value) <= 31) ||
+          'День зарплаты должен быть числом от 1 до 31',
+      },
     }
   );
 
@@ -135,7 +144,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     }
 
     console.log('Fetching user with ID:', userId);
-    
+
     // Загрузка данных пользователя
     dispatch(fetchUserById(userId));
 
@@ -149,15 +158,19 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (currentUser) {
       console.log('Заполняем форму данными пользователя:', currentUser);
-      
+
       // Заполнение формы профиля
       setProfileValue('firstName', currentUser.firstName || '');
       setProfileValue('lastName', currentUser.lastName || '');
       setProfileValue('middleName', currentUser.middleName || '');
-      
+
       // Преобразование даты в формат для поля ввода
-      console.log('Дата рождения из данных пользователя:', currentUser.birthday, typeof currentUser.birthday);
-      
+      console.log(
+        'Дата рождения из данных пользователя:',
+        currentUser.birthday,
+        typeof currentUser.birthday
+      );
+
       if (currentUser.birthday) {
         try {
           const date = new Date(currentUser.birthday);
@@ -167,7 +180,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
             console.log('Форматированная дата для формы:', formattedDate);
             setProfileValue('birthday', formattedDate);
           } else {
-            console.warn('Invalid birthday date detected:', currentUser.birthday);
+            console.warn(
+              'Invalid birthday date detected:',
+              currentUser.birthday
+            );
             setProfileValue('birthday', '');
           }
         } catch (e) {
@@ -178,11 +194,14 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         console.log('Дата рождения отсутствует (null или undefined)');
         setProfileValue('birthday', '');
       }
-      
+
       // Заполнение формы чувствительных данных
       setSensitiveValue('email', currentUser.email);
       setSensitiveValue('role', currentUser.role);
-      setSensitiveValue('salaryDay', currentUser.salaryDay !== null ? String(currentUser.salaryDay) : '');
+      setSensitiveValue(
+        'salaryDay',
+        currentUser.salaryDay !== null ? String(currentUser.salaryDay) : ''
+      );
     }
   }, [currentUser, setProfileValue, setSensitiveValue]);
 
@@ -191,7 +210,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     setActiveTab(tab);
     setSuccess('');
     setServerError('');
-    
+
     // Сбрасываем формы к исходным значениям при переключении вкладок
     if (currentUser) {
       if (tab === 'profile') {
@@ -199,7 +218,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         setProfileValue('firstName', currentUser.firstName || '');
         setProfileValue('lastName', currentUser.lastName || '');
         setProfileValue('middleName', currentUser.middleName || '');
-        
+
         if (currentUser.birthday) {
           try {
             const date = new Date(currentUser.birthday);
@@ -208,7 +227,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
               const formattedDate = date.toISOString().split('T')[0];
               setProfileValue('birthday', formattedDate);
             } else {
-              console.warn('Invalid birthday date detected:', currentUser.birthday);
+              console.warn(
+                'Invalid birthday date detected:',
+                currentUser.birthday
+              );
               setProfileValue('birthday', '');
             }
           } catch (e) {
@@ -220,7 +242,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         // Перезаполняем форму конфиденциальных данных исходными данными
         setSensitiveValue('email', currentUser.email);
         setSensitiveValue('role', currentUser.role);
-        setSensitiveValue('salaryDay', currentUser.salaryDay !== null ? String(currentUser.salaryDay) : '');
+        setSensitiveValue(
+          'salaryDay',
+          currentUser.salaryDay !== null ? String(currentUser.salaryDay) : ''
+        );
       }
     }
   };
@@ -237,7 +262,9 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       if (!validateProfileForm()) {
         const errorMessages = Object.values(profileErrors).filter(Boolean);
         if (errorMessages.length > 0) {
-          setServerError(`Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`);
+          setServerError(
+            `Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`
+          );
           return;
         }
       }
@@ -253,12 +280,18 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       // Преобразуем дату рождения в формат ISO-8601 DateTime, если она указана
       if (updatedData.birthday) {
         try {
-          console.log('Преобразуем дату рождения в ISO формат:', updatedData.birthday);
+          console.log(
+            'Преобразуем дату рождения в ISO формат:',
+            updatedData.birthday
+          );
           const birthday = new Date(`${updatedData.birthday}T00:00:00Z`);
           if (!isNaN(birthday.getTime())) {
             updatedData.birthday = birthday.toISOString();
           } else {
-            console.warn('Invalid birthday date, sending as is:', updatedData.birthday);
+            console.warn(
+              'Invalid birthday date, sending as is:',
+              updatedData.birthday
+            );
           }
         } catch (error) {
           console.error('Ошибка при форматировании даты рождения:', error);
@@ -274,18 +307,24 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
       if (updateUserProfile.fulfilled.match(resultAction)) {
         setSuccess('Профиль успешно обновлен');
-        
+
         // Обновляем данные пользователя и историю после успешного обновления
         console.log('Обновляем данные пользователя после успешного сохранения');
         await dispatch(fetchUserById(userId));
-        
+
         // После успешного обновления базовой информации сбрасываем форму конфиденциальных данных
         if (currentUser) {
           setSensitiveValue('email', currentUser.email);
           setSensitiveValue('role', currentUser.role);
-          setSensitiveValue('salaryDay', currentUser.salaryDay !== null ? String(currentUser.salaryDay) : '');
+          setSensitiveValue(
+            'salaryDay',
+            currentUser.salaryDay !== null ? String(currentUser.salaryDay) : ''
+          );
         }
-      } else if (updateUserProfile.rejected.match(resultAction) && resultAction.payload) {
+      } else if (
+        updateUserProfile.rejected.match(resultAction) &&
+        resultAction.payload
+      ) {
         setServerError(resultAction.payload as string);
       }
     } catch (err) {
@@ -303,7 +342,9 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       if (!validateSensitiveForm()) {
         const errorMessages = Object.values(sensitiveErrors).filter(Boolean);
         if (errorMessages.length > 0) {
-          setServerError(`Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`);
+          setServerError(
+            `Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`
+          );
           return;
         }
       }
@@ -312,7 +353,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       const updatedData = { ...data } as any;
 
       // Преобразуем salaryDay из строки в число, если оно указано
-      if (updatedData.salaryDay !== undefined && updatedData.salaryDay.trim() !== '') {
+      if (
+        updatedData.salaryDay !== undefined &&
+        updatedData.salaryDay.trim() !== ''
+      ) {
         updatedData.salaryDay = parseInt(updatedData.salaryDay, 10);
       } else {
         updatedData.salaryDay = null;
@@ -325,16 +369,16 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
       if (updateUserSensitiveData.fulfilled.match(resultAction)) {
         setSuccess('Данные успешно обновлены');
-        
+
         // Обновляем данные пользователя и историю после успешного обновления
         await dispatch(fetchUserById(userId));
-        
+
         // После успешного обновления конфиденциальных данных сбрасываем форму базовой информации
         if (currentUser) {
           setProfileValue('firstName', currentUser.firstName || '');
           setProfileValue('lastName', currentUser.lastName || '');
           setProfileValue('middleName', currentUser.middleName || '');
-          
+
           if (currentUser.birthday) {
             try {
               const date = new Date(currentUser.birthday);
@@ -343,7 +387,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 const formattedDate = date.toISOString().split('T')[0];
                 setProfileValue('birthday', formattedDate);
               } else {
-                console.warn('Invalid birthday date detected:', currentUser.birthday);
+                console.warn(
+                  'Invalid birthday date detected:',
+                  currentUser.birthday
+                );
                 setProfileValue('birthday', '');
               }
             } catch (e) {
@@ -352,7 +399,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
             }
           }
         }
-      } else if (updateUserSensitiveData.rejected.match(resultAction) && resultAction.payload) {
+      } else if (
+        updateUserSensitiveData.rejected.match(resultAction) &&
+        resultAction.payload
+      ) {
         setServerError(resultAction.payload as string);
       }
     } catch (err) {
@@ -374,15 +424,19 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       <div className="px-4 py-6 sm:px-0">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">
-            Редактирование пользователя: {currentUser.firstName} {currentUser.lastName}
+            Редактирование пользователя: {currentUser.firstName}{' '}
+            {currentUser.lastName}
           </h1>
-          
+
           <div className="flex space-x-4">
-            <Button variant="secondary" onClick={() => router.push('/admin/users')}>
+            <Button
+              variant="secondary"
+              onClick={() => router.push('/admin/users')}
+            >
               Назад к списку
             </Button>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => router.push(`/admin/users/${userId}/history`)}
             >
               История изменений
@@ -419,7 +473,11 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
         <Card>
           {activeTab === 'profile' ? (
-            <form key="profile-form" onSubmit={handleSubmitProfile(onProfileSubmit)} className="space-y-6">
+            <form
+              key="profile-form"
+              onSubmit={handleSubmitProfile(onProfileSubmit)}
+              className="space-y-6"
+            >
               <Input
                 id="firstName"
                 name="firstName"
@@ -465,10 +523,15 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 error={profileErrors.birthday}
               />
 
-              {(error && error !== 'REQUEST_CANCELLED' || serverError) && (
-                <div className="text-red-500 text-sm mt-4">{error !== 'REQUEST_CANCELLED' ? error : ''}{serverError}</div>
+              {((error && error !== 'REQUEST_CANCELLED') || serverError) && (
+                <div className="text-red-500 text-sm mt-4">
+                  {error !== 'REQUEST_CANCELLED' ? error : ''}
+                  {serverError}
+                </div>
               )}
-              {success && <div className="text-green-500 text-sm mt-4">{success}</div>}
+              {success && (
+                <div className="text-green-500 text-sm mt-4">{success}</div>
+              )}
 
               <div className="flex justify-end">
                 <Button type="submit" isLoading={isLoading}>
@@ -477,7 +540,11 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
               </div>
             </form>
           ) : (
-            <form key="sensitive-form" onSubmit={handleSubmitSensitive(onSensitiveSubmit)} className="space-y-6">
+            <form
+              key="sensitive-form"
+              onSubmit={handleSubmitSensitive(onSensitiveSubmit)}
+              className="space-y-6"
+            >
               <Input
                 id="email"
                 name="email"
@@ -490,7 +557,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
               />
 
               <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="role"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Роль
                 </label>
                 <select
@@ -516,10 +586,15 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 error={sensitiveErrors.salaryDay}
               />
 
-              {(error && error !== 'REQUEST_CANCELLED' || serverError) && (
-                <div className="text-red-500 text-sm mt-4">{error !== 'REQUEST_CANCELLED' ? error : ''}{serverError}</div>
+              {((error && error !== 'REQUEST_CANCELLED') || serverError) && (
+                <div className="text-red-500 text-sm mt-4">
+                  {error !== 'REQUEST_CANCELLED' ? error : ''}
+                  {serverError}
+                </div>
               )}
-              {success && <div className="text-green-500 text-sm mt-4">{success}</div>}
+              {success && (
+                <div className="text-green-500 text-sm mt-4">{success}</div>
+              )}
 
               <div className="flex justify-end">
                 <Button type="submit" isLoading={isLoading}>
@@ -532,4 +607,4 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       </div>
     </div>
   );
-} 
+}

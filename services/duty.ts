@@ -1,14 +1,18 @@
-import { 
-  Duty, 
-  CreateDutyDto, 
+import {
+  Duty,
+  CreateDutyDto,
   UpdateDutyDto,
-  Distribution, 
-  DistributionDetail, 
+  Distribution,
+  DistributionDetail,
   CreateDistributionDto,
-  DistributionWithDetails
+  DistributionWithDetails,
 } from '../types/duty';
 import { privateApi } from './ApiClient';
-import { DUTIES_ENDPOINTS, DISTRIBUTIONS_ENDPOINTS, DISTRIBUTION_DETAILS_ENDPOINTS } from './endpoints';
+import {
+  DUTIES_ENDPOINTS,
+  DISTRIBUTIONS_ENDPOINTS,
+  DISTRIBUTION_DETAILS_ENDPOINTS,
+} from './endpoints';
 import { logger } from '../utils/logger';
 
 export const dutyService = {
@@ -48,7 +52,10 @@ export const dutyService = {
   // Обновление обязанности
   update: async (id: string, data: UpdateDutyDto): Promise<Duty> => {
     try {
-      const response = await privateApi.patch<Duty>(DUTIES_ENDPOINTS.byId(id), data);
+      const response = await privateApi.patch<Duty>(
+        DUTIES_ENDPOINTS.byId(id),
+        data
+      );
       return response.data;
     } catch (error) {
       logger.error(`Error updating duty with ID ${id}:`, error);
@@ -56,12 +63,12 @@ export const dutyService = {
     }
   },
 
-
-
   // Получение всех распределений
   getAllDistributions: async (): Promise<Distribution[]> => {
     try {
-      const response = await privateApi.get<Distribution[]>(DISTRIBUTIONS_ENDPOINTS.base);
+      const response = await privateApi.get<Distribution[]>(
+        DISTRIBUTIONS_ENDPOINTS.base
+      );
       return response.data;
     } catch (error) {
       logger.error('Error fetching distributions:', error);
@@ -69,12 +76,12 @@ export const dutyService = {
     }
   },
 
-
-
   // Получение распределения по ID с деталями
   getDistributionById: async (id: string): Promise<DistributionWithDetails> => {
     try {
-      const response = await privateApi.get<DistributionWithDetails>(DISTRIBUTIONS_ENDPOINTS.byId(id));
+      const response = await privateApi.get<DistributionWithDetails>(
+        DISTRIBUTIONS_ENDPOINTS.byId(id)
+      );
       return response.data;
     } catch (error) {
       logger.error(`Error fetching distribution with ID ${id}:`, error);
@@ -95,25 +102,28 @@ export const dutyService = {
   }): Promise<DistributionWithDetails> {
     try {
       logger.debug('Отправляем запрос на создание распределения:', data);
-      
+
       // Преобразуем данные в формат, ожидаемый API
       const requestData: CreateDistributionDto = {
         workHistoryId: data.workHistoryId,
         effectiveDate: data.effectiveDate,
-        details: data.details.map(detail => ({
+        details: data.details.map((detail) => ({
           dutyId: detail.dutyId,
           userId: detail.userId,
           price: detail.price?.toString() || null,
-          percentage: detail.percentage?.toString() || null
-        }))
+          percentage: detail.percentage?.toString() || null,
+        })),
       };
-      
+
       logger.debug('Преобразованные данные для API:', requestData);
-      
-      const response = await privateApi.post<DistributionWithDetails>(DISTRIBUTIONS_ENDPOINTS.base, requestData);
-      
+
+      const response = await privateApi.post<DistributionWithDetails>(
+        DISTRIBUTIONS_ENDPOINTS.base,
+        requestData
+      );
+
       logger.debug('Ответ от API при создании распределения:', response.data);
-      
+
       return response.data;
     } catch (error) {
       logger.error('Ошибка при создании распределения:', error);
@@ -122,12 +132,19 @@ export const dutyService = {
   },
 
   // Получение распределения по workHistoryId
-  getDistributionsByWorkHistoryId: async (workHistoryId: string): Promise<DistributionWithDetails | null> => {
+  getDistributionsByWorkHistoryId: async (
+    workHistoryId: string
+  ): Promise<DistributionWithDetails | null> => {
     try {
-      const response = await privateApi.get<DistributionWithDetails>(DISTRIBUTIONS_ENDPOINTS.byWorkHistoryId(workHistoryId));
+      const response = await privateApi.get<DistributionWithDetails>(
+        DISTRIBUTIONS_ENDPOINTS.byWorkHistoryId(workHistoryId)
+      );
       return response.data;
     } catch (error) {
-      logger.error(`Error fetching distribution for work history ${workHistoryId}:`, error);
+      logger.error(
+        `Error fetching distribution for work history ${workHistoryId}:`,
+        error
+      );
       // Если распределение не найдено, возвращаем null вместо ошибки
       if (error.response?.status === 404) {
         return null;
@@ -137,9 +154,13 @@ export const dutyService = {
   },
 
   // Получение всех распределений по workId (для работы)
-  getDistributionsByWorkId: async (workId: string): Promise<DistributionWithDetails[]> => {
+  getDistributionsByWorkId: async (
+    workId: string
+  ): Promise<DistributionWithDetails[]> => {
     try {
-      const response = await privateApi.get<DistributionWithDetails[]>(DISTRIBUTIONS_ENDPOINTS.byWorkId(workId));
+      const response = await privateApi.get<DistributionWithDetails[]>(
+        DISTRIBUTIONS_ENDPOINTS.byWorkId(workId)
+      );
       return response.data;
     } catch (error) {
       logger.error(`Error fetching distributions for work ${workId}:`, error);
@@ -151,34 +172,42 @@ export const dutyService = {
     }
   },
 
-
-
   // Обновление распределения
-  async updateDistribution(workHistoryId: string, data: {
-    details: {
-      dutyId: string;
-      userId: string;
-      price?: string | null;
-      percentage?: string | null;
-    }[];
-    effectiveDate?: string;
-  }): Promise<DistributionWithDetails> {
+  async updateDistribution(
+    workHistoryId: string,
+    data: {
+      details: {
+        dutyId: string;
+        userId: string;
+        price?: string | null;
+        percentage?: string | null;
+      }[];
+      effectiveDate?: string;
+    }
+  ): Promise<DistributionWithDetails> {
     try {
-      logger.debug('Отправляем запрос на обновление распределения:', { workHistoryId, details: data.details, effectiveDate: data.effectiveDate });
-      
+      logger.debug('Отправляем запрос на обновление распределения:', {
+        workHistoryId,
+        details: data.details,
+        effectiveDate: data.effectiveDate,
+      });
+
       // Преобразуем данные в формат, ожидаемый API
       const requestData = {
         workHistoryId: workHistoryId,
         details: data.details,
-        effectiveDate: data.effectiveDate
+        effectiveDate: data.effectiveDate,
       };
-      
+
       logger.debug('Преобразованные данные для API:', requestData);
-      
-      const response = await privateApi.patch<DistributionWithDetails>(DISTRIBUTIONS_ENDPOINTS.byId(workHistoryId), requestData);
-      
+
+      const response = await privateApi.patch<DistributionWithDetails>(
+        DISTRIBUTIONS_ENDPOINTS.byId(workHistoryId),
+        requestData
+      );
+
       logger.debug('Ответ от API при обновлении распределения:', response.data);
-      
+
       return response.data;
     } catch (error) {
       logger.error('Ошибка при обновлении распределения:', error);
@@ -186,12 +215,14 @@ export const dutyService = {
     }
   },
 
-
-
   // Получение детали распределения по ID
-  getDistributionDetailById: async (id: string): Promise<DistributionDetail> => {
+  getDistributionDetailById: async (
+    id: string
+  ): Promise<DistributionDetail> => {
     try {
-      const response = await privateApi.get<DistributionDetail>(DISTRIBUTION_DETAILS_ENDPOINTS.byId(id));
+      const response = await privateApi.get<DistributionDetail>(
+        DISTRIBUTION_DETAILS_ENDPOINTS.byId(id)
+      );
       return response.data;
     } catch (error) {
       logger.error(`Error fetching distribution detail with ID ${id}:`, error);
@@ -208,7 +239,10 @@ export const dutyService = {
     percentage?: string | null;
   }): Promise<DistributionDetail> => {
     try {
-      const response = await privateApi.post<DistributionDetail>(DISTRIBUTION_DETAILS_ENDPOINTS.base, data);
+      const response = await privateApi.post<DistributionDetail>(
+        DISTRIBUTION_DETAILS_ENDPOINTS.base,
+        data
+      );
       return response.data;
     } catch (error) {
       logger.error('Error creating distribution detail:', error);
@@ -217,16 +251,22 @@ export const dutyService = {
   },
 
   // Обновление детали распределения
-  updateDistributionDetail: async (id: string, data: {
-    price?: string | null;
-    percentage?: string | null;
-  }): Promise<DistributionDetail> => {
+  updateDistributionDetail: async (
+    id: string,
+    data: {
+      price?: string | null;
+      percentage?: string | null;
+    }
+  ): Promise<DistributionDetail> => {
     try {
-      const response = await privateApi.patch<DistributionDetail>(DISTRIBUTION_DETAILS_ENDPOINTS.byId(id), data);
+      const response = await privateApi.patch<DistributionDetail>(
+        DISTRIBUTION_DETAILS_ENDPOINTS.byId(id),
+        data
+      );
       return response.data;
     } catch (error) {
       logger.error(`Error updating distribution detail with ID ${id}:`, error);
       throw error;
     }
-  }
-}; 
+  },
+};

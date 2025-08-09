@@ -19,4 +19,4 @@ const WorkDetails: React.FC<WorkDetailsProps> = ({ work, users }) => {
   return null;
 };
 
-export default WorkDetails; 
+export default WorkDetails;

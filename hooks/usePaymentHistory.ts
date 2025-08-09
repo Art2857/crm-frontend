@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { PaymentHistory, PaymentHistoryDto, Payment, PaymentType } from '../types/payment';
+import {
+  PaymentHistory,
+  PaymentHistoryDto,
+  Payment,
+  PaymentType,
+} from '../types/payment';
 import { fetchPaymentHistory } from '../services/payment';
 import { on } from '../utils/eventBus';
 
@@ -30,13 +35,13 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
     total: 0,
     page: 1,
     limit: 20,
-    totalPages: 0
+    totalPages: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFiltersState] = useState<PaymentHistoryDto>({
     page: 1,
-    limit: 20
+    limit: 20,
   });
 
   // Используем ref для отслеживания активного запроса
@@ -58,12 +63,12 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
 
       // Создаем новый AbortController для текущего запроса
       abortControllerRef.current = new AbortController();
-      
+
       setLoading(true);
       setError(null);
-      
+
       const result = await fetchPaymentHistory(filters);
-      
+
       // Проверяем, что запрос не был отменен
       if (!abortControllerRef.current.signal.aborted) {
         setData(result);
@@ -75,10 +80,13 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
       // Проверяем, что ошибка не связана с отменой запроса
       if (!abortControllerRef.current?.signal.aborted) {
         console.error('Error fetching payment history:', err);
-        
+
         // Проверяем тип ошибки
         if (err instanceof Error) {
-          if (err.name === 'AbortError' || err.message.includes('REQUEST_CANCELLED')) {
+          if (
+            err.name === 'AbortError' ||
+            err.message.includes('REQUEST_CANCELLED')
+          ) {
             // Игнорируем ошибки отмены запроса
             return;
           }
@@ -99,15 +107,34 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
   useEffect(() => {
     const unsubscribe = on('paymentCreated', (event: CustomEvent<Payment>) => {
       const createdPaymentRaw: any = event.detail;
-      const createdPayment: Payment = (createdPaymentRaw as any).payment ?? (createdPaymentRaw as any);
+      const createdPayment: Payment =
+        (createdPaymentRaw as any).payment ?? (createdPaymentRaw as any);
 
       // Проверяем, удовлетворяет ли новая выплата текущим фильтрам
       const matchesFilters = () => {
-        if (filters.workId && createdPayment.workId !== filters.workId) return false;
-        if (filters.userId && createdPayment.toUserId !== filters.userId && createdPayment.fromUserId !== filters.userId) return false;
-        if (filters.paymentType && createdPayment.paymentType !== filters.paymentType) return false;
-        if (filters.startDate && new Date(createdPayment.paymentDate) < new Date(filters.startDate)) return false;
-        if (filters.endDate && new Date(createdPayment.paymentDate) > new Date(filters.endDate)) return false;
+        if (filters.workId && createdPayment.workId !== filters.workId)
+          return false;
+        if (
+          filters.userId &&
+          createdPayment.toUserId !== filters.userId &&
+          createdPayment.fromUserId !== filters.userId
+        )
+          return false;
+        if (
+          filters.paymentType &&
+          createdPayment.paymentType !== filters.paymentType
+        )
+          return false;
+        if (
+          filters.startDate &&
+          new Date(createdPayment.paymentDate) < new Date(filters.startDate)
+        )
+          return false;
+        if (
+          filters.endDate &&
+          new Date(createdPayment.paymentDate) > new Date(filters.endDate)
+        )
+          return false;
         return true;
       };
 
@@ -118,7 +145,7 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
         return;
       }
 
-      setData(prev => {
+      setData((prev) => {
         const newPayments = [createdPayment, ...prev.payments];
         const limitedPayments = newPayments.slice(0, prev.limit);
         const updatedTotal = prev.total + 1;
@@ -146,7 +173,7 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
 
   useEffect(() => {
     fetchData();
-    
+
     // Cleanup function для отмены запроса при размонтировании
     return () => {
       if (abortControllerRef.current) {
@@ -156,11 +183,11 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
   }, [fetchData]);
 
   const setFilters = useCallback((newFilters: Partial<PaymentHistoryDto>) => {
-    setFiltersState(prev => ({
+    setFiltersState((prev) => ({
       ...prev,
       ...newFilters,
       // При изменении фильтров сбрасываем страницу на первую, кроме случая когда явно указана страница
-      page: newFilters.page !== undefined ? newFilters.page : 1
+      page: newFilters.page !== undefined ? newFilters.page : 1,
     }));
   }, []);
 
@@ -181,6 +208,6 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
     error,
     filters,
     setFilters,
-    refetch
+    refetch,
   };
-} 
+}

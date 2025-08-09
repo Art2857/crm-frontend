@@ -1,4 +1,10 @@
-import React, { ReactNode, useState, useEffect, useRef, useCallback } from 'react';
+import React, {
+  ReactNode,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import { useAppSelector, useAppDispatch } from '../../store';
 import Link from 'next/link';
 import { Role } from '../../types/user';
@@ -23,7 +29,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { breadcrumbs } = useBreadcrumbs();
   const { lastSwitchedAccountId } = useAccountSwitcher();
   const { confirm } = useModal();
-  
+
   // Ссылки на кнопки для меню аккаунтов
   const desktopMenuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
@@ -38,9 +44,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       message: 'Вы уверены, что хотите выйти из системы?',
       confirmText: 'Выйти',
       cancelText: 'Отмена',
-      variant: 'danger'
+      variant: 'danger',
     });
-    
+
     if (isConfirmed) {
       dispatch(logout());
       router.push('/login');
@@ -48,13 +54,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, [dispatch, router, confirm]);
 
   // Мемоизируем обработчик переключения меню аккаунтов
-  const toggleAccountMenu = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setIsAccountMenuOpen(prev => !prev);
-  }, []);
+  const toggleAccountMenu = useCallback(
+    (e?: React.MouseEvent | React.TouchEvent) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      setIsAccountMenuOpen((prev) => !prev);
+    },
+    []
+  );
 
   // Мемоизируем обработчик закрытия меню аккаунтов
   const closeAccountMenu = useCallback(() => {
@@ -66,8 +75,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Профиль', href: '/profile', visible: isAuthenticated },
     { name: 'Работы', href: '/works', visible: isAuthenticated },
     { name: 'Выплаты', href: '/payments', visible: isAuthenticated },
-    { name: 'Пользователи', href: '/admin/users', visible: isAuthenticated && isAdmin },
-    { name: 'Обязанности', href: '/admin/duties', visible: isAuthenticated && isAdmin },
+    {
+      name: 'Пользователи',
+      href: '/admin/users',
+      visible: isAuthenticated && isAdmin,
+    },
+    {
+      name: 'Обязанности',
+      href: '/admin/duties',
+      visible: isAuthenticated && isAdmin,
+    },
     { name: 'Аккаунты', href: '/accounts', visible: isAuthenticated },
   ];
 
@@ -85,7 +102,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       // Проверяем, был ли клик вне мобильного меню
-      if (!target.closest('.mobile-menu') && !target.closest('button[aria-expanded]')) {
+      if (
+        !target.closest('.mobile-menu') &&
+        !target.closest('button[aria-expanded]')
+      ) {
         setIsMobileMenuOpen(false);
       }
     };
@@ -107,7 +127,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <Link href="/dashboard" className="text-xl font-bold text-primary-600">
+                <Link
+                  href="/dashboard"
+                  className="text-xl font-bold text-primary-600"
+                >
                   CRM Система
                 </Link>
               </div>
@@ -144,13 +167,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }}
                   >
                     <span className="mr-2">
-                      {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'Пользователь'}
+                      {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
+                        user?.email ||
+                        'Пользователь'}
                     </span>
-                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <svg
+                      className="h-4 w-4 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </button>
-                  
+
                   {/* Меню аккаунтов для десктопа */}
                   {isAuthenticated && user && (
                     <AccountMenu
@@ -160,15 +195,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       triggerRef={desktopMenuButtonRef}
                     />
                   )}
-                  
+
                   <button
                     type="button"
                     className="ml-4 bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                     onClick={handleLogout}
                   >
                     <span className="sr-only">Выйти</span>
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    <svg
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -182,8 +227,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
                 <span className="sr-only">Открыть меню</span>
-                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="block h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </button>
             </div>
@@ -191,7 +247,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* Мобильное меню */}
-        <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} sm:hidden mobile-menu`}>
+        <div
+          className={`${isMobileMenuOpen ? 'block' : 'hidden'} sm:hidden mobile-menu`}
+        >
           <div className="pt-2 pb-3 space-y-1">
             {navigation
               .filter((item) => item.visible)
@@ -223,11 +281,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   }}
                 >
                   <div className="text-base font-medium text-gray-800">
-                    {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'Пользователь'}
+                    {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
+                      user?.email ||
+                      'Пользователь'}
                   </div>
                   <div className="text-xs text-gray-500">{user?.email}</div>
                 </button>
-                
+
                 {/* Меню аккаунтов для мобильных устройств */}
                 {isAuthenticated && user && (
                   <AccountMenu
@@ -257,7 +317,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {breadcrumbs && breadcrumbs.length > 0 && (
             <Breadcrumbs items={breadcrumbs} className="mb-4" />
           )}
-          
+
           {children}
         </div>
       </div>
@@ -265,4 +325,4 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 };
 
-export default Layout; 
+export default Layout;

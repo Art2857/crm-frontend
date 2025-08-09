@@ -24,12 +24,13 @@ const getBoolean = (value: string | undefined, fallback: boolean): boolean => {
 };
 
 export const env: AppEnv = {
-  apiBaseUrl: getString(process.env.NEXT_PUBLIC_API_URL, 'http://localhost:3000'),
+  apiBaseUrl: getString(
+    process.env.NEXT_PUBLIC_API_URL,
+    'http://localhost:3000'
+  ),
   ignoreSsl: getBoolean(process.env.NEXT_PUBLIC_IGNORE_SSL, false),
   nodeEnv: process.env.NODE_ENV,
 };
 
 export const isProduction = env.nodeEnv === 'production';
 export const isDevelopment = env.nodeEnv !== 'production';
-
-

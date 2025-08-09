@@ -12,9 +12,13 @@ interface DutyCardProps {
   onShowCalculation: (dutyId: string) => void;
 }
 
-export default function DutyCard({ duty, index, onShowCalculation }: DutyCardProps) {
+export default function DutyCard({
+  duty,
+  index,
+  onShowCalculation,
+}: DutyCardProps) {
   return (
-    <div 
+    <div
       className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${
         index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
       }`}
@@ -28,13 +32,15 @@ export default function DutyCard({ duty, index, onShowCalculation }: DutyCardPro
           </p>
         </div>
       </div>
-      
+
       <div className="flex items-center space-x-4">
         <div className="text-right">
-          <p className="text-lg font-bold text-red-600">{formatCurrency(duty.debt)}</p>
+          <p className="text-lg font-bold text-red-600">
+            {formatCurrency(duty.debt)}
+          </p>
           <p className="text-xs text-gray-500">к выплате</p>
         </div>
-        
+
         <Button
           onClick={() => onShowCalculation(duty.dutyId)}
           size="sm"
@@ -45,4 +51,4 @@ export default function DutyCard({ duty, index, onShowCalculation }: DutyCardPro
       </div>
     </div>
   );
-} 
+}

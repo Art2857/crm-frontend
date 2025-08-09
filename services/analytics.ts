@@ -105,8 +105,8 @@ export interface DutyPeriod {
 }
 
 export interface DutyDebt {
-  id: string;               // ← ПРАВИЛЬНО! Backend возвращает id
-  name: string;             // ← ПРАВИЛЬНО! Backend возвращает name
+  id: string; // ← ПРАВИЛЬНО! Backend возвращает id
+  name: string; // ← ПРАВИЛЬНО! Backend возвращает name
   monthlyAmount: number;
   totalAccrued: number;
   totalDebt: number;
@@ -170,17 +170,22 @@ export const analyticsService = {
         endDate = date.toISOString().split('T')[0];
       }
 
-      logger.debug('params: ', { endDate, worksId: worksIds, workerId: targetUserId });
-      const response = await privateApi.get<UsersWorksClosurePeriodsAnalysisResult>(
-        ANALYTICS_ENDPOINTS.worksClosurePeriodsAnalysis,
-        {
-          params: {
-            endDate,
-            worksId: worksIds,
-            workerId: targetUserId,
-          },
-        }
-      );
+      logger.debug('params: ', {
+        endDate,
+        worksId: worksIds,
+        workerId: targetUserId,
+      });
+      const response =
+        await privateApi.get<UsersWorksClosurePeriodsAnalysisResult>(
+          ANALYTICS_ENDPOINTS.worksClosurePeriodsAnalysis,
+          {
+            params: {
+              endDate,
+              worksId: worksIds,
+              workerId: targetUserId,
+            },
+          }
+        );
 
       return response.data;
     } catch (error) {
@@ -194,11 +199,13 @@ export const analyticsService = {
    */
   async getMyDebts(): Promise<MyDebtsResponse> {
     try {
-      const response = await privateApi.get<MyDebtsResponse>(ANALYTICS_ENDPOINTS.myDebts);
+      const response = await privateApi.get<MyDebtsResponse>(
+        ANALYTICS_ENDPOINTS.myDebts
+      );
       return response.data;
     } catch (error) {
       logger.error('Error fetching my debts:', error);
       throw error;
     }
   },
-}; 
+};

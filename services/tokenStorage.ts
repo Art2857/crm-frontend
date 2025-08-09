@@ -45,5 +45,3 @@ export const tokenStorage = {
     this.setRefreshToken(null);
   },
 };
-
-

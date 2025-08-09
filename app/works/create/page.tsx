@@ -23,7 +23,7 @@ export default function CreateWorkPage() {
     name: '',
     responsibleUserId: '',
     salary: '0',
-    releaseDate: ''
+    releaseDate: '',
   });
   const [success, setSuccess] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -34,16 +34,18 @@ export default function CreateWorkPage() {
   }, [dispatch]);
 
   // Обработчик изменения полей формы
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     // Очищаем ошибку для измененного поля
     if (formErrors[name]) {
-      setFormErrors(prev => {
+      setFormErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
@@ -74,7 +76,7 @@ export default function CreateWorkPage() {
   // Обработчик отправки формы
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -82,7 +84,7 @@ export default function CreateWorkPage() {
     try {
       setSuccess('');
       const resultAction = await dispatch(createWork(formData));
-      
+
       if (createWork.fulfilled.match(resultAction)) {
         setSuccess('Работа успешно создана');
         // После создания работы перенаправляем на список работ через 1.5 секунды
@@ -96,21 +98,26 @@ export default function CreateWorkPage() {
   };
 
   // Создаем список опций для выбора ответственного
-  const userOptions = users.map(user => ({
+  const userOptions = users.map((user) => ({
     value: user.id,
-    label: `${user.lastName} ${user.firstName} ${user.middleName || ''} (${user.email})`
+    label: `${user.lastName} ${user.firstName} ${user.middleName || ''} (${user.email})`,
   }));
-  
+
   return (
     <Layout>
       <div className="py-6">
         <div className="mx-auto max-w-3xl sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-6">Создание новой работы</h1>
-          
+          <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+            Создание новой работы
+          </h1>
+
           <Card>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Название работы
                 </label>
                 <Input
@@ -126,7 +133,10 @@ export default function CreateWorkPage() {
               </div>
 
               <div>
-                <label htmlFor="responsibleUserId" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="responsibleUserId"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Ответственный
                 </label>
                 {users.length > 0 ? (
@@ -139,19 +149,24 @@ export default function CreateWorkPage() {
                     error={formErrors.responsibleUserId}
                   >
                     <option value="">Выберите ответственного</option>
-                    {userOptions.map(option => (
+                    {userOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </Select>
                 ) : (
-                  <div className="text-gray-500 italic">Загрузка списка пользователей...</div>
+                  <div className="text-gray-500 italic">
+                    Загрузка списка пользователей...
+                  </div>
                 )}
               </div>
 
               <div>
-                <label htmlFor="salary" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="salary"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Зарплата по работе (руб.)
                 </label>
                 <Input
@@ -169,7 +184,10 @@ export default function CreateWorkPage() {
               </div>
 
               <div>
-                <label htmlFor="releaseDate" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="releaseDate"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Дата выхода (необязательно)
                 </label>
                 <Input
@@ -187,15 +205,15 @@ export default function CreateWorkPage() {
               {success && <Alert type="success">{success}</Alert>}
 
               <div className="flex justify-end space-x-4">
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   variant="outline"
                   onClick={() => router.push('/works')}
                 >
                   Отмена
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   isLoading={isLoading}
                   disabled={isLoading}
                 >
@@ -208,4 +226,4 @@ export default function CreateWorkPage() {
       </div>
     </Layout>
   );
-} 
+}

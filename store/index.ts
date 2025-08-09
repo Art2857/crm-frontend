@@ -31,4 +31,4 @@ export type AppDispatch = typeof store.dispatch;
 
 // Хуки для использования типизированного dispatch и selector
 export const useAppDispatch = () => useDispatch<AppDispatch>();
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector; 
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

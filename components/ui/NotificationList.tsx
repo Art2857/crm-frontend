@@ -1,5 +1,8 @@
 import React from 'react';
-import { useNotification, NotificationType } from '../../contexts/NotificationContext';
+import {
+  useNotification,
+  NotificationType,
+} from '../../contexts/NotificationContext';
 
 // Настройки стилей для разных типов уведомлений
 const getNotificationStyles = (type: NotificationType) => {
@@ -76,10 +79,13 @@ const NotificationList: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col items-end justify-start p-4 pointer-events-none space-y-4 z-50" style={{ top: '5rem' }}>
+    <div
+      className="fixed inset-0 flex flex-col items-end justify-start p-4 pointer-events-none space-y-4 z-50"
+      style={{ top: '5rem' }}
+    >
       {notifications.map((notification) => {
         const styles = getNotificationStyles(notification.type);
-        
+
         return (
           <div
             key={notification.id}
@@ -91,14 +97,20 @@ const NotificationList: React.FC = () => {
                   {styles.icon}
                 </div>
                 <div className="ml-3 w-0 flex-1 pt-0.5">
-                  <p className={`text-sm font-medium ${styles.textClass}`}>{notification.message}</p>
+                  <p className={`text-sm font-medium ${styles.textClass}`}>
+                    {notification.message}
+                  </p>
                 </div>
                 <div className="ml-4 flex-shrink-0 flex">
                   <button
                     className="inline-flex text-gray-400 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
                     onClick={() => removeNotification(notification.id)}
                   >
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <svg
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
                       <path
                         fillRule="evenodd"
                         d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -116,4 +128,4 @@ const NotificationList: React.FC = () => {
   );
 };
 
-export default NotificationList; 
+export default NotificationList;

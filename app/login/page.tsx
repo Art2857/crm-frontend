@@ -22,18 +22,20 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAddMode = searchParams.get('mode') === 'add';
-  const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isLoading, error, isAuthenticated } = useAppSelector(
+    (state) => state.auth
+  );
   const [serverError, setServerError] = useState('');
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  
+
   // Проверяем, нужно ли показать кнопку "Вернуться назад"
   const [showBackButton, setShowBackButton] = useState(false);
-  
+
   // Загружаем состояние флага возврата при монтировании компонента
   useEffect(() => {
     setShowBackButton(accountNavigation.shouldShowBackButton() || isAddMode);
   }, [isAddMode]);
-  
+
   const {
     register,
     handleSubmit,
@@ -71,31 +73,35 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setServerError('');
-      
+
       // Если мы в режиме добавления аккаунта, используем специальный метод
       if (isAddMode) {
         try {
           // Используем метод addAccountLogin, который не изменяет текущий токен
           const response = await authService.addAccountLogin(data);
-          
+
           // Обновляем Redux store с данными нового аккаунта
-          dispatch(setCredentials({
-            user: response.user,
-            token: response.access_token
-          }));
-          
+          dispatch(
+            setCredentials({
+              user: response.user,
+              token: response.access_token,
+            })
+          );
+
           // Загружаем полные данные пользователя
           await dispatch(getCurrentUser());
-          
+
           // После успешного входа перенаправляем на страницу аккаунтов
           router.push('/accounts');
         } catch (error: any) {
-          setServerError(error.response?.data?.message || 'Произошла ошибка при входе');
+          setServerError(
+            error.response?.data?.message || 'Произошла ошибка при входе'
+          );
         }
       } else {
         // Стандартный процесс входа через Redux
         const resultAction = await dispatch(login(data));
-        
+
         if (login.fulfilled.match(resultAction)) {
           // Второй шаг - получить полные данные пользователя
           await dispatch(getCurrentUser());
@@ -122,7 +128,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-100">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {isAddMode || showBackButton ? 'Вход в новый аккаунт' : 'Вход в систему'}
+          {isAddMode || showBackButton
+            ? 'Вход в новый аккаунт'
+            : 'Вход в систему'}
         </h2>
       </div>
 
@@ -130,9 +138,9 @@ export default function LoginPage() {
         <Card>
           {showBackButton && (
             <div className="mb-4 pb-4 border-b border-gray-200">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleBackToAccounts}
                 className="w-full"
               >
@@ -179,11 +187,7 @@ export default function LoginPage() {
             )}
 
             <div>
-              <Button
-                type="submit"
-                width="full"
-                isLoading={isLoading}
-              >
+              <Button type="submit" width="full" isLoading={isLoading}>
                 Войти
               </Button>
             </div>
@@ -191,8 +195,8 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <div className="text-sm text-center">
-              <Link 
-                href={isAddMode ? "/register?mode=add" : "/register"}
+              <Link
+                href={isAddMode ? '/register?mode=add' : '/register'}
                 className="font-medium text-primary-600 hover:text-primary-500"
                 onClick={() => {
                   // Если включен режим возврата к аккаунтам, сохраняем его при переходе на регистрацию
@@ -209,4 +213,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-} 
+}

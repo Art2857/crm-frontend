@@ -165,4 +165,4 @@ export interface UserWorkDebt {
   duties: DutyDetail[];
   userPeriods?: any;
   paymentHistory?: PaymentHistoryItem[];
-} 
+}

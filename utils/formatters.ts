@@ -12,12 +12,12 @@ const DEFAULT_LOCALE = 'ru-RU';
 const DEFAULT_DATE_FORMAT: Intl.DateTimeFormatOptions = {
   day: '2-digit',
   month: '2-digit',
-  year: 'numeric'
+  year: 'numeric',
 };
 const DEFAULT_DATE_TIME_FORMAT: Intl.DateTimeFormatOptions = {
   ...DEFAULT_DATE_FORMAT,
   hour: '2-digit',
-  minute: '2-digit'
+  minute: '2-digit',
 };
 
 /**
@@ -52,13 +52,18 @@ export const formatDate = (
   includeTime: boolean = false
 ): string => {
   if (!dateString) return '-';
-  
-  const defaultOptions = includeTime ? DEFAULT_DATE_TIME_FORMAT : DEFAULT_DATE_FORMAT;
-  const dateOptions = options ? { ...defaultOptions, ...options } : defaultOptions;
-  
+
+  const defaultOptions = includeTime
+    ? DEFAULT_DATE_TIME_FORMAT
+    : DEFAULT_DATE_FORMAT;
+  const dateOptions = options
+    ? { ...defaultOptions, ...options }
+    : defaultOptions;
+
   return withErrorHandling(
     () => {
-      const date = dateString instanceof Date ? dateString : new Date(dateString);
+      const date =
+        dateString instanceof Date ? dateString : new Date(dateString);
       if (isNaN(date.getTime())) throw new Error('Invalid date');
       return new Intl.DateTimeFormat(DEFAULT_LOCALE, dateOptions).format(date);
     },
@@ -66,14 +71,6 @@ export const formatDate = (
     'Ошибка при форматировании даты'
   );
 };
-
-
-
-
-
-
-
-
 
 // Интерфейс для меток статусов и типов
 export interface Label {
@@ -104,7 +101,7 @@ const PRIORITY_LABELS: Record<string, Label> = {
   [WorkPriority.LOW]: { text: 'Низкий', color: 'blue' },
   [WorkPriority.MEDIUM]: { text: 'Средний', color: 'green' },
   [WorkPriority.HIGH]: { text: 'Высокий', color: 'orange' },
-  [WorkPriority.CRITICAL]: { text: 'Критический', color: 'red' }
+  [WorkPriority.CRITICAL]: { text: 'Критический', color: 'red' },
 };
 
 /**
@@ -112,12 +109,13 @@ const PRIORITY_LABELS: Record<string, Label> = {
  * @param priority - приоритет работы
  * @returns метка с текстом и цветом
  */
-export const getPriorityLabel = (priority: WorkPriority | null | undefined): Label => {
-  return getLabelFromMapping(
-    priority,
-    PRIORITY_LABELS,
-    { text: 'Неизвестно', color: 'gray' }
-  );
+export const getPriorityLabel = (
+  priority: WorkPriority | null | undefined
+): Label => {
+  return getLabelFromMapping(priority, PRIORITY_LABELS, {
+    text: 'Неизвестно',
+    color: 'gray',
+  });
 };
 
 /**
@@ -126,7 +124,7 @@ export const getPriorityLabel = (priority: WorkPriority | null | undefined): Lab
 const TYPE_LABELS: Record<string, Label> = {
   [WorkType.BUG]: { text: 'Ошибка', color: 'red' },
   [WorkType.FEATURE]: { text: 'Функциональность', color: 'green' },
-  [WorkType.TASK]: { text: 'Задача', color: 'blue' }
+  [WorkType.TASK]: { text: 'Задача', color: 'blue' },
 };
 
 /**
@@ -135,11 +133,10 @@ const TYPE_LABELS: Record<string, Label> = {
  * @returns метка с текстом и цветом
  */
 export const getTypeLabel = (type: WorkType | null | undefined): Label => {
-  return getLabelFromMapping(
-    type,
-    TYPE_LABELS,
-    { text: 'Неизвестно', color: 'gray' }
-  );
+  return getLabelFromMapping(type, TYPE_LABELS, {
+    text: 'Неизвестно',
+    color: 'gray',
+  });
 };
 
 /**
@@ -150,7 +147,7 @@ const STATUS_LABELS: Record<string, Label> = {
   [WorkStatus.IN_PROGRESS]: { text: 'В работе', color: 'yellow' },
   [WorkStatus.TESTING]: { text: 'На тестировании', color: 'purple' },
   [WorkStatus.DONE]: { text: 'Завершена', color: 'green' },
-  [WorkStatus.CANCELED]: { text: 'Отменена', color: 'red' }
+  [WorkStatus.CANCELED]: { text: 'Отменена', color: 'red' },
 };
 
 /**
@@ -158,10 +155,11 @@ const STATUS_LABELS: Record<string, Label> = {
  * @param status - статус работы
  * @returns метка с текстом и цветом
  */
-export const getStatusLabel = (status: WorkStatus | null | undefined): Label => {
-  return getLabelFromMapping(
-    status,
-    STATUS_LABELS,
-    { text: 'Неизвестно', color: 'gray' }
-  );
+export const getStatusLabel = (
+  status: WorkStatus | null | undefined
+): Label => {
+  return getLabelFromMapping(status, STATUS_LABELS, {
+    text: 'Неизвестно',
+    color: 'gray',
+  });
 };
