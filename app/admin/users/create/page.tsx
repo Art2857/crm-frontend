@@ -11,10 +11,10 @@ import Select from '../../../../components/ui/Select';
 import { Role } from '../../../../types/user';
 import { createUser } from '../../../../store/slices/users';
 
-// Опции для выбора дня зарплаты
+// Опции для выбора дня зарплаты (1..28 — чтобы одинаково работать для всех месяцев)
 const salaryDayOptions = [
   { value: '', label: 'Не указано' },
-  ...Array.from({ length: 31 }, (_, i) => ({
+  ...Array.from({ length: 28 }, (_, i) => ({
     value: String(i + 1),
     label: String(i + 1),
   })),
@@ -102,13 +102,13 @@ export default function CreateUserPage() {
         isDate: true,
       },
       salaryDay: {
-        pattern: /^([1-9]|[12][0-9]|3[01])$/,
+        pattern: /^([1-9]|1[0-9]|2[0-8])$/,
         validate: (value) =>
           value === '' ||
-          (/^([1-9]|[12][0-9]|3[01])$/.test(value) &&
+          (/^([1-9]|1[0-9]|2[0-8])$/.test(value) &&
             parseInt(value) >= 1 &&
-            parseInt(value) <= 31) ||
-          'День зарплаты должен быть числом от 1 до 31',
+            parseInt(value) <= 28) ||
+          'День зарплаты должен быть числом от 1 до 28',
       },
       role: {
         required: true,

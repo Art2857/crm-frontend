@@ -30,6 +30,7 @@ interface CalculationModalProps {
   calculationDate?: string;
   isUserCalculation?: boolean; // Флаг для общего расчета пользователя
   showPaymentHistory?: boolean; // Нужно ли показать раздел выплат
+  onBulkPayAllWorks?: () => void; // мульти-выплата по всем работам пользователя
 }
 
 export default function CalculationModal({
@@ -41,6 +42,7 @@ export default function CalculationModal({
   calculationDate,
   isUserCalculation = false,
   showPaymentHistory = true,
+  onBulkPayAllWorks,
 }: CalculationModalProps) {
   // Hooks must be called unconditionally
   const { totals } = useCalculationView(calculation);
@@ -569,14 +571,24 @@ export default function CalculationModal({
               </div>
             )}
 
-            {/* Информационное сообщение для общего расчета пользователя */}
+            {/* Общий расчёт по пользователю: мультиидействие */}
             {!isDebtsView && isUserCalculation && (
-              <div className="bg-blue-50 rounded-lg p-4 text-center">
-                <p className="text-blue-700 font-medium">
-                  💡 Это общий расчет по всем работам пользователя. Для создания
-                  выплаты используйте кнопку &quot;Сделать выплату&quot; рядом с
-                  конкретной работой.
-                </p>
+              <div className="flex flex-col items-center gap-3">
+                <div className="bg-blue-50 rounded-lg p-4 text-center w-full">
+                  <p className="text-blue-700 font-medium">
+                    Это общий расчет по всем работам пользователя. Можно
+                    выполнить мульти-выплату/закрытие периодов одним действием.
+                  </p>
+                </div>
+                {onBulkPayAllWorks && (
+                  <Button
+                    onClick={onBulkPayAllWorks}
+                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <BanknotesIcon className="h-5 w-5 mr-2" /> Выплатить/закрыть
+                    по всем работам
+                  </Button>
+                )}
               </div>
             )}
 

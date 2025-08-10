@@ -314,41 +314,32 @@ export const analyticsService = {
    * @param worksIds
    * @param targetUserId ID работника, по которому нужно делать поиск
    */
+  // legacy endpoint kept for backward-compat in rare places; prefer paymentsManagement
   async getUserWorksClosurePeriodsAnalysis(
     endDate?: string,
     worksIds?: string[],
     targetUserId?: string
   ): Promise<UsersWorksClosurePeriodsAnalysisResult> {
-    try {
-      // Если дата не передана — используем вчерашний день
-      if (!endDate) {
-        const date = new Date();
-        date.setDate(date.getDate() - 1);
-        endDate = date.toISOString().split('T')[0];
-      }
-
-      logger.debug('params: ', {
-        endDate,
-        worksId: worksIds,
-        workerId: targetUserId,
-      });
-      const response =
-        await privateApi.get<UsersWorksClosurePeriodsAnalysisResult>(
-          ANALYTICS_ENDPOINTS.worksClosurePeriodsAnalysis,
-          {
-            params: {
-              endDate,
-              worksId: worksIds,
-              workerId: targetUserId,
-            },
-          }
-        );
-
-      return response.data;
-    } catch (error) {
-      logger.error('Error fetching works-closure periods analysis:', error);
-      throw error;
-    }
+    // Redirect to new endpoint behaviour when possible
+    const users = await this.getPaymentsManagement(
+      endDate,
+      worksIds,
+      targetUserId
+    );
+    return {
+      endDate: endDate || new Date().toISOString().split('T')[0],
+      users: users.map((u) => ({
+        userId: u.userId,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        works: [],
+        totalWorks: u.works.length,
+        totalClosures: 0,
+        totalPeriods: 0,
+      })),
+      totalUsers: users.length,
+    } as unknown as UsersWorksClosurePeriodsAnalysisResult;
   },
 
   /**

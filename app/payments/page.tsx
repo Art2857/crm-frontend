@@ -32,6 +32,7 @@ import {
   closePeriod,
 } from '../../services/payment';
 import { analyticsService } from '../../services/analytics';
+import { bulkCreateAndClose } from '../../services/payment';
 import { PaymentType } from '../../types/payment';
 import { useNotification } from '../../contexts/NotificationContext';
 import { logger } from '../../utils/logger';
@@ -176,6 +177,7 @@ export default function PaymentsPage() {
   );
 
   // Инициализация данных один раз на монтировании
+  // Инициализация данных — запускаем один раз
   useEffect(() => {
     fetchWorksData().catch((err) => {
       logger.error('Ошибка инициализации выплат', err);
@@ -185,9 +187,11 @@ export default function PaymentsPage() {
       logger.error('Ошибка загрузки моих задолженностей', err);
       notification.showError('Не удалось загрузить данные о задолженностях');
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Слушатель события закрытия периода (подписка/отписка один раз)
+  // Слушатель закрытия периода — регистрируем один раз
   useEffect(() => {
     const onClosePeriod = async (e: any) => {
       try {
@@ -210,6 +214,7 @@ export default function PaymentsPage() {
     window.addEventListener('close-period', onClosePeriod as any);
     return () =>
       window.removeEventListener('close-period', onClosePeriod as any);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Загрузка данных о задолженностях текущего пользователя теперь в хуке usePaymentsData
@@ -237,6 +242,41 @@ export default function PaymentsPage() {
       setLoading(false);
     }
   };
+
+  // Мульти-выплата/закрытие по всем работам из общего расчёта
+  const handleBulkPayAllWorks = useCallback(async () => {
+    if (!selectedCalculation || !isUserCalculation) return;
+    try {
+      setLoading(true);
+      const userId = selectedCalculation.userId;
+      const userData = usersData.find((u) => u.userId === userId);
+      if (!userData) return;
+      const endDate = getUserPeriodDate(userId);
+      const items = userData.works.map((w) => ({
+        workId: w.workId,
+        userId,
+        amount: Math.max(w.totalDebt || 0, 0),
+        paymentDate: endDate,
+        description: `Мультивыплата по общему расчету (${w.workName})`,
+      }));
+      await bulkCreateAndClose(items);
+      await refreshAfterUserPayment(userId);
+      setCalculationModalOpen(false);
+      setSelectedCalculation(null);
+      notification.showSuccess('Мультивыплата выполнена');
+    } catch (e) {
+      logger.error('Мультивыплата не выполнена', e);
+      notification.showError('Не удалось выполнить мультивыплату');
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    selectedCalculation,
+    isUserCalculation,
+    usersData,
+    getUserPeriodDate,
+    notification,
+  ]);
 
   // Обработчик создания выплаты
   const handleCreatePayment = (
@@ -703,6 +743,7 @@ export default function PaymentsPage() {
           }
           isUserCalculation={isUserCalculation}
           showPaymentHistory={calculationModalShowPaymentHistory}
+          onBulkPayAllWorks={handleBulkPayAllWorks}
         />
 
         <PaymentModal

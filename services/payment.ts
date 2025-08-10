@@ -187,3 +187,19 @@ export const closePeriod = async (params: {
   );
   return data;
 };
+
+export const bulkCreateAndClose = async (
+  items: Array<{
+    workId: string;
+    userId: string;
+    amount: number; // 0 — только закрытие
+    paymentDate: string; // YYYY-MM-DD
+    description?: string;
+  }>
+) => {
+  const { data } = await privateApi.post(
+    PAYMENTS_ENDPOINTS.bulkCreateAndClose,
+    { items }
+  );
+  return data;
+};

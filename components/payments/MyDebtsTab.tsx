@@ -27,6 +27,7 @@ export default function MyDebtsTab({
   onShowCalculation,
 }: MyDebtsTabProps) {
   // Для отладки структуры данных
+  // eslint-disable-next-line no-console
   console.log('myDebts:', myDebts);
   if (myDebts.length === 0) {
     return (

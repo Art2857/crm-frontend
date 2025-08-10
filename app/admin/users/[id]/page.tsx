@@ -17,13 +17,13 @@ import {
   clearCurrentUser,
 } from '../../../../store/slices/users';
 
-// Опции для выбора дня зарплаты
+// Опции для выбора дня зарплаты (1..28)
 const salaryDayOptions = [
   { value: '', label: 'Выберите день зарплаты' },
-  { value: '1', label: '1 число' },
-  { value: '10', label: '10 число' },
-  { value: '15', label: '15 число' },
-  { value: '25', label: '25 число' },
+  ...Array.from({ length: 28 }, (_, i) => ({
+    value: String(i + 1),
+    label: `${i + 1} число`,
+  })),
 ];
 
 type UpdateProfileFormData = {
@@ -131,13 +131,13 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         required: true,
       },
       salaryDay: {
-        pattern: /^([1-9]|[12][0-9]|3[01])$/,
+        pattern: /^([1-9]|1[0-9]|2[0-8])$/,
         validate: (value) =>
           value === '' ||
-          (/^([1-9]|[12][0-9]|3[01])$/.test(value) &&
+          (/^([1-9]|1[0-9]|2[0-8])$/.test(value) &&
             parseInt(value) >= 1 &&
-            parseInt(value) <= 31) ||
-          'День зарплаты должен быть числом от 1 до 31',
+            parseInt(value) <= 28) ||
+          'День зарплаты должен быть числом от 1 до 28',
       },
     }
   );
@@ -160,6 +160,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       return;
     }
 
+    // eslint-disable-next-line no-console
     console.log('Fetching user with ID:', userId);
 
     // Загрузка данных пользователя
@@ -174,6 +175,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   // Заполнение формы данными пользователя
   useEffect(() => {
     if (currentUser) {
+      // eslint-disable-next-line no-console
       console.log('Заполняем форму данными пользователя:', currentUser);
 
       // Заполнение формы профиля
@@ -182,6 +184,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       setProfileValue('middleName', currentUser.middleName || '');
 
       // Преобразование даты в формат для поля ввода
+      // eslint-disable-next-line no-console
       console.log(
         'Дата рождения из данных пользователя:',
         currentUser.birthday,
@@ -194,6 +197,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           // Check if date is valid before using toISOString()
           if (!isNaN(date.getTime())) {
             const formattedDate = date.toISOString().split('T')[0];
+            // eslint-disable-next-line no-console
             console.log('Форматированная дата для формы:', formattedDate);
             setProfileValue('birthday', formattedDate);
           } else {
@@ -208,6 +212,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           setProfileValue('birthday', '');
         }
       } else {
+        // eslint-disable-next-line no-console
         console.log('Дата рождения отсутствует (null или undefined)');
         setProfileValue('birthday', '');
       }
@@ -285,6 +290,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       setSuccess('');
 
       // Логируем данные формы для отладки
+      // eslint-disable-next-line no-console
       console.log('Данные формы перед отправкой:', data);
 
       // Валидация перед отправкой
@@ -317,6 +323,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       // Преобразуем дату рождения в формат ISO-8601 DateTime, если она указана
       if (updatedData.birthday) {
         try {
+          // eslint-disable-next-line no-console
           console.log(
             'Преобразуем дату рождения в ISO формат:',
             updatedData.birthday
@@ -337,6 +344,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       }
 
       // Отправляем запрос на обновление профиля
+      // eslint-disable-next-line no-console
       console.log('Отправляем данные на сервер:', updatedData);
       const resultAction = await dispatch(
         updateUserProfile({ userId, data: updatedData })
@@ -346,6 +354,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         setSuccess('Профиль успешно обновлен');
 
         // Обновляем данные пользователя и историю после успешного обновления
+        // eslint-disable-next-line no-console
         console.log('Обновляем данные пользователя после успешного сохранения');
         await dispatch(fetchUserById(userId));
 

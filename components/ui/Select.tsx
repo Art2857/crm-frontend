@@ -53,6 +53,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     useEffect(() => {
       if (process.env.NODE_ENV !== 'production') {
         if (isFirstRender.current) {
+          // eslint-disable-next-line no-console
           console.log(
             'Select initialized with:',
             selectProps.name,
