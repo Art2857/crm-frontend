@@ -1,19 +1,24 @@
 import { privateApi } from './ApiClient';
 import { ANALYTICS_ENDPOINTS } from './endpoints';
 import { logger } from '../utils/logger';
+import {
+  ResponsibleUser,
+  WorkDetail,
+  DetailedCalculation,
+} from '../types/payments';
 
 // ==========================
 // Types returned by backend
 // ==========================
 
-export interface DistributionDutyInfo {
+interface DistributionDutyInfo {
   id: string;
   name: string;
   basePrice: number | null;
   basePercentage: number | null;
 }
 
-export interface DistributionDetail {
+interface DistributionDetail {
   id: string;
   dutyId: string;
   userId: string;
@@ -23,14 +28,14 @@ export interface DistributionDetail {
   duty: DistributionDutyInfo;
 }
 
-export interface WorkHistoryPeriod {
+interface WorkHistoryPeriod {
   startDate: string;
   endDate: string;
   daysInPeriod: number;
   distributionDetails: DistributionDetail[];
 }
 
-export interface WorkHistoryPeriodsResult {
+interface WorkHistoryPeriodsResult {
   dutiesPeriods: WorkHistoryPeriod[];
   totalPeriods: number;
   requestedPeriod: {
@@ -39,7 +44,7 @@ export interface WorkHistoryPeriodsResult {
   };
 }
 
-export interface PaymentClosureUser {
+interface PaymentClosureUser {
   id: string;
   firstName: string | null;
   lastName: string | null;
@@ -47,7 +52,7 @@ export interface PaymentClosureUser {
   email: string;
 }
 
-export interface PaymentClosureInfo {
+interface PaymentClosureInfo {
   id: string;
   workId: string;
   userId: string;
@@ -56,12 +61,12 @@ export interface PaymentClosureInfo {
   user: PaymentClosureUser;
 }
 
-export interface PaymentClosureWithPeriods {
+interface PaymentClosureWithPeriods {
   closure: PaymentClosureInfo;
   userPeriods: WorkHistoryPeriodsResult;
 }
 
-export interface WorkWithClosuresAndPeriods {
+interface WorkWithClosuresAndPeriods {
   workId: string;
   workName: string;
   salary: number;
@@ -75,7 +80,7 @@ export interface WorkWithClosuresAndPeriods {
 // Новые типы (пользователь → работы)
 // --------------------------
 
-export interface UserWithWorksAndPeriods {
+interface UserWithWorksAndPeriods {
   userId: string;
   firstName: string | null;
   lastName: string | null;
@@ -86,7 +91,7 @@ export interface UserWithWorksAndPeriods {
   totalPeriods: number;
 }
 
-export interface UsersWorksClosurePeriodsAnalysisResult {
+interface UsersWorksClosurePeriodsAnalysisResult {
   endDate: string;
   users: UserWithWorksAndPeriods[];
   totalUsers: number;
@@ -96,7 +101,7 @@ export interface UsersWorksClosurePeriodsAnalysisResult {
 // Types for My Debts
 // ==========================
 
-export interface DutyPeriod {
+interface DutyPeriod {
   startDate: string;
   endDate: string;
   daysInPeriod: number;
@@ -104,7 +109,7 @@ export interface DutyPeriod {
   accrued?: number;
 }
 
-export interface DutyDebt {
+interface DutyDebt {
   id: string; // ← ПРАВИЛЬНО! Backend возвращает id
   name: string; // ← ПРАВИЛЬНО! Backend возвращает name
   monthlyAmount: number;
@@ -120,7 +125,7 @@ export interface DutyDebt {
   }>;
 }
 
-export interface ResponsibleUserDto {
+interface ResponsibleUserDto {
   id: string;
   firstName: string | null;
   lastName: string | null;
@@ -151,6 +156,158 @@ export interface MyDebtsResponse {
 }
 
 export const analyticsService = {
+  /**
+   * Получить агрегированные данные для вкладки «Управление выплатами»
+   * Возвращает уже готовые ResponsibleUser[]
+   */
+  async getPaymentsManagement(
+    endDate?: string,
+    worksIds?: string[],
+    targetUserId?: string
+  ): Promise<ResponsibleUser[]> {
+    // дата по умолчанию — вчера
+    if (!endDate) {
+      const date = new Date();
+      date.setDate(date.getDate() - 1);
+      endDate = date.toISOString().split('T')[0];
+    }
+
+    const { data } = await privateApi.get<{
+      endDateIso: string;
+      endDateRu: string;
+      users: Array<{
+        userId: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+        salaryDay?: number | null;
+        totals: {
+          totalAccrued: number;
+          totalPaid: number;
+          totalDebt: number;
+          remainingDebt: number;
+          isPaymentDue: boolean;
+        };
+        works: Array<{
+          workId: string;
+          workName: string;
+          salary: number;
+          lastClosureDate: string | null;
+          totals: { accrued: number; paid: number; debt: number };
+          duties: Array<{
+            dutyId: string;
+            dutyName: string;
+            monthlyAmount: number;
+            debt: number;
+          }>;
+        }>;
+      }>;
+    }>(ANALYTICS_ENDPOINTS.paymentsManagement, {
+      params: { endDate, worksId: worksIds, workerId: targetUserId },
+    });
+
+    // Подготовим дату расчёта для вычисления индикаторов «внимания»
+    const calcDate = endDate ? new Date(endDate) : new Date();
+
+    // Преобразуем к ResponsibleUser[], без перерасчётов — только переименование полей
+    const users: ResponsibleUser[] = data.users.map((u) => {
+      const works: WorkDetail[] = u.works.map((w) => {
+        const duties = w.duties.map((d) => ({
+          dutyId: d.dutyId,
+          dutyName: d.dutyName,
+          monthlyAmount: d.monthlyAmount,
+          debt: d.debt,
+        }));
+        const totalAccrued = duties.reduce((sum, d) => sum + (d.debt || 0), 0);
+        const overpaidAmount = Math.max(w.totals.paid - totalAccrued, 0);
+        // Индикатор «требует внимания»: если с даты последнего закрытия до даты расчёта прошло >= 1 календарный месяц
+        const requiresAttention = (() => {
+          if (!w.lastClosureDate) return false;
+          const lc = new Date(w.lastClosureDate);
+          const end = calcDate;
+          const monthsDiff =
+            (end.getFullYear() - lc.getFullYear()) * 12 +
+            (end.getMonth() - lc.getMonth());
+          if (monthsDiff > 1) return true;
+          if (monthsDiff < 1) return false;
+          // Ровно один месяц разницы — дополнительно проверяем число
+          return end.getDate() >= lc.getDate();
+        })();
+        return {
+          workId: w.workId,
+          workName: w.workName,
+          duties,
+          totalDebt: w.totals.debt,
+          paidAmount: w.totals.paid,
+          totalAccrued,
+          overpaidAmount,
+          requiresAttention,
+          isPaymentDue: w.totals.debt > 0,
+          lastClosureDate: w.lastClosureDate,
+          users: [
+            {
+              userId: u.userId,
+              firstName: u.firstName || '',
+              lastName: u.lastName || '',
+              email: u.email,
+              totalDebt: w.totals.debt,
+              isPaymentDue: w.totals.debt > 0,
+              lastClosureDate: w.lastClosureDate,
+              duties,
+            },
+          ],
+          salary: w.salary,
+        } as WorkDetail;
+      });
+
+      // Индикатор у пользователя — если хотя бы одна работа требует внимания
+      const requiresAttentionUser = works.some((w) => w.requiresAttention);
+      return {
+        userId: u.userId,
+        firstName: u.firstName || '',
+        lastName: u.lastName || '',
+        email: u.email,
+        salaryDay: u.salaryDay ?? 15,
+        works,
+        totalDebt: u.totals.totalDebt,
+        totalAccrued: u.totals.totalAccrued,
+        totalPaid: u.totals.totalPaid,
+        overpaidAmount: works.reduce((s, w) => s + (w.overpaidAmount || 0), 0),
+        remainingDebt: u.totals.remainingDebt,
+        isPaymentDue: u.totals.isPaymentDue,
+        requiresAttention: requiresAttentionUser,
+        lastPaymentDate: null,
+        lastPaymentAmount: null,
+      } as ResponsibleUser;
+    });
+
+    return users;
+  },
+
+  /** Получить детальный расчёт по работе/пользователю для модалки */
+  async getPaymentsCalculation(params: {
+    userId: string;
+    workId: string;
+    endDate: string;
+  }): Promise<DetailedCalculation> {
+    const { data } = await privateApi.get<DetailedCalculation>(
+      ANALYTICS_ENDPOINTS.paymentsCalculation,
+      { params }
+    );
+    return data;
+  },
+
+  /** Получить общий детальный расчёт по пользователю (все работы) */
+  async getPaymentsCalculationUser(params: {
+    userId: string;
+    endDate: string;
+  }): Promise<DetailedCalculation> {
+    const { data } = await privateApi.get<DetailedCalculation>(
+      ANALYTICS_ENDPOINTS.paymentsCalculationUser,
+      { params }
+    );
+    return data;
+  },
   /**
    * Получить анализ закрытий и периодов работ, где текущий пользователь является ответственным
    * @param endDate Дата окончания анализируемого периода YYYY-MM-DD (по умолчанию вчера)

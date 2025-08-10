@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Button from '../../components/ui/Button';
 import { CurrencyDollarIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../../store';
@@ -26,14 +26,16 @@ import {
   PaymentModalData,
   CustomPaymentFormData,
 } from '../../types/payments';
-import { makePayment, createPaymentAndClose } from '../../services/payment';
+import {
+  makePayment,
+  createPaymentAndClose,
+  closePeriod,
+} from '../../services/payment';
+import { analyticsService } from '../../services/analytics';
 import { PaymentType } from '../../types/payment';
 import { useNotification } from '../../contexts/NotificationContext';
 import { logger } from '../../utils/logger';
-import {
-  buildUserDetailedCalculation,
-  buildWorkDetailedCalculation,
-} from '../../utils/paymentCalculations';
+import { buildUserDetailedCalculation } from '../../utils/paymentCalculations';
 import { usePaymentsData } from '../../hooks/payments/usePaymentsData';
 import { usePeriodDates } from '../../hooks/payments/usePeriodDates';
 
@@ -91,37 +93,89 @@ export default function PaymentsPage() {
 
   // mapAnalysisToUsers вынесен в utils/paymentsMapping.ts
 
-  const fetchWorksData = async (
-    data: {
-      endDate?: string;
-      targetWorkId?: string;
-      targetUserId?: string;
-    } = {}
-  ) => {
-    setLoading(true);
-    try {
-      await fetchWorksDataRaw(data);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchWorksData = useCallback(
+    async (
+      data: {
+        endDate?: string;
+        targetWorkId?: string;
+        targetUserId?: string;
+      } = {}
+    ) => {
+      setLoading(true);
+      try {
+        await fetchWorksDataRaw(data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchWorksDataRaw]
+  );
 
-  const updateWorksData = async (
-    data: {
-      endDate?: string;
-      targetWorkId?: string;
-      targetUserId?: string;
-    } = {}
-  ) => {
-    setLoading(true);
-    try {
-      await updateWorksDataRaw(data);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const updateWorksData = useCallback(
+    async (
+      data: {
+        endDate?: string;
+        targetWorkId?: string;
+        targetUserId?: string;
+      } = {}
+    ) => {
+      setLoading(true);
+      try {
+        await updateWorksDataRaw(data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [updateWorksDataRaw]
+  );
 
-  // Загрузка данных при монтировании компонента
+  // Обработчик показа детального расчета
+  const handleShowCalculation = useCallback(
+    async (userId: string, workId: string, dutyId?: string) => {
+      try {
+        setLoading(true);
+        const endDate = getWorkPeriodDate(workId);
+        const calc = await analyticsService.getPaymentsCalculation({
+          userId,
+          workId,
+          endDate,
+        });
+
+        // Если запрошен расчёт по конкретной обязанности — фильтруем периоды локально
+        const filtered = dutyId
+          ? {
+              ...calc,
+              periods: calc.periods.map((p) => {
+                const duties = p.duties.filter((d) => d.dutyId === dutyId);
+                const totalAmount = duties.reduce(
+                  (s, d) => s + d.calculatedAmount,
+                  0
+                );
+                return { ...p, duties, totalAmount };
+              }),
+              totalAccrued: calc.periods
+                .map((p) => p.duties.filter((d) => d.dutyId === dutyId))
+                .flat()
+                .reduce((s, d) => s + d.calculatedAmount, 0),
+            }
+          : calc;
+
+        setSelectedCalculation(filtered);
+        setIsUserCalculation(false);
+        setCalculationType('work');
+        setIsDutyCalculation(!!dutyId);
+        setCalculationModalOpen(true);
+        setCalculationModalShowPaymentHistory(!dutyId);
+      } catch (error) {
+        console.error('Ошибка при загрузке расчета:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getWorkPeriodDate]
+  );
+
+  // Инициализация данных один раз на монтировании
   useEffect(() => {
     fetchWorksData().catch((err) => {
       logger.error('Ошибка инициализации выплат', err);
@@ -133,50 +187,46 @@ export default function PaymentsPage() {
     });
   }, []);
 
+  // Слушатель события закрытия периода (подписка/отписка один раз)
+  useEffect(() => {
+    const onClosePeriod = async (e: any) => {
+      try {
+        const { userId, workId, calculationDate } = e.detail || {};
+        if (!userId || !workId || !calculationDate) return;
+        await closePeriod({ workId, userId, closureDate: calculationDate });
+        await updateWorksData({
+          endDate: calculationDate,
+          targetWorkId: workId,
+          targetUserId: userId,
+        });
+        if (calculationModalOpen) {
+          await handleShowCalculation(userId, workId);
+        }
+      } catch (err) {
+        logger.error('Не удалось закрыть период', err);
+        notification.showError('Не удалось закрыть период');
+      }
+    };
+    window.addEventListener('close-period', onClosePeriod as any);
+    return () =>
+      window.removeEventListener('close-period', onClosePeriod as any);
+  }, []);
+
   // Загрузка данных о задолженностях текущего пользователя теперь в хуке usePaymentsData
 
   // getWorkPeriodDate/getUserPeriodDate предоставлены хуком usePeriodDates
-
-  // Обработчик показа детального расчета
-  const handleShowCalculation = async (
-    userId: string,
-    workId: string,
-    dutyId?: string
-  ) => {
-    try {
-      setLoading(true);
-      const result = buildWorkDetailedCalculation({
-        usersData,
-        myDebts,
-        userId,
-        workId,
-        dutyId,
-        getWorkPeriodDate,
-      });
-      if (!result) return;
-      setSelectedCalculation(result.calculation);
-      setIsUserCalculation(false);
-      setCalculationType('work');
-      setIsDutyCalculation(!!dutyId);
-      setCalculationModalOpen(true);
-      setCalculationModalShowPaymentHistory(result.showPaymentHistory);
-    } catch (error) {
-      console.error('Ошибка при загрузке расчета:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Функция для показа общего расчета пользователя по всем работам
   const handleShowUserCalculation = async (userId: string) => {
     try {
       setLoading(true);
-      const detailedCalc = buildUserDetailedCalculation({
-        usersData,
+      const endDate = getWorkPeriodDate(
+        usersData.find((u) => u.userId === userId)?.works[0]?.workId || ''
+      );
+      const detailedCalc = await analyticsService.getPaymentsCalculationUser({
         userId,
-        getWorkPeriodDate,
+        endDate,
       });
-      if (!detailedCalc) return;
       setSelectedCalculation(detailedCalc);
       setIsUserCalculation(true);
       setCalculationType('user');
@@ -585,12 +635,7 @@ export default function PaymentsPage() {
                     >
                       <div className="space-y-4">
                         {/* Дата расчетного периода */}
-                        <WorkPeriodSelector
-                          userId={user.userId}
-                          workId={work.workId}
-                          selectedDate={getWorkPeriodDate(work.workId)}
-                          onDateChange={handleWorkPeriodDateChange}
-                        />
+                        {/* Убрали выбор даты на уровне работы — дата задаётся только в пользователе */}
 
                         {/* Обязанности пользователя */}
                         <div>

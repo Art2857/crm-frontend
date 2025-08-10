@@ -26,6 +26,8 @@ export default function WorkCard({
   onShowCalculation,
   children,
 }: WorkCardProps) {
+  const accrued = work.totalAccrued ?? 0;
+  const paidForDisplay = Math.min(work.paidAmount || 0, accrued);
   return (
     <div className="group">
       <Card className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md">
@@ -37,7 +39,7 @@ export default function WorkCard({
             <div className="flex items-center space-x-3">
               <div
                 className={`w-3 h-3 rounded-full ${
-                  work.isPaymentDue ? 'bg-red-400' : 'bg-green-400'
+                  work.requiresAttention ? 'bg-red-400' : 'bg-green-400'
                 }`}
               />
               <div>
@@ -55,9 +57,10 @@ export default function WorkCard({
 
             <div className="flex items-center space-x-4">
               <FinancialSummary
-                totalAccrued={work.totalDebt + work.paidAmount}
-                totalPaid={work.paidAmount}
+                totalAccrued={accrued}
+                totalPaid={paidForDisplay}
                 remainingDebt={work.totalDebt}
+                overpaidAmount={work.overpaidAmount}
                 isPaymentDue={work.isPaymentDue}
               />
 

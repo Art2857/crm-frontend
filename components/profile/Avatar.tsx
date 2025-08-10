@@ -11,11 +11,11 @@ interface AvatarProps {
   onAvatarChange?: (file: File) => void;
 }
 
-const Avatar: React.FC<AvatarProps> = ({ 
-  user, 
-  size = 'medium', 
+const Avatar: React.FC<AvatarProps> = ({
+  user,
+  size = 'medium',
   editable = false,
-  onAvatarChange 
+  onAvatarChange,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,7 +24,7 @@ const Avatar: React.FC<AvatarProps> = ({
   const sizeClasses = {
     small: 'w-12 h-12',
     medium: 'w-20 h-20',
-    large: 'w-24 h-24'
+    large: 'w-24 h-24',
   };
 
   const getInitials = () => {
@@ -59,7 +59,7 @@ const Avatar: React.FC<AvatarProps> = ({
   };
 
   return (
-    <div 
+    <div
       className={`relative ${sizeClasses[size]} rounded-full overflow-hidden ${
         editable ? 'cursor-pointer' : ''
       }`}
@@ -75,9 +75,24 @@ const Avatar: React.FC<AvatarProps> = ({
       {/* Оверлей для редактирования */}
       {editable && isHovered && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+          <svg
+            className="w-6 h-6 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+            />
           </svg>
         </div>
       )}

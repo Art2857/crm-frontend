@@ -24,8 +24,11 @@ export interface WorkDetail {
   duties: DutyDetail[];
   totalDebt: number;
   paidAmount: number;
+  totalAccrued?: number;
+  overpaidAmount?: number; // сверхурочные (переплата)
   isPaymentDue: boolean;
   lastClosureDate: string | null;
+  requiresAttention?: boolean; // индикатор «требует внимания» по правилам ЗП
   users?: UserWorkDebt[];
   salary: number;
 }
@@ -40,8 +43,10 @@ export interface ResponsibleUser {
   totalDebt: number;
   totalAccrued: number;
   totalPaid: number;
+  overpaidAmount?: number; // переплата по пользователю (сумма сверхурочных по работам)
   remainingDebt: number;
   isPaymentDue: boolean;
+  requiresAttention?: boolean; // есть хотя бы одна работа, требующая внимания
   lastPaymentDate: string | null;
   lastPaymentAmount: number | null;
 }

@@ -7,6 +7,7 @@ interface FinancialSummaryProps {
   totalAccrued: number;
   totalPaid: number;
   remainingDebt: number;
+  overpaidAmount?: number; // сверхурочные (переплата)
   isPaymentDue?: boolean;
   className?: string;
 }
@@ -15,11 +16,12 @@ export default function FinancialSummary({
   totalAccrued,
   totalPaid,
   remainingDebt,
+  overpaidAmount = 0,
   isPaymentDue = false,
   className = '',
 }: FinancialSummaryProps) {
   return (
-    <div className={`grid grid-cols-3 gap-3 text-center ${className}`}>
+    <div className={`grid grid-cols-4 gap-3 text-center ${className}`}>
       <div className="bg-blue-50 rounded-lg p-2">
         <p className="text-xs text-blue-600 font-medium">Начислено</p>
         <p className="text-sm font-bold text-blue-800">
@@ -30,6 +32,12 @@ export default function FinancialSummary({
         <p className="text-xs text-green-600 font-medium">Выплачено</p>
         <p className="text-sm font-bold text-green-800">
           {formatCurrency(totalPaid)}
+        </p>
+      </div>
+      <div className="bg-yellow-50 rounded-lg p-2">
+        <p className="text-xs text-yellow-700 font-medium">Сверхурочные</p>
+        <p className="text-sm font-bold text-yellow-800">
+          {formatCurrency(overpaidAmount)}
         </p>
       </div>
       <div

@@ -40,7 +40,7 @@ export default function UserCard({
           {/* Декоративная линия сверху */}
           <div
             className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
-              user.isPaymentDue
+              user.requiresAttention
                 ? 'from-red-400 via-orange-400 to-red-400'
                 : 'from-blue-400 via-indigo-400 to-purple-400'
             }`}
@@ -51,17 +51,17 @@ export default function UserCard({
               {/* Аватар пользователя */}
               <div
                 className={`relative p-4 rounded-2xl shadow-lg ${
-                  user.isPaymentDue
+                  user.requiresAttention
                     ? 'bg-gradient-to-br from-red-100 to-orange-100'
                     : 'bg-gradient-to-br from-blue-100 to-indigo-100'
                 }`}
               >
                 <UserIcon
                   className={`h-7 w-7 ${
-                    user.isPaymentDue ? 'text-red-600' : 'text-blue-600'
+                    user.requiresAttention ? 'text-red-600' : 'text-blue-600'
                   }`}
                 />
-                {user.isPaymentDue && (
+                {user.requiresAttention && (
                   <div className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center">
                     <ExclamationTriangleIcon className="h-3 w-3 text-white" />
                   </div>
@@ -74,7 +74,7 @@ export default function UserCard({
                   <h3 className="text-xl font-bold text-gray-900">
                     {user.firstName} {user.lastName}
                   </h3>
-                  {user.isPaymentDue && (
+                  {user.requiresAttention && (
                     <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium animate-pulse">
                       <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                       <span>Требует внимания</span>
@@ -101,6 +101,7 @@ export default function UserCard({
                 totalAccrued={user.totalAccrued}
                 totalPaid={user.totalPaid}
                 remainingDebt={user.remainingDebt}
+                overpaidAmount={user.overpaidAmount}
                 isPaymentDue={user.isPaymentDue}
               />
 

@@ -36,7 +36,7 @@ export default function UserPeriodSelector({
         className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2 px-3 py-1 text-sm font-medium shadow-sm border"
       >
         <ClockIcon className="h-4 w-4" />
-        <span>Установить время</span>
+        <span>Рассчитать</span>
       </Button>
     </div>
   );

@@ -171,3 +171,19 @@ export const createPaymentAndClose = async (
     throw error;
   }
 };
+
+export const closePeriod = async (params: {
+  workId: string;
+  userId: string;
+  closureDate: string; // YYYY-MM-DD — дата «расчёт до»
+}) => {
+  const { data } = await privateApi.post(
+    `${PAYMENTS_ENDPOINTS.base}/close-period`,
+    {
+      workId: params.workId,
+      targetUserId: params.userId,
+      closureDate: params.closureDate,
+    }
+  );
+  return data;
+};

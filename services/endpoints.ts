@@ -64,6 +64,9 @@ export const ANALYTICS_ENDPOINTS = {
   userWorks: '/analytics/user/works',
   worksClosurePeriodsAnalysis: '/analytics/user/works-closure-periods-analysis',
   myDebts: '/analytics/user/my-debts',
+  paymentsManagement: '/analytics/payments/management',
+  paymentsCalculation: '/analytics/payments/calculation',
+  paymentsCalculationUser: '/analytics/payments/calculation-user',
 } as const;
 
 export const DASHBOARD_ENDPOINTS = {

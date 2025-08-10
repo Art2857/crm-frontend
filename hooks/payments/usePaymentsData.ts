@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { analyticsService, MyDebt } from '../../services/analytics';
-import { mapAnalysisToUsers } from '../../utils/paymentsMapping';
 import { logger } from '../../utils/logger';
 import { useNotification } from '../../contexts/NotificationContext';
 import { ResponsibleUser } from '../../types/payments';
@@ -20,13 +19,11 @@ export function usePaymentsData() {
   const getWorksData = useCallback(async (data: LoadParams = {}) => {
     const { endDate, targetWorkId, targetUserId } = data;
 
-    const analysis = await analyticsService.getUserWorksClosurePeriodsAnalysis(
+    const mappedUsers = await analyticsService.getPaymentsManagement(
       endDate,
       targetWorkId ? [targetWorkId] : undefined,
       targetUserId
     );
-
-    const mappedUsers = mapAnalysisToUsers(analysis);
 
     const sortByName = (arr: ResponsibleUser[]) =>
       arr.slice().sort((a, b) => {
@@ -55,42 +52,17 @@ export function usePaymentsData() {
             (mu) => mu.userId === user.userId
           );
           if (updatedUserInNewResult) {
-            const works = user.works.map((oldWorkData) => {
-              const updatedWorkInNewResult = updatedUserInNewResult.works.find(
-                (nw) => oldWorkData.workId === nw.workId
-              );
-              return updatedWorkInNewResult || oldWorkData;
-            });
-
-            // Пересчет агрегатов пользователя на основе всех его работ
-            const aggregate = works.reduce(
-              (acc, work) => {
-                const u = work.users?.find((wu) => wu.userId === user.userId);
-                if (u) {
-                  acc.totalAccrued += u.totalAccrued || 0;
-                  acc.totalPaid += u.totalPaid || 0;
-                  acc.totalDebt += (u.totalAccrued || 0) - (u.totalPaid || 0);
-                }
-                const workRemaining = (work.users || []).reduce(
-                  (s, wu) =>
-                    s +
-                    Math.max((wu.totalAccrued || 0) - (wu.totalPaid || 0), 0),
-                  0
-                );
-                acc.remainingDebt += workRemaining;
-                return acc;
-              },
-              { totalAccrued: 0, totalPaid: 0, totalDebt: 0, remainingDebt: 0 }
-            );
-
+            // Используем агрегаты, которые пришли уже посчитанными с бэка
             return {
               ...user,
-              works,
-              totalAccrued: aggregate.totalAccrued,
-              totalPaid: aggregate.totalPaid,
-              totalDebt: aggregate.totalDebt,
-              remainingDebt: aggregate.remainingDebt,
-              isPaymentDue: aggregate.remainingDebt > 0,
+              works: updatedUserInNewResult.works,
+              totalAccrued: updatedUserInNewResult.totalAccrued,
+              totalPaid: updatedUserInNewResult.totalPaid,
+              totalDebt: updatedUserInNewResult.totalDebt,
+              remainingDebt: updatedUserInNewResult.remainingDebt,
+              overpaidAmount: updatedUserInNewResult.overpaidAmount,
+              isPaymentDue: updatedUserInNewResult.isPaymentDue,
+              requiresAttention: updatedUserInNewResult.requiresAttention,
             } as ResponsibleUser;
           }
           return user;

@@ -21,12 +21,11 @@ export function usePaymentStats(
     [myDebts]
   );
 
-  const overdueCount = useMemo(
-    () =>
-      (responsibleUsers?.filter((u) => u.isPaymentDue)?.length || 0) +
-      (myDebts?.filter((d) => d.isPaymentDue)?.length || 0),
-    [responsibleUsers, myDebts]
-  );
+  // Количество «просроченных» — количество пользователей с индикатором «требует внимания»
+  const overdueCount = useMemo(() => {
+    if (!Array.isArray(responsibleUsers)) return 0;
+    return responsibleUsers.filter((u) => Boolean(u.requiresAttention)).length;
+  }, [responsibleUsers]);
 
   return { totalResponsibleDebt, totalMyDebt, overdueCount };
 }

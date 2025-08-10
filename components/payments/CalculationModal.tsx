@@ -60,13 +60,19 @@ export default function CalculationModal({
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl font-semibold text-gray-900">
-              {calculation?.periods[0]?.duties.length === 1 &&
-              !isDebtsView &&
-              !showPaymentHistory
-                ? `Расчет по обязанности: ${calculation.periods[0].duties[0].dutyName}`
-                : isDebtsView
-                  ? 'Детальный расчет задолженности'
-                  : 'Детальный расчет выплаты'}
+              {(() => {
+                const userName = calculation?.userName || 'Пользователь';
+                const workName = calculation?.workName || 'Работа';
+                if (isUserCalculation)
+                  return `Детальный расчет по пользователю: ${userName}`;
+                if (
+                  calculation?.periods[0]?.duties.length === 1 &&
+                  !isDebtsView &&
+                  !showPaymentHistory
+                )
+                  return `Детальный расчет: ${userName} · ${workName} · ${calculation.periods[0].duties[0].dutyName}`;
+                return `Детальный расчет по работе: ${userName} · ${workName}`;
+              })()}
             </h3>
           </div>
           <button
@@ -281,9 +287,14 @@ export default function CalculationModal({
                           Последнее закрытие:{' '}
                         </span>
                         <span className="text-blue-800 font-semibold">
-                          {new Date(
-                            calculation.lastClosureDate
-                          ).toLocaleDateString('ru-RU')}
+                          {(() => {
+                            const lc = calculation.lastClosureDate as any;
+                            const d =
+                              typeof lc === 'string' && lc.includes('.')
+                                ? new Date(lc.split('.').reverse().join('-'))
+                                : new Date(lc);
+                            return d.toLocaleDateString('ru-RU');
+                          })()}
                         </span>
                       </div>
                     )}
@@ -319,12 +330,21 @@ export default function CalculationModal({
                     <div key={index} className="bg-gray-50 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h5 className="font-medium text-gray-900">
-                          Период {index + 1}:{' '}
-                          {new Date(period.startDate).toLocaleDateString(
-                            'ru-RU'
-                          )}{' '}
-                          -{' '}
-                          {new Date(period.endDate).toLocaleDateString('ru-RU')}
+                          {(() => {
+                            const toDate = (v: any) =>
+                              typeof v === 'string' && v.includes('.')
+                                ? new Date(v.split('.').reverse().join('-'))
+                                : new Date(v);
+                            const sd = toDate(period.startDate);
+                            const ed = toDate(period.endDate);
+                            return (
+                              <>
+                                Период {index + 1}:{' '}
+                                {sd.toLocaleDateString('ru-RU')} -{' '}
+                                {ed.toLocaleDateString('ru-RU')}
+                              </>
+                            );
+                          })()}
                         </h5>
                         <Badge className="bg-blue-100 text-blue-800">
                           {period.days || 0} из {period.monthDays || 0} дней
@@ -511,24 +531,41 @@ export default function CalculationModal({
             {/* Кнопки создания выплаты */}
             {!isDebtsView && !isUserCalculation && (
               <div className="flex justify-center">
-                <Button
-                  onClick={() => {
-                    onCreatePayment(
-                      calculation.userId,
-                      calculation.workId,
-                      calculation.remainingDebt,
-                      calculation.userName || 'Пользователь',
-                      calculation.workName || 'Работа',
-                      calculationDate
-                    );
-                  }}
-                  disabled={calculation.remainingDebt <= 0}
-                  className={`px-8 py-3 ${calculation.remainingDebt <= 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'}`}
-                >
-                  <BanknotesIcon className="h-5 w-5 mr-2" />
-                  Выплатить зарплату (
-                  {formatCurrency(calculation.remainingDebt)})
-                </Button>
+                {calculation.remainingDebt > 0 ? (
+                  <Button
+                    onClick={() => {
+                      onCreatePayment(
+                        calculation.userId,
+                        calculation.workId,
+                        calculation.remainingDebt,
+                        calculation.userName || 'Пользователь',
+                        calculation.workName || 'Работа',
+                        calculationDate
+                      );
+                    }}
+                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <BanknotesIcon className="h-5 w-5 mr-2" />
+                    Выплатить зарплату (
+                    {formatCurrency(calculation.remainingDebt)})
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      const ev = new CustomEvent('close-period', {
+                        detail: {
+                          userId: calculation.userId,
+                          workId: calculation.workId,
+                          calculationDate,
+                        },
+                      });
+                      window.dispatchEvent(ev);
+                    }}
+                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Закрыть период
+                  </Button>
+                )}
               </div>
             )}
 
