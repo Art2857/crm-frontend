@@ -98,8 +98,8 @@ export interface WorkDutiesGroup {
 export interface PeriodCalculation {
   startDate: string;
   endDate: string;
-  days: number;
-  monthDays: number;
+  days: number; // Количество рабочих дней в периоде
+  monthDays: number; // Количество рабочих дней в месяце
   duties: Array<{
     dutyId: string;
     dutyName: string;
@@ -175,4 +175,18 @@ export interface UserWorkDebt {
   duties: DutyDetail[];
   userPeriods?: any;
   paymentHistory?: PaymentHistoryItem[];
+}
+
+export interface PaymentPeriodDetail {
+  startDate: string;
+  endDate: string;
+  workingDays: number; // Количество рабочих дней в периоде
+  monthDays: number; // Количество рабочих дней в месяце
+  duties: Array<{
+    id: string;
+    name: string;
+    calculatedValue: number;
+    prorated: number;
+  }>;
+  totalForPeriod: number;
 }
