@@ -176,7 +176,7 @@ export default function CalculationModal({
                         - {new Date(period.endDate).toLocaleDateString('ru-RU')}
                       </h5>
                       <Badge className="bg-blue-100 text-blue-800">
-                        {period.days} из {period.monthDays} дней
+                        {period.days} из {period.monthDays} рабочих дней
                       </Badge>
                     </div>
 
@@ -349,7 +349,7 @@ export default function CalculationModal({
                           })()}
                         </h5>
                         <Badge className="bg-blue-100 text-blue-800">
-                          {period.days || 0} из {period.monthDays || 0} дней
+                          {period.days || 0} из {period.monthDays || 0} рабочих дней
                         </Badge>
                       </div>
                       <div className="space-y-2">

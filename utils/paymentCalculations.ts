@@ -5,6 +5,7 @@ import {
   WorkDetail,
 } from '../types/payments';
 import { MyDebt } from '../services/analytics';
+import { getWorkingDaysInMonth, getWorkingDaysInPeriod } from './workingDays';
 import { toIsoFromRu, parseRuDate } from './paymentsMapping';
 
 type UsersData = ResponsibleUser[];
@@ -165,15 +166,8 @@ export function buildWorkDetailedCalculation(params: {
         const [start, end] = key.split('|');
         const startDate = new Date(start);
         const endDate = new Date(end);
-        const daysInPeriod =
-          Math.floor(
-            (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-          ) + 1;
-        const monthDays = new Date(
-          endDate.getFullYear(),
-          endDate.getMonth() + 1,
-          0
-        ).getDate();
+        const workingDaysInPeriod = getWorkingDaysInPeriod(startDate, endDate);
+        const workingDaysInMonth = getWorkingDaysInMonth(endDate);
         const dutiesForPeriod = dutyPeriods.map(({ duty, period }: any) => ({
           dutyId: duty.id,
           dutyName: duty.name,
@@ -187,8 +181,8 @@ export function buildWorkDetailedCalculation(params: {
         periods.push({
           startDate: startDate.toISOString().split('T')[0],
           endDate: endDate.toISOString().split('T')[0],
-          days: daysInPeriod,
-          monthDays,
+          days: workingDaysInPeriod,
+          monthDays: workingDaysInMonth,
           duties: dutiesForPeriod,
           totalAmount,
         });
@@ -203,11 +197,7 @@ export function buildWorkDetailedCalculation(params: {
     userPeriodsSource?.dutiesPeriods?.forEach((p: any) => {
       const periodStartDate = parseRuDate(p.startDate);
       const periodEndDate = parseRuDate(p.endDate);
-      const monthDays = new Date(
-        periodEndDate.getFullYear(),
-        periodEndDate.getMonth() + 1,
-        0
-      ).getDate();
+      const workingDaysInMonth = getWorkingDaysInMonth(periodEndDate);
       const dutiesCalc = p.distributionDetails.map((dd: any) => {
         const price = Number(dd.price) || 0;
         const perc = Number(dd.percentage) || 0;
@@ -231,7 +221,7 @@ export function buildWorkDetailedCalculation(params: {
         startDate: toIsoFromRu(p.startDate)!,
         endDate: toIsoFromRu(p.endDate)!,
         days: p.daysInPeriod,
-        monthDays,
+        monthDays: workingDaysInMonth,
         duties: filteredDuties,
         totalAmount,
       });
@@ -365,30 +355,15 @@ export function buildUserDetailedCalculation(params: {
 
   const startDateObj = new Date(startDate);
   const endDateObj = new Date(endDate);
-  const startDateOnly = new Date(
-    startDateObj.getFullYear(),
-    startDateObj.getMonth(),
-    startDateObj.getDate()
-  );
-  const endDateOnly = new Date(
-    endDateObj.getFullYear(),
-    endDateObj.getMonth(),
-    endDateObj.getDate()
-  );
-  const timeDiff = endDateOnly.getTime() - startDateOnly.getTime();
-  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
-  const monthDays = new Date(
-    endDateObj.getFullYear(),
-    endDateObj.getMonth() + 1,
-    0
-  ).getDate();
+  const workingDaysInPeriod = getWorkingDaysInPeriod(startDateObj, endDateObj);
+  const workingDaysInMonth = getWorkingDaysInMonth(endDateObj);
 
   const periods: PeriodCalculation[] = [
     {
       startDate,
       endDate,
-      days,
-      monthDays,
+      days: workingDaysInPeriod,
+      monthDays: workingDaysInMonth,
       duties: allDuties.map((duty, index) => ({
         dutyId: `${duty.dutyId}-${index}`,
         dutyName: duty.dutyName,
