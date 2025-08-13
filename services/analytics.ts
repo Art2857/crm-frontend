@@ -187,6 +187,7 @@ export const analyticsService = {
           totalDebt: number;
           remainingDebt: number;
           isPaymentDue: boolean;
+          requiresAttention?: boolean;
         };
         works: Array<{
           workId: string;
@@ -194,6 +195,7 @@ export const analyticsService = {
           salary: number;
           lastClosureDate: string | null;
           totals: { accrued: number; paid: number; debt: number };
+          requiresAttention?: boolean;
           duties: Array<{
             dutyId: string;
             dutyName: string;
@@ -206,9 +208,6 @@ export const analyticsService = {
       params: { endDate, worksId: worksIds, workerId: targetUserId },
     });
 
-    // Подготовим дату расчёта для вычисления индикаторов «внимания»
-    const calcDate = endDate ? new Date(endDate) : new Date();
-
     // Преобразуем к ResponsibleUser[], без перерасчётов — только переименование полей
     const users: ResponsibleUser[] = data.users.map((u) => {
       const works: WorkDetail[] = u.works.map((w) => {
@@ -220,19 +219,7 @@ export const analyticsService = {
         }));
         const totalAccrued = duties.reduce((sum, d) => sum + (d.debt || 0), 0);
         const overpaidAmount = Math.max(w.totals.paid - totalAccrued, 0);
-        // Индикатор «требует внимания»: если с даты последнего закрытия до даты расчёта прошло >= 1 календарный месяц
-        const requiresAttention = (() => {
-          if (!w.lastClosureDate) return false;
-          const lc = new Date(w.lastClosureDate);
-          const end = calcDate;
-          const monthsDiff =
-            (end.getFullYear() - lc.getFullYear()) * 12 +
-            (end.getMonth() - lc.getMonth());
-          if (monthsDiff > 1) return true;
-          if (monthsDiff < 1) return false;
-          // Ровно один месяц разницы — дополнительно проверяем число
-          return end.getDate() >= lc.getDate();
-        })();
+        const requiresAttention = w.requiresAttention || false;
         return {
           workId: w.workId,
           workName: w.workName,
@@ -260,8 +247,11 @@ export const analyticsService = {
         } as WorkDetail;
       });
 
-      // Индикатор у пользователя — если хотя бы одна работа требует внимания
-      const requiresAttentionUser = works.some((w) => w.requiresAttention);
+      // Индикатор у пользователя — используем значение из бэкенда или вычисляем на основе работ
+      const requiresAttentionUser =
+        u.totals.requiresAttention !== undefined
+          ? u.totals.requiresAttention
+          : works.some((w) => w.requiresAttention);
       return {
         userId: u.userId,
         firstName: u.firstName || '',
