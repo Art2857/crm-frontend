@@ -459,6 +459,7 @@ export default function CreateUserPage() {
                 >
                   <option value={Role.WORKER}>Работник</option>
                   <option value={Role.ADMIN}>Администратор</option>
+                  <option value={Role.MANAGER}>Менеджер</option>
                 </select>
               </div>
             </div>

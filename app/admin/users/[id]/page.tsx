@@ -683,6 +683,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 >
                   <option value={Role.WORKER}>Работник</option>
                   <option value={Role.ADMIN}>Администратор</option>
+                  <option value={Role.MANAGER}>Менеджер</option>
                 </select>
               </div>
 
