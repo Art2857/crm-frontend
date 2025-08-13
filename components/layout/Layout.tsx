@@ -37,6 +37,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
 
   const isAdmin = user?.role === Role.ADMIN;
+  const isManager = user?.role === Role.MANAGER;
 
   // Мемоизируем обработчик выхода из системы
   const handleLogout = useCallback(async () => {
@@ -80,7 +81,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     {
       name: 'Пользователи',
       href: '/admin/users',
-      visible: isAuthenticated && isAdmin,
+      visible: isAuthenticated && (isAdmin || isManager),
     },
     {
       name: 'Обязанности',

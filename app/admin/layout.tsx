@@ -21,7 +21,8 @@ export default function AdminLayout({
       router.replace('/login');
       return;
     }
-    if (user?.role !== Role.ADMIN) {
+
+    if (![Role.ADMIN, Role.MANAGER].includes(user?.role)) {
       router.replace('/dashboard');
       return;
     }
