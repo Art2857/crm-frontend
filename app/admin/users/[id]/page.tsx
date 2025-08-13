@@ -42,6 +42,7 @@ type UpdateSensitiveFormData = {
   email?: string;
   role?: string;
   salaryDay?: string;
+  characteristics?: string;
 };
 
 export default function EditUserPage({ params }: { params: { id: string } }) {
@@ -118,6 +119,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       email: '',
       role: '',
       salaryDay: '',
+      characteristics: '',
     },
     {
       email: {
@@ -143,13 +145,13 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   );
 
   useEffect(() => {
-    // Проверка аутентификации и прав администратора
+    // Проверка аутентификации и прав администратора/менеджера
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
 
-    if (user?.role !== Role.ADMIN) {
+    if (user?.role !== Role.ADMIN && user?.role !== Role.MANAGER) {
       router.push('/dashboard');
       return;
     }
@@ -236,6 +238,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         'salaryDay',
         currentUser.salaryDay !== null ? String(currentUser.salaryDay) : ''
       );
+      setSensitiveValue('characteristics', currentUser.characteristics || '');
     }
   }, [currentUser, setProfileValue, setSensitiveValue]);
 
@@ -280,6 +283,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           'salaryDay',
           currentUser.salaryDay !== null ? String(currentUser.salaryDay) : ''
         );
+        setSensitiveValue('characteristics', currentUser.characteristics || '');
       }
     }
   };
@@ -365,6 +369,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           setSensitiveValue(
             'salaryDay',
             currentUser.salaryDay !== null ? String(currentUser.salaryDay) : ''
+          );
+          setSensitiveValue(
+            'characteristics',
+            currentUser.characteristics || ''
           );
         }
       } else if (
@@ -457,10 +465,14 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     }
   };
 
-  if (!user || user.role !== Role.ADMIN || !currentUser) {
+  if (
+    !user ||
+    (user.role !== Role.ADMIN && user.role !== Role.MANAGER) ||
+    !currentUser
+  ) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -698,19 +710,21 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 error={sensitiveErrors.salaryDay}
               />
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Характеристика (видно только ADMIN/MANAGER/HR)
-                </label>
-                <textarea
-                  name="characteristics"
-                  value={(sensitiveValues as any).characteristics || ''}
-                  onChange={handleSensitiveChange}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  rows={4}
-                  placeholder="Краткая характеристика сотрудника"
-                />
-              </div>
+              {(user?.role === Role.ADMIN || user?.role === Role.MANAGER) && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Характеристика (видно только ADMIN/MANAGER/HR)
+                  </label>
+                  <textarea
+                    name="characteristics"
+                    value={sensitiveValues.characteristics || ''}
+                    onChange={handleSensitiveChange}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    rows={4}
+                    placeholder="Краткая характеристика сотрудника"
+                  />
+                </div>
+              )}
 
               {((error && error !== 'REQUEST_CANCELLED') || serverError) && (
                 <div className="text-red-500 text-sm mt-4">
