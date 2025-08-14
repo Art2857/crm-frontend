@@ -21,10 +21,18 @@ export function usePaymentStats(
     [myDebts]
   );
 
-  // Количество «просроченных» — количество пользователей с индикатором «требует внимания»
+  // Количество «просроченных» — количество работ с индикатором «требует внимания»
   const overdueCount = useMemo(() => {
     if (!Array.isArray(responsibleUsers)) return 0;
-    return responsibleUsers.filter((u) => Boolean(u.requiresAttention)).length;
+    return responsibleUsers.reduce((userOverdueCount, user) => {
+      const userWorksOverdueCount = user.works.reduce(
+        (userWorkOverdueCount, work) => {
+          return userWorkOverdueCount + Number(work.requiresAttention);
+        },
+        0
+      );
+      return userOverdueCount + userWorksOverdueCount;
+    }, 0);
   }, [responsibleUsers]);
 
   return { totalResponsibleDebt, totalMyDebt, overdueCount };
