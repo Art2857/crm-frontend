@@ -16,12 +16,16 @@ const initialState: UsersState = {
   error: null,
 };
 
+interface GetAllUsersParams {
+  archivingStatus?: 'archived' | 'actual';
+}
+
 // Асинхронные thunks
 export const fetchAllUsers = createAsyncThunk(
   'users/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async (getAllUsersParams: GetAllUsersParams, { rejectWithValue }) => {
     try {
-      const users = await userService.getAllUsers();
+      const users = await userService.getAllUsers(getAllUsersParams);
       return users;
     } catch (error: any) {
       // Игнорируем отмененные запросы

@@ -10,18 +10,45 @@ import { User, Role } from '../../../types/user';
 import { fetchAllUsers } from '../../../store/slices/users';
 import { useConfirmation } from '../../../hooks/useConfirmation';
 import { privateApi } from '../../../services/ApiClient';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 export default function AdminUsersPage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { users, isLoading } = useAppSelector((state) => state.users);
   const [showArchived, setShowArchived] = useState(false);
+  const notification = useNotification();
+
   const archiveConfirm = useConfirmation<string>(async (id: string) => {
-    await privateApi.patch(`/users/${id}/archive`);
-    dispatch(fetchAllUsers());
+    try {
+      await privateApi.patch(`/users/${id}/archive`);
+      notification.showSuccess('Пользователь успешно архивирован');
+      dispatch(fetchAllUsers({}));
+    } catch (error: any) {
+      let errorMessage = '';
+
+      const errorPayload = error instanceof Promise ? await error : error;
+      if (errorPayload?.originalData?.message) {
+        errorMessage = errorPayload.originalData.message;
+      } else if (errorPayload.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (errorPayload.message) {
+        errorMessage = error.message;
+      }
+
+      if (errorMessage) {
+        notification.showError(errorMessage, 10000);
+      } else {
+        notification.showError(
+          'Произошла ошибка при архивировании пользователя',
+          10000
+        );
+      }
+    }
   });
+
   const restoreConfirm = useConfirmation<string>(async (id: string) => {
     await privateApi.patch(`/users/${id}/restore`);
-    dispatch(fetchAllUsers());
+    dispatch(fetchAllUsers({}));
   });
   const displayedUsers = useMemo(
     () =>
@@ -46,7 +73,7 @@ export default function AdminUsersPage() {
     }
 
     // Загрузка данных о пользователях
-    dispatch(fetchAllUsers());
+    dispatch(fetchAllUsers({}));
   }, [isAuthenticated, router, user, dispatch]);
 
   if (!user || ![Role.ADMIN, Role.MANAGER].includes(user.role) || isLoading) {

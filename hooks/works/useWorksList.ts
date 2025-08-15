@@ -68,7 +68,7 @@ export function useWorksList() {
           userRole: user.role,
         });
         const promises: Array<any> = [];
-        promises.push(dispatch(fetchAllUsers()));
+        promises.push(dispatch(fetchAllUsers({})));
         if (user.role === 'ADMIN') {
           promises.push(dispatch(fetchAllWorks()));
           setViewType('all');
