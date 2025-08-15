@@ -30,7 +30,7 @@ export default function CreateWorkPage() {
 
   // Загружаем список пользователей при монтировании компонента
   useEffect(() => {
-    dispatch(fetchAllUsers());
+    dispatch(fetchAllUsers({}));
   }, [dispatch]);
 
   // Обработчик изменения полей формы

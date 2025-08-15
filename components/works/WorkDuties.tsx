@@ -34,19 +34,10 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   }, [users]);
 
   // Получаем последнее распределение (самое актуальное)
-  const latestDistribution = useMemo(() => {
-    if (!distributions || distributions.length === 0) return null;
-
-    return [...distributions].sort((a, b) => {
-      const aDate = new Date(
-        a.workHistory.effectiveDate || a.createdAt || a.workHistory.date
-      ).getTime();
-      const bDate = new Date(
-        b.workHistory.effectiveDate || b.createdAt || b.workHistory.date
-      ).getTime();
-      return bDate - aDate;
-    })[0];
-  }, [distributions]);
+  const latestDistribution = useMemo<DistributionWithDetails | undefined>(
+    () => distributions[0],
+    [distributions]
+  );
 
   // Фильтруем детали распределения по текущему пользователю, если нужно
   const filteredDetails = useMemo(() => {

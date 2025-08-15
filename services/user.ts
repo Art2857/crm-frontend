@@ -24,12 +24,17 @@ interface CreateUserDto {
   role?: string;
 }
 
+interface GetAllUsersParams {
+  archivingStatus?: 'archived' | 'actual';
+}
+
 export const userService = {
   // Получение списка всех пользователей (только для админа)
-  getAll: async (): Promise<User[]> => {
+  getAll: async (getAllUsersParams: GetAllUsersParams): Promise<User[]> => {
     try {
       const response = await privateApi.get<User[]>(USERS_ENDPOINTS.base, {
         headers: ApiClient.getNoCacheHeaders(),
+        params: getAllUsersParams,
       });
       return response.data;
     } catch (error) {
@@ -39,8 +44,10 @@ export const userService = {
   },
 
   // Алиас для getAll для совместимости с кодом, который использует getAllUsers
-  getAllUsers: async (): Promise<User[]> => {
-    return userService.getAll();
+  getAllUsers: async (
+    getAllUsersParams: GetAllUsersParams
+  ): Promise<User[]> => {
+    return userService.getAll(getAllUsersParams);
   },
 
   // Получение одного пользователя по ID

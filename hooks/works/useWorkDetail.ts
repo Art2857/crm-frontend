@@ -38,7 +38,7 @@ export function useWorkDetail(id: string) {
       const work = await dispatch(fetchWorkById(id)).unwrap();
       if (user?.role === 'ADMIN') {
         await Promise.all([
-          dispatch(fetchAllUsers()).unwrap(),
+          dispatch(fetchAllUsers({ archivingStatus: 'actual' })).unwrap(),
           dispatch(fetchAllDuties()).unwrap(),
         ]);
       } else {
