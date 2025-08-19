@@ -489,6 +489,16 @@ export default function CalculationModal({
                                       'ru-RU'
                                     )}
                                   </span>
+                                  {payment.createdAt && (
+                                    <span className="text-xs text-gray-500 ml-2">
+                                      <span>создано: </span>
+                                      <span>
+                                        {new Date(
+                                          payment.createdAt
+                                        ).toLocaleString('ru-RU')}
+                                      </span>
+                                    </span>
+                                  )}
                                 </div>
                                 <p className="font-medium text-gray-900">
                                   {payment.description}

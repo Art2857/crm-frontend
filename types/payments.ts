@@ -131,6 +131,7 @@ export interface DetailedCalculation {
     type: 'SALARY' | 'ADVANCE' | 'BONUS' | 'EXTRA';
     description: string;
     date: string;
+    createdAt: string;
   }>;
 }
 
