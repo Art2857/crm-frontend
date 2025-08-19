@@ -245,3 +245,8 @@ export const russianDateToDate = (dateString: string): Date | null => {
 
   return new Date(year, month, day);
 };
+
+export const formatedDateToDateObject = (date: string): Date =>
+  typeof date === 'string' && date.includes('.')
+    ? new Date(date.split('.').reverse().join('-'))
+    : new Date(date);
