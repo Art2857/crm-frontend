@@ -202,7 +202,6 @@ export default function CreateWorkPage() {
                   onChange={handleChange}
                   className="mt-1"
                   placeholder="Выберите дату выхода"
-                  required
                   error={formErrors.releaseDate}
                 />
               </div>
