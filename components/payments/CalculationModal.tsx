@@ -5,6 +5,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { formatCurrency } from '../../utils/payments';
+import { formatedDateToDateObject } from '../../utils/date';
 import {
   CalendarIcon,
   CurrencyDollarIcon,
@@ -172,8 +173,13 @@ export default function CalculationModal({
                     <div className="flex items-center justify-between mb-3">
                       <h5 className="font-medium text-gray-900">
                         Период {index + 1}:{' '}
-                        {new Date(period.startDate).toLocaleDateString('ru-RU')}{' '}
-                        - {new Date(period.endDate).toLocaleDateString('ru-RU')}
+                        {formatedDateToDateObject(
+                          period.startDate
+                        ).toLocaleDateString('ru-RU')}{' '}
+                        -{' '}
+                        {formatedDateToDateObject(
+                          period.endDate
+                        ).toLocaleDateString('ru-RU')}
                       </h5>
                       <Badge className="bg-blue-100 text-blue-800">
                         {period.days} из {period.monthDays} рабочих дней
@@ -333,12 +339,10 @@ export default function CalculationModal({
                       <div className="flex items-center justify-between mb-3">
                         <h5 className="font-medium text-gray-900">
                           {(() => {
-                            const toDate = (v: any) =>
-                              typeof v === 'string' && v.includes('.')
-                                ? new Date(v.split('.').reverse().join('-'))
-                                : new Date(v);
-                            const sd = toDate(period.startDate);
-                            const ed = toDate(period.endDate);
+                            const sd = formatedDateToDateObject(
+                              period.startDate
+                            );
+                            const ed = formatedDateToDateObject(period.endDate);
                             return (
                               <>
                                 Период {index + 1}:{' '}
@@ -349,7 +353,8 @@ export default function CalculationModal({
                           })()}
                         </h5>
                         <Badge className="bg-blue-100 text-blue-800">
-                          {period.days || 0} из {period.monthDays || 0} рабочих дней
+                          {period.days || 0} из {period.monthDays || 0} рабочих
+                          дней
                         </Badge>
                       </div>
                       <div className="space-y-2">
