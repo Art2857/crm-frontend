@@ -514,6 +514,7 @@ export default function PaymentsPage() {
           type: result.payment.paymentType,
           description: result.payment.description || '',
           date: result.payment.paymentDate,
+          createdAt: result.payment.createdAt,
         };
 
         setSelectedCalculation((prev) => {
@@ -574,6 +575,7 @@ export default function PaymentsPage() {
             type: c.paymentType,
             description: c.description || '',
             date: c.paymentDate,
+            createdAt: c.createdAt,
           };
 
           setSelectedCalculation((prev) => {
