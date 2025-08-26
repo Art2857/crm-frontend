@@ -96,8 +96,8 @@ export interface WorkDutiesGroup {
 }
 
 export interface PeriodCalculation {
-  startDate: string;
-  endDate: string;
+  startDate: string; // ISO Date
+  endDate: string; // ISO Date
   days: number; // Количество рабочих дней в периоде
   monthDays: number; // Количество рабочих дней в месяце
   duties: Array<{
