@@ -84,6 +84,7 @@ export function buildWorkDetailedCalculation(params: {
     type: PaymentType;
     description: string;
     date: string;
+    createdAt: string;
   }> = [];
 
   if (userWorkEntry) {
@@ -104,6 +105,7 @@ export function buildWorkDetailedCalculation(params: {
       ),
       description: payment.description || '',
       date: (payment as any).paymentDate || (payment as any).date,
+      createdAt: payment.createdAt,
     }));
   }
 
