@@ -173,13 +173,8 @@ export default function CalculationModal({
                     <div className="flex items-center justify-between mb-3">
                       <h5 className="font-medium text-gray-900">
                         Период {index + 1}:{' '}
-                        {formatedDateToDateObject(
-                          period.startDate
-                        ).toLocaleDateString('ru-RU')}{' '}
-                        -{' '}
-                        {formatedDateToDateObject(
-                          period.endDate
-                        ).toLocaleDateString('ru-RU')}
+                        {new Date(period.startDate).toLocaleDateString('ru-RU')}{' '}
+                        - {new Date(period.endDate).toLocaleDateString('ru-RU')}
                       </h5>
                       <Badge className="bg-blue-100 text-blue-800">
                         {period.days} из {period.monthDays} рабочих дней
@@ -334,90 +329,93 @@ export default function CalculationModal({
                   Разбивка по периодам изменения обязанностей:
                 </h4>
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                  {calculation.periods.map((period, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h5 className="font-medium text-gray-900">
-                          {(() => {
-                            const sd = formatedDateToDateObject(
-                              period.startDate
-                            );
-                            const ed = formatedDateToDateObject(period.endDate);
-                            return (
-                              <>
-                                Период {index + 1}:{' '}
-                                {sd.toLocaleDateString('ru-RU')} -{' '}
-                                {ed.toLocaleDateString('ru-RU')}
-                              </>
-                            );
-                          })()}
-                        </h5>
-                        <Badge className="bg-blue-100 text-blue-800">
-                          {period.days || 0} из {period.monthDays || 0} рабочих
-                          дней
-                        </Badge>
-                      </div>
-                      <div className="space-y-2">
-                        {/* Отображаем обязанности с группировкой по работам */}
-                        {period.workGroups && period.workGroups.length > 0
-                          ? // Если есть группировка по работам - используем её
-                            period.workGroups.map((workGroup) => (
-                              <div key={workGroup.workId} className="space-y-1">
-                                <div className="font-medium text-gray-800 text-sm mb-1">
-                                  {workGroup.workName}
-                                </div>
-                                {workGroup.duties.map((duty) => (
-                                  <div
-                                    key={duty.dutyId}
-                                    className="flex items-center justify-between text-sm ml-4"
-                                  >
-                                    <span className="text-gray-700">
-                                      {duty.dutyName}:
-                                    </span>
-                                    <span className="font-mono">
-                                      {formatCurrency(duty.monthlyAmount)} ×{' '}
-                                      {period.days || 0}/{period.monthDays || 0}{' '}
-                                      = {formatCurrency(duty.calculatedAmount)}
-                                    </span>
+                  {calculation.periods.map((period, index) => {
+                    const periodStartLocalDateString = new Date(
+                      period.startDate
+                    ).toLocaleDateString('ru-RU');
+                    const periodEndLocalDateString = new Date(
+                      period.endDate
+                    ).toLocaleDateString('ru-RU');
+
+                    return (
+                      <div key={index} className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="font-medium text-gray-900">
+                            <span> Период {index + 1} </span>
+                            <span> {periodStartLocalDateString} </span>-
+                            <span> {periodEndLocalDateString} </span>
+                          </h5>
+                          <Badge className="bg-blue-100 text-blue-800">
+                            {period.days || 0} из {period.monthDays || 0}{' '}
+                            рабочих дней
+                          </Badge>
+                        </div>
+                        <div className="space-y-2">
+                          {/* Отображаем обязанности с группировкой по работам */}
+                          {period.workGroups && period.workGroups.length > 0
+                            ? // Если есть группировка по работам - используем её
+                              period.workGroups.map((workGroup) => (
+                                <div
+                                  key={workGroup.workId}
+                                  className="space-y-1"
+                                >
+                                  <div className="font-medium text-gray-800 text-sm mb-1">
+                                    {workGroup.workName}
                                   </div>
-                                ))}
-                              </div>
-                            ))
-                          : // Если нет группировки - отображаем все обязанности
-                            period.duties.map((duty) => (
-                              <div
-                                key={duty.dutyId}
-                                className="flex items-center justify-between text-sm"
-                              >
-                                <span className="text-gray-700">
-                                  {duty.workName ? (
-                                    <>
-                                      <span className="text-gray-500 mr-1">
-                                        {duty.workName}:
+                                  {workGroup.duties.map((duty) => (
+                                    <div
+                                      key={duty.dutyId}
+                                      className="flex items-center justify-between text-sm ml-4"
+                                    >
+                                      <span className="text-gray-700">
+                                        {duty.dutyName}:
                                       </span>
-                                      {duty.dutyName}:
-                                    </>
-                                  ) : (
-                                    <>{duty.dutyName}:</>
-                                  )}
-                                </span>
-                                <span className="font-mono">
-                                  {formatCurrency(duty.monthlyAmount)} ×{' '}
-                                  {period.days || 0}/{period.monthDays || 0} ={' '}
-                                  {formatCurrency(duty.calculatedAmount)}
-                                </span>
-                              </div>
-                            ))}
-                        <hr className="border-gray-300" />
-                        <div className="flex items-center justify-between font-medium">
-                          <span>Итого за период:</span>
-                          <span className="text-blue-600">
-                            {formatCurrency(period.totalAmount)}
-                          </span>
+                                      <span className="font-mono">
+                                        {formatCurrency(duty.monthlyAmount)} ×{' '}
+                                        {period.days || 0}/
+                                        {period.monthDays || 0} ={' '}
+                                        {formatCurrency(duty.calculatedAmount)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))
+                            : // Если нет группировки - отображаем все обязанности
+                              period.duties.map((duty) => (
+                                <div
+                                  key={duty.dutyId}
+                                  className="flex items-center justify-between text-sm"
+                                >
+                                  <span className="text-gray-700">
+                                    {duty.workName ? (
+                                      <>
+                                        <span className="text-gray-500 mr-1">
+                                          {duty.workName}:
+                                        </span>
+                                        {duty.dutyName}:
+                                      </>
+                                    ) : (
+                                      <>{duty.dutyName}:</>
+                                    )}
+                                  </span>
+                                  <span className="font-mono">
+                                    {formatCurrency(duty.monthlyAmount)} ×{' '}
+                                    {period.days || 0}/{period.monthDays || 0} ={' '}
+                                    {formatCurrency(duty.calculatedAmount)}
+                                  </span>
+                                </div>
+                              ))}
+                          <hr className="border-gray-300" />
+                          <div className="flex items-center justify-between font-medium">
+                            <span>Итого за период:</span>
+                            <span className="text-blue-600">
+                              {formatCurrency(period.totalAmount)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {/* Общая сумма всех периодов */}
                 <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200">
