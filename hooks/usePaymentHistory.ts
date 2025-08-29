@@ -1,14 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  PaymentHistory,
-  PaymentHistoryDto,
-  Payment,
-  PaymentType,
-} from '../types/payment';
+import { PaymentHistory, PaymentHistoryDto, Payment } from '../types/payment';
 import { fetchPaymentHistory } from '../services/payment';
 import { on } from '../utils/eventBus';
+import { useAppSelector } from '../store';
 
 interface UsePaymentHistoryResult {
   payments: Payment[];
@@ -30,6 +26,7 @@ const paymentHistoryCache: Record<CacheKey, PaymentHistory> = {};
 const buildCacheKey = (filters: PaymentHistoryDto) => JSON.stringify(filters);
 
 export function usePaymentHistory(): UsePaymentHistoryResult {
+  const { user } = useAppSelector((state) => state.auth);
   const [data, setData] = useState<PaymentHistory>({
     payments: [],
     total: 0,
@@ -67,7 +64,7 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
       setLoading(true);
       setError(null);
 
-      const result = await fetchPaymentHistory(filters);
+      const result = await fetchPaymentHistory(user.role, filters);
 
       // Проверяем, что запрос не был отменен
       if (!abortControllerRef.current.signal.aborted) {

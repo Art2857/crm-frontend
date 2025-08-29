@@ -30,7 +30,7 @@ export default function AdminDutiesPage() {
     }
 
     // Загрузка данных об обязанностях
-    dispatch(fetchAllDuties());
+    dispatch(fetchAllDuties({ role: user.role }));
   }, [isAuthenticated, router, user, dispatch]);
 
   if (!user || isLoading) {

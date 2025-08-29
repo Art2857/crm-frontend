@@ -15,6 +15,7 @@ import { useBreadcrumbs } from '../../../hooks/useBreadcrumbs';
 import Alert from '../../../components/ui/Alert';
 
 export default function CreateWorkPage() {
+  const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { isLoading, error } = useAppSelector((state) => state.works);
@@ -30,7 +31,7 @@ export default function CreateWorkPage() {
 
   // Загружаем список пользователей при монтировании компонента
   useEffect(() => {
-    dispatch(fetchAllUsers({}));
+    dispatch(fetchAllUsers({ role: user.role }));
   }, [dispatch]);
 
   // Обработчик изменения полей формы
@@ -87,7 +88,9 @@ export default function CreateWorkPage() {
 
     try {
       setSuccess('');
-      const resultAction = await dispatch(createWork(formData));
+      const resultAction = await dispatch(
+        createWork({ role: user.role, data: formData })
+      );
 
       if (createWork.fulfilled.match(resultAction)) {
         setSuccess('Работа успешно создана');

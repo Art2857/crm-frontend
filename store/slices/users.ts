@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { userService } from '../../services/user';
-import { User, UserWithHistory } from '../../types/user';
+import { Role, User, UserWithHistory } from '../../types/user';
 
 interface UsersState {
   users: User[];
@@ -23,9 +23,12 @@ interface GetAllUsersParams {
 // Асинхронные thunks
 export const fetchAllUsers = createAsyncThunk(
   'users/fetchAll',
-  async (getAllUsersParams: GetAllUsersParams, { rejectWithValue }) => {
+  async (
+    { role, ...getAllUsersParams }: { role: Role } & GetAllUsersParams,
+    { rejectWithValue }
+  ) => {
     try {
-      const users = await userService.getAllUsers(getAllUsersParams);
+      const users = await userService.getAllUsers(role, getAllUsersParams);
       return users;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -43,10 +46,9 @@ export const fetchAllUsers = createAsyncThunk(
 
 export const fetchUserById = createAsyncThunk(
   'users/fetchById',
-  async (id: string, { rejectWithValue }) => {
+  async ({ role, id }: { role: Role; id: string }, { rejectWithValue }) => {
     try {
-      const user = await userService.getById(id);
-      return user;
+      return await userService.getById(role, id);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
@@ -64,11 +66,11 @@ export const fetchUserById = createAsyncThunk(
 export const updateUserProfile = createAsyncThunk(
   'users/updateProfile',
   async (
-    { userId, data }: { userId: string; data: any },
+    { role, userId, data }: { role: Role; userId: string; data: any },
     { rejectWithValue }
   ) => {
     try {
-      const user = await userService.updateProfile(userId, data);
+      const user = await userService.updateProfile(role, userId, data);
       return user;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -86,11 +88,11 @@ export const updateUserProfile = createAsyncThunk(
 export const updateUserSensitiveData = createAsyncThunk(
   'users/updateSensitiveData',
   async (
-    { userId, data }: { userId: string; data: any },
+    { role, userId, data }: { role: Role; userId: string; data: any },
     { rejectWithValue }
   ) => {
     try {
-      const user = await userService.updateSensitiveData(userId, data);
+      const user = await userService.updateSensitiveData(role, userId, data);
       return user;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -188,9 +190,12 @@ export const createUser = createAsyncThunk(
 
 export const fetchUserHistory = createAsyncThunk(
   'users/fetchHistory',
-  async (userId: string, { rejectWithValue }) => {
+  async (
+    { role, userId }: { role: Role; userId: string },
+    { rejectWithValue }
+  ) => {
     try {
-      const userWithHistory = await userService.getUserHistory(userId);
+      const userWithHistory = await userService.getUserHistory(role, userId);
       return userWithHistory;
     } catch (error: any) {
       // Игнорируем отмененные запросы

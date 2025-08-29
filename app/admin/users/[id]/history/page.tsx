@@ -34,7 +34,7 @@ export default function UserHistoryPage({
   const refreshUserHistory = async () => {
     try {
       setRefreshing(true);
-      await dispatch(fetchUserHistory(userId));
+      await dispatch(fetchUserHistory({ role: user.role, userId }));
       console.log('История пользователя обновлена');
     } catch (error) {
       console.error('Ошибка при обновлении истории:', error);
@@ -66,7 +66,7 @@ export default function UserHistoryPage({
     }, 5000); // 5 секунд таймаут
 
     // Загрузка истории пользователя
-    dispatch(fetchUserHistory(userId))
+    dispatch(fetchUserHistory({ role: user.role, userId }))
       .then(() => {
         setHasLoaded(true);
       })
@@ -145,7 +145,7 @@ export default function UserHistoryPage({
                 onClick={() => {
                   setHasLoaded(false);
                   setLoadingTimeout(false);
-                  dispatch(fetchUserHistory(userId))
+                  dispatch(fetchUserHistory({ role: user.role, userId }))
                     .then(() => setHasLoaded(true))
                     .catch(() => setHasLoaded(true));
                 }}
@@ -384,7 +384,14 @@ export default function UserHistoryPage({
               <p>История изменений пользователя не найдена</p>
               {currentUser?.id && (
                 <button
-                  onClick={() => dispatch(fetchUserHistory(currentUser.id))}
+                  onClick={() =>
+                    dispatch(
+                      fetchUserHistory({
+                        role: user.role,
+                        userId: currentUser.id,
+                      })
+                    )
+                  }
                   className="mt-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 >
                   Обновить данные

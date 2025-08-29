@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAppDispatch } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 import { getCurrentUser } from '../store/slices/auth';
 
 /**
@@ -11,10 +11,11 @@ export function useAccountSwitcher() {
     string | null
   >(null);
   const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
 
   // Обновление данных пользователя
   const refreshUserData = () => {
-    dispatch(getCurrentUser());
+    dispatch(getCurrentUser({ role: user.role }));
   };
 
   // Слушаем событие переключения аккаунта

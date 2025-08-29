@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { dutyService } from '../../services/duty';
 import { Duty, Distribution, DistributionWithDetails } from '../../types/duty';
+import { Role } from '../../types/user';
 
 interface DutiesState {
   duties: Duty[];
@@ -25,9 +26,9 @@ const initialState: DutiesState = {
 // Асинхронные thunks для обязанностей
 export const fetchAllDuties = createAsyncThunk(
   'duties/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async ({ role }: { role: Role }, { rejectWithValue }) => {
     try {
-      const duties = await dutyService.getAll();
+      const duties = await dutyService.getAll({ role });
       return duties;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -44,9 +45,12 @@ export const fetchAllDuties = createAsyncThunk(
 
 export const fetchDutyById = createAsyncThunk(
   'duties/fetchById',
-  async (dutyId: string, { rejectWithValue }) => {
+  async (
+    { role, dutyId }: { role: Role; dutyId: string },
+    { rejectWithValue }
+  ) => {
     try {
-      const duty = await dutyService.getById(dutyId);
+      const duty = await dutyService.getById(role, dutyId);
       return duty;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -63,9 +67,9 @@ export const fetchDutyById = createAsyncThunk(
 
 export const createDuty = createAsyncThunk(
   'duties/create',
-  async (data: any, { rejectWithValue }) => {
+  async ({ role, data }: { role: Role; data: any }, { rejectWithValue }) => {
     try {
-      const duty = await dutyService.create(data);
+      const duty = await dutyService.create(role, data);
       return duty;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -82,10 +86,12 @@ export const createDuty = createAsyncThunk(
 
 export const updateDuty = createAsyncThunk(
   'duties/update',
-  async ({ id, data }: any, { rejectWithValue }) => {
+  async (
+    { role, id, data }: { role: Role; id: string; data: any },
+    { rejectWithValue }
+  ) => {
     try {
-      const duty = await dutyService.update(id, data);
-      return duty;
+      return await dutyService.update(role, id, data);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
@@ -104,10 +110,9 @@ export const updateDuty = createAsyncThunk(
 // Асинхронные thunks для распределений
 export const fetchAllDistributions = createAsyncThunk(
   'duties/fetchAllDistributions',
-  async (_, { rejectWithValue }) => {
+  async ({ role }: { role: Role }, { rejectWithValue }) => {
     try {
-      const distributions = await dutyService.getAllDistributions();
-      return distributions;
+      return await dutyService.getAllDistributions(role);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
@@ -123,10 +128,15 @@ export const fetchAllDistributions = createAsyncThunk(
 
 export const fetchWorkDistributions = createAsyncThunk(
   'duties/fetchWorkDistributions',
-  async (workHistoryId: string, { rejectWithValue }) => {
+  async (
+    { role, workHistoryId }: { role: Role; workHistoryId: string },
+    { rejectWithValue }
+  ) => {
     try {
-      const distribution =
-        await dutyService.getDistributionsByWorkHistoryId(workHistoryId);
+      const distribution = await dutyService.getDistributionsByWorkHistoryId(
+        role,
+        workHistoryId
+      );
       // Возвращаем массив с одним элементом или пустой массив
       return distribution ? [distribution] : [];
     } catch (error: any) {
@@ -146,10 +156,9 @@ export const fetchWorkDistributions = createAsyncThunk(
 
 export const fetchDistributionById = createAsyncThunk(
   'duties/fetchDistributionById',
-  async (id: string, { rejectWithValue }) => {
+  async ({ role, id }: { role: Role; id: string }, { rejectWithValue }) => {
     try {
-      const distribution = await dutyService.getDistributionById(id);
-      return distribution;
+      return await dutyService.getDistributionById(role, id);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
@@ -168,12 +177,19 @@ export const fetchDistributionById = createAsyncThunk(
 export const createDistribution = createAsyncThunk(
   'duties/createDistribution',
   async (
-    data: { workHistoryId: string; details: any[]; effectiveDate?: string },
+    {
+      role,
+      ...data
+    }: {
+      role: Role;
+      workHistoryId: string;
+      details: any[];
+      effectiveDate?: string;
+    },
     { rejectWithValue }
   ) => {
     try {
-      const distribution = await dutyService.createDistribution(data);
-      return distribution;
+      return await dutyService.createDistribution(role, data);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
@@ -233,18 +249,23 @@ export const updateDistribution = createAsyncThunk(
   'duties/updateDistribution',
   async (
     {
+      role,
       workHistoryId,
       details,
       effectiveDate,
-    }: { workHistoryId: string; details: any[]; effectiveDate?: string },
+    }: {
+      role: Role;
+      workHistoryId: string;
+      details: any[];
+      effectiveDate?: string;
+    },
     { rejectWithValue }
   ) => {
     try {
-      const distribution = await dutyService.updateDistribution(workHistoryId, {
+      return await dutyService.updateDistribution(role, workHistoryId, {
         details,
         effectiveDate,
       });
-      return distribution;
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
@@ -303,10 +324,12 @@ export const updateDistribution = createAsyncThunk(
 // Новый thunk для загрузки всех распределений по workId
 export const fetchDistributionsByWorkId = createAsyncThunk(
   'duties/fetchDistributionsByWorkId',
-  async (workId: string, { rejectWithValue }) => {
+  async (
+    { role, workId }: { role: Role; workId: string },
+    { rejectWithValue }
+  ) => {
     try {
-      const distributions = await dutyService.getDistributionsByWorkId(workId);
-      return distributions;
+      return await dutyService.getDistributionsByWorkId(role, workId);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {

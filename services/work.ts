@@ -8,13 +8,14 @@ import {
 import { privateApi } from './ApiClient';
 import { WORKS_ENDPOINTS, WORK_HISTORY_ENDPOINTS } from './endpoints';
 import { logger } from '../utils/logger';
+import { Role } from '../types/user';
 
 // Сервис для работы с работами
 export const workService = {
   // Получить все работы
-  getAll: async (): Promise<Work[]> => {
+  getAll: async (role: Role): Promise<Work[]> => {
     try {
-      const response = await privateApi.get<Work[]>(WORKS_ENDPOINTS.base);
+      const response = await privateApi.get<Work[]>(WORKS_ENDPOINTS.base(role));
       return response.data;
     } catch (error) {
       logger.error('Error fetching works:', error);
@@ -23,10 +24,10 @@ export const workService = {
   },
 
   // Получить работы по пользователю (где пользователь является ответственным)
-  getByUserId: async (userId: string): Promise<Work[]> => {
+  getByUserId: async (role: Role, userId: string): Promise<Work[]> => {
     try {
       const response = await privateApi.get<Work[]>(
-        WORKS_ENDPOINTS.responsible(userId)
+        WORKS_ENDPOINTS.responsible(role, userId)
       );
       return response.data;
     } catch (error) {
@@ -36,10 +37,10 @@ export const workService = {
   },
 
   // Получить одну работу с историей
-  getById: async (id: string): Promise<WorkWithHistory> => {
+  getById: async (role: Role, id: string): Promise<WorkWithHistory> => {
     try {
       const response = await privateApi.get<WorkWithHistory>(
-        WORKS_ENDPOINTS.byId(id)
+        WORKS_ENDPOINTS.byId(role, id)
       );
       return response.data;
     } catch (error) {
@@ -49,9 +50,12 @@ export const workService = {
   },
 
   // Создать новую работу
-  create: async (data: CreateWorkDto): Promise<Work> => {
+  create: async (role: Role, data: CreateWorkDto): Promise<Work> => {
     try {
-      const response = await privateApi.post<Work>(WORKS_ENDPOINTS.base, data);
+      const response = await privateApi.post<Work>(
+        WORKS_ENDPOINTS.base(role),
+        data
+      );
       return response.data;
     } catch (error) {
       logger.error('Error creating work:', error);
@@ -60,10 +64,10 @@ export const workService = {
   },
 
   // Архивировать работу
-  archive: async (id: string): Promise<Work> => {
+  archive: async (role: Role, id: string): Promise<Work> => {
     try {
       const response = await privateApi.post<Work>(
-        `${WORKS_ENDPOINTS.byId(id)}/archive`
+        `${WORKS_ENDPOINTS.byId(role, id)}/archive`
       );
       return response.data;
     } catch (error) {
@@ -73,10 +77,10 @@ export const workService = {
   },
 
   // Восстановить работу
-  restore: async (id: string): Promise<Work> => {
+  restore: async (role: Role, id: string): Promise<Work> => {
     try {
       const response = await privateApi.post<Work>(
-        `${WORKS_ENDPOINTS.byId(id)}/restore`
+        `${WORKS_ENDPOINTS.byId(role, id)}/restore`
       );
       return response.data;
     } catch (error) {
@@ -86,10 +90,10 @@ export const workService = {
   },
 
   // Список архивных работ
-  getArchived: async (): Promise<Work[]> => {
+  getArchived: async (role: Role): Promise<Work[]> => {
     try {
       const response = await privateApi.get<Work[]>(
-        `${WORKS_ENDPOINTS.base}/archived/list`
+        `${WORKS_ENDPOINTS.base(role)}/archived/list`
       );
       return response.data;
     } catch (error) {
@@ -101,10 +105,10 @@ export const workService = {
   // createExtended/updateExtended удалены: в бэкенде нет /works/extended
 
   // Получить историю работы (исправленный путь)
-  getHistory: async (id: string): Promise<WorkHistory[]> => {
+  getHistory: async (role: Role, id: string): Promise<WorkHistory[]> => {
     try {
       const response = await privateApi.get<WorkHistory[]>(
-        WORK_HISTORY_ENDPOINTS.work(id)
+        WORK_HISTORY_ENDPOINTS.work(role, id)
       );
       return response.data;
     } catch (error) {
@@ -114,10 +118,14 @@ export const workService = {
   },
 
   // Обновить работу
-  update: async (id: string, data: UpdateWorkDto): Promise<WorkHistory> => {
+  update: async (
+    role: Role,
+    id: string,
+    data: UpdateWorkDto
+  ): Promise<WorkHistory> => {
     try {
       const response = await privateApi.patch<WorkHistory>(
-        WORKS_ENDPOINTS.byId(id),
+        WORKS_ENDPOINTS.byId(role, id),
         data
       );
       return response.data;
@@ -128,10 +136,13 @@ export const workService = {
   },
 
   // Получение последней записи истории работы
-  getLatestWorkHistory: async (workId: string): Promise<WorkHistory> => {
+  getLatestWorkHistory: async (
+    role: Role,
+    workId: string
+  ): Promise<WorkHistory> => {
     try {
       const response = await privateApi.get<WorkHistory>(
-        WORK_HISTORY_ENDPOINTS.latest(workId)
+        WORK_HISTORY_ENDPOINTS.latest(role, workId)
       );
       return response.data;
     } catch (error) {
@@ -145,12 +156,13 @@ export const workService = {
 
   // Обновление записи истории работы
   updateWorkHistory: async (
+    role: Role,
     workHistoryId: string,
     data: { effectiveDate?: string }
   ): Promise<WorkHistory> => {
     try {
       const response = await privateApi.patch<WorkHistory>(
-        WORK_HISTORY_ENDPOINTS.byId(workHistoryId),
+        WORK_HISTORY_ENDPOINTS.byId(role, workHistoryId),
         data
       );
       return response.data;

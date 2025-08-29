@@ -93,7 +93,9 @@ export default function CreateDutyPage() {
       maxValue: maxValue ? maxValue : null,
     };
 
-    const resultAction = await dispatch(createDuty(dutyData));
+    const resultAction = await dispatch(
+      createDuty({ role: user.role, data: dutyData })
+    );
     if (createDuty.fulfilled.match(resultAction)) {
       router.push('/admin/duties');
     }

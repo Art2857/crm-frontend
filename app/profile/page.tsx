@@ -233,7 +233,7 @@ export default function ProfilePage() {
       }
 
       const resultAction = await dispatch(
-        updateUserProfile({ userId: user!.id, data })
+        updateUserProfile({ role: user.role, userId: user!.id, data })
       );
 
       if (updateUserProfile.fulfilled.match(resultAction)) {
@@ -255,7 +255,7 @@ export default function ProfilePage() {
         });
 
         setTimeout(() => {
-          dispatch(getCurrentUser());
+          dispatch(getCurrentUser({ role: user.role }));
         }, 300);
       }
     } catch (err) {

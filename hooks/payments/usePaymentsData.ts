@@ -3,6 +3,7 @@ import { analyticsService, MyDebt } from '../../services/analytics';
 import { logger } from '../../utils/logger';
 import { useNotification } from '../../contexts/NotificationContext';
 import { ResponsibleUser } from '../../types/payments';
+import { useAppSelector } from '../../store';
 
 interface LoadParams {
   endDate?: string;
@@ -12,6 +13,7 @@ interface LoadParams {
 
 export function usePaymentsData() {
   const notification = useNotification();
+  const { user } = useAppSelector((state) => state.auth);
 
   const [usersData, setUsersData] = useState<ResponsibleUser[]>([]);
   const [myDebts, setMyDebts] = useState<MyDebt[]>([]);
@@ -20,6 +22,7 @@ export function usePaymentsData() {
     const { endDate, targetWorkId, targetUserId } = data;
 
     const mappedUsers = await analyticsService.getPaymentsManagement(
+      user.role,
       endDate,
       targetWorkId ? [targetWorkId] : undefined,
       targetUserId
@@ -75,7 +78,7 @@ export function usePaymentsData() {
 
   const fetchMyDebtsData = useCallback(async () => {
     try {
-      const myDebtsData = await analyticsService.getMyDebts();
+      const myDebtsData = await analyticsService.getMyDebts(user.role);
       setMyDebts(myDebtsData.debts as unknown as MyDebt[]);
     } catch (error) {
       logger.error('Ошибка загрузки моих задолженностей:', error);

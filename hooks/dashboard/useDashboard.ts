@@ -17,7 +17,7 @@ export function useDashboard() {
       router.push('/login');
       return;
     }
-    dispatch(fetchDashboardData());
+    dispatch(fetchDashboardData({ role: user.role }));
   }, [isAuthenticated, router, dispatch]);
 
   const getFullName = (u: User | null): string => {

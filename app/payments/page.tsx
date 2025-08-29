@@ -137,6 +137,7 @@ export default function PaymentsPage() {
         setLoading(true);
         const endDate = getWorkPeriodDate(workId);
         const calc = await analyticsService.getPaymentsCalculation({
+          role: user.role,
           userId,
           workId,
           endDate,
@@ -197,7 +198,11 @@ export default function PaymentsPage() {
       try {
         const { userId, workId, calculationDate } = e.detail || {};
         if (!userId || !workId || !calculationDate) return;
-        await closePeriod({ workId, userId, closureDate: calculationDate });
+        await closePeriod(user.role, {
+          workId,
+          userId,
+          closureDate: calculationDate,
+        });
         await updateWorksData({
           endDate: calculationDate,
           targetWorkId: workId,
@@ -229,6 +234,7 @@ export default function PaymentsPage() {
         usersData.find((u) => u.userId === userId)?.works[0]?.workId || ''
       );
       const detailedCalc = await analyticsService.getPaymentsCalculationUser({
+        role: user.role,
         userId,
         endDate,
       });
@@ -259,7 +265,7 @@ export default function PaymentsPage() {
         paymentDate: endDate,
         description: `Мультивыплата по общему расчету (${w.workName})`,
       }));
-      await bulkCreateAndClose(items);
+      await bulkCreateAndClose(user.role, items);
       await refreshAfterUserPayment(userId);
       setCalculationModalOpen(false);
       setSelectedCalculation(null);
@@ -490,7 +496,7 @@ export default function PaymentsPage() {
   const handlePaymentSubmit = async (data: PaymentModalData) => {
     try {
       // Используем новый эндпоинт create-payment-and-close
-      const result = await createPaymentAndClose({
+      const result = await createPaymentAndClose(user.role, {
         workId: selectedPayment?.workId || '',
         userId: selectedPayment?.userId || '',
         amount: Math.round(data.amount), // Конвертируем в копейки
@@ -545,7 +551,7 @@ export default function PaymentsPage() {
 
   const handleCustomPaymentSubmit = async (data: CustomPaymentFormData) => {
     try {
-      const created = await makePayment({
+      const created = await makePayment(user.role, {
         workId: data.workId,
         userId: data.userId,
         amount: Math.round(data.amount),

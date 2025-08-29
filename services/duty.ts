@@ -14,12 +14,15 @@ import {
   DISTRIBUTION_DETAILS_ENDPOINTS,
 } from './endpoints';
 import { logger } from '../utils/logger';
+import { Role } from '../types/user';
 
 export const dutyService = {
   // Получение всех обязанностей
-  getAll: async (): Promise<Duty[]> => {
+  getAll: async ({ role }: { role: Role }): Promise<Duty[]> => {
     try {
-      const response = await privateApi.get<Duty[]>(DUTIES_ENDPOINTS.base);
+      const response = await privateApi.get<Duty[]>(
+        DUTIES_ENDPOINTS.base(role)
+      );
       return response.data;
     } catch (error) {
       logger.error('Error fetching duties:', error);
@@ -28,9 +31,11 @@ export const dutyService = {
   },
 
   // Получение обязанности по ID
-  getById: async (id: string): Promise<Duty> => {
+  getById: async (role: Role, id: string): Promise<Duty> => {
     try {
-      const response = await privateApi.get<Duty>(DUTIES_ENDPOINTS.byId(id));
+      const response = await privateApi.get<Duty>(
+        DUTIES_ENDPOINTS.byId(role, id)
+      );
       return response.data;
     } catch (error) {
       logger.error(`Error fetching duty with ID ${id}:`, error);
@@ -39,9 +44,12 @@ export const dutyService = {
   },
 
   // Создание новой обязанности
-  create: async (data: CreateDutyDto): Promise<Duty> => {
+  create: async (role: Role, data: CreateDutyDto): Promise<Duty> => {
     try {
-      const response = await privateApi.post<Duty>(DUTIES_ENDPOINTS.base, data);
+      const response = await privateApi.post<Duty>(
+        DUTIES_ENDPOINTS.base(role),
+        data
+      );
       return response.data;
     } catch (error) {
       logger.error('Error creating duty:', error);
@@ -50,10 +58,14 @@ export const dutyService = {
   },
 
   // Обновление обязанности
-  update: async (id: string, data: UpdateDutyDto): Promise<Duty> => {
+  update: async (
+    role: Role,
+    id: string,
+    data: UpdateDutyDto
+  ): Promise<Duty> => {
     try {
       const response = await privateApi.patch<Duty>(
-        DUTIES_ENDPOINTS.byId(id),
+        DUTIES_ENDPOINTS.byId(role, id),
         data
       );
       return response.data;
@@ -64,10 +76,10 @@ export const dutyService = {
   },
 
   // Получение всех распределений
-  getAllDistributions: async (): Promise<Distribution[]> => {
+  getAllDistributions: async (role: Role): Promise<Distribution[]> => {
     try {
       const response = await privateApi.get<Distribution[]>(
-        DISTRIBUTIONS_ENDPOINTS.base
+        DISTRIBUTIONS_ENDPOINTS.base(role)
       );
       return response.data;
     } catch (error) {
@@ -77,10 +89,13 @@ export const dutyService = {
   },
 
   // Получение распределения по ID с деталями
-  getDistributionById: async (id: string): Promise<DistributionWithDetails> => {
+  getDistributionById: async (
+    role: Role,
+    id: string
+  ): Promise<DistributionWithDetails> => {
     try {
       const response = await privateApi.get<DistributionWithDetails>(
-        DISTRIBUTIONS_ENDPOINTS.byId(id)
+        DISTRIBUTIONS_ENDPOINTS.byId(role, id)
       );
       return response.data;
     } catch (error) {
@@ -90,16 +105,19 @@ export const dutyService = {
   },
 
   // Создание нового распределения
-  async createDistribution(data: {
-    workHistoryId: string;
-    effectiveDate?: string;
-    details: {
-      dutyId: string;
-      userId: string;
-      price?: number | null;
-      percentage?: number | null;
-    }[];
-  }): Promise<DistributionWithDetails> {
+  async createDistribution(
+    role: Role,
+    data: {
+      workHistoryId: string;
+      effectiveDate?: string;
+      details: {
+        dutyId: string;
+        userId: string;
+        price?: number | null;
+        percentage?: number | null;
+      }[];
+    }
+  ): Promise<DistributionWithDetails> {
     try {
       logger.debug('Отправляем запрос на создание распределения:', data);
 
@@ -118,7 +136,7 @@ export const dutyService = {
       logger.debug('Преобразованные данные для API:', requestData);
 
       const response = await privateApi.post<DistributionWithDetails>(
-        DISTRIBUTIONS_ENDPOINTS.base,
+        DISTRIBUTIONS_ENDPOINTS.base(role),
         requestData
       );
 
@@ -133,11 +151,12 @@ export const dutyService = {
 
   // Получение распределения по workHistoryId
   getDistributionsByWorkHistoryId: async (
+    role: Role,
     workHistoryId: string
   ): Promise<DistributionWithDetails | null> => {
     try {
       const response = await privateApi.get<DistributionWithDetails>(
-        DISTRIBUTIONS_ENDPOINTS.byWorkHistoryId(workHistoryId)
+        DISTRIBUTIONS_ENDPOINTS.byWorkHistoryId(role, workHistoryId)
       );
       return response.data;
     } catch (error) {
@@ -155,11 +174,12 @@ export const dutyService = {
 
   // Получение всех распределений по workId (для работы)
   getDistributionsByWorkId: async (
+    role: Role,
     workId: string
   ): Promise<DistributionWithDetails[]> => {
     try {
       const response = await privateApi.get<DistributionWithDetails[]>(
-        DISTRIBUTIONS_ENDPOINTS.byWorkId(workId)
+        DISTRIBUTIONS_ENDPOINTS.byWorkId(role, workId)
       );
       return response.data;
     } catch (error) {
@@ -174,6 +194,7 @@ export const dutyService = {
 
   // Обновление распределения
   async updateDistribution(
+    role: Role,
     workHistoryId: string,
     data: {
       details: {
@@ -202,7 +223,7 @@ export const dutyService = {
       logger.debug('Преобразованные данные для API:', requestData);
 
       const response = await privateApi.patch<DistributionWithDetails>(
-        DISTRIBUTIONS_ENDPOINTS.byId(workHistoryId),
+        DISTRIBUTIONS_ENDPOINTS.byId(role, workHistoryId),
         requestData
       );
 
@@ -217,11 +238,12 @@ export const dutyService = {
 
   // Получение детали распределения по ID
   getDistributionDetailById: async (
+    role: Role,
     id: string
   ): Promise<DistributionDetail> => {
     try {
       const response = await privateApi.get<DistributionDetail>(
-        DISTRIBUTION_DETAILS_ENDPOINTS.byId(id)
+        DISTRIBUTION_DETAILS_ENDPOINTS.byId(role, id)
       );
       return response.data;
     } catch (error) {
@@ -231,16 +253,19 @@ export const dutyService = {
   },
 
   // Создание детали распределения
-  createDistributionDetail: async (data: {
-    workHistoryId: string;
-    dutyId: string;
-    userId: string;
-    price?: string | null;
-    percentage?: string | null;
-  }): Promise<DistributionDetail> => {
+  createDistributionDetail: async (
+    role: Role,
+    data: {
+      workHistoryId: string;
+      dutyId: string;
+      userId: string;
+      price?: string | null;
+      percentage?: string | null;
+    }
+  ): Promise<DistributionDetail> => {
     try {
       const response = await privateApi.post<DistributionDetail>(
-        DISTRIBUTION_DETAILS_ENDPOINTS.base,
+        DISTRIBUTION_DETAILS_ENDPOINTS.base(role),
         data
       );
       return response.data;
@@ -252,6 +277,7 @@ export const dutyService = {
 
   // Обновление детали распределения
   updateDistributionDetail: async (
+    role: Role,
     id: string,
     data: {
       price?: string | null;
@@ -260,7 +286,7 @@ export const dutyService = {
   ): Promise<DistributionDetail> => {
     try {
       const response = await privateApi.patch<DistributionDetail>(
-        DISTRIBUTION_DETAILS_ENDPOINTS.byId(id),
+        DISTRIBUTION_DETAILS_ENDPOINTS.byId(role, id),
         data
       );
       return response.data;
