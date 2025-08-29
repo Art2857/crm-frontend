@@ -283,9 +283,11 @@ export const analyticsService = {
     workId: string;
     endDate: string;
   }): Promise<DetailedCalculation> {
+    // Убираем role из query параметров - роль должна браться из JWT!
+    const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
-      ANALYTICS_ENDPOINTS.paymentsCalculation(params.role),
-      { params }
+      ANALYTICS_ENDPOINTS.paymentsCalculation(role),
+      { params: queryParams }
     );
     return data;
   },
@@ -296,9 +298,11 @@ export const analyticsService = {
     userId: string;
     endDate: string;
   }): Promise<DetailedCalculation> {
+    // Убираем role из query параметров - роль должна браться из JWT!
+    const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
-      ANALYTICS_ENDPOINTS.paymentsCalculationUser(params.role),
-      { params }
+      ANALYTICS_ENDPOINTS.paymentsCalculationUser(role),
+      { params: queryParams }
     );
     return data;
   },
