@@ -1,5 +1,7 @@
 // Централизованные пути API
 
+import { Role } from '../types/user';
+
 export const AUTH_ENDPOINTS = {
   login: '/auth/login',
   register: '/auth/register',
@@ -10,68 +12,82 @@ export const AUTH_ENDPOINTS = {
 } as const;
 
 export const USERS_ENDPOINTS = {
-  base: '/users',
-  byId: (id: string) => `/users/${id}`,
-  me: '/users/me',
-  meHistory: '/users/me/history',
-  history: (id: string) => `/users/${id}/history`,
-  profile: (id: string) => `/users/${id}/profile`,
-  sensitive: (id: string) => `/users/${id}/sensitive`,
+  base: (role: Role) => `${role.toLowerCase()}/users`,
+  byId: (role: Role, id: string) => `${role.toLowerCase()}/users/${id}`,
+  me: (role: Role) => `${role.toLowerCase()}/users/me`,
+  meHistory: (role: Role) => `${role.toLowerCase()}/users/me/history`,
+  history: (role: Role, id: string) =>
+    `${role.toLowerCase()}/users/${id}/history`,
+  profile: (role: Role, id: string) =>
+    `${role.toLowerCase()}/users/${id}/profile`,
+  sensitive: (role: Role, id: string) =>
+    `${role.toLowerCase()}/users/${id}/sensitive`,
 } as const;
 
 export const WORKS_ENDPOINTS = {
-  base: '/works',
-  byId: (id: string) => `/works/${id}`,
-  responsible: (userId: string) => `/works/responsible/${userId}`,
-  byDuties: (userId: string) => `/works/duties/${userId}`,
-  executers: (workId: string) => `/works/${workId}/executers`,
+  base: (role: Role) => `${role.toLowerCase()}/works`,
+  byId: (role: Role, id: string) => `${role.toLowerCase()}/works/${id}`,
+  responsible: (role: Role, userId: string) =>
+    `${role.toLowerCase()}/works/responsible/${userId}`,
+  byDuties: (role: Role, userId: string) =>
+    `${role.toLowerCase()}/works/duties/${userId}`,
+  executers: (role: Role, workId: string) =>
+    `${role.toLowerCase()}/works/${workId}/executers`,
 } as const;
 
 export const WORK_HISTORY_ENDPOINTS = {
-  base: '/work-history',
-  work: (workId: string) => `/work-history/work/${workId}`,
-  latest: (workId: string) => `/work-history/work/${workId}/latest`,
-  byId: (id: string) => `/work-history/${id}`,
+  base: (role: Role) => `${role.toLowerCase()}/work-history`,
+  work: (role: Role, workId: string) =>
+    `${role.toLowerCase()}/work-history/work/${workId}`,
+  latest: (role: Role, workId: string) =>
+    `${role.toLowerCase()}/work-history/work/${workId}/latest`,
+  byId: (role: Role, id: string) => `${role.toLowerCase()}/work-history/${id}`,
 } as const;
 
 export const DUTIES_ENDPOINTS = {
-  base: '/duties',
-  byId: (id: string) => `/duties/${id}`,
+  base: (role: Role) => `${role.toLowerCase()}/duties`,
+  byId: (role: Role, id: string) => `${role.toLowerCase()}/duties/${id}`,
 } as const;
 
 export const DISTRIBUTIONS_ENDPOINTS = {
-  base: '/distributions',
-  byId: (id: string) => `/distributions/${id}`,
-  byWorkHistoryId: (workHistoryId: string) =>
-    `/distributions/work-history/${workHistoryId}`,
-  byWorkId: (workId: string) => `/distributions/work/${workId}`,
+  base: (role: Role) => `${role.toLowerCase()}/distributions`,
+  byId: (role: Role, id: string) => `${role.toLowerCase()}/distributions/${id}`,
+  byWorkHistoryId: (role: Role, workHistoryId: string) =>
+    `${role.toLowerCase()}/distributions/work-history/${workHistoryId}`,
+  byWorkId: (role: Role, workId: string) =>
+    `${role.toLowerCase()}/distributions/work/${workId}`,
 } as const;
 
 export const DISTRIBUTION_DETAILS_ENDPOINTS = {
-  base: '/distribution-details',
-  byId: (id: string) => `/distribution-details/${id}`,
+  base: (role: Role) => `${role.toLowerCase()}/distribution-details`,
+  byId: (role: Role, id: string) =>
+    `${role.toLowerCase()}/distribution-details/${id}`,
 } as const;
 
 export const PAYMENTS_ENDPOINTS = {
-  base: '/payments',
-  byId: (id: string) => `/payments/${id}`,
-  history: '/payments/history',
-  createAndClose: '/payments/create-payment-and-close',
-  bulkCreateAndClose: '/payments/bulk-create-and-close',
+  base: (role: Role) => `${role.toLowerCase()}/payments`,
+  byId: (role: Role, id: string) => `${role.toLowerCase()}/payments/${id}`,
+  history: (role: Role) => `${role.toLowerCase()}/payments/history`,
+  createAndClose: (role: Role) =>
+    `${role.toLowerCase()}/payments/create-payment-and-close`,
+  bulkCreateAndClose: (role: Role) =>
+    `${role.toLowerCase()}/payments/bulk-create-and-close`,
 } as const;
 
 export const ANALYTICS_ENDPOINTS = {
-  base: '/analytics',
-  userWorks: '/analytics/user/works',
-  worksClosurePeriodsAnalysis: '/analytics/user/works-closure-periods-analysis',
-  myDebts: '/analytics/user/my-debts',
-  paymentsManagement: '/analytics/payments/management',
-  paymentsCalculation: '/analytics/payments/calculation',
-  paymentsCalculationUser: '/analytics/payments/calculation-user',
+  base: (role: Role) => `${role.toLowerCase()}/analytics`,
+  userWorks: (role: Role) => `${role.toLowerCase()}/analytics/user/works`,
+  myDebts: (role: Role) => `${role.toLowerCase()}/analytics/user/my-debts`,
+  paymentsManagement: (role: Role) =>
+    `${role.toLowerCase()}/analytics/payments/management`,
+  paymentsCalculation: (role: Role) =>
+    `${role.toLowerCase()}/analytics/payments/calculation`,
+  paymentsCalculationUser: (role: Role) =>
+    `${role.toLowerCase()}/analytics/payments/calculation-user`,
 } as const;
 
 export const DASHBOARD_ENDPOINTS = {
-  base: '/dashboard',
+  base: (role: Role) => `${role.toLowerCase()}/dashboard`,
 } as const;
 
 export const HEALTH_ENDPOINTS = {

@@ -4,6 +4,7 @@ import {
   User,
   UserWithHistory,
   UserHistory,
+  Role,
 } from '../types/user';
 import { privateApi, authApi, ApiClient } from './ApiClient';
 import { USERS_ENDPOINTS, AUTH_ENDPOINTS } from './endpoints';
@@ -30,12 +31,18 @@ interface GetAllUsersParams {
 
 export const userService = {
   // Получение списка всех пользователей (только для админа)
-  getAll: async (getAllUsersParams: GetAllUsersParams): Promise<User[]> => {
+  getAll: async (
+    role: Role,
+    getAllUsersParams: GetAllUsersParams
+  ): Promise<User[]> => {
     try {
-      const response = await privateApi.get<User[]>(USERS_ENDPOINTS.base, {
-        headers: ApiClient.getNoCacheHeaders(),
-        params: getAllUsersParams,
-      });
+      const response = await privateApi.get<User[]>(
+        USERS_ENDPOINTS.base(role),
+        {
+          headers: ApiClient.getNoCacheHeaders(),
+          params: getAllUsersParams,
+        }
+      );
       return response.data;
     } catch (error) {
       logger.error('Error fetching users:', error);
@@ -45,19 +52,20 @@ export const userService = {
 
   // Алиас для getAll для совместимости с кодом, который использует getAllUsers
   getAllUsers: async (
+    role: Role,
     getAllUsersParams: GetAllUsersParams
   ): Promise<User[]> => {
-    return userService.getAll(getAllUsersParams);
+    return userService.getAll(role, getAllUsersParams);
   },
 
   // Получение одного пользователя по ID
-  getById: async (id: string): Promise<UserWithHistory> => {
+  getById: async (role: Role, id: string): Promise<UserWithHistory> => {
     try {
       console.log(`Запрос пользователя с ID: ${id}`);
 
       // Делаем запрос к API без параметров в URL, которые могут вызывать проблемы с CORS
       const response = await privateApi.get<UserWithHistory>(
-        USERS_ENDPOINTS.byId(id),
+        USERS_ENDPOINTS.byId(role, id),
         {
           headers: ApiClient.getNoCacheHeaders(),
         }
@@ -72,6 +80,7 @@ export const userService = {
 
   // Обновление профиля пользователя (неконфиденциальная информация)
   updateProfile: async (
+    role: Role,
     id: string,
     data: Partial<UpdateProfileDto>
   ): Promise<User> => {
@@ -105,7 +114,7 @@ export const userService = {
 
       // Отправляем запрос на обновление профиля
       const response = await privateApi.patch<User>(
-        USERS_ENDPOINTS.profile(id),
+        USERS_ENDPOINTS.profile(role, id),
         processedData,
         {
           headers: ApiClient.getNoCacheHeaders(),
@@ -121,12 +130,13 @@ export const userService = {
 
   // Обновление конфиденциальной информации (только для админа)
   updateSensitiveData: async (
+    role: Role,
     id: string,
     data: UpdateSensitiveDataDto
   ): Promise<User> => {
     try {
       const response = await privateApi.patch<User>(
-        USERS_ENDPOINTS.sensitive(id),
+        USERS_ENDPOINTS.sensitive(role, id),
         data,
         {
           headers: ApiClient.getNoCacheHeaders(),
@@ -140,17 +150,20 @@ export const userService = {
   },
 
   // Получение истории пользователя
-  getUserHistory: async (userId: string): Promise<UserWithHistory> => {
+  getUserHistory: async (
+    role: Role,
+    userId: string
+  ): Promise<UserWithHistory> => {
     try {
       // Получаем данные пользователя
-      const userData = await userService.getById(userId);
+      const userData = await userService.getById(role, userId);
 
       try {
         logger.debug(`Запрос истории пользователя с ID: ${userId}`);
 
         // Получаем историю пользователя без кеш-параметров в URL
         const historyResponse = await privateApi.get<UserHistory[]>(
-          USERS_ENDPOINTS.history(userId),
+          USERS_ENDPOINTS.history(role, userId),
           {
             headers: ApiClient.getNoCacheHeaders(),
           }

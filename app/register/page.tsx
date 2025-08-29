@@ -29,7 +29,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAddMode = searchParams.get('mode') === 'add';
-  const { isLoading, error, isAuthenticated } = useAppSelector(
+  const { isLoading, error, isAuthenticated, user } = useAppSelector(
     (state) => state.auth
   );
   const [serverError, setServerError] = useState('');
@@ -101,7 +101,7 @@ export default function RegisterPage() {
           );
 
           // Загружаем полные данные пользователя
-          await dispatch(getCurrentUser());
+          await dispatch(getCurrentUser({ role: user.role }));
 
           // После успешной регистрации перенаправляем на страницу аккаунтов
           router.push('/accounts');
@@ -116,7 +116,7 @@ export default function RegisterPage() {
 
         if (registerUser.fulfilled.match(resultAction)) {
           // Второй шаг - получить полные данные пользователя
-          await dispatch(getCurrentUser());
+          await dispatch(getCurrentUser({ role: user.role }));
           router.push('/profile');
         } else if (
           registerUser.rejected.match(resultAction) &&

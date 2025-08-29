@@ -7,13 +7,19 @@ import {
 } from '../store/slices/duties';
 import { DistributionWithDetails } from '../types/duty';
 import { workService } from '../services/work';
+import { Role } from '../types/user';
 
 interface UseWorkDutiesProps {
   workId: string;
   workSalary?: string; // Обновляем тип на string
+  role: Role; // Добавляем параметр role
 }
 
-export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
+export const useWorkDuties = ({
+  workId,
+  workSalary,
+  role,
+}: UseWorkDutiesProps) => {
   const dispatch = useAppDispatch();
   const {
     workDistributions,
@@ -61,7 +67,7 @@ export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
       // Выполняем запрос
       try {
         const result = await dispatch(
-          fetchDistributionsByWorkId(workId)
+          fetchDistributionsByWorkId({ role, workId })
         ).unwrap();
         console.log(
           `✅ [${loadId}] Загружены распределения для работы ID=${workId}:`,
@@ -83,7 +89,7 @@ export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
       setIsLoading(false);
       isLoadingRef.current = false;
     }
-  }, [dispatch, workId]);
+  }, [dispatch, workId, role]);
 
   // Выполняем начальную загрузку данных при монтировании или смене workId
   useEffect(() => {
@@ -215,8 +221,10 @@ export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
         } else if (!historyId) {
           try {
             // Получаем последнюю запись истории работы
-            const latestHistory =
-              await workService.getLatestWorkHistory(workId);
+            const latestHistory = await workService.getLatestWorkHistory(
+              role,
+              workId
+            );
             historyId = latestHistory.id;
             console.log(
               '✅ Получена последняя запись истории работы:',
@@ -238,6 +246,7 @@ export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
         console.log('🔄 Создаем новое распределение для ID:', historyId);
         result = await dispatch(
           createDistribution({
+            role,
             workHistoryId: historyId,
             details: validDuties, // допускается [] для обнуления
             effectiveDate,
@@ -246,7 +255,7 @@ export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
         console.log('✅ Распределение успешно создано:', result);
 
         // Обновляем список распределений для текущей работы
-        await dispatch(fetchDistributionsByWorkId(workId)).unwrap();
+        await dispatch(fetchDistributionsByWorkId({ role, workId })).unwrap();
 
         setIsEditingDuties(false);
         setSuccessMessage('Распределение обязанностей успешно сохранено');
@@ -295,7 +304,7 @@ export const useWorkDuties = ({ workId, workSalary }: UseWorkDutiesProps) => {
         setIsLoading(false);
       }
     },
-    [dispatch, workId, getCurrentDistribution]
+    [dispatch, workId, role, getCurrentDistribution]
   );
 
   // Очистка сообщений

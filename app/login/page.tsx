@@ -22,7 +22,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAddMode = searchParams.get('mode') === 'add';
-  const { isLoading, error, isAuthenticated } = useAppSelector(
+  const { isLoading, error, isAuthenticated, user } = useAppSelector(
     (state) => state.auth
   );
   const [serverError, setServerError] = useState('');
@@ -46,6 +46,9 @@ export default function LoginPage() {
   useEffect(() => {
     // Если пользователь уже авторизован и не в режиме добавления аккаунта,
     // перенаправляем на дашборд
+    console.log('isAuthenticated: ', isAuthenticated);
+    console.log('!showBackButton: ', !showBackButton);
+    console.log('!isAddMode: ', !isAddMode);
     if (isAuthenticated && !showBackButton && !isAddMode) {
       router.push('/dashboard');
     } else {
@@ -89,7 +92,7 @@ export default function LoginPage() {
           );
 
           // Загружаем полные данные пользователя
-          await dispatch(getCurrentUser());
+          await dispatch(getCurrentUser({ role: user.role }));
 
           // После успешного входа перенаправляем на страницу аккаунтов
           router.push('/accounts');
@@ -104,7 +107,7 @@ export default function LoginPage() {
 
         if (login.fulfilled.match(resultAction)) {
           // Второй шаг - получить полные данные пользователя
-          await dispatch(getCurrentUser());
+          await dispatch(getCurrentUser({ role: user.role }));
           router.push('/dashboard');
         } else if (login.rejected.match(resultAction) && resultAction.payload) {
           setServerError(resultAction.payload as string);

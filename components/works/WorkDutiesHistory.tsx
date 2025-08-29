@@ -7,6 +7,7 @@ import { formatDateForDisplay } from '../../utils/date';
 import { formatCurrency, formatPayment } from '../../utils/currency';
 import { WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
+import { useAppSelector } from '../../store';
 
 interface WorkDutiesHistoryProps {
   distributions: DistributionWithDetails[] | null;
@@ -52,6 +53,8 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   onUpdate,
   canEdit = false,
 }) => {
+  const { user } = useAppSelector((state) => state.auth);
+
   // Создаем карту пользователей для быстрого поиска по id
   const usersMap = useMemo(() => {
     const map: Record<string, User> = {};
@@ -323,9 +326,13 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
     setIsUpdating(true);
     try {
-      await workService.updateWorkHistory(distribution.workHistory.id, {
-        effectiveDate: tempDate,
-      });
+      await workService.updateWorkHistory(
+        user.role,
+        distribution.workHistory.id,
+        {
+          effectiveDate: tempDate,
+        }
+      );
 
       setEditingEffectiveDate(null);
       setTempDate('');
@@ -346,7 +353,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
     setIsUpdating(true);
     try {
-      await workService.updateWorkHistory(workHistoryItem.id, {
+      await workService.updateWorkHistory(user.role, workHistoryItem.id, {
         effectiveDate: tempDate,
       });
 

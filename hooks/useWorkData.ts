@@ -5,6 +5,7 @@ import { updateWork, fetchWorkById } from '../store/slices/works';
 import { UpdateWorkDto } from '../types/work';
 import { useNotification } from '../contexts/NotificationContext';
 import { useErrorHandler } from './useErrorHandler';
+import { Role } from '../types/user';
 
 interface UseWorkDataParams {
   id: string;
@@ -15,6 +16,7 @@ interface UseWorkDataParams {
     releaseDate?: string;
   };
   isAuthenticated: boolean;
+  role: Role; // Добавляем параметр role
 }
 
 /**
@@ -57,6 +59,7 @@ export const useWorkData = ({
     releaseDate: '',
   },
   isAuthenticated,
+  role,
 }: UseWorkDataParams) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -142,7 +145,9 @@ export const useWorkData = ({
       if (!id) return;
       console.log('🔄 Перезагрузка данных работы ID:', id);
       setIsLoading(true);
-      const updatedWorkData = await dispatch(fetchWorkById(id)).unwrap();
+      const updatedWorkData = await dispatch(
+        fetchWorkById({ role, workId: id })
+      ).unwrap();
       console.log('✅ Данные работы успешно обновлены:', updatedWorkData);
       setIsLoading(false);
       return updatedWorkData;
@@ -151,7 +156,7 @@ export const useWorkData = ({
       setIsLoading(false);
       showError(handleError(error).message);
     }
-  }, [id, dispatch, showError, handleError]);
+  }, [id, role, dispatch, showError, handleError]);
 
   // Обработчик отправки формы
   const handleSubmit = useCallback(
@@ -168,7 +173,7 @@ export const useWorkData = ({
         console.log('📝 Отправка данных работы:', dataToSubmit);
 
         const updatedWork = await dispatch(
-          updateWork({ id, data: dataToSubmit })
+          updateWork({ role, id, data: dataToSubmit })
         ).unwrap();
         console.log('✅ Работа успешно обновлена:', updatedWork);
 
@@ -185,7 +190,7 @@ export const useWorkData = ({
         setIsLoading(false);
       }
     },
-    [formData, id, dispatch, showSuccess, showError, handleError, reload]
+    [formData, id, role, dispatch, showSuccess, showError, handleError, reload]
   );
 
   return {

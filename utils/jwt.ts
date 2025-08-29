@@ -2,6 +2,8 @@
  * Утилиты для работы с JWT токенами
  */
 
+import { Role } from '../types/user';
+
 export function decodeJWT(token: string): any {
   try {
     const parts = token.split('.');
@@ -47,4 +49,13 @@ export function isJwtExpired(token: string, skewSeconds: number = 30): boolean {
   if (!exp) return false;
   const nowSeconds = Math.floor(Date.now() / 1000);
   return nowSeconds >= exp - skewSeconds;
+}
+
+export function getRoleFromToken(token: string): Role | null {
+  const payload = decodeJWT(token);
+  if (payload && payload.role) {
+    return payload.role as Role;
+  }
+  // Если роль не найдена в токене, возвращаем роль по умолчанию
+  return Role.WORKER;
 }

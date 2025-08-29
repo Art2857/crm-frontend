@@ -11,6 +11,7 @@ import PaymentHistoryItem from './PaymentHistoryItem';
 import { PaymentHistoryDto } from '../../types/payment';
 import { deletePayment } from '../../services/payment';
 import { useState } from 'react';
+import { useAppSelector } from '../../store';
 
 interface PaymentHistoryTabProps {
   currentUserId?: string;
@@ -19,6 +20,7 @@ interface PaymentHistoryTabProps {
 export default function PaymentHistoryTab({
   currentUserId,
 }: PaymentHistoryTabProps) {
+  const { user } = useAppSelector((state) => state.auth);
   const {
     payments,
     total,
@@ -60,7 +62,7 @@ export default function PaymentHistoryTab({
     if (confirm('Вы уверены, что хотите удалить эту выплату?')) {
       try {
         setDeletingPaymentId(paymentId);
-        await deletePayment(paymentId);
+        await deletePayment(user.role, paymentId);
         await refetch(); // Перезагружаем данные после удаления
       } catch (error) {
         console.error('Error deleting payment:', error);

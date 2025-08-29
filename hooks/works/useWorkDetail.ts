@@ -35,14 +35,18 @@ export function useWorkDetail(id: string) {
 
   const loadAllData = useCallback(async () => {
     try {
-      const work = await dispatch(fetchWorkById(id)).unwrap();
+      const work = await dispatch(
+        fetchWorkById({ role: user.role, workId: id })
+      ).unwrap();
       if (user?.role === 'ADMIN') {
         await Promise.all([
-          dispatch(fetchAllUsers({ archivingStatus: 'actual' })).unwrap(),
-          dispatch(fetchAllDuties()).unwrap(),
+          dispatch(
+            fetchAllUsers({ role: user.role, archivingStatus: 'actual' })
+          ).unwrap(),
+          dispatch(fetchAllDuties({ role: user.role })).unwrap(),
         ]);
       } else {
-        await dispatch(fetchAllDuties()).unwrap();
+        await dispatch(fetchAllDuties({ role: user.role })).unwrap();
       }
       return work;
     } catch (error) {
@@ -101,28 +105,69 @@ export function useWorkDetail(id: string) {
           ]
         : []),
     ],
-    [id, workData]
+    [workData, id]
   );
+
+  const workManagementHook = useWorkData({
+    id,
+    initialData: initialWorkData,
+    isAuthenticated,
+    role: user?.role as any, // Добавляем role parameter
+  });
+
+  const dutiesManagementHook = useWorkDuties({
+    workId: id,
+    workSalary: workData?.salary.toString(),
+    role: user?.role as any, // Добавляем role parameter
+  });
 
   useBreadcrumbs(breadcrumbs);
 
-  const { isEditing, formData, setIsEditing, handleChange, handleSubmit } =
-    useWorkData({
-      id,
-      initialData: initialWorkData,
-      isAuthenticated,
-    });
+  const handleArchiveWork = useCallback(async () => {
+    try {
+      const confirmArchive = window.confirm(
+        'Вы уверены, что хотите архивировать эту работу?'
+      );
+      if (!confirmArchive) return;
 
-  const {
-    distributions,
-    isEditingDuties,
-    successMessage: dutiesSuccessMessage,
-    errorMessage: dutiesErrorMessage,
-    setIsEditingDuties,
-    createDistribution,
-    clearMessages: clearDutiesMessages,
-    forceReload: forceReloadDuties,
-  } = useWorkDuties({ workId: id, workSalary: workData?.salary });
+      await workService.archive(user.role, id);
+      notification.showSuccess('Работа успешно архивирована');
+      router.push('/works'); // Перенаправляем на список работ
+    } catch (error) {
+      console.error('Error archiving work:', error);
+      notification.showError('Не удалось архивировать работу');
+    }
+  }, [id, notification, router]);
+
+  const handleRestoreWork = useCallback(async () => {
+    try {
+      const confirmRestore = window.confirm(
+        'Вы уверены, что хотите восстановить эту работу?'
+      );
+      if (!confirmRestore) return;
+
+      await workService.restore(user.role, id);
+      notification.showSuccess('Работа успешно восстановлена');
+      // Обновляем данные работы
+      await reloadWorkData();
+    } catch (error) {
+      console.error('Error restoring work:', error);
+      notification.showError('Не удалось восстановить работу');
+    }
+  }, [id, notification, reloadWorkData]);
+
+  const loadWorkHistory = useCallback(async () => {
+    try {
+      setIsLoadingHistory(true);
+      const history = await workService.getHistory(user.role, id);
+      setWorkHistory(history);
+    } catch (error) {
+      console.error('Error loading work history:', error);
+      notification.showError('Не удалось загрузить историю работы');
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [id, notification]);
 
   const responsibleUser = useMemo(() => {
     if (!workData || !users.length) return null;
@@ -156,25 +201,29 @@ export function useWorkDetail(id: string) {
       effectiveDate?: string
     ) => {
       // Разрешаем пустой список для обнуления распределения
-      createDistribution(duties, effectiveDate);
+      dutiesManagementHook.createDistribution(duties, effectiveDate);
     },
-    [createDistribution]
+    [dutiesManagementHook.createDistribution]
   );
 
   const handleFormSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       try {
-        await handleSubmit(e);
+        await workManagementHook.handleSubmit(e);
         setTimeout(() => {
           reloadWorkData();
-          forceReloadDuties();
+          dutiesManagementHook.forceReload();
         }, 100);
       } catch (error) {
         // отобразится формой
       }
     },
-    [handleSubmit, reloadWorkData, forceReloadDuties]
+    [
+      workManagementHook.handleSubmit,
+      reloadWorkData,
+      dutiesManagementHook.forceReload,
+    ]
   );
 
   const canEdit = useMemo(() => {
@@ -195,15 +244,15 @@ export function useWorkDetail(id: string) {
   const loadDutiesHistory = useCallback(async () => {
     setIsLoadingHistory(true);
     try {
-      const historyData = await workService.getHistory(id);
+      const historyData = await workService.getHistory(user.role, id);
       setWorkHistory(historyData);
-      forceReloadDuties();
+      dutiesManagementHook.forceReload();
     } catch (error) {
       notification.showError('Ошибка при загрузке истории обязанностей');
     } finally {
       setIsLoadingHistory(false);
     }
-  }, [id, notification, forceReloadDuties]);
+  }, [id, notification, dutiesManagementHook.forceReload]);
 
   useEffect(() => {
     if (dutiesTab === 'history' && !workHistory && !isLoadingHistory) {
@@ -240,20 +289,20 @@ export function useWorkDetail(id: string) {
     user,
     users,
     // edit work
-    isEditing,
-    formData,
-    setIsEditing,
-    handleChange,
+    isEditing: workManagementHook.isEditing,
+    formData: workManagementHook.formData,
+    setIsEditing: workManagementHook.setIsEditing,
+    handleChange: workManagementHook.handleChange,
     handleFormSubmit,
     // duties
     duties,
-    distributions,
-    isEditingDuties,
-    dutiesSuccessMessage,
-    dutiesErrorMessage,
-    setIsEditingDuties,
+    distributions: dutiesManagementHook.distributions,
+    isEditingDuties: dutiesManagementHook.isEditingDuties,
+    dutiesSuccessMessage: dutiesManagementHook.successMessage,
+    dutiesErrorMessage: dutiesManagementHook.errorMessage,
+    setIsEditingDuties: dutiesManagementHook.setIsEditingDuties,
     handleDutiesSubmit,
-    clearDutiesMessages,
+    clearDutiesMessages: dutiesManagementHook.clearMessages,
     loadDutiesHistory,
     isLoadingHistory,
     workHistory,
@@ -266,5 +315,8 @@ export function useWorkDetail(id: string) {
     // ui
     dutiesTab,
     setDutiesTab,
+    // actions
+    handleArchiveWork,
+    handleRestoreWork,
   };
 }

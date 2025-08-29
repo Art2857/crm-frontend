@@ -12,6 +12,7 @@ import {
   UpdateWorkDto,
   WorkHistory,
 } from '../../types/work';
+import { Role } from '../../types/user';
 
 // Типы состояния
 interface WorksState {
@@ -57,9 +58,9 @@ const handleThunkError = (error: unknown, defaultMessage: string): string => {
 // Асинхронные thunks
 export const fetchAllWorks = createAsyncThunk(
   'works/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async ({ role }: { role: Role }, { rejectWithValue }) => {
     try {
-      return await workService.getAll();
+      return await workService.getAll(role);
     } catch (error) {
       // Проверяем на отмененный запрос
       if (error instanceof Error && error.message === 'REQUEST_CANCELLED') {
@@ -75,9 +76,12 @@ export const fetchAllWorks = createAsyncThunk(
 
 export const fetchUserWorks = createAsyncThunk(
   'works/fetchUserWorks',
-  async (userId: string, { rejectWithValue }) => {
+  async (
+    { role, userId }: { role: Role; userId: string },
+    { rejectWithValue }
+  ) => {
     try {
-      return await workService.getByUserId(userId);
+      return await workService.getByUserId(role, userId);
     } catch (error) {
       // Проверяем на отмененный запрос
       if (error instanceof Error && error.message === 'REQUEST_CANCELLED') {
@@ -95,9 +99,12 @@ export const fetchUserWorks = createAsyncThunk(
 
 export const fetchUserWorksWithDuties = createAsyncThunk(
   'works/fetchUserWorksWithDuties',
-  async (userId: string, { rejectWithValue }) => {
+  async (
+    { role, userId }: { role: Role; userId: string },
+    { rejectWithValue }
+  ) => {
     try {
-      return await workService.getByUserId(userId);
+      return await workService.getByUserId(role, userId);
     } catch (error) {
       return rejectWithValue(
         handleThunkError(
@@ -111,9 +118,12 @@ export const fetchUserWorksWithDuties = createAsyncThunk(
 
 export const fetchWorkById = createAsyncThunk(
   'works/fetchById',
-  async (workId: string, { rejectWithValue }) => {
+  async (
+    { role, workId }: { role: Role; workId: string },
+    { rejectWithValue }
+  ) => {
     try {
-      return await workService.getById(workId);
+      return await workService.getById(role, workId);
     } catch (error) {
       return rejectWithValue(
         handleThunkError(error, 'Не удалось загрузить работу')
@@ -124,9 +134,12 @@ export const fetchWorkById = createAsyncThunk(
 
 export const createWork = createAsyncThunk(
   'works/create',
-  async (data: CreateWorkDto, { rejectWithValue }) => {
+  async (
+    { role, data }: { role: Role; data: CreateWorkDto },
+    { rejectWithValue }
+  ) => {
     try {
-      return await workService.create(data);
+      return await workService.create(role, data);
     } catch (error) {
       return rejectWithValue(
         handleThunkError(error, 'Не удалось создать работу')
@@ -138,11 +151,11 @@ export const createWork = createAsyncThunk(
 export const updateWork = createAsyncThunk(
   'works/update',
   async (
-    { id, data }: { id: string; data: UpdateWorkDto },
+    { role, id, data }: { role: Role; id: string; data: UpdateWorkDto },
     { rejectWithValue }
   ) => {
     try {
-      return await workService.update(id, data);
+      return await workService.update(role, id, data);
     } catch (error) {
       return rejectWithValue(
         handleThunkError(error, 'Не удалось обновить работу')

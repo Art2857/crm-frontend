@@ -43,7 +43,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
     }
 
     // Загружаем данные обязанности
-    dispatch(fetchDutyById(dutyId));
+    dispatch(fetchDutyById({ role: user.role, dutyId }));
 
     // Очищаем данные при размонтировании компонента
     return () => {
@@ -138,7 +138,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
     console.log('Отправляемые данные:', dutyData);
 
     const resultAction = await dispatch(
-      updateDuty({ id: dutyId, data: dutyData })
+      updateDuty({ role: user.role, id: dutyId, data: dutyData })
     );
     if (updateDuty.fulfilled.match(resultAction)) {
       router.push('/admin/duties');

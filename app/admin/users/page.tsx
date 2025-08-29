@@ -22,7 +22,7 @@ export default function AdminUsersPage() {
     try {
       await privateApi.patch(`/users/${id}/archive`);
       notification.showSuccess('Пользователь успешно архивирован');
-      dispatch(fetchAllUsers({}));
+      dispatch(fetchAllUsers({ role: user.role }));
     } catch (error: any) {
       let errorMessage = '';
 
@@ -48,7 +48,7 @@ export default function AdminUsersPage() {
 
   const restoreConfirm = useConfirmation<string>(async (id: string) => {
     await privateApi.patch(`/users/${id}/restore`);
-    dispatch(fetchAllUsers({}));
+    dispatch(fetchAllUsers({ role: user.role }));
   });
   const displayedUsers = useMemo(
     () =>
@@ -73,7 +73,7 @@ export default function AdminUsersPage() {
     }
 
     // Загрузка данных о пользователях
-    dispatch(fetchAllUsers({}));
+    dispatch(fetchAllUsers({ role: user.role }));
   }, [isAuthenticated, router, user, dispatch]);
 
   if (!user || ![Role.ADMIN, Role.MANAGER].includes(user.role) || isLoading) {

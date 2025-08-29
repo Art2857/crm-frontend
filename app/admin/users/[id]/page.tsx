@@ -166,7 +166,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     console.log('Fetching user with ID:', userId);
 
     // Загрузка данных пользователя
-    dispatch(fetchUserById(userId));
+    dispatch(fetchUserById({ role: user.role, id: userId }));
 
     // Очистка данных при размонтировании компонента
     return () => {
@@ -351,7 +351,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       // eslint-disable-next-line no-console
       console.log('Отправляем данные на сервер:', updatedData);
       const resultAction = await dispatch(
-        updateUserProfile({ userId, data: updatedData })
+        updateUserProfile({ userId, role: user.role, data: updatedData })
       );
 
       if (updateUserProfile.fulfilled.match(resultAction)) {
@@ -360,7 +360,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         // Обновляем данные пользователя и историю после успешного обновления
         // eslint-disable-next-line no-console
         console.log('Обновляем данные пользователя после успешного сохранения');
-        await dispatch(fetchUserById(userId));
+        await dispatch(fetchUserById({ role: user.role, id: userId }));
 
         // После успешного обновления базовой информации сбрасываем форму конфиденциальных данных
         if (currentUser) {
@@ -418,14 +418,14 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
       // Отправляем запрос на обновление чувствительных данных
       const resultAction = await dispatch(
-        updateUserSensitiveData({ userId, data: updatedData })
+        updateUserSensitiveData({ userId, role: user.role, data: updatedData })
       );
 
       if (updateUserSensitiveData.fulfilled.match(resultAction)) {
         setSuccess('Данные успешно обновлены');
 
         // Обновляем данные пользователя и историю после успешного обновления
-        await dispatch(fetchUserById(userId));
+        await dispatch(fetchUserById({ role: user.role, id: userId }));
 
         // После успешного обновления конфиденциальных данных сбрасываем форму базовой информации
         if (currentUser) {

@@ -6,7 +6,7 @@ import { getCurrentUser } from '../store/slices/auth';
 import { authService } from '../services/auth';
 import { tokenStorage } from '../services/tokenStorage';
 import { logger } from '../utils/logger';
-import { isJwtExpired } from '../utils/jwt';
+import { isJwtExpired, getRoleFromToken } from '../utils/jwt';
 
 export default function AuthChecker({
   children,
@@ -67,7 +67,20 @@ export default function AuthChecker({
           // Если токен есть в localStorage, но состояние не аутентифицировано
           // или данные пользователя не загружены - получаем текущего пользователя
           logger.debug('AuthChecker: загружаем данные пользователя');
-          await dispatch(getCurrentUser()).unwrap();
+
+          // Получаем роль из токена, если пользователь не загружен
+          const currentToken = tokenStorage.getAccessToken();
+          const role =
+            user?.role ||
+            (currentToken ? getRoleFromToken(currentToken) : null);
+
+          if (role) {
+            await dispatch(getCurrentUser({ role })).unwrap();
+          } else {
+            // Если не можем определить роль, очищаем состояние
+            logger.warn('AuthChecker: не удалось определить роль пользователя');
+            tokenStorage.clearAll();
+          }
         } else if (!hasToken && isAuthenticated) {
           // Если токена нет, но состояние показывает аутентификацию - очищаем состояние
           logger.debug(
