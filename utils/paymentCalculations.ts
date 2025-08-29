@@ -197,36 +197,45 @@ export function buildWorkDetailedCalculation(params: {
     );
     const userPeriodsSource = closureWrap?.userPeriods;
     userPeriodsSource?.dutiesPeriods?.forEach((p: any) => {
-      const periodStartDate = parseRuDate(p.startDate);
-      const periodEndDate = parseRuDate(p.endDate);
-      const workingDaysInMonth = getWorkingDaysInMonth(periodEndDate);
-      const dutiesCalc = p.distributionDetails.map((dd: any) => {
-        const price = Number(dd.price) || 0;
-        const perc = Number(dd.percentage) || 0;
-        const monthlyAmount = price + (salary * perc) / 100;
-        return {
-          dutyId: dd.dutyId,
-          dutyName: dd.duty?.name || '—',
-          monthlyAmount,
-          calculatedAmount: Math.round(Number(dd.calculatedValuePeriod) || 0),
-        };
-      });
-      const filteredDuties = dutyId
-        ? dutiesCalc.filter((d: any) => d.dutyId === dutyId)
-        : dutiesCalc;
-      if (filteredDuties.length === 0) return;
-      const totalAmount = filteredDuties.reduce(
-        (s: number, d: any) => s + d.calculatedAmount,
-        0
-      );
-      periods.push({
-        startDate: toIsoFromRu(p.startDate)!,
-        endDate: toIsoFromRu(p.endDate)!,
-        days: p.daysInPeriod,
-        monthDays: workingDaysInMonth,
-        duties: filteredDuties,
-        totalAmount,
-      });
+      try {
+        const periodStartDate = parseRuDate(p.startDate);
+        const periodEndDate = parseRuDate(p.endDate);
+        const workingDaysInMonth = getWorkingDaysInMonth(periodEndDate);
+        const dutiesCalc = p.distributionDetails.map((dd: any) => {
+          const price = Number(dd.price) || 0;
+          const perc = Number(dd.percentage) || 0;
+          const monthlyAmount = price + (salary * perc) / 100;
+          return {
+            dutyId: dd.dutyId,
+            dutyName: dd.duty?.name || '—',
+            monthlyAmount,
+            calculatedAmount: Math.round(Number(dd.calculatedValuePeriod) || 0),
+          };
+        });
+        const filteredDuties = dutyId
+          ? dutiesCalc.filter((d: any) => d.dutyId === dutyId)
+          : dutiesCalc;
+        if (filteredDuties.length === 0) return;
+        const totalAmount = filteredDuties.reduce(
+          (s: number, d: any) => s + d.calculatedAmount,
+          0
+        );
+        periods.push({
+          startDate: toIsoFromRu(p.startDate)!,
+          endDate: toIsoFromRu(p.endDate)!,
+          days: p.daysInPeriod,
+          monthDays: workingDaysInMonth,
+          duties: filteredDuties,
+          totalAmount,
+        });
+      } catch (error) {
+        console.error('Ошибка парсинга дат в периоде:', {
+          startDate: p.startDate,
+          endDate: p.endDate,
+          error,
+        });
+        // Пропускаем этот период при ошибке парсинга дат
+      }
     });
   }
 

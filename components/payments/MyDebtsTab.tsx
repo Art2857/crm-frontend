@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { MyDebt } from '../../services/analytics';
 import type { DutyDebt } from '../../types/payments';
+import { useDateManager } from '../../hooks/useDateManager';
 
 interface MyDebtsTabProps {
   myDebts: MyDebt[];
@@ -26,6 +27,7 @@ export default function MyDebtsTab({
   myDebts,
   onShowCalculation,
 }: MyDebtsTabProps) {
+  const { formatRussian } = useDateManager();
   // Для отладки структуры данных
   // eslint-disable-next-line no-console
   console.log('myDebts:', myDebts);
@@ -84,7 +86,7 @@ export default function MyDebtsTab({
                 <CalendarIcon className="h-4 w-4" />
                 <span>
                   Последнее закрытие:{' '}
-                  {new Date(debt.lastClosureDate).toLocaleDateString('ru-RU')}
+                  {formatRussian(debt.lastClosureDate) || 'Неизвестная дата'}
                 </span>
               </div>
             )}

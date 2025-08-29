@@ -9,7 +9,7 @@ import Input from '../../components/ui/Input';
 import TimezoneSelector from '../../components/ui/TimezoneSelector';
 import { UpdateProfileDto, UserStatus } from '../../types/user';
 import { updateUserProfile } from '../../store/slices/users';
-import { toDateObject, formatDateToISO } from '../../utils/date';
+import { useDateManager } from '../../hooks/useDateManager';
 import { useForm } from '../../hooks/useForm';
 import { useNotification } from '../../contexts/NotificationContext';
 import { getCurrentUser } from '../../store/slices/auth';
@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const notification = useNotification();
   const { timezone: currentTimezone } = useTimezone();
+  const { formatISO, formatRussian, dateManager } = useDateManager();
 
   const initializedRef = useRef(false);
 
@@ -97,10 +98,9 @@ export default function ProfilePage() {
 
       try {
         if (user.birthday) {
-          const dateObj = toDateObject(user.birthday);
+          const dateObj = dateManager.parseDate(user.birthday);
           if (dateObj) {
-            const formattedDate = dateObj.toISOString().split('T')[0];
-            setValue('birthday', formattedDate);
+            setValue('birthday', formatISO(dateObj));
           } else {
             setValue('birthday', '');
           }
@@ -201,7 +201,7 @@ export default function ProfilePage() {
       if (data.birthday) {
         try {
           const dateString = `${data.birthday}T00:00:00Z`;
-          const dateObj = toDateObject(dateString);
+          const dateObj = dateManager.parseDate(dateString);
 
           if (dateObj) {
             data.birthday = dateObj.toISOString();
@@ -308,19 +308,7 @@ export default function ProfilePage() {
 
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
   const calculateAge = (birthdayString: string | null): number | null => {
-    if (!birthdayString) return null;
-    const birthday = toDateObject(birthdayString);
-    if (!birthday) return null;
-    const today = new Date();
-    let age = today.getFullYear() - birthday.getFullYear();
-    const monthDiff = today.getMonth() - birthday.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthday.getDate())
-    ) {
-      age--;
-    }
-    return age;
+    return dateManager.calculateAge(birthdayString);
   };
 
   const getStatusLabel = (status: UserStatus): string => {
@@ -647,7 +635,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
                       {user.birthday
-                        ? formatDateToISO(user.birthday)
+                        ? formatRussian(user.birthday)
                         : 'Не указана'}
                     </div>
                   </div>
@@ -689,7 +677,7 @@ export default function ProfilePage() {
                       Регистрация
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {formatDateToISO(user.createdAt)}
+                      {formatRussian(user.createdAt)}
                     </div>
                   </div>
                 </div>

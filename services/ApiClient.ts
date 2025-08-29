@@ -193,12 +193,12 @@ export class ApiClient {
               ? localStorage.getItem('app.timezone')
               : null;
           if (tz && config.headers) {
-            (config.headers as any)['X-Client-Timezone'] = tz;
+            (config.headers as any)['X-User-Timezone'] = tz;
           } else if (
             config.headers &&
-            !(config.headers as any)['X-Client-Timezone']
+            !(config.headers as any)['X-User-Timezone']
           ) {
-            (config.headers as any)['X-Client-Timezone'] =
+            (config.headers as any)['X-User-Timezone'] =
               Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
           }
         } catch {}

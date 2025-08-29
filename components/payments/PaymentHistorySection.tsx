@@ -8,6 +8,7 @@ import {
   BanknotesIcon,
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
+import { useDateManager } from '../../hooks/useDateManager';
 
 interface PaymentHistoryItem {
   id: string;
@@ -27,6 +28,7 @@ export default function PaymentHistorySection({
   paymentHistory,
   isDebtsView,
 }: PaymentHistorySectionProps) {
+  const { formatRussian } = useDateManager();
   const totalPaid = paymentHistory.reduce(
     (sum, payment) => sum + payment.amount,
     0
@@ -95,14 +97,13 @@ export default function PaymentHistorySection({
                         </Badge>
                         <span className="text-sm text-gray-700 font-semibold">
                           Закрытие:{' '}
-                          {new Date(payment.date).toLocaleDateString('ru-RU')}
+                          {formatRussian(payment.date) || 'Неизвестная дата'}
                         </span>
                         {payment.createdAt && (
                           <span className="text-xs text-gray-500">
                             (создано:{' '}
-                            {new Date(payment.createdAt).toLocaleString(
-                              'ru-RU'
-                            )}
+                            {formatRussian(payment.createdAt) ||
+                              'Неизвестная дата'}
                             )
                           </span>
                         )}

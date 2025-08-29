@@ -4,6 +4,7 @@ import React from 'react';
 import Badge from '../ui/Badge';
 import { formatCurrency } from '../../utils/payments';
 import { PeriodCalculation } from '../../types/payments';
+import { useDateManager } from '../../hooks/useDateManager';
 
 interface PeriodCalculationSectionProps {
   periods: PeriodCalculation[];
@@ -14,6 +15,7 @@ export default function PeriodCalculationSection({
   periods,
   isCompact = false,
 }: PeriodCalculationSectionProps) {
+  const { formatRussian } = useDateManager();
   const totalAmount = periods.reduce(
     (sum, period) => sum + period.totalAmount,
     0
@@ -32,8 +34,8 @@ export default function PeriodCalculationSection({
             <div className="flex items-center justify-between mb-3">
               <h5 className="font-medium text-gray-900">
                 Период {index + 1}:{' '}
-                {new Date(period.startDate).toLocaleDateString('ru-RU')} -{' '}
-                {new Date(period.endDate).toLocaleDateString('ru-RU')}
+                {formatRussian(period.startDate) || 'Неизвестная дата'} -{' '}
+                {formatRussian(period.endDate) || 'Неизвестная дата'}
               </h5>
               <Badge className="bg-blue-100 text-blue-800">
                 {period.days} из {period.monthDays} дней

@@ -5,7 +5,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { formatCurrency } from '../../utils/payments';
-import { formatedDateToDateObject } from '../../utils/date';
+import { formatedDateToDateObject } from '../../utils/DateManager';
 import {
   CalendarIcon,
   CurrencyDollarIcon,
@@ -13,6 +13,7 @@ import {
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import { DetailedCalculation } from '../../types/payments';
+import { useDateManager } from '../../hooks/useDateManager';
 import { useCalculationView } from '../../hooks/payments/useCalculationView';
 
 interface CalculationModalProps {
@@ -46,6 +47,7 @@ export default function CalculationModal({
   onBulkPayAllWorks,
 }: CalculationModalProps) {
   // Hooks must be called unconditionally
+  const { formatRussian } = useDateManager();
   const { totals } = useCalculationView(calculation);
   if (!calculation) return null;
 
@@ -141,9 +143,8 @@ export default function CalculationModal({
                     Последнее закрытие
                   </p>
                   <p className="text-sm font-semibold text-blue-800">
-                    {new Date(calculation.lastClosureDate).toLocaleDateString(
-                      'ru-RU'
-                    )}
+                    {formatRussian(calculation.lastClosureDate) ||
+                      'Неизвестная дата'}
                   </p>
                 </div>
               )}
@@ -155,7 +156,7 @@ export default function CalculationModal({
                     Расчет до
                   </p>
                   <p className="text-sm font-semibold text-green-800">
-                    {new Date(calculationDate).toLocaleDateString('ru-RU')}
+                    {formatRussian(calculationDate) || 'Неизвестная дата'}
                   </p>
                 </div>
               )}
@@ -173,8 +174,8 @@ export default function CalculationModal({
                     <div className="flex items-center justify-between mb-3">
                       <h5 className="font-medium text-gray-900">
                         Период {index + 1}:{' '}
-                        {new Date(period.startDate).toLocaleDateString('ru-RU')}{' '}
-                        - {new Date(period.endDate).toLocaleDateString('ru-RU')}
+                        {formatRussian(period.startDate) || 'Неизвестная дата'}{' '}
+                        - {formatRussian(period.endDate) || 'Неизвестная дата'}
                       </h5>
                       <Badge className="bg-blue-100 text-blue-800">
                         {period.days} из {period.monthDays} рабочих дней
@@ -290,14 +291,8 @@ export default function CalculationModal({
                           Последнее закрытие:{' '}
                         </span>
                         <span className="text-blue-800 font-semibold">
-                          {(() => {
-                            const lc = calculation.lastClosureDate as any;
-                            const d =
-                              typeof lc === 'string' && lc.includes('.')
-                                ? new Date(lc.split('.').reverse().join('-'))
-                                : new Date(lc);
-                            return d.toLocaleDateString('ru-RU');
-                          })()}
+                          {formatRussian(calculation.lastClosureDate) ||
+                            'Неизвестная дата'}
                         </span>
                       </div>
                     )}
@@ -308,9 +303,7 @@ export default function CalculationModal({
                           Расчет до:{' '}
                         </span>
                         <span className="text-green-800 font-semibold">
-                          {new Date(calculationDate).toLocaleDateString(
-                            'ru-RU'
-                          )}
+                          {formatRussian(calculationDate) || 'Неизвестная дата'}
                         </span>
                       </div>
                     )}
@@ -330,12 +323,10 @@ export default function CalculationModal({
                 </h4>
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                   {calculation.periods.map((period, index) => {
-                    const periodStartLocalDateString = new Date(
-                      period.startDate
-                    ).toLocaleDateString('ru-RU');
-                    const periodEndLocalDateString = new Date(
-                      period.endDate
-                    ).toLocaleDateString('ru-RU');
+                    const periodStartLocalDateString =
+                      formatRussian(period.startDate) || 'Неизвестная дата';
+                    const periodEndLocalDateString =
+                      formatRussian(period.endDate) || 'Неизвестная дата';
 
                     return (
                       <div key={index} className="bg-gray-50 rounded-lg p-4">
@@ -488,17 +479,15 @@ export default function CalculationModal({
                                           : 'Аванс'}
                                   </Badge>
                                   <span className="text-sm text-gray-600">
-                                    {new Date(payment.date).toLocaleDateString(
-                                      'ru-RU'
-                                    )}
+                                    {formatRussian(payment.date) ||
+                                      'Неизвестная дата'}
                                   </span>
                                   {payment.createdAt && (
                                     <span className="text-xs text-gray-500 ml-2">
                                       <span>создано: </span>
                                       <span>
-                                        {new Date(
-                                          payment.createdAt
-                                        ).toLocaleString('ru-RU')}
+                                        {formatRussian(payment.createdAt) ||
+                                          'Неизвестная дата'}
                                       </span>
                                     </span>
                                   )}

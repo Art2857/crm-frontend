@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import { formatCurrency, getPaymentTypeColor } from '../../utils/payments';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { Payment } from '../../types/payment';
+import { useDateManager } from '../../hooks/useDateManager';
 
 interface PaymentHistoryItemProps {
   payment: Payment;
@@ -19,6 +20,7 @@ export default function PaymentHistoryItem({
   onDelete,
   isDeleting,
 }: PaymentHistoryItemProps) {
+  const { formatRussian } = useDateManager();
   // Определяем направление выплаты для текущего пользователя
   const isReceived = payment.toUserId === currentUserId;
   const isSent = payment.fromUserId === currentUserId;
@@ -59,11 +61,12 @@ export default function PaymentHistoryItem({
             </span>
             <span className="text-sm text-gray-700 font-semibold">
               Закрытие:{' '}
-              {new Date(payment.paymentDate).toLocaleDateString('ru-RU')}
+              {formatRussian(payment.paymentDate) || 'Неизвестная дата'}
             </span>
             {payment.createdAt && (
               <span className="text-xs text-gray-500 ml-2">
-                (создано: {new Date(payment.createdAt).toLocaleString('ru-RU')})
+                (создано:{' '}
+                {formatRussian(payment.createdAt) || 'Неизвестная дата'})
               </span>
             )}
           </div>
@@ -112,8 +115,8 @@ export default function PaymentHistoryItem({
           </p>
           {payment.periodStart && payment.periodEnd && (
             <p className="text-xs text-gray-500">
-              {new Date(payment.periodStart).toLocaleDateString('ru-RU')} -{' '}
-              {new Date(payment.periodEnd).toLocaleDateString('ru-RU')}
+              {formatRussian(payment.periodStart) || 'Неизвестная дата'} -{' '}
+              {formatRussian(payment.periodEnd) || 'Неизвестная дата'}
             </p>
           )}
         </div>

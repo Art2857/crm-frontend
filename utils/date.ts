@@ -1,6 +1,8 @@
 /**
  * Утилиты для работы с датами
  * Реализация следует принципам DRY (Don't Repeat Yourself) и SOLID
+ *
+ * @deprecated Используйте DateManager вместо этих утилит
  */
 
 /**
@@ -246,7 +248,18 @@ export const russianDateToDate = (dateString: string): Date | null => {
   return new Date(year, month, day);
 };
 
-export const formatedDateToDateObject = (date: string): Date =>
-  typeof date === 'string' && date.includes('.')
-    ? new Date(date.split('.').reverse().join('-'))
-    : new Date(date);
+// DEPRECATED: Use formatedDateToDateObject from DateManager.ts instead
+export const formatedDateToDateObject = (date: string): Date => {
+  console.warn(
+    'DEPRECATED: formatedDateToDateObject from date.ts is deprecated. Use from DateManager.ts instead'
+  );
+  try {
+    if (typeof date === 'string' && date.includes('.')) {
+      return new Date(date.split('.').reverse().join('-'));
+    }
+    return new Date(date);
+  } catch (error) {
+    console.error('Ошибка парсинга даты:', { date, error });
+    return new Date(); // Fallback to current date
+  }
+};

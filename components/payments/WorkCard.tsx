@@ -9,6 +9,7 @@ import {
   EyeIcon,
 } from '@heroicons/react/24/outline';
 import { WorkDetail } from '../../types/payments';
+import { useDateManager } from '../../hooks/useDateManager';
 import FinancialSummary from './FinancialSummary';
 
 interface WorkCardProps {
@@ -26,6 +27,7 @@ export default function WorkCard({
   onShowCalculation,
   children,
 }: WorkCardProps) {
+  const { formatRussian } = useDateManager();
   const accrued = work.totalAccrued ?? 0;
   const paidForDisplay = Math.min(work.paidAmount || 0, accrued);
   return (
@@ -49,7 +51,7 @@ export default function WorkCard({
                 {work.lastClosureDate && (
                   <p className="text-sm text-gray-500">
                     Последнее закрытие:{' '}
-                    {new Date(work.lastClosureDate).toLocaleDateString('ru-RU')}
+                    {formatRussian(work.lastClosureDate) || 'Неизвестная дата'}
                   </p>
                 )}
               </div>

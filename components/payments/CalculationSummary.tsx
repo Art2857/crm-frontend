@@ -3,6 +3,7 @@
 import React from 'react';
 import { formatCurrency } from '../../utils/payments';
 import { CalendarIcon } from '@heroicons/react/24/outline';
+import { useDateManager } from '../../hooks/useDateManager';
 
 interface CalculationSummaryProps {
   totalAccrued: number;
@@ -23,6 +24,7 @@ export default function CalculationSummary({
   calculationDate,
   isDebtsView,
 }: CalculationSummaryProps) {
+  const { formatRussian } = useDateManager();
   return (
     <div className="bg-blue-50 rounded-lg p-4 mb-6">
       <div className="grid grid-cols-4 gap-4 text-center">
@@ -66,7 +68,7 @@ export default function CalculationSummary({
                   Последнее закрытие:{' '}
                 </span>
                 <span className="text-blue-800 font-semibold">
-                  {new Date(lastClosureDate).toLocaleDateString('ru-RU')}
+                  {formatRussian(lastClosureDate) || 'Неизвестная дата'}
                 </span>
               </div>
             )}
@@ -75,7 +77,7 @@ export default function CalculationSummary({
                 <CalendarIcon className="h-4 w-4 inline mr-1 text-green-600" />
                 <span className="text-green-600 font-medium">Расчет до: </span>
                 <span className="text-green-800 font-semibold">
-                  {new Date(calculationDate).toLocaleDateString('ru-RU')}
+                  {formatRussian(calculationDate) || 'Неизвестная дата'}
                 </span>
               </div>
             )}

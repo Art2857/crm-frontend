@@ -13,6 +13,7 @@ import {
   EyeIcon,
 } from '@heroicons/react/24/outline';
 import { ResponsibleUser } from '../../types/payments';
+import { useDateManager } from '../../hooks/useDateManager';
 import FinancialSummary from './FinancialSummary';
 
 interface UserCardProps {
@@ -30,6 +31,7 @@ export default function UserCard({
   onShowCalculation,
   children,
 }: UserCardProps) {
+  const { formatRussian } = useDateManager();
   return (
     <div className="relative">
       <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-r from-white via-gray-50 to-white">
@@ -131,7 +133,7 @@ export default function UserCard({
           {user.lastPaymentDate && (
             <div className="mt-2 text-xs text-gray-400 text-center">
               Последняя выплата:{' '}
-              {new Date(user.lastPaymentDate).toLocaleDateString('ru-RU')}
+              {formatRussian(user.lastPaymentDate) || 'Неизвестная дата'}
             </div>
           )}
         </div>

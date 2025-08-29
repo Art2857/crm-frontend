@@ -175,8 +175,7 @@ export const analyticsService = {
     }
 
     const { data } = await privateApi.get<{
-      endDateIso: string;
-      endDateRu: string;
+      endDate: string; // Российский формат DD.MM.YYYY
       users: Array<{
         userId: string;
         firstName: string | null;
