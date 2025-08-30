@@ -59,7 +59,9 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   const usersMap = useMemo(() => {
     const map: Record<string, User> = {};
     users.forEach((user) => {
-      map[user.id] = user;
+      if (user && user.id) {
+        map[user.id] = user;
+      }
     });
     return map;
   }, [users]);

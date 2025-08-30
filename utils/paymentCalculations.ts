@@ -168,6 +168,12 @@ export function buildWorkDetailedCalculation(params: {
         const [start, end] = key.split('|');
         const startDate = new Date(start);
         const endDate = new Date(end);
+        
+        // Пропускаем периоды где начало больше или равно концу
+        if (startDate.getTime() >= endDate.getTime()) {
+          return;
+        }
+        
         const workingDaysInPeriod = getWorkingDaysInPeriod(startDate, endDate);
         const workingDaysInMonth = getWorkingDaysInMonth(endDate);
         const dutiesForPeriod = dutyPeriods.map(({ duty, period }: any) => ({
@@ -216,6 +222,14 @@ export function buildWorkDetailedCalculation(params: {
           ? dutiesCalc.filter((d: any) => d.dutyId === dutyId)
           : dutiesCalc;
         if (filteredDuties.length === 0) return;
+        
+        // Проверяем корректность периода
+        const startDate = parseRuDate(p.startDate);
+        const endDate = parseRuDate(p.endDate);
+        
+        // Пропускаем периоды где начало больше или равно концу
+        if (startDate.getTime() >= endDate.getTime()) return;
+        
         const totalAmount = filteredDuties.reduce(
           (s: number, d: any) => s + d.calculatedAmount,
           0

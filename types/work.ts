@@ -37,6 +37,7 @@ export interface Work {
   responsibleUserId: string;
   salary: string; // Decimal represented as string
   releaseDate?: string; // Date as ISO string
+  isArchived?: boolean; // Архивный статус работы
   createdAt: string;
   updatedAt: string;
   history?: WorkHistory[]; // Соответствие бэкенду

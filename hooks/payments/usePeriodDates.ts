@@ -12,7 +12,6 @@ export function usePeriodDates() {
     (workId: string): string => {
       if (workPeriodDates[workId]) return workPeriodDates[workId];
       const d = new Date();
-      d.setDate(d.getDate() - 1);
       return d.toISOString().split('T')[0];
     },
     [workPeriodDates]
@@ -22,7 +21,6 @@ export function usePeriodDates() {
     (userId: string): string => {
       if (userPeriodDates[userId]) return userPeriodDates[userId];
       const d = new Date();
-      d.setDate(d.getDate() - 1);
       return d.toISOString().split('T')[0];
     },
     [userPeriodDates]

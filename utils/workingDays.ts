@@ -1,8 +1,8 @@
 /**
  * Возвращает количество рабочих дней в периоде (исключая выходные - субботу и воскресенье)
- * @param startDate - Начальная дата
- * @param endDate - Конечная дата
- * @returns Количество рабочих дней в периоде
+ * @param startDate - Начальная дата (включительно)
+ * @param endDate - Конечная дата (НЕ включительно)
+ * @returns Количество рабочих дней в периоде (конечный день не включается в расчет)
  */
 export function getWorkingDaysInPeriod(startDate: Date, endDate: Date): number {
   // Проверка валидности
@@ -17,8 +17,8 @@ export function getWorkingDaysInPeriod(startDate: Date, endDate: Date): number {
   let workingDays = 0;
   const currentDate = new Date(startDate);
 
-  // Проходим по всем дням в периоде
-  while (currentDate <= endDate) {
+  // Проходим по всем дням в периоде (НЕ включая последний день)
+  while (currentDate < endDate) {
     const dayOfWeek = currentDate.getDay();
 
     // Считаем рабочими днями пн-пт (1-5), исключаем сб-вс (0,6)

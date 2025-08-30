@@ -973,7 +973,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                       ? 'Превышено!'
                       : numericSalary > 0
                         ? `Осталось: ${formatCurrency(((100 - totalPercentage) * numericSalary) / 100)} (${Math.round(100 - totalPercentage)}%)`
-                        : `Осталось: ${Math.max(0, 100 - totalPercentage).toFixed(4)}%`}
+                        : `Осталось: 0.0000%`}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">

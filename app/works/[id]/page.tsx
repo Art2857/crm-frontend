@@ -46,6 +46,8 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     dutiesTab,
     setDutiesTab,
     users,
+    handleArchiveWork,
+    handleRestoreWork,
   } = useWorkDetail(id);
 
   // Если данные еще не загружены, показываем индикатор загрузки
@@ -123,9 +125,16 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   <p className="text-sm text-gray-500 font-medium">
                     Рабочий проект
                   </p>
-                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                    {workData.name}
-                  </h1>
+                  <div className="flex items-center space-x-3">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                      {workData.name}
+                    </h1>
+                    {workData.isArchived && (
+                      <span className="px-3 py-1 text-sm rounded-full bg-orange-100 text-orange-800 border border-orange-200">
+                        Архив
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center text-sm text-gray-600">
@@ -166,39 +175,83 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
 
             <div className="flex space-x-3">
               {canEdit && (
-                <Button
-                  variant={isEditing ? 'secondary' : 'primary'}
-                  onClick={() => setIsEditing(!isEditing)}
-                  className={`px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 ${
-                    isEditing
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
-                      : 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 shadow-lg hover:shadow-xl'
-                  }`}
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                <>
+                  <Button
+                    variant={isEditing ? 'secondary' : 'primary'}
+                    onClick={() => setIsEditing(!isEditing)}
+                    className={`px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 ${
+                      isEditing
+                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                        : 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 shadow-lg hover:shadow-xl'
+                    }`}
                   >
-                    {isEditing ? (
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    ) : (
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    )}
-                  </svg>
-                  {isEditing ? 'Отменить' : 'Редактировать'}
-                </Button>
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      {isEditing ? (
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      ) : (
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      )}
+                    </svg>
+                    {isEditing ? 'Отменить' : 'Редактировать'}
+                  </Button>
+
+                  {workData.isArchived ? (
+                    <Button
+                      onClick={handleRestoreWork}
+                      className="px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                      Восстановить
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleArchiveWork}
+                      className="px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-700 text-white hover:from-orange-700 hover:to-orange-800 shadow-lg hover:shadow-xl"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 8h14l-1 9H6L5 8zm0 0V6a2 2 0 012-2h10a2 2 0 012 2v2M9 12v4m6-4v4"
+                        />
+                      </svg>
+                      Архивировать
+                    </Button>
+                  )}
+                </>
               )}
 
               <Button
@@ -251,9 +304,16 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                       <h2 className="text-xl font-medium text-primary-100 mb-1">
                         Проект
                       </h2>
-                      <h1 className="text-3xl font-bold leading-tight">
-                        {workData.name}
-                      </h1>
+                      <div className="flex items-center space-x-3">
+                        <h1 className="text-3xl font-bold leading-tight">
+                          {workData.name}
+                        </h1>
+                        {workData.isArchived && (
+                          <span className="px-3 py-1 text-sm rounded-full bg-white bg-opacity-20 text-white border border-white border-opacity-30">
+                            Архив
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

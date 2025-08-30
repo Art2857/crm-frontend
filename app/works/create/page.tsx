@@ -66,8 +66,8 @@ export default function CreateWorkPage() {
       errors.responsibleUserId = 'Необходимо выбрать ответственного';
     }
 
-    if (!formData.salary || Number(formData.salary) <= 0) {
-      errors.salary = 'Зарплата должна быть больше 0';
+    if (!formData.salary || Number(formData.salary) < 0) {
+      errors.salary = 'Зарплата не может быть отрицательной';
     }
 
     if (!formData.releaseDate || formData.releaseDate.trim() === '') {

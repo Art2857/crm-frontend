@@ -34,7 +34,9 @@ export function useWorksList() {
   const usersMap = useMemo(() => {
     const map: Record<string, User> = {};
     users.forEach((u) => {
-      map[u.id] = u;
+      if (u && u.id) {
+        map[u.id] = u;
+      }
     });
     return map;
   }, [users]);
