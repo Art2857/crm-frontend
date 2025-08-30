@@ -6,6 +6,7 @@ import dutiesReducer from './slices/duties';
 import usersReducer from './slices/users';
 import breadcrumbsReducer from './slices/breadcrumbs';
 import dashboardReducer from './slices/dashboard';
+import exchangeRatesReducer from './slices/exchangeRates';
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +16,7 @@ export const store = configureStore({
     users: usersReducer,
     breadcrumbs: breadcrumbsReducer,
     dashboard: dashboardReducer,
+    exchangeRates: exchangeRatesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

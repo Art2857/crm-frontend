@@ -1,10 +1,28 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../store';
 import { setBreadcrumbs } from '../store/slices/breadcrumbs';
 import { breadcrumbConfig } from '../store/slices/breadcrumbs';
 import { Breadcrumb } from '../types/breadcrumb';
 import * as breadcrumbUtils from '../utils/breadcrumbs';
+
+/**
+ * Функция для сравнения массивов breadcrumbs
+ */
+const areBreadcrumbsEqual = (a: Breadcrumb[], b: Breadcrumb[]): boolean => {
+  if (a.length !== b.length) return false;
+  
+  return a.every((item, index) => {
+    const otherItem = b[index];
+    return (
+      item.id === otherItem.id &&
+      item.title === otherItem.title &&
+      item.path === otherItem.path &&
+      item.isActive === otherItem.isActive &&
+      item.isClickable === otherItem.isClickable
+    );
+  });
+};
 
 /**
  * Хук для работы с хлебными крошками
@@ -15,60 +33,67 @@ export const useBreadcrumbs = (customBreadcrumbs?: Breadcrumb[]) => {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
   const breadcrumbs = useAppSelector((state) => state.breadcrumbs.breadcrumbs);
+  const lastBreadcrumbsRef = useRef<Breadcrumb[]>([]);
+
+  // Мемоизируем customBreadcrumbs чтобы избежать лишних рендеров
+  const memoizedCustomBreadcrumbs = useMemo(() => {
+    return customBreadcrumbs;
+  }, [customBreadcrumbs?.map(b => `${b.id}-${b.title}-${b.path}`).join('|')]);
 
   useEffect(() => {
-    if (customBreadcrumbs) {
+    let newBreadcrumbs: Breadcrumb[] = [];
+
+    if (memoizedCustomBreadcrumbs) {
       // Если переданы пользовательские хлебные крошки, используем их
-      dispatch(setBreadcrumbs(customBreadcrumbs));
+      newBreadcrumbs = memoizedCustomBreadcrumbs;
     } else {
       // Иначе определяем хлебные крошки по текущему пути
-      let dynamicBreadcrumbs: Breadcrumb[] = [];
-
-      // Определяем тип страницы по пути и создаем соответствующие хлебные крошки
       if (pathname === '/dashboard') {
-        dynamicBreadcrumbs = breadcrumbUtils.createBaseBreadcrumbs();
+        newBreadcrumbs = breadcrumbUtils.createBaseBreadcrumbs();
         // Главная страница активна и не кликабельна
-        dynamicBreadcrumbs[0].isActive = true;
-        dynamicBreadcrumbs[0].isClickable = false;
+        newBreadcrumbs[0].isActive = true;
+        newBreadcrumbs[0].isClickable = false;
       } else if (pathname === '/profile') {
-        dynamicBreadcrumbs = breadcrumbUtils.createProfileBreadcrumbs();
+        newBreadcrumbs = breadcrumbUtils.createProfileBreadcrumbs();
       } else if (pathname === '/works') {
-        dynamicBreadcrumbs = breadcrumbUtils.createWorksBreadcrumbs();
+        newBreadcrumbs = breadcrumbUtils.createWorksBreadcrumbs();
       } else if (pathname === '/works/create') {
-        dynamicBreadcrumbs = breadcrumbUtils.createCreateWorkBreadcrumbs();
+        newBreadcrumbs = breadcrumbUtils.createCreateWorkBreadcrumbs();
       } else if (
         pathname.startsWith('/works/') &&
         pathname !== '/works/create'
       ) {
         // Получаем ID работы из пути
         const workId = pathname.replace('/works/', '');
-        dynamicBreadcrumbs = breadcrumbUtils.createWorkDetailBreadcrumbs(
+        newBreadcrumbs = breadcrumbUtils.createWorkDetailBreadcrumbs(
           undefined,
           workId
         );
       } else if (pathname === '/accounts') {
-        dynamicBreadcrumbs = breadcrumbUtils.createAccountsBreadcrumbs();
+        newBreadcrumbs = breadcrumbUtils.createAccountsBreadcrumbs();
+      } else if (pathname === '/exchange-rates') {
+        newBreadcrumbs = breadcrumbUtils.createExchangeRatesBreadcrumbs();
       } else if (pathname === '/admin/users') {
-        dynamicBreadcrumbs = breadcrumbUtils.createUsersAdminBreadcrumbs();
+        newBreadcrumbs = breadcrumbUtils.createUsersAdminBreadcrumbs();
       } else if (pathname === '/admin/duties') {
-        dynamicBreadcrumbs = breadcrumbUtils.createDutiesAdminBreadcrumbs();
+        newBreadcrumbs = breadcrumbUtils.createDutiesAdminBreadcrumbs();
       } else if (pathname === '/admin/distributions') {
-        dynamicBreadcrumbs =
-          breadcrumbUtils.createDistributionsAdminBreadcrumbs();
+        newBreadcrumbs = breadcrumbUtils.createDistributionsAdminBreadcrumbs();
       } else {
         // Если не нашли соответствие, используем конфигурацию из слайса
         const matchedPath = findMatchingPath(pathname);
-
         if (matchedPath) {
-          dispatch(setBreadcrumbs(breadcrumbConfig[matchedPath]));
-          return;
+          newBreadcrumbs = breadcrumbConfig[matchedPath];
         }
       }
-
-      // Устанавливаем динамически созданные хлебные крошки
-      dispatch(setBreadcrumbs(dynamicBreadcrumbs));
     }
-  }, [pathname, customBreadcrumbs, dispatch]);
+
+    // Обновляем breadcrumbs только если они изменились
+    if (!areBreadcrumbsEqual(lastBreadcrumbsRef.current, newBreadcrumbs)) {
+      lastBreadcrumbsRef.current = newBreadcrumbs;
+      dispatch(setBreadcrumbs(newBreadcrumbs));
+    }
+  }, [pathname, memoizedCustomBreadcrumbs, dispatch]);
 
   return { breadcrumbs };
 };

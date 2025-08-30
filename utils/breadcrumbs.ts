@@ -218,3 +218,22 @@ export const createAccountsBreadcrumbs = (): Breadcrumb[] => {
 
   return breadcrumbs;
 };
+
+/**
+ * Создает хлебные крошки для страницы котировок валют
+ * @returns Массив хлебных крошек для котировок валют
+ */
+export const createExchangeRatesBreadcrumbs = (): Breadcrumb[] => {
+  const breadcrumbs = createBaseBreadcrumbs();
+
+  breadcrumbs.push({
+    id: 'exchange-rates',
+    title: 'Котировки валют',
+    path: '/exchange-rates',
+    isActive: true,
+    isClickable: false,
+    icon: '💱',
+  });
+
+  return breadcrumbs;
+};

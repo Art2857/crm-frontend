@@ -78,6 +78,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Профиль', href: '/profile', visible: isAuthenticated },
     { name: 'Работы', href: '/works', visible: isAuthenticated },
     { name: 'Выплаты', href: '/payments', visible: isAuthenticated },
+    { name: 'Котировки валют', href: '/exchange-rates', visible: isAuthenticated },
     {
       name: 'Пользователи',
       href: '/admin/users',
