@@ -8,6 +8,7 @@ import { formatCurrency, formatPayment } from '../../utils/currency';
 import { WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
 import { useAppSelector } from '../../store';
+import { useUsersMap } from '../../hooks/shared/useUsersMap';
 
 interface WorkDutiesHistoryProps {
   distributions: DistributionWithDetails[] | null;
@@ -56,15 +57,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   const { user } = useAppSelector((state) => state.auth);
 
   // Создаем карту пользователей для быстрого поиска по id
-  const usersMap = useMemo(() => {
-    const map: Record<string, User> = {};
-    users.forEach((user) => {
-      if (user && user.id) {
-        map[user.id] = user;
-      }
-    });
-    return map;
-  }, [users]);
+  const usersMap = useUsersMap(users);
 
   // Состояние для редактирования effectiveDate
   const [editingEffectiveDate, setEditingEffectiveDate] = useState<

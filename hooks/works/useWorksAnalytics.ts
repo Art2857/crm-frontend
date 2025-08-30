@@ -19,41 +19,50 @@ export function useWorksAnalytics(showArchived = false) {
   /**
    * Загружает аналитические данные
    */
-  const loadAnalytics = useCallback(async (archived = false) => {
-    if (!user?.role) {
-      setError('Пользователь не аутентифицирован');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      logger.debug(`Загружаем аналитику работ (архив: ${archived})...`);
-      const analyticsData = await workAnalyticsService.getAnalytics(user.role, archived);
-      setData(analyticsData);
-      logger.debug('Аналитика работ загружена успешно');
-    } catch (err) {
-      const errorMessage = 'Не удалось загрузить аналитику работ';
-      logger.error(errorMessage, err);
-      setError(errorMessage);
-      // Убираем notification из зависимостей, чтобы избежать бесконечных перерендеров
-      try {
-        notification.showError(errorMessage);
-      } catch (notifErr) {
-        logger.warn('Не удалось показать уведомление об ошибке:', notifErr);
+  const loadAnalytics = useCallback(
+    async (archived = false) => {
+      if (!user?.role) {
+        setError('Пользователь не аутентифицирован');
+        return;
       }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.role]); // Убираем notification из зависимостей
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        logger.debug(`Загружаем аналитику работ (архив: ${archived})...`);
+        const analyticsData = await workAnalyticsService.getAnalytics(
+          user.role,
+          archived
+        );
+        setData(analyticsData);
+        logger.debug('Аналитика работ загружена успешно');
+      } catch (err) {
+        const errorMessage = 'Не удалось загрузить аналитику работ';
+        logger.error(errorMessage, err);
+        setError(errorMessage);
+        // Убираем notification из зависимостей, чтобы избежать бесконечных перерендеров
+        try {
+          notification.showError(errorMessage);
+        } catch (notifErr) {
+          logger.warn('Не удалось показать уведомление об ошибке:', notifErr);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.role]
+  ); // Убираем notification из зависимостей
 
   /**
    * Обновляет данные
    */
-  const refresh = useCallback((archived = false) => {
-    return loadAnalytics(archived);
-  }, [loadAnalytics]);
+  const refresh = useCallback(
+    (archived = false) => {
+      return loadAnalytics(archived);
+    },
+    [loadAnalytics]
+  );
 
   // Автоматическая загрузка при монтировании компонента
   useEffect(() => {

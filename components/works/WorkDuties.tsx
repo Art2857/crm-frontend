@@ -5,6 +5,7 @@ import { User } from '../../types/user';
 import { formatDateForDisplay } from '../../utils/date';
 import { formatPayment } from '../../utils/currency';
 import { formatCurrency } from '../../utils/currency';
+import { useUsersMap } from '../../hooks/shared/useUsersMap';
 
 interface WorkDutiesProps {
   distributions: DistributionWithDetails[] | null;
@@ -25,15 +26,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   showOnlyCurrentUser = false,
 }) => {
   // Создаем карту пользователей для быстрого поиска по id
-  const usersMap = useMemo(() => {
-    const map: Record<string, User> = {};
-    users.forEach((user) => {
-      if (user && user.id) {
-        map[user.id] = user;
-      }
-    });
-    return map;
-  }, [users]);
+  const usersMap = useUsersMap(users);
 
   // Получаем последнее распределение (самое актуальное)
   const latestDistribution = useMemo<DistributionWithDetails | undefined>(

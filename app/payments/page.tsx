@@ -174,7 +174,7 @@ export default function PaymentsPage() {
         setLoading(false);
       }
     },
-    [getWorkPeriodDate]
+    [getWorkPeriodDate, user.role]
   );
 
   // Инициализация данных один раз на монтировании
@@ -282,6 +282,7 @@ export default function PaymentsPage() {
     usersData,
     getUserPeriodDate,
     notification,
+    user.role,
   ]);
 
   // Обработчик создания выплаты

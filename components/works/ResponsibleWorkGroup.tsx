@@ -55,7 +55,9 @@ export default function ResponsibleWorkGroup({
               </h3>
               <p className="text-gray-600 text-sm sm:text-base">
                 {group.totals.worksCount} работ(ы)
-                {showArchived && <span className="ml-2 text-orange-600">(Архив)</span>}
+                {showArchived && (
+                  <span className="ml-2 text-orange-600">(Архив)</span>
+                )}
               </p>
             </div>
           </div>
@@ -89,15 +91,23 @@ export default function ResponsibleWorkGroup({
                   isExpanded ? 'rotate-180' : ''
                 } flex justify-center items-center w-8 h-8 rounded-full hover:bg-gray-200`}
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <svg
+                  className="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </div>
             </div>
           </div>
         </div>
-
-
       </div>
 
       {/* Детали группы */}
@@ -116,22 +126,30 @@ export default function ResponsibleWorkGroup({
                 <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                   <div>
                     <span className="text-gray-500">Зарплата:</span>
-                    <div className="font-medium text-green-700">{formatCurrency(work.salary)}</div>
+                    <div className="font-medium text-green-700">
+                      {formatCurrency(work.salary)}
+                    </div>
                   </div>
                   <div>
                     <span className="text-gray-500">Расходы:</span>
-                    <div className="font-medium text-red-900">{formatCurrency(work.expenses)}</div>
+                    <div className="font-medium text-red-900">
+                      {formatCurrency(work.expenses)}
+                    </div>
                   </div>
                   <div>
                     <span className="text-gray-500">Доход:</span>
-                    <div className={`font-medium ${getIncomeColor(work.income)}`}>
+                    <div
+                      className={`font-medium ${getIncomeColor(work.income)}`}
+                    >
                       {formatCurrency(work.income)}
                     </div>
                   </div>
                   <div>
                     <span className="text-gray-500">Дата:</span>
                     <div className="text-gray-700">
-                      {work.releaseDate ? formatDateForDisplay(work.releaseDate) : 'Не указана'}
+                      {work.releaseDate
+                        ? formatDateForDisplay(work.releaseDate)
+                        : 'Не указана'}
                     </div>
                   </div>
                 </div>
@@ -152,13 +170,25 @@ export default function ResponsibleWorkGroup({
             <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Работа</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Зарплата</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Расходы</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Доход</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">
+                    Работа
+                  </th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700">
+                    Зарплата
+                  </th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700">
+                    Расходы
+                  </th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700">
+                    Доход
+                  </th>
 
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Дата выхода</th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-700">Действия</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-700">
+                    Дата выхода
+                  </th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-700">
+                    Действия
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -168,7 +198,9 @@ export default function ResponsibleWorkGroup({
                     className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}
                   >
                     <td className="py-3 px-4">
-                      <div className="font-medium text-gray-900">{work.name}</div>
+                      <div className="font-medium text-gray-900">
+                        {work.name}
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-right font-medium text-green-700">
                       {formatCurrency(work.salary)}
@@ -176,11 +208,15 @@ export default function ResponsibleWorkGroup({
                     <td className="py-3 px-4 text-right text-red-900 font-medium">
                       {formatCurrency(work.expenses)}
                     </td>
-                    <td className={`py-3 px-4 text-right font-medium ${getIncomeColor(work.income)}`}>
+                    <td
+                      className={`py-3 px-4 text-right font-medium ${getIncomeColor(work.income)}`}
+                    >
                       {formatCurrency(work.income)}
                     </td>
                     <td className="py-3 px-4 text-right text-gray-600">
-                      {work.releaseDate ? formatDateForDisplay(work.releaseDate) : 'Не указана'}
+                      {work.releaseDate
+                        ? formatDateForDisplay(work.releaseDate)
+                        : 'Не указана'}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <Button

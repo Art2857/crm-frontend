@@ -11,12 +11,15 @@ export const workAnalyticsService = {
   /**
    * Получить аналитику всех работ, сгруппированную по ответственному
    */
-  getAnalytics: async (role: Role, archived = false): Promise<WorkAnalyticsResponse> => {
+  getAnalytics: async (
+    role: Role,
+    archived = false
+  ): Promise<WorkAnalyticsResponse> => {
     try {
-      const endpoint = archived 
+      const endpoint = archived
         ? WORKS_ENDPOINTS.analyticsArchived(role)
         : WORKS_ENDPOINTS.analytics(role);
-      
+
       const response = await privateApi.get<WorkAnalyticsResponse>(endpoint);
       return response.data;
     } catch (error) {
@@ -38,10 +41,7 @@ export const workAnalyticsService = {
       );
       return response.data;
     } catch (error) {
-      logger.error(
-        `Error fetching work analytics for user ${userId}:`,
-        error
-      );
+      logger.error(`Error fetching work analytics for user ${userId}:`, error);
       throw error;
     }
   },

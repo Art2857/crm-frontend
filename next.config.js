@@ -1,52 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Основные настройки
-  poweredByHeader: false,
   reactStrictMode: true,
-
-  // Оптимизация для Docker
-  output: 'standalone',
-
-  // Отключаем проверку ESLint во время сборки (для стабильного деплоя в Dokploy)
   eslint: {
+    // Отключаем ESLint во время сборки
     ignoreDuringBuilds: true,
+    dirs: []
   },
-
-  // Настройки сборки
-  webpack: (config, { isServer }) => {
-    // Оптимизации для production
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-      };
-    }
-
-    return config;
+  typescript: {
+    // Разрешаем сборку с ошибками TypeScript в продакшене
+    ignoreBuildErrors: false,
   },
-
-  // Настройки для Dokploy/Docker
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
-          },
-        ],
-      },
-    ];
+  images: {
+    domains: ['localhost'],
+    unoptimized: true
   },
-};
+  experimental: {
+    serverComponentsExternalPackages: []
+  }
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

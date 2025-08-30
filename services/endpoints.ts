@@ -34,7 +34,8 @@ export const WORKS_ENDPOINTS = {
   executers: (role: Role, workId: string) =>
     `${role.toLowerCase()}/works/${workId}/executers`,
   analytics: (role: Role) => `${role.toLowerCase()}/works/analytics`,
-  analyticsArchived: (role: Role) => `${role.toLowerCase()}/works/analytics/archived`,
+  analyticsArchived: (role: Role) =>
+    `${role.toLowerCase()}/works/analytics/archived`,
   analyticsUser: (role: Role, userId: string) =>
     `${role.toLowerCase()}/works/analytics/user/${userId}`,
 } as const;

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUsersMap } from '../shared/useUsersMap';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchAllWorks, fetchUserWorks } from '../../store/slices/works';
 import { fetchAllUsers } from '../../store/slices/users';
@@ -31,15 +32,7 @@ export function useWorksList() {
   const [archivedWorks, setArchivedWorks] = useState<Work[]>([]);
   const notification = useNotification();
 
-  const usersMap = useMemo(() => {
-    const map: Record<string, User> = {};
-    users.forEach((u) => {
-      if (u && u.id) {
-        map[u.id] = u;
-      }
-    });
-    return map;
-  }, [users]);
+  const usersMap = useUsersMap(users);
 
   useEffect(() => {
     const initializeAuth = async () => {

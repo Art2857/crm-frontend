@@ -56,13 +56,26 @@ export default function WorkAnalyticsView({
         <Card className="p-10 text-center">
           <div className="max-w-md mx-auto">
             <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              <svg
+                className="w-10 h-10 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Нет данных для анализа</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Нет данных для анализа
+            </h3>
             <p className="text-gray-500 mb-6">
-              Создайте работы и назначьте ответственных для просмотра аналитической информации
+              Создайте работы и назначьте ответственных для просмотра
+              аналитической информации
             </p>
             {userRole === 'ADMIN' && (
               <Button

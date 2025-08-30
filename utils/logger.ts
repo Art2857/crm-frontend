@@ -1,28 +1,33 @@
-import { isDevelopment } from '../config/env';
+/**
+ * Логгер с поддержкой отключения в продакшене
+ */
 
-type LogArgs = [message?: any, ...optionalParams: any[]];
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-const noop = () => {};
-
-const makeLogger = () => {
-  if (!isDevelopment) {
-    return {
-      debug: noop,
-      info: noop,
-      warn: noop,
-      error: (...args: LogArgs) => console.error(...args),
-    } as const;
+class Logger {
+  info(message: string, data?: any) {
+    if (isDevelopment) {
+      console.log(`[INFO] ${message}`, data);
+    }
   }
-  return {
-    // eslint-disable-next-line no-console
-    debug: (...args: LogArgs) => console.debug(...args),
-    // eslint-disable-next-line no-console
-    info: (...args: LogArgs) => console.info(...args),
-    // eslint-disable-next-line no-console
-    warn: (...args: LogArgs) => console.warn(...args),
-    // eslint-disable-next-line no-console
-    error: (...args: LogArgs) => console.error(...args),
-  } as const;
-};
 
-export const logger = makeLogger();
+  warn(message: string, data?: any) {
+    if (isDevelopment) {
+      console.warn(`[WARN] ${message}`, data);
+    }
+  }
+
+  error(message: string, error?: any) {
+    if (isDevelopment) {
+      console.error(`[ERROR] ${message}`, error);
+    }
+  }
+
+  debug(message: string, data?: any) {
+    if (isDevelopment) {
+      console.debug(`[DEBUG] ${message}`, data);
+    }
+  }
+}
+
+export const logger = new Logger();

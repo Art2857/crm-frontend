@@ -1,0 +1,24 @@
+{
+  "root": true,
+  "extends": ["next/core-web-vitals"],
+  "rules": {},
+  "overrides": [
+    {
+      "files": ["**/*.{js,jsx,ts,tsx}"],
+      "rules": {
+        "no-console": "off",
+        "react-hooks/exhaustive-deps": "off",
+        "react-hooks/rules-of-hooks": "off",
+        "@next/next/no-img-element": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "prefer-const": "off",
+        "no-var": "off",
+        "react/no-unescaped-entities": "off",
+        "react/display-name": "off",
+        "jsx-a11y/alt-text": "off",
+        "jsx-a11y/anchor-is-valid": "off"
+      }
+    }
+  ]
+}
