@@ -12,7 +12,7 @@ interface UseWorkDataParams {
   initialData?: {
     name: string;
     responsibleUserId: string;
-    salary: string;
+    salary: string | number;
     releaseDate?: string;
   };
   isAuthenticated: boolean;
@@ -68,40 +68,44 @@ export const useWorkData = ({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<UpdateWorkDto>(initialData);
+  const [formData, setFormData] = useState<UpdateWorkDto>(() => {
+    const defaultData = {
+      name: '',
+      responsibleUserId: '',
+      salary: '',
+      releaseDate: '',
+    };
+    
+    if (!initialData) return defaultData;
+    
+    return {
+      ...defaultData,
+      ...initialData,
+      salary: typeof initialData.salary === 'number' ? initialData.salary.toString() : initialData.salary,
+    };
+  });
 
   // Используем ref для отслеживания, был ли уже инициализирован formData
   const initializedRef = useRef(false);
 
-  // Обновляем форму при изменении initialData или включении режима редактирования
+  // Обновляем formData всякий раз, когда приходят новые initialData
   useEffect(() => {
-    // Инициализация данных формы если есть initialData
-    if (initialData) {
-      if (isEditing) {
-        // При включении режима редактирования всегда обновляем данные
-        const processedData = { ...initialData };
-
-        // Обработка даты выхода - приводим к формату YYYY-MM-DD без учета TZ
-        if (processedData.releaseDate) {
-          const date = new Date(processedData.releaseDate);
-          if (!isNaN(date.getTime())) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            processedData.releaseDate = `${y}-${m}-${d}`;
-          } else {
-            processedData.releaseDate = '';
-          }
-        }
-
-        setFormData(processedData);
-        initializedRef.current = true;
-      } else {
-        // Сбрасываем флаг инициализации при выключении режима редактирования
-        initializedRef.current = false;
-      }
+    if (initialData && Object.keys(initialData).length > 0) {
+      const processedData: UpdateWorkDto = {
+        name: initialData.name,
+        responsibleUserId: initialData.responsibleUserId,
+        salary: typeof initialData.salary === 'number' ? initialData.salary.toString() : initialData.salary,
+        releaseDate: initialData.releaseDate || '',
+      };
+      
+      setFormData(processedData);
     }
-  }, [initialData, isEditing]);
+  }, [initialData]);
+
+  // Отслеживаем режим редактирования для сброса флага инициализации
+  useEffect(() => {
+    initializedRef.current = isEditing;
+  }, [isEditing]);
 
   // Перенаправляем неавторизованных пользователей
   useEffect(() => {
@@ -125,13 +129,7 @@ export const useWorkData = ({
           newData[name] = value;
         }
 
-        // Не логируем каждое изменение, только в особых случаях для отладки
-        if (
-          process.env.NODE_ENV !== 'production' &&
-          name === 'responsibleUserId'
-        ) {
-          console.log('ResponsibleUserId updated:', newData[name]);
-        }
+
 
         return newData;
       });
@@ -143,16 +141,14 @@ export const useWorkData = ({
   const reload = useCallback(async () => {
     try {
       if (!id) return;
-      console.log('🔄 Перезагрузка данных работы ID:', id);
       setIsLoading(true);
       const updatedWorkData = await dispatch(
         fetchWorkById({ role, workId: id })
       ).unwrap();
-      console.log('✅ Данные работы успешно обновлены:', updatedWorkData);
       setIsLoading(false);
       return updatedWorkData;
     } catch (error) {
-      console.error('❌ Ошибка при перезагрузке данных работы:', error);
+      console.error('Ошибка при перезагрузке данных работы:', error);
       setIsLoading(false);
       showError(handleError(error).message);
     }
@@ -170,21 +166,17 @@ export const useWorkData = ({
           ...formData,
         };
 
-        console.log('📝 Отправка данных работы:', dataToSubmit);
-
         const updatedWork = await dispatch(
           updateWork({ role, id, data: dataToSubmit })
         ).unwrap();
-        console.log('✅ Работа успешно обновлена:', updatedWork);
 
         showSuccess('Работа успешно обновлена');
         setIsEditing(false);
 
         // Перезагружаем данные после обновления
-        console.log('🔄 Запуск перезагрузки данных после обновления работы');
         await reload();
       } catch (error) {
-        console.error('❌ Ошибка при обновлении работы:', error);
+        console.error('Ошибка при обновлении работы:', error);
         showError(handleError(error).message);
       } finally {
         setIsLoading(false);

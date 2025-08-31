@@ -11,6 +11,7 @@ import WorkForm from '../../../components/works/WorkForm';
 import WorkDuties from '../../../components/works/WorkDuties';
 import WorkDutiesForm from '../../../components/works/WorkDutiesForm';
 import WorkDutiesHistory from '../../../components/works/WorkDutiesHistory';
+import WorkIncomeManagement from '../../../components/work-income/WorkIncomeManagement';
 import { formatCurrency } from '../../../utils/currency';
 import { formatDateForDisplay } from '../../../utils/date';
 import { useWorkDetail } from '../../../hooks/works/useWorkDetail';
@@ -49,6 +50,9 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     handleArchiveWork,
     handleRestoreWork,
   } = useWorkDetail(id);
+
+  // Состояние для табов (включая новый таб доходов)
+  const [activeTab, setActiveTab] = React.useState<'duties' | 'income'>('duties');
 
   // Если данные еще не загружены, показываем индикатор загрузки
   if (isLoading || !workData) {
@@ -441,7 +445,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* Секция обязанностей */}
+        {/* Главные табы для переключения между разделами */}
         <div className="mb-8">
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
             {/* Заголовок секции */}
@@ -459,51 +463,31 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                       />
                     </svg>
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">
-                      Управление обязанностями
+                      Управление проектом
                     </h2>
                     <p className="text-sm text-gray-600">
-                      Распределение ролей и ответственности в проекте
+                      Обязанности команды и история поступлений средств
                     </p>
                   </div>
                 </div>
 
-                {canEdit && !isEditingDuties && dutiesTab === 'current' && (
-                  <Button
-                    onClick={() => setIsEditingDuties(true)}
-                    className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
-                  >
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
-                    Распределить обязанности
-                  </Button>
-                )}
+
               </div>
             </div>
 
-            {/* Табы для переключения между текущими обязанностями и историей */}
+            {/* Главные табы */}
             <div className="border-b border-gray-200">
               <div className="flex">
                 <button
-                  onClick={() => setDutiesTab('current')}
+                  onClick={() => setActiveTab('duties')}
                   className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
-                    dutiesTab === 'current'
+                    activeTab === 'duties'
                       ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                   }`}
@@ -519,16 +503,16 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                       />
                     </svg>
-                    Текущие обязанности
+                    Обязанности команды
                   </div>
                 </button>
                 <button
-                  onClick={() => setDutiesTab('history')}
+                  onClick={() => setActiveTab('income')}
                   className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
-                    dutiesTab === 'history'
+                    activeTab === 'income'
                       ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                   }`}
@@ -544,14 +528,72 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
                       />
                     </svg>
-                    История изменений
+                    История поступлений
                   </div>
                 </button>
               </div>
             </div>
+
+            {/* Вложенные табы для раздела обязанностей */}
+            {activeTab === 'duties' && (
+              <div className="border-b border-gray-200 bg-gray-25">
+                <div className="flex">
+                  <button
+                    onClick={() => setDutiesTab('current')}
+                    className={`flex-1 py-3 px-6 text-center font-medium text-xs transition-all duration-200 ${
+                      dutiesTab === 'current'
+                        ? 'border-b-2 border-primary-500 text-primary-600 bg-white'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg
+                        className="w-3 h-3 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Текущие обязанности
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setDutiesTab('history')}
+                    className={`flex-1 py-3 px-6 text-center font-medium text-xs transition-all duration-200 ${
+                      dutiesTab === 'history'
+                        ? 'border-b-2 border-primary-500 text-primary-600 bg-white'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg
+                        className="w-3 h-3 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      История изменений
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Отображаем уведомления для обязанностей */}
             {(dutiesSuccessMessage || dutiesErrorMessage) && (
@@ -582,77 +624,88 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
 
             {/* Контент табов */}
             <div className="p-6">
-              {dutiesTab === 'current' ? (
+              {activeTab === 'duties' ? (
                 <div>
-                  {isEditingDuties ? (
+                  {dutiesTab === 'current' ? (
                     <div>
-                      <div className="mb-6 pb-4 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-                          <svg
-                            className="w-5 h-5 mr-2 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                            />
-                          </svg>
-                          Распределение обязанностей
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Назначьте участников проекта и определите их роли
-                        </p>
-                      </div>
-                      <WorkDutiesForm
-                        workId={id}
-                        duties={duties}
-                        users={users}
-                        onSubmit={handleDutiesSubmit}
-                        onCancel={() => setIsEditingDuties(false)}
-                        workSalary={workData.salary}
-                        currentDistribution={
-                          distributions.length > 0 ? distributions[0] : null
-                        }
-                        isLoading={false}
-                      />
+                      {isEditingDuties ? (
+                        <div>
+                          <div className="mb-6 pb-4 border-b border-gray-200">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                              <svg
+                                className="w-5 h-5 mr-2 text-green-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                />
+                              </svg>
+                              Распределение обязанностей
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Назначьте участников проекта и определите их роли
+                            </p>
+                          </div>
+                          <WorkDutiesForm
+                            workId={id}
+                            duties={duties}
+                            users={users}
+                            onSubmit={handleDutiesSubmit}
+                            onCancel={() => setIsEditingDuties(false)}
+                            workSalary={workData.salary}
+                            currentDistribution={
+                              distributions.length > 0 ? distributions[0] : null
+                            }
+                            isLoading={false}
+                          />
+                        </div>
+                      ) : (
+                        <WorkDuties
+                          distributions={distributions}
+                          users={users}
+                          workSalary={workData.salary}
+                          currentUserId={user?.id}
+                          showOnlyCurrentUser={showOnlyCurrentUserDuties}
+                          canEdit={canEdit && !isEditingDuties}
+                          onEditDuties={() => setIsEditingDuties(true)}
+                        />
+                      )}
                     </div>
                   ) : (
-                    <WorkDuties
-                      distributions={distributions}
-                      users={users}
-                      workSalary={workData.salary}
-                      currentUserId={user?.id}
-                      showOnlyCurrentUser={showOnlyCurrentUserDuties}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div>
-                  {isLoadingHistory ? (
-                    <div className="flex flex-col items-center justify-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mb-4"></div>
-                      <p className="text-gray-500 text-sm">
-                        Загрузка истории изменений...
-                      </p>
+                    <div>
+                      {isLoadingHistory ? (
+                        <div className="flex flex-col items-center justify-center py-12">
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mb-4"></div>
+                          <p className="text-gray-500 text-sm">
+                            Загрузка истории изменений...
+                          </p>
+                        </div>
+                      ) : (
+                        <WorkDutiesHistory
+                          distributions={distributions}
+                          workHistory={workHistory}
+                          users={users}
+                          workSalary={workData.salary}
+                          currentUserId={user?.id}
+                          showOnlyCurrentUser={showOnlyCurrentUserDuties}
+                          onUpdate={loadDutiesHistory}
+                          canEdit={canEdit}
+                        />
+                      )}
                     </div>
-                  ) : (
-                    <WorkDutiesHistory
-                      distributions={distributions}
-                      workHistory={workHistory}
-                      users={users}
-                      workSalary={workData.salary}
-                      currentUserId={user?.id}
-                      showOnlyCurrentUser={showOnlyCurrentUserDuties}
-                      onUpdate={loadDutiesHistory}
-                      canEdit={canEdit}
-                    />
                   )}
                 </div>
-              )}
+              ) : activeTab === 'income' ? (
+                <WorkIncomeManagement
+                  workId={id}
+                  canEdit={canEdit}
+                />
+              ) : null}
             </div>
           </div>
         </div>

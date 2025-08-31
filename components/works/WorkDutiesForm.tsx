@@ -135,7 +135,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
   // Инициализация формы с текущими данными распределения
   useEffect(() => {
     if (currentDistribution) {
-      console.log('Инициализация формы с данными:', currentDistribution);
+
       const items = currentDistribution.details.map((detail) => ({
         dutyId: detail.duty.id,
         userId: detail.user.id,
@@ -143,7 +143,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
         percentage:
           detail.percentage !== null ? detail.percentage.toString() : '',
       }));
-      console.log('Сформированные элементы формы:', items);
+
       setDutyItems(items);
     } else {
       setDutyItems([]);

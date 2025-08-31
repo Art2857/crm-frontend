@@ -50,14 +50,12 @@ export const useWorkDuties = ({
 
   // Загрузка распределений обязанностей для работы
   const loadDistributions = useCallback(async () => {
-    if (!workId || isLoadingRef.current) return null;
+    if (!workId || !role || isLoadingRef.current) {
+      return null;
+    }
 
     try {
       loadCountRef.current += 1;
-      const loadId = loadCountRef.current;
-      console.log(
-        `🔄 [${loadId}] Начинаем загрузку распределений для работы ID=${workId}, зарплата=${workSalary}`
-      );
       setIsLoading(true);
       isLoadingRef.current = true;
 
@@ -69,20 +67,15 @@ export const useWorkDuties = ({
         const result = await dispatch(
           fetchDistributionsByWorkId({ role, workId })
         ).unwrap();
-        console.log(
-          `✅ [${loadId}] Загружены распределения для работы ID=${workId}:`,
-          result
-        );
-        console.log('Количество записей:', result?.length || 0);
 
         setIsInitiallyLoaded(true);
         return result;
       } catch (error) {
-        console.error('❌ Ошибка при запросе распределений:', error);
+        console.error('Ошибка при запросе распределений:', error);
         throw error;
       }
     } catch (error) {
-      console.error('❌ Ошибка при загрузке распределений:', error);
+      console.error('Ошибка при загрузке распределений:', error);
       setErrorMessage('Не удалось загрузить распределения обязанностей');
       return null;
     } finally {
@@ -95,9 +88,6 @@ export const useWorkDuties = ({
   useEffect(() => {
     // Сброс состояния при смене работы
     if (prevWorkIdRef.current !== workId) {
-      console.log(
-        `🔄 ID работы изменился: ${prevWorkIdRef.current} -> ${workId}`
-      );
       setIsInitiallyLoaded(false);
 
       // Очищаем текущие распределения
@@ -107,10 +97,6 @@ export const useWorkDuties = ({
     }
 
     if (workId && !isInitiallyLoaded) {
-      console.log(
-        '🔄 Выполняем начальную загрузку распределений для работы ID:',
-        workId
-      );
       loadDistributions();
     }
   }, [workId, isInitiallyLoaded, loadDistributions, dispatch]);
@@ -126,17 +112,7 @@ export const useWorkDuties = ({
       !isEditingDuties &&
       !isLoadingRef.current
     ) {
-      console.log(
-        '🔔 Зарплата работы изменилась:',
-        prevWorkSalaryRef.current,
-        '->',
-        workSalary,
-        'isInitiallyLoaded:',
-        isInitiallyLoaded
-      );
-
       // Очищаем текущие распределения и перезагружаем
-      console.log('🔄 Перезагружаем распределения из-за изменения зарплаты');
       dispatch(clearWorkDistributions());
       loadDistributions();
     }
@@ -163,9 +139,6 @@ export const useWorkDuties = ({
       // Проверяем, произошло ли действительное изменение режима (был в режиме редактирования, теперь вышли)
       const isEditModeChanged = !isEditingDuties && !isLoadingRef.current;
       if (isEditModeChanged) {
-        console.log(
-          '🔄 Перезагружаем распределения после выхода из режима редактирования'
-        );
         loadDistributions();
       }
     }
@@ -199,8 +172,6 @@ export const useWorkDuties = ({
       clearMessages(); // Очищаем предыдущие сообщения
 
       try {
-        console.log('📝 Обрабатываем обязанности для работы ID:', workId);
-
         // Фильтруем элементы без обязательных полей
         const validDuties = duties.filter((duty) => duty.dutyId && duty.userId);
 
@@ -214,10 +185,6 @@ export const useWorkDuties = ({
         if (!historyId && currentDistribution) {
           // Если есть текущее распределение, используем его historyId для обновления
           historyId = currentDistribution.workHistory.id;
-          console.log(
-            '✅ Используем существующую историю работы для обновления:',
-            historyId
-          );
         } else if (!historyId) {
           try {
             // Получаем последнюю запись истории работы
@@ -226,12 +193,8 @@ export const useWorkDuties = ({
               workId
             );
             historyId = latestHistory.id;
-            console.log(
-              '✅ Получена последняя запись истории работы:',
-              latestHistory
-            );
           } catch (error) {
-            console.error('❌ Ошибка при получении истории работы:', error);
+            console.error('Ошибка при получении истории работы:', error);
             throw new Error('Не удалось получить историю работы');
           }
         }
@@ -242,9 +205,7 @@ export const useWorkDuties = ({
         }
 
         // Всегда создаём новое распределение (POST), независимо от наличия предыдущих
-        let result;
-        console.log('🔄 Создаем новое распределение для ID:', historyId);
-        result = await dispatch(
+        const result = await dispatch(
           createDistribution({
             role,
             workHistoryId: historyId,
@@ -252,7 +213,6 @@ export const useWorkDuties = ({
             effectiveDate,
           })
         ).unwrap();
-        console.log('✅ Распределение успешно создано:', result);
 
         // Обновляем список распределений для текущей работы
         await dispatch(fetchDistributionsByWorkId({ role, workId })).unwrap();
@@ -262,7 +222,7 @@ export const useWorkDuties = ({
 
         return result;
       } catch (error: any) {
-        console.error('❌ Ошибка при обработке распределения:', error);
+        console.error('Ошибка при обработке распределения:', error);
 
         // Улучшенная обработка ошибок
         let errorMsg = 'Не удалось обновить распределение обязанностей';
@@ -294,10 +254,7 @@ export const useWorkDuties = ({
 
         setErrorMessage(errorMsg);
 
-        // Если есть дополнительные детали, логируем их отдельно
-        if (error.details) {
-          console.log('Детали ошибки:', error.details);
-        }
+
 
         return null;
       } finally {
@@ -315,10 +272,6 @@ export const useWorkDuties = ({
 
   // Явно перезагружаем данные распределений
   const forceReload = useCallback(() => {
-    console.log(
-      '🔄 Принудительная перезагрузка распределений для работы ID:',
-      workId
-    );
     dispatch(clearWorkDistributions());
     return loadDistributions();
   }, [dispatch, workId, loadDistributions]);

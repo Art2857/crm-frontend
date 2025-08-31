@@ -28,7 +28,7 @@ export function useExchangeRates() {
 
   // ВРЕМЕННАЯ ИНИЦИАЛИЗАЦИЯ - только из IndexedDB БЕЗ фонового обновления
   useEffect(() => {
-    console.log('🛡️ БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ - только из IndexedDB');
+
     const safeInit = async () => {
       try {
         // Загружаем ТОЛЬКО из IndexedDB без фонового обновления
@@ -36,7 +36,7 @@ export function useExchangeRates() {
         const { loadFromCache } = await import('../../store/slices/exchangeRates');
         
         await dispatch(loadFromCache('USD'));
-        console.log('✅ Данные загружены ТОЛЬКО из IndexedDB');
+
       } catch (error) {
         console.error('Ошибка безопасной инициализации:', error);
       }

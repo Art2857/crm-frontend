@@ -135,7 +135,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       maxValue: formatNumberValue(maxValue),
     };
 
-    console.log('Отправляемые данные:', dutyData);
+
 
     const resultAction = await dispatch(
       updateDuty({ role: user.role, id: dutyId, data: dutyData })

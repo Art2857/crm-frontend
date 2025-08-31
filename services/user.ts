@@ -61,7 +61,7 @@ export const userService = {
   // Получение одного пользователя по ID
   getById: async (role: Role, id: string): Promise<UserWithHistory> => {
     try {
-      console.log(`Запрос пользователя с ID: ${id}`);
+
 
       // Делаем запрос к API без параметров в URL, которые могут вызывать проблемы с CORS
       const response = await privateApi.get<UserWithHistory>(

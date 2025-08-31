@@ -38,8 +38,6 @@ export const toDateObject = (
   try {
     // Проверяем, является ли строка датой в российском формате DD.MM.YYYY
     if (typeof date === 'string' && /^\d{2}\.\d{2}\.\d{4}$/.test(date)) {
-      console.log('🗓️ Обнаружен российский формат даты:', date);
-
       // Парсим российскую дату напрямую
       const parts = date.split('.');
       const day = parseInt(parts[0], 10);
@@ -54,10 +52,8 @@ export const toDateObject = (
         russianDate.getMonth() === month &&
         russianDate.getDate() === day
       ) {
-        console.log('🗓️ Результат парсинга российской даты:', russianDate);
         return russianDate;
       } else {
-        console.error('🗓️ Невалидная российская дата:', date);
         return null;
       }
     }

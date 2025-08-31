@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { dashboardService, DashboardData } from '../../services/dashboard';
 import { Role } from '../../types/user';
+import { logout } from './auth';
 
 interface DashboardState {
   data: DashboardData | null;
@@ -30,7 +31,13 @@ export const fetchDashboardData = createAsyncThunk(
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
-  reducers: {},
+  reducers: {
+    clearDashboardData: (state) => {
+      state.data = null;
+      state.error = null;
+      state.isLoading = false;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchDashboardData.pending, (state) => {
@@ -44,9 +51,15 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      // Очищаем данные дашборда при выходе из системы
+      .addCase(logout, (state) => {
+        state.data = null;
+        state.error = null;
+        state.isLoading = false;
       });
   },
 });
 
-export const {} = dashboardSlice.actions;
+export const { clearDashboardData } = dashboardSlice.actions;
 export default dashboardSlice.reducer;

@@ -33,7 +33,7 @@ export const fetchAllDuties = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос обязанностей был отменен, игнорируем ошибку');
+
         return [];
       }
       return rejectWithValue(
@@ -55,7 +55,7 @@ export const fetchDutyById = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос обязанности по ID был отменен, игнорируем ошибку');
+
         return null;
       }
       return rejectWithValue(

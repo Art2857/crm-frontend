@@ -134,7 +134,7 @@ class ExchangeRateCacheService {
     if (diffDays >= 1) {
       store.dispatch(cleanOldCache(365)); // Оставляем данные за год
       localStorage.setItem('exchangeRatesLastCleanup', now.toISOString());
-      console.log('🧹 Запущена очистка старого кеша');
+
     }
   }
 
@@ -257,7 +257,7 @@ class ExchangeRateCacheService {
     }));
 
     if (result.payload) {
-      console.log('✅ Обновление завершено');
+
       return result.payload;
     }
 
@@ -276,7 +276,7 @@ class ExchangeRateCacheService {
    * Очистка всего кеша
    */
   async clearCache() {
-    console.log('🧹 Очистка кеша...');
+
     
     // Очищаем Redux
     const { clearCache } = await import('../store/slices/exchangeRates');
@@ -291,7 +291,7 @@ class ExchangeRateCacheService {
     this.initialized = false;
     this.initPromise = null;
 
-    console.log('✅ Кеш очищен');
+
   }
 
   /**
@@ -340,7 +340,7 @@ class ExchangeRateCacheService {
     // Предзагружаем данные за последний месяц
     try {
       await this.getChartData(currencyCode, lastMonth, now);
-      console.log('📈 Данные за месяц предзагружены');
+
     } catch (error) {
       console.warn('⚠️  Предзагрузка данных не удалась:', error);
     }

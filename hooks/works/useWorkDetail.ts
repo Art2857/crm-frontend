@@ -14,6 +14,7 @@ import { WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
 import { privateApi } from '../../services/ApiClient';
 import { User } from '../../types/user';
+import { toDateObject, formatDateToISO } from '../../utils/date';
 
 type DutiesTabType = 'current' | 'history';
 
@@ -66,11 +67,22 @@ export function useWorkDetail(id: string) {
 
   const initialWorkData = useMemo(() => {
     if (!workData) return undefined;
+    
+    // Преобразуем дату в формат YYYY-MM-DD для input type="date"
+    let releaseDateFormatted = '';
+    if (workData.releaseDate) {
+      // Используем функцию из utils/date.ts для правильного парсинга российских дат
+      const dateObj = toDateObject(workData.releaseDate);
+      if (dateObj) {
+        releaseDateFormatted = formatDateToISO(dateObj);
+      }
+    }
+    
     return {
       name: workData.name,
       responsibleUserId: workData.responsibleUserId,
       salary: workData.salary,
-      releaseDate: workData.releaseDate,
+      releaseDate: releaseDateFormatted,
     };
   }, [workData]);
 

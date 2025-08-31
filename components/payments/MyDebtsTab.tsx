@@ -30,7 +30,7 @@ export default function MyDebtsTab({
   const { formatRussian } = useDateManager();
   // Для отладки структуры данных
   // eslint-disable-next-line no-console
-  console.log('myDebts:', myDebts);
+
   if (myDebts.length === 0) {
     return (
       <Card className="p-12 text-center">

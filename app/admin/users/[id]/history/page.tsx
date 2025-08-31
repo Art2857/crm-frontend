@@ -35,7 +35,7 @@ export default function UserHistoryPage({
     try {
       setRefreshing(true);
       await dispatch(fetchUserHistory({ role: user.role, userId }));
-      console.log('История пользователя обновлена');
+
     } catch (error) {
       console.error('Ошибка при обновлении истории:', error);
       setError(
@@ -90,7 +90,7 @@ export default function UserHistoryPage({
   // Добавляем логирование истории для отладки
   useEffect(() => {
     if (currentUser?.history) {
-      console.log('История пользователя:', currentUser.history);
+
     }
   }, [currentUser]);
 
@@ -172,9 +172,6 @@ export default function UserHistoryPage({
   // Вычисление возраста на основе даты рождения
   const calculateAge = (birthdayString: string | null): number | null => {
     if (!birthdayString) return null;
-
-    // Трассировка для отладки
-    console.log('Calculating age from birthday:', birthdayString);
 
     // Попытка преобразовать дату с использованием toDateObject
     const birthday = toDateObject(birthdayString);
@@ -333,12 +330,6 @@ export default function UserHistoryPage({
                             if (historyItem.birthday) {
                               try {
                                 birthdayDisplay = formatDateForDisplay(
-                                  historyItem.birthday
-                                );
-                                console.log(
-                                  'Formatted birthday:',
-                                  birthdayDisplay,
-                                  'from:',
                                   historyItem.birthday
                                 );
                               } catch (e) {

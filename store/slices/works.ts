@@ -64,7 +64,7 @@ export const fetchAllWorks = createAsyncThunk(
     } catch (error) {
       // Проверяем на отмененный запрос
       if (error instanceof Error && error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос всех работ был отменен, возвращаем пустой массив');
+
         return []; // Возвращаем пустой массив для отмененных запросов
       }
       return rejectWithValue(
@@ -85,9 +85,6 @@ export const fetchUserWorks = createAsyncThunk(
     } catch (error) {
       // Проверяем на отмененный запрос
       if (error instanceof Error && error.message === 'REQUEST_CANCELLED') {
-        console.log(
-          'Запрос работ пользователя был отменен, возвращаем пустой массив'
-        );
         return []; // Возвращаем пустой массив для отмененных запросов
       }
       return rejectWithValue(

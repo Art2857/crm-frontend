@@ -163,7 +163,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     }
 
     // eslint-disable-next-line no-console
-    console.log('Fetching user with ID:', userId);
+
 
     // Загрузка данных пользователя
     dispatch(fetchUserById({ role: user.role, id: userId }));
@@ -178,7 +178,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (currentUser) {
       // eslint-disable-next-line no-console
-      console.log('Заполняем форму данными пользователя:', currentUser);
+
 
       // Заполнение формы профиля
       setProfileValue('firstName', currentUser.firstName || '');
@@ -200,7 +200,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           if (!isNaN(date.getTime())) {
             const formattedDate = date.toISOString().split('T')[0];
             // eslint-disable-next-line no-console
-            console.log('Форматированная дата для формы:', formattedDate);
+
             setProfileValue('birthday', formattedDate);
           } else {
             console.warn(
@@ -215,7 +215,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         }
       } else {
         // eslint-disable-next-line no-console
-        console.log('Дата рождения отсутствует (null или undefined)');
+
         setProfileValue('birthday', '');
       }
 
@@ -295,7 +295,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
       // Логируем данные формы для отладки
       // eslint-disable-next-line no-console
-      console.log('Данные формы перед отправкой:', data);
+
 
       // Валидация перед отправкой
       if (!validateProfileForm()) {
@@ -349,7 +349,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
       // Отправляем запрос на обновление профиля
       // eslint-disable-next-line no-console
-      console.log('Отправляем данные на сервер:', updatedData);
+
       const resultAction = await dispatch(
         updateUserProfile({ userId, role: user.role, data: updatedData })
       );
@@ -359,7 +359,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
         // Обновляем данные пользователя и историю после успешного обновления
         // eslint-disable-next-line no-console
-        console.log('Обновляем данные пользователя после успешного сохранения');
+
         await dispatch(fetchUserById({ role: user.role, id: userId }));
 
         // После успешного обновления базовой информации сбрасываем форму конфиденциальных данных

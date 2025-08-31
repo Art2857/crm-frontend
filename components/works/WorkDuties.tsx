@@ -13,6 +13,8 @@ interface WorkDutiesProps {
   workSalary: string;
   currentUserId?: string;
   showOnlyCurrentUser?: boolean;
+  canEdit?: boolean;
+  onEditDuties?: () => void;
 }
 
 /**
@@ -24,6 +26,8 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   workSalary,
   currentUserId,
   showOnlyCurrentUser = false,
+  canEdit = false,
+  onEditDuties,
 }) => {
   // Создаем карту пользователей для быстрого поиска по id
   const usersMap = useUsersMap(users);
@@ -51,9 +55,34 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
     return (
       <Card>
         <div className="py-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Обязанности
-          </h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Обязанности
+            </h3>
+            
+            {/* Кнопка создания обязанностей */}
+            {canEdit && onEditDuties && (
+              <button
+                onClick={onEditDuties}
+                className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
+              >
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                Распределить обязанности
+              </button>
+            )}
+          </div>
           <p className="text-gray-500 italic">Нет назначенных обязанностей</p>
         </div>
       </Card>
@@ -65,9 +94,34 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
     return (
       <Card>
         <div className="py-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Обязанности
-          </h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Обязанности
+            </h3>
+            
+            {/* Кнопка создания обязанностей (только если есть права) */}
+            {canEdit && onEditDuties && (
+              <button
+                onClick={onEditDuties}
+                className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
+              >
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                Распределить обязанности
+              </button>
+            )}
+          </div>
           <p className="text-gray-500 italic">
             У вас нет назначенных обязанностей по этой работе
           </p>
@@ -81,14 +135,39 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
       <div className="space-y-6">
         <div className="pb-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
-            <p className="text-sm text-gray-500">
-              Обновлено:{' '}
-              {formatDateForDisplay(
-                latestDistribution.workHistory.effectiveDate ||
-                  latestDistribution.createdAt
-              )}
-            </p>
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
+              <p className="text-sm text-gray-500">
+                Обновлено:{' '}
+                {formatDateForDisplay(
+                  latestDistribution.workHistory.effectiveDate ||
+                    latestDistribution.createdAt
+                )}
+              </p>
+            </div>
+            
+            {/* Кнопка редактирования обязанностей */}
+            {canEdit && onEditDuties && (
+              <button
+                onClick={onEditDuties}
+                className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
+              >
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                Распределить обязанности
+              </button>
+            )}
           </div>
 
           <div className="overflow-x-auto">

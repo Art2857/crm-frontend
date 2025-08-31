@@ -5,6 +5,7 @@ import { fetchDashboardData } from '../../store/slices/dashboard';
 import { formatCurrency } from '../../utils/currency';
 import { formatDateForDisplay } from '../../utils/date';
 import { User } from '../../types/user';
+import { logger } from '../../utils/logger';
 
 export function useDashboard() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -13,12 +14,28 @@ export function useDashboard() {
   const router = useRouter();
 
   useEffect(() => {
+    logger.debug('useDashboard useEffect triggered', { 
+      isAuthenticated, 
+      user: user ? { id: user.id, role: user.role, email: user.email } : null 
+    });
+
     if (!isAuthenticated) {
+      logger.debug('useDashboard: не аутентифицирован, перенаправляем на логин');
       router.push('/login');
       return;
     }
-    dispatch(fetchDashboardData({ role: user.role }));
-  }, [isAuthenticated, router, dispatch]);
+    
+    // Проверяем, что пользователь полностью загружен перед запросом данных
+    if (user && user.role) {
+      logger.debug('useDashboard: загружаем данные дашборда для роли', user.role);
+      dispatch(fetchDashboardData({ role: user.role }));
+    } else {
+      logger.debug('useDashboard: пользователь или роль не загружены', { 
+        hasUser: !!user, 
+        role: user?.role 
+      });
+    }
+  }, [isAuthenticated, user, router, dispatch]);
 
   const getFullName = (u: User | null): string => {
     if (!u) return '';

@@ -46,9 +46,7 @@ export default function LoginPage() {
   useEffect(() => {
     // Если пользователь уже авторизован и не в режиме добавления аккаунта,
     // перенаправляем на дашборд
-    console.log('isAuthenticated: ', isAuthenticated);
-    console.log('!showBackButton: ', !showBackButton);
-    console.log('!isAddMode: ', !isAddMode);
+
     if (isAuthenticated && !showBackButton && !isAddMode) {
       router.push('/dashboard');
     } else {

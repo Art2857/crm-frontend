@@ -50,19 +50,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     }
 
     // Логируем только при первом рендере или реальном изменении значения
-    useEffect(() => {
-      if (process.env.NODE_ENV !== 'production') {
-        if (isFirstRender.current) {
-          // eslint-disable-next-line no-console
-          console.log(
-            'Select initialized with:',
-            selectProps.name,
-            selectProps.value
-          );
-          isFirstRender.current = false;
-        }
-      }
-    }, [selectProps.name, selectProps.value]);
+
 
     return (
       <div className={`${fullWidth ? 'w-full' : ''} mb-4`}>

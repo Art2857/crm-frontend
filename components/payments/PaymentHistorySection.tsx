@@ -43,8 +43,7 @@ export default function PaymentHistorySection({
         <div className="space-y-3">
           <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3">
             {paymentHistory.map((payment) => {
-              console.log('Payment in component:', payment);
-              console.log('Payment type:', payment.type);
+
 
               return (
                 <div

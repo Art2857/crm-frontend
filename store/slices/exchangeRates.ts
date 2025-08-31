@@ -234,18 +234,14 @@ export const convertCurrency = createAsyncThunk(
         const rateKey = createRateKey(fromCurrency, date);
         rate = state.exchangeRates.rates[rateKey] || null;
         
-        console.log(`🔍 Ищем курс для ключа: ${rateKey}`, {
-          found: !!rate,
-          availableKeys: Object.keys(state.exchangeRates.rates).filter(k => k.includes(fromCurrency)),
-          totalRates: Object.keys(state.exchangeRates.rates).length
-        });
+
         
         // Если в Redux нет, ищем в IndexedDB
         if (!rate) {
-          console.log(`💾 Fallback к IndexedDB для ${fromCurrency} на ${date}`);
+
           const cached = await indexedDBManager.getRateByDate(fromCurrency, date);
           rate = cached ? cacheToExchangeRate(cached) : null;
-          console.log(`💾 IndexedDB результат:`, !!rate);
+
         }
       } else {
         // Используем последний курс
@@ -260,17 +256,17 @@ export const convertCurrency = createAsyncThunk(
 
       if (!rate) {
         // Последний fallback - попробуем найти любые данные USD и подгрузить недостающие
-        console.log(`❌ Курс ${fromCurrency} не найден в кеше для даты ${date || 'latest'}`);
+
         
         // Попробуем подгрузить данные для этой даты с API
         if (date && fromCurrency === 'USD') {
-          console.log(`🌐 Подгружаем данные с API для USD на ${date}`);
+
           try {
             const apiService = await import('../../services/exchangeRates');
             const result = await apiService.exchangeRatesService.getRateByDate('USD', new Date(date));
             if (result) {
               rate = result;
-              console.log(`✅ Получен курс с API:`, rate);
+
             }
           } catch (apiError) {
             console.warn('API fallback failed:', apiError);
@@ -344,11 +340,7 @@ const exchangeRatesSlice = createSlice({
       state.rates[key] = rate;
       
       // ЭКСТРЕННЫЙ ФИКС: Очищаем latestRates полностью перед обновлением
-      console.log(`🚨 addRate: ПОЛНОСТЬЮ ОБНОВЛЯЕМ ${rate.currencyCode}`, {
-        newRate: rate,
-        oldLatest: state.latestRates[rate.currencyCode],
-        clearingLatestRates: true
-      });
+
       
       // Очищаем старые данные для этой валюты
       delete state.latestRates[rate.currencyCode];
@@ -412,19 +404,19 @@ const exchangeRatesSlice = createSlice({
       .addCase(updateFromAPI.fulfilled, (state, action) => {
         state.isUpdating = false;
         
-        console.log('🚨 updateFromAPI.fulfilled - АНАЛИЗИРУЕМ ДАННЫЕ:', action.payload);
+
         
         if (action.payload) {
           // ФИКС: Анализируем что приходит и НЕ перезаписываем более свежие данные
           action.payload.rates.forEach(rate => {
-            console.log(`📊 Анализируем курс: ${rate.date} = ${rate.rate}`);
+
             
             const key = createRateKey(rate.currencyCode, rate.date);
             
             // Проверяем есть ли уже более свежие данные
             const existingLatest = state.latestRates[rate.currencyCode];
             if (existingLatest && existingLatest.date > rate.date) {
-              console.log(`⚠️ ПРОПУСКАЕМ СТАРЫЙ КУРС: ${rate.date} (есть более свежий ${existingLatest.date})`);
+
               return; // Пропускаем старые данные
             }
             
@@ -433,7 +425,7 @@ const exchangeRatesSlice = createSlice({
             // Обновляем последний курс только если это действительно свежие данные
             const currentLatest = state.latestRates[rate.currencyCode];
             if (!currentLatest || rate.date > currentLatest.date) {
-              console.log(`✅ ОБНОВЛЯЕМ ПОСЛЕДНИЙ КУРС: ${rate.date} = ${rate.rate}`);
+
               state.latestRates[rate.currencyCode] = rate;
             }
           });
@@ -493,25 +485,21 @@ export const selectLatestRate = (state: { exchangeRates: ExchangeRatesState }, c
   // Сначала пробуем latestRates (как в convertCurrency строка 252)
   let rate = state.exchangeRates.latestRates[currencyCode] || null;
   
-  console.log(`🎯 selectLatestRate для ${currencyCode}:`, {
-    fromLatestRates: rate,
-    latestRatesKeys: Object.keys(state.exchangeRates.latestRates),
-    totalRates: Object.keys(state.exchangeRates.rates).length
-  });
+
   
   // Если нет в latestRates, ищем в rates (fallback как в convertCurrency)
   if (!rate) {
-    console.log(`📊 Ищем в rates, нет в latestRates`);
+
     const currencyRates = Object.entries(state.exchangeRates.rates)
       .filter(([key]) => key.startsWith(`${currencyCode}-`))
       .map(([, rate]) => rate)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     rate = currencyRates[0] || null;
-    console.log(`📊 Найден в rates:`, rate);
+
   }
   
-  console.log(`✅ ИТОГОВЫЙ РЕЗУЛЬТАТ selectLatestRate:`, rate);
+
   return rate;
 };
 

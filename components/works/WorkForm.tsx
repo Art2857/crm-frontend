@@ -47,15 +47,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
     };
   });
 
-  // Отладочный логгинг только при первом рендере или серьезных изменениях
-  useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') {
-      if (isFirstRender.current) {
-        console.log('WorkForm - первичная инициализация с данными:', formData);
-        isFirstRender.current = false;
-      }
-    }
-  }, [formData]);
+
 
   // Проверяем валидность данных формы
   const isFormValid =

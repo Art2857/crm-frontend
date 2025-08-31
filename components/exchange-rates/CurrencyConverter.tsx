@@ -66,7 +66,7 @@ const CurrencyConverter = memo(function CurrencyConverter({ currencies }: Curren
   // ЭКСТРЕННЫЙ ФИКС: Получаем курс без мемоизации
   const usdToRubRate = useAppSelector((state) => {
     const result = selectLatestRate(state, 'USD');
-    console.log('🔥 CurrencyConverter usdToRubRate:', result);
+
     return result;
   });
   const [rate, setRate] = useState<number | null>(null);

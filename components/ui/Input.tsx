@@ -44,19 +44,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
     // Отслеживаем реальные изменения значения для отладки
     useEffect(() => {
-      if (
-        process.env.NODE_ENV !== 'production' &&
-        props.value !== prevValueRef.current &&
-        props.name === 'salary'
-      ) {
-        console.log(
-          `Input ${props.name} value changed:`,
-          prevValueRef.current,
-          '->',
-          props.value
-        );
-        prevValueRef.current = props.value;
-      }
+      prevValueRef.current = props.value;
     }, [props.value, props.name]);
 
     return (
