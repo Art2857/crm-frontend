@@ -129,22 +129,13 @@ class IndexedDBManager {
       
       // БЕРЕМ ТЕКУЩУЮ ДАТУ
       const today = new Date();
-      console.log(`🚀 Начинаем поиск от сегодня: ${today.toLocaleDateString('ru-RU')} для валюты ${currencyCode}`);
       
-      // СНАЧАЛА ПОКАЖЕМ ВСЕ ДОСТУПНЫЕ КУРСЫ ДЛЯ ОТЛАДКИ
+      // Получаем все доступные курсы для проверки
       const allRates = await new Promise<CachedExchangeRate[]>((resolve, reject) => {
         const allRatesRequest = store.index('currencyCode').getAll(currencyCode);
         allRatesRequest.onsuccess = () => resolve(allRatesRequest.result || []);
         allRatesRequest.onerror = () => reject(allRatesRequest.error);
       });
-      
-      console.log(`🗂️ Найдено ${allRates.length} курсов для ${currencyCode}:`);
-      allRates.slice(0, 10).forEach(rate => {
-        console.log(`   📊 ${rate.date}: ${rate.rate}`);
-      });
-      if (allRates.length > 10) {
-        console.log(`   ... и еще ${allRates.length - 10} курсов`);
-      }
       
       // ИДЕМ НАЗАД ПО ДНЯМ И ПРОВЕРЯЕМ КАЖДУЮ ДАТУ!
       for (let i = 0; i <= 365; i++) {
@@ -157,8 +148,8 @@ class IndexedDBManager {
         const year = checkDate.getFullYear();
         const dateStr = `${day}.${month}.${year}`;
         
-        // Показываем только первые 10 дней для экономии логов
-        if (i < 10) {
+        // Логируем только если включен debug режим
+        if (i < 10 && process.env.NODE_ENV === 'development') {
           console.log(`🔍 Проверяем дату: ${dateStr}`);
         }
         
@@ -167,7 +158,7 @@ class IndexedDBManager {
           const request = store.get([currencyCode, dateStr]);
           request.onsuccess = () => {
             const result = request.result;
-            if (result) {
+            if (result && process.env.NODE_ENV === 'development') {
               console.log(`✅ НАШЛИ курс на ${dateStr}: ${result.rate}`);
             }
             resolve(result || null);
@@ -177,12 +168,16 @@ class IndexedDBManager {
         
         // ЕСЛИ НАШЛИ - ВОЗВРАЩАЕМ!
         if (rate) {
-          console.log(`🏆 НАШЛИ последний курс за ${dateStr}: ${rate.rate}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🏆 НАШЛИ последний курс за ${dateStr}: ${rate.rate}`);
+          }
           return rate;
         }
       }
       
-      console.log('❌ Не нашли ни одного курса за 365 дней!');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('❌ Не нашли ни одного курса за 365 дней!');
+      }
       return null;
     } catch (error) {
       console.error('❌ Ошибка:', error);
@@ -490,6 +485,7 @@ if (typeof window !== 'undefined') {
     forceUpdate: async () => {
       console.log('🚀 Принудительное обновление...');
       await indexedDBManager.forceUpdate();
+      sessionStorage.setItem('exchangeRatesForceUpdated', 'true');
       location.reload(); // Перезагружаем страницу
     },
     clearMetadata: async () => {
@@ -541,12 +537,24 @@ if (typeof window !== 'undefined') {
   // АВТОМАТИЧЕСКОЕ ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ПРИ ПЕРВОМ ЗАПУСКЕ
   setTimeout(async () => {
     try {
+      // Проверяем, не было ли уже принудительного обновления в этой сессии
+      const hasBeenForceUpdated = sessionStorage.getItem('exchangeRatesForceUpdated');
+      if (hasBeenForceUpdated) {
+        console.log('✅ Принудительное обновление уже выполнялось в этой сессии');
+        return;
+      }
+
       const cacheInfo = await (window as any).__debugExchangeRates.getCacheInfo();
       const latestRate = await indexedDBManager.getLatestRate('USD');
       
       if (!latestRate || latestRate.date < '20.08.2025') {
         console.log('🚀 Автоматическое принудительное обновление - старые данные!');
         await indexedDBManager.forceUpdate();
+        
+        // Устанавливаем флаг, что обновление было выполнено
+        sessionStorage.setItem('exchangeRatesForceUpdated', 'true');
+        
+        // Перезагружаем только один раз
         location.reload();
       }
     } catch (e) {

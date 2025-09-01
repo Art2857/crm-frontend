@@ -133,6 +133,11 @@ export default function PaymentsPage() {
   // Обработчик показа детального расчета
   const handleShowCalculation = useCallback(
     async (userId: string, workId: string, dutyId?: string) => {
+      if (!user?.role) {
+        console.error('Пользователь не авторизован');
+        return;
+      }
+      
       try {
         setLoading(true);
         const endDate = getWorkPeriodDate(workId);
@@ -174,7 +179,7 @@ export default function PaymentsPage() {
         setLoading(false);
       }
     },
-    [getWorkPeriodDate, user.role]
+    [getWorkPeriodDate, user?.role]
   );
 
   // Инициализация данных один раз на монтировании
@@ -198,7 +203,7 @@ export default function PaymentsPage() {
       try {
         const { userId, workId, calculationDate } = e.detail || {};
         if (!userId || !workId || !calculationDate) return;
-        await closePeriod(user.role, {
+        await closePeriod(user?.role, {
           workId,
           userId,
           closureDate: calculationDate,
@@ -234,7 +239,7 @@ export default function PaymentsPage() {
         usersData.find((u) => u.userId === userId)?.works[0]?.workId || ''
       );
       const detailedCalc = await analyticsService.getPaymentsCalculationUser({
-        role: user.role,
+        role: user?.role,
         userId,
         endDate,
       });
@@ -265,7 +270,7 @@ export default function PaymentsPage() {
         paymentDate: endDate,
         description: `Мультивыплата по общему расчету (${w.workName})`,
       }));
-      await bulkCreateAndClose(user.role, items);
+      await bulkCreateAndClose(user?.role, items);
       await refreshAfterUserPayment(userId);
       setCalculationModalOpen(false);
       setSelectedCalculation(null);
@@ -282,7 +287,7 @@ export default function PaymentsPage() {
     usersData,
     getUserPeriodDate,
     notification,
-    user.role,
+    user?.role,
   ]);
 
   // Обработчик создания выплаты
@@ -497,7 +502,7 @@ export default function PaymentsPage() {
   const handlePaymentSubmit = async (data: PaymentModalData) => {
     try {
       // Используем новый эндпоинт create-payment-and-close
-      const result = await createPaymentAndClose(user.role, {
+      const result = await createPaymentAndClose(user?.role, {
         workId: selectedPayment?.workId || '',
         userId: selectedPayment?.userId || '',
         amount: Math.round(data.amount), // Конвертируем в копейки
@@ -552,7 +557,7 @@ export default function PaymentsPage() {
 
   const handleCustomPaymentSubmit = async (data: CustomPaymentFormData) => {
     try {
-      const created = await makePayment(user.role, {
+      const created = await makePayment(user?.role, {
         workId: data.workId,
         userId: data.userId,
         amount: Math.round(data.amount),
