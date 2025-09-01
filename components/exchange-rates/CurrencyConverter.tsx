@@ -7,6 +7,7 @@ import Button from '../ui/Button';
 import { CurrencyConversion } from '../../types/exchange-rates';
 import { exchangeRatesService } from '../../services/exchangeRates';
 import { exchangeRateCacheService } from '../../services/exchangeRateCache';
+import { indexedDBManager } from '../../utils/indexedDB';
 import { useAppSelector } from '../../store';
 import { selectLatestRate } from '../../store/slices/exchangeRates';
 
@@ -16,10 +17,10 @@ interface CurrencyConverterProps {
 
 // Утилиты для работы с рабочими днями ЦБР (вынесены наружу для стабильности)
 const isWorkingDay = (date: Date): boolean => {
-  const dayOfWeek = date.getDay(); // 0 = воскресенье, 6 = суббота
+  const dayOfWeek = date.getDay(); // 0 = воскресенье, 1 = понедельник
   
-  // Исключаем выходные
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
+  // Исключаем выходные ЦБ РФ (воскресенье и понедельник)
+  if (dayOfWeek === 0 || dayOfWeek === 1) {
     return false;
   }
   
@@ -31,44 +32,31 @@ const isWorkingDay = (date: Date): boolean => {
 const getLastWorkingDay = (): Date => {
   const today = new Date();
   
-  // ФИКС: Используем фиксированную дату последнего известного рабочего дня
-  // 29.08.2025 - четверг, это последний доступный рабочий день из данных CBR
-  const lastKnownWorkingDay = new Date('2025-08-29');
-  
-  // Если сегодня позже известной даты, возвращаем известную дату
-  if (today >= lastKnownWorkingDay) {
-    return lastKnownWorkingDay;
-  }
-  
-  // Иначе ищем последний рабочий день от сегодня
+  // Ищем последний рабочий день от сегодня назад
   let current = new Date(today);
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 30; i++) { // Расширяем поиск до 30 дней
     if (isWorkingDay(current)) {
       return current;
     }
     current.setDate(current.getDate() - 1);
   }
   
-  // Fallback на известный рабочий день
-  return lastKnownWorkingDay;
+  // Fallback на сегодня если ничего не нашли
+  return today;
 };
 
-const CurrencyConverter = memo(function CurrencyConverter({ currencies }: CurrencyConverterProps) {
+const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currencies }: CurrencyConverterProps) {
   const [fromCurrency, setFromCurrency] = useState<string>('USD');
   const [toCurrency, setToCurrency] = useState<string>('RUB');
   const [amount, setAmount] = useState<string>('100');
   const [selectedDate, setSelectedDate] = useState<string>(() => {
-    // ФИКС: Инициализируем последней доступной датой с данными CBR
-    return '2025-08-29';
+    // Инициализируем последним рабочим днем от сегодня
+    return getLastWorkingDay().toISOString().split('T')[0];
   });
   const [result, setResult] = useState<number | null>(null);
   
-  // ЭКСТРЕННЫЙ ФИКС: Получаем курс без мемоизации
-  const usdToRubRate = useAppSelector((state) => {
-    const result = selectLatestRate(state, 'USD');
-
-    return result;
-  });
+  // Курс USD/RUB из IndexedDB
+  const [usdToRubRate, setUsdToRubRate] = useState<any>(null);
   const [rate, setRate] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -131,6 +119,21 @@ const CurrencyConverter = memo(function CurrencyConverter({ currencies }: Curren
     setRate(null);
     setError(null);
   };
+
+  // Загружаем последний курс USD НАПРЯМУЮ ИЗ IndexedDB!
+  useEffect(() => {
+    const loadLatestUsdRate = async () => {
+      try {
+        const rate = await indexedDBManager.getLatestRate('USD');
+        console.log('🏆 Получили последний курс USD из IndexedDB:', rate);
+        setUsdToRubRate(rate);
+      } catch (error) {
+        console.error('❌ Ошибка загрузки курса USD:', error);
+      }
+    };
+    
+    loadLatestUsdRate();
+  }, []);
 
   // Мгновенная конвертация при изменении суммы, валют или даты (БЕЗ debounce)
   useEffect(() => {
@@ -200,16 +203,25 @@ const CurrencyConverter = memo(function CurrencyConverter({ currencies }: Curren
                    Официальный курс Центрального банка России<br />
                    {usdToRubRate?.date ? (
                      (() => {
-                       try {
-                         // Безопасный парсинг даты - поддерживаем разные форматы
-                         const dateStr = usdToRubRate.date;
-                         const date = new Date(dateStr);
-                         
-                         // Проверяем валидность даты
-                         if (isNaN(date.getTime())) {
-                           console.warn('Invalid date in usdToRubRate:', dateStr);
-                           return 'Курс за 29.08.2025'; // Fallback на известную дату
-                         }
+                                             try {
+                        // Парсинг даты в формате DD.MM.YYYY
+                        const dateStr = usdToRubRate.date;
+                        let date: Date;
+                        
+                        // Если дата в формате DD.MM.YYYY - конвертируем
+                        if (dateStr.includes('.')) {
+                          const [day, month, year] = dateStr.split('.');
+                          date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        } else {
+                          // Иначе пробуем обычный парсинг
+                          date = new Date(dateStr);
+                        }
+                        
+                        // Проверяем валидность даты
+                        if (isNaN(date.getTime())) {
+                          console.warn('Invalid date in usdToRubRate:', dateStr);
+                          return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`;
+                        }
                          
                          return `Курс за ${date.toLocaleDateString('ru-RU', { 
                            year: 'numeric', 
@@ -218,11 +230,11 @@ const CurrencyConverter = memo(function CurrencyConverter({ currencies }: Curren
                          })}`;
                        } catch (error) {
                          console.error('Error parsing date:', error);
-                         return 'Курс за 29.08.2025'; // Fallback
+                         return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`; // Fallback
                        }
                      })()
                    ) : (
-                     'Курс за 29.08.2025' // Fallback если нет данных
+                     `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}` // Fallback если нет данных
                    )}
                  </p>
           </div>
@@ -270,7 +282,7 @@ const CurrencyConverter = memo(function CurrencyConverter({ currencies }: Curren
                            type="date"
                            value={selectedDate}
                            onChange={handleDateChange}
-                           max="2025-08-29"
+                           max={getLastWorkingDay().toISOString().split('T')[0]}
                            min="2020-01-01"
                            className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
                            title="Дата курса (только рабочие дни)"
@@ -279,7 +291,7 @@ const CurrencyConverter = memo(function CurrencyConverter({ currencies }: Curren
                              const input = e.target as HTMLInputElement;
                              const inputDate = new Date(input.value);
                              if (!isWorkingDay(inputDate)) {
-                               input.setCustomValidity('Выберите рабочий день (понедельник-пятница)');
+                               input.setCustomValidity('Выберите рабочий день (вторник-суббота)');
                              } else {
                                input.setCustomValidity('');
                              }
@@ -340,4 +352,5 @@ const CurrencyConverter = memo(function CurrencyConverter({ currencies }: Curren
   );
 });
 
-export { CurrencyConverter };
+export { CurrencyConverterLegacy as CurrencyConverter };
+export default CurrencyConverterLegacy;

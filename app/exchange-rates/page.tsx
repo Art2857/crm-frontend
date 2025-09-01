@@ -7,11 +7,21 @@ import { ExchangeRateChart } from '../../components/exchange-rates/ExchangeRateC
 import { CurrencyConverter } from '../../components/exchange-rates/CurrencyConverter';
 import { useExchangeRates } from '../../hooks/exchange-rates/useExchangeRates';
 
-// Функция для поиска последнего рабочего дня (ЦБ не публикует в выходные)
+// Функция для поиска последнего рабочего дня (ЦБ публикует вт-сб, выходные вс-пн)
 const getLastWorkingDay = (date: Date): Date => {
-  // ФИКС: Возвращаем фиксированную дату последнего известного курса CBR
-  // 29.08.2025 - четверг, последний доступный день из данных
-  return new Date('2025-08-29');
+  // Ищем последний рабочий день от указанной даты назад
+  let current = new Date(date);
+  for (let i = 0; i < 30; i++) {
+    const dayOfWeek = current.getDay();
+    // Рабочие дни ЦБ РФ: вторник-суббота (2-6), выходные воскресенье-понедельник (0,1)
+    if (dayOfWeek >= 2 && dayOfWeek <= 6) {
+      return current;
+    }
+    current.setDate(current.getDate() - 1);
+  }
+  
+  // Fallback на саму указанную дату
+  return date;
 };
 
 export default function ExchangeRatesPage() {
@@ -57,8 +67,8 @@ export default function ExchangeRatesPage() {
     let to = new Date(today);
     let from = new Date(today);
     
-    // ФИКС: Используем фиксированную дату последнего известного курса
-    to = new Date('2025-08-29');
+    // Используем последний рабочий день от сегодня
+    to = getLastWorkingDay(new Date());
     
     switch (period) {
       case 7: // 7 дней назад

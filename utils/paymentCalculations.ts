@@ -5,7 +5,7 @@ import {
   WorkDetail,
 } from '../types/payments';
 import { MyDebt } from '../services/analytics';
-import { getWorkingDaysInMonth, getWorkingDaysInPeriod } from './workingDays';
+import { getSalaryWorkingDaysInMonth as getWorkingDaysInMonth, getSalaryWorkingDaysInPeriod as getWorkingDaysInPeriod } from './salary-working-days';
 import { toIsoFromRu, parseRuDate } from './paymentsMapping';
 
 // Основная функция находится ниже

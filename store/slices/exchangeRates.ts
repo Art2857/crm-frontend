@@ -244,14 +244,11 @@ export const convertCurrency = createAsyncThunk(
 
         }
       } else {
-        // Используем последний курс
-        rate = state.exchangeRates.latestRates[fromCurrency] || null;
+        // Просто ищем последний курс через IndexedDB (динамически!)
+        const cached = await indexedDBManager.getLatestRate(fromCurrency);
+        rate = cached ? cacheToExchangeRate(cached) : null;
         
-        // Если в Redux нет, ищем в IndexedDB
-        if (!rate) {
-          const cached = await indexedDBManager.getLatestRate(fromCurrency);
-          rate = cached ? cacheToExchangeRate(cached) : null;
-        }
+        console.log('🔍 Получили из IndexedDB последний курс:', rate);
       }
 
       if (!rate) {
@@ -315,6 +312,197 @@ export const cleanOldCache = createAsyncThunk(
     
     const cacheSize = await indexedDBManager.getCacheSize();
     return cacheSize;
+  }
+);
+
+// Новая функция: умная загрузка недостающих данных
+export const smartLoadMissingData = createAsyncThunk(
+  'exchangeRates/smartLoadMissingData',
+  async (params: { 
+    currencyCode?: string;
+    checkDaysBack?: number; // на сколько дней назад проверять
+  } = {}) => {
+    const { currencyCode = 'USD', checkDaysBack = 60 } = params;
+    
+    try {
+      // Проверяем какие данные у нас есть (принудительно используем правильную функцию)
+      console.log(`🔎 smartLoadMissingData: Проверяем последний курс для ${currencyCode}`);
+      const latestRate = await indexedDBManager.getLatestRate(currencyCode);
+      console.log(`📋 Получили последний курс:`, latestRate);
+      
+      const today = new Date();
+      let needsUpdate = true;
+      
+      if (latestRate) {
+        // ПАРСИМ ДАТУ В ФОРМАТЕ DD.MM.YYYY ПРАВИЛЬНО!
+        let latestDate: Date;
+        const dateStr = latestRate.date;
+        
+        if (dateStr.includes('.')) {
+          // Формат DD.MM.YYYY
+          const [day, month, year] = dateStr.split('.');
+          latestDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        } else {
+          // Формат ISO
+          latestDate = new Date(dateStr);
+        }
+        const diffDays = Math.floor((today.getTime() - latestDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // ПРОВЕРЯЕМ НА РАБОЧИе ДНИ! Не просто 3 дня!
+        console.log(`📅 Последние данные: ${latestRate.date} (парсинг: ${latestDate.toISOString().split('T')[0]}), разница дней: ${diffDays}`);
+        
+        // Проверяем есть ли рабочие дни между последними данными и сегодня
+        let hasWorkingDaysBetween = false;
+        const checkDate = new Date(latestDate);
+        checkDate.setDate(checkDate.getDate() + 1); // Начинаем со следующего дня
+        
+        console.log(`🔍 Проверяем дни с ${checkDate.toISOString().split('T')[0]} по ${today.toISOString().split('T')[0]}`);
+        
+        while (checkDate <= today) {
+          const dayOfWeek = checkDate.getDay();
+          const dayName = ['VOSKR', 'PONED', 'VTOR', 'SREDA', 'CHETV', 'PYATN', 'SUBBOT'][dayOfWeek];
+          
+          console.log(`📅 Проверяем ${checkDate.toISOString().split('T')[0]} (${dayName}, dayOfWeek=${dayOfWeek})`);
+          
+          // Рабочие дни ЦБ РФ: вт-сб (2-6), ИСКЛЮЧАЕМ вс-пн (0,1)
+          if (dayOfWeek >= 2 && dayOfWeek <= 6) {
+            hasWorkingDaysBetween = true;
+            console.log(`📈 НАШЛИ рабочий день без данных: ${checkDate.toISOString().split('T')[0]} (${dayName})`);
+            break;
+          }
+          checkDate.setDate(checkDate.getDate() + 1);
+        }
+        
+        if (!hasWorkingDaysBetween) {
+          needsUpdate = false;
+          console.log('✅ Нет рабочих дней для обновления');
+        } else {
+          console.log(`🚀 НУЖНО ОБНОВЛЕНИЕ! Есть рабочие дни без данных`);
+        }
+      }
+      
+      if (!needsUpdate) {
+        console.log(`✅ smartLoadMissingData: Данные актуальны для ${currencyCode}`);
+        console.log(`📅 smartLoadMissingData: Последняя дата: ${latestRate?.date}`);
+        return {
+          message: 'Данные актуальны',
+          latestDate: latestRate?.date,
+          loaded: 0
+        };
+      }
+      
+      // Загружаем недостающие данные с API (ПОСЛЕДНИЕ 60 ДНЕЙ!)
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - 60); // Увеличиваем до 60 дней назад
+      
+      console.log(`🚀 Загружаем данные с ${fromDate.toISOString().split('T')[0]} по ${today.toISOString().split('T')[0]}`);
+      console.log(`📡 Параметры API запроса:`, {
+        currencyCode,
+        fromDate: fromDate.toISOString().split('T')[0],
+        toDate: today.toISOString().split('T')[0]
+      });
+      
+      // ОТЛАДКА: покажем какие дни должны быть рабочими по логике ЦБ РФ
+      console.log('🏦 Ожидаемые рабочие дни ЦБ РФ в запрашиваемом диапазоне:');
+      const expectedWorkingDays = [];
+      const checkFrom = new Date('2025-08-20'); // Проверим последние дни августа
+      const checkTo = new Date('2025-08-31');
+      
+      for (let d = new Date(checkFrom); d <= checkTo; d.setDate(d.getDate() + 1)) {
+        const dayOfWeek = d.getDay();
+        const isWorkingCBR = dayOfWeek >= 2 && dayOfWeek <= 6; // вт-сб
+        const dateStr = d.toISOString().split('T')[0];
+        const dayNames = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
+        
+        console.log(`   ${dateStr} (${dayNames[dayOfWeek]}): ${isWorkingCBR ? '✅ Должен быть' : '❌ Выходной'}`);
+        if (isWorkingCBR) expectedWorkingDays.push(dateStr);
+      }
+      console.log(`🎯 Итого ожидается ${expectedWorkingDays.length} рабочих дней:`, expectedWorkingDays);
+      
+      let response;
+      try {
+        response = await exchangeRatesService.getExchangeRates({
+          currencyCode,
+          fromDate,
+          toDate: today,
+        });
+        console.log('📈 Ответ API:', response);
+        console.log('📊 Количество записей:', response?.data?.length);
+        console.log('📅 Первые 10 дат из API:', response?.data?.slice(0, 10).map(r => r.date));
+        
+        // Проверим какие рабочие дни ЦБ РФ пропущены в ответе
+        if (response?.data) {
+          const receivedDates = response.data.map(r => {
+            // Конвертируем DD.MM.YYYY в YYYY-MM-DD для сравнения
+            const [day, month, year] = r.date.split('.');
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          });
+          
+          console.log('📋 Полученные даты в ISO формате:', receivedDates.slice(0, 10));
+          
+          const missingWorkingDays = expectedWorkingDays.filter(expected => !receivedDates.includes(expected));
+          if (missingWorkingDays.length > 0) {
+            console.warn('⚠️ ПРОПУЩЕНЫ рабочие дни ЦБ РФ:', missingWorkingDays);
+            
+            // Проверим конкретно 23.08.2025
+            if (missingWorkingDays.includes('2025-08-23')) {
+              console.error('🚨 КРИТИЧНО: 23.08.2025 (суббота) отсутствует в ответе API!');
+              console.error('🏦 По логике ЦБ РФ суббота должна быть рабочим днем!');
+            }
+          } else {
+            console.log('✅ Все ожидаемые рабочие дни получены с API');
+          }
+        }
+      } catch (apiError) {
+        console.error('❌ Ошибка API:', apiError);
+        throw apiError;
+      }
+      
+      if (response && response.data && response.data.length > 0) {
+        // Сохраняем в IndexedDB
+        const cachedRates = response.data.map(exchangeRateToCache);
+        await indexedDBManager.saveRates(cachedRates);
+        
+        // Обновляем метаданные
+        const now = new Date().toISOString();
+        await indexedDBManager.setMetadata('lastUpdate', now);
+        await indexedDBManager.setMetadata('lastSyncDate', now);
+        
+        // Находим МАКСИМАЛЬНУЮ дату среди загруженных данных через рефакторенные утилиты
+        const dates = response.data.map(rate => rate.date);
+        const sortedDates = dates.sort((a, b) => {
+          // Правильное сравнение дат DD.MM.YYYY
+          const [dayA, monthA, yearA] = a.split('.').map(Number);
+          const [dayB, monthB, yearB] = b.split('.').map(Number);
+          
+          const dateA = new Date(yearA, monthA - 1, dayA);
+          const dateB = new Date(yearB, monthB - 1, dayB);
+          
+          return dateB.getTime() - dateA.getTime(); // Убывание (новые сначала)
+        });
+        
+        const maxDate = sortedDates[0] || '';
+        
+        console.log(`📊 smartLoadMissingData: Загружено ${response.data.length} курсов`);
+        console.log(`📅 smartLoadMissingData: Максимальная дата среди загруженных: ${maxDate}`);
+        console.log(`🗂️ smartLoadMissingData: Все загруженные даты:`, sortedDates.slice(0, 5));
+        
+        return {
+          message: 'Данные обновлены',
+          rates: response.data,
+          loaded: response.data.length,
+          latestDate: maxDate
+        };
+      }
+      
+      return {
+        message: 'Новых данных нет',
+        loaded: 0
+      };
+    } catch (error) {
+      console.error('Error in smartLoadMissingData:', error);
+      throw error;
+    }
   }
 );
 
@@ -469,6 +657,35 @@ const exchangeRatesSlice = createSlice({
       .addCase(cleanOldCache.fulfilled, (state, action) => {
         state.totalCachedRates = action.payload.ratesCount;
       });
+
+    // smartLoadMissingData
+    builder
+      .addCase(smartLoadMissingData.pending, (state) => {
+        state.isUpdating = true;
+        state.error = null;
+      })
+      .addCase(smartLoadMissingData.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        
+        if (action.payload && action.payload.rates) {
+          // Добавляем новые курсы
+          action.payload.rates.forEach(rate => {
+            const key = createRateKey(rate.currencyCode, rate.date);
+            state.rates[key] = rate;
+            
+            // НЕ обновляем latestRates - сравнение строк дат DD.MM.YYYY не работает!
+            // IndexedDB всегда даст правильный последний курс
+          });
+          
+          state.lastUpdate = new Date().toISOString();
+          state.lastSyncDate = new Date().toISOString();
+          state.totalCachedRates = Object.keys(state.rates).length;
+        }
+      })
+      .addCase(smartLoadMissingData.rejected, (state, action) => {
+        state.isUpdating = false;
+        state.error = action.error.message || 'Ошибка загрузки недостающих данных';
+      });
   },
 });
 
@@ -478,30 +695,18 @@ export default exchangeRatesSlice.reducer;
 // Селекторы
 export const selectExchangeRates = (state: { exchangeRates: ExchangeRatesState }) => state.exchangeRates;
 
-// Мемоизированные селекторы для производительности
-// ЭКСТРЕННЫЙ ФИКС: Убираем мемоизацию - она дает кэшированные данные!
-export const selectLatestRate = (state: { exchangeRates: ExchangeRatesState }, currencyCode: string) => {
-  // 🚀 ИСПОЛЬЗУЕМ ТОЧНО ТУ ЖЕ ЛОГИКУ КАК В convertCurrency!
-  // Сначала пробуем latestRates (как в convertCurrency строка 252)
-  let rate = state.exchangeRates.latestRates[currencyCode] || null;
-  
-
-  
-  // Если нет в latestRates, ищем в rates (fallback как в convertCurrency)
-  if (!rate) {
-
-    const currencyRates = Object.entries(state.exchangeRates.rates)
-      .filter(([key]) => key.startsWith(`${currencyCode}-`))
-      .map(([, rate]) => rate)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
-    rate = currencyRates[0] || null;
-
+// Селектор последнего курса - ИДЕМ В IndexedDB!
+export const selectLatestRate = createSelector(
+  [
+    (state: { exchangeRates: ExchangeRatesState }) => state.exchangeRates.latestRates,
+    (_: any, currencyCode: string) => currencyCode,
+  ],
+  (latestRates, currencyCode) => {
+    // НЕ полагаемся на latestRates - они могут быть старыми!
+    // Возвращаем null - компонент пойдет в IndexedDB
+    return null;
   }
-  
-
-  return rate;
-};
+);
 
 export const selectRateByDate = createSelector(
   [

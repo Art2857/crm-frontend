@@ -54,13 +54,11 @@ export default function CalculationModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div
-        className="p-6 max-w-full mx-auto max-h-[95vh]"
-        style={{
-          width:
-            calculation?.periods[0]?.duties.length === 1 && !showPaymentHistory
-              ? '70vw'
-              : '90vw',
-        }}
+        className={`p-6 max-w-full mx-auto max-h-[95vh] ${
+          calculation?.periods[0]?.duties.length === 1 && !showPaymentHistory
+            ? 'w-[70vw]'
+            : 'w-[90vw]'
+        }`}
       >
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -170,7 +168,7 @@ export default function CalculationModal({
             <div className="space-y-4">
               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {calculation.periods.map((period, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4">
+                  <div key={`period-${period.startDate}-${period.endDate}-${index}`} className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h5 className="font-medium text-gray-900">
                         Период {index + 1}:{' '}
@@ -186,14 +184,14 @@ export default function CalculationModal({
                       {/* Отображаем обязанности с группировкой по работам */}
                       {period.workGroups && period.workGroups.length > 0
                         ? // Если есть группировка по работам - используем её
-                          period.workGroups.map((workGroup) => (
-                            <div key={workGroup.workId} className="space-y-1">
+                          period.workGroups.map((workGroup, wgIndex) => (
+                            <div key={`workgroup-${workGroup.workId}-${index}-${wgIndex}`} className="space-y-1">
                               <div className="font-medium text-gray-800 text-sm mb-1">
                                 {workGroup.workName}
                               </div>
-                              {workGroup.duties.map((duty) => (
+                              {workGroup.duties.map((duty, dutyIndex) => (
                                 <div
-                                  key={duty.dutyId}
+                                  key={`duty-${duty.dutyId}-${workGroup.workId}-${index}-${dutyIndex}`}
                                   className="flex items-center justify-between text-sm ml-4"
                                 >
                                   <span className="text-gray-700">
@@ -209,9 +207,9 @@ export default function CalculationModal({
                             </div>
                           ))
                         : // Если нет группировки - отображаем как раньше
-                          period.duties.map((duty) => (
+                          period.duties.map((duty, dutyIndex) => (
                             <div
-                              key={duty.dutyId}
+                              key={`duty-${duty.dutyId}-${index}-${dutyIndex}`}
                               className="flex items-center justify-between text-sm"
                             >
                               <span className="text-gray-700">
@@ -329,7 +327,7 @@ export default function CalculationModal({
                       formatRussian(period.endDate) || 'Неизвестная дата';
 
                     return (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4">
+                      <div key={`period-detail-${period.startDate}-${period.endDate}-${index}`} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h5 className="font-medium text-gray-900">
                             <span> Период {index + 1} </span>
@@ -345,17 +343,17 @@ export default function CalculationModal({
                           {/* Отображаем обязанности с группировкой по работам */}
                           {period.workGroups && period.workGroups.length > 0
                             ? // Если есть группировка по работам - используем её
-                              period.workGroups.map((workGroup) => (
+                              period.workGroups.map((workGroup, wgIndex) => (
                                 <div
-                                  key={workGroup.workId}
+                                  key={`workgroup-detail-${workGroup.workId}-${index}-${wgIndex}`}
                                   className="space-y-1"
                                 >
                                   <div className="font-medium text-gray-800 text-sm mb-1">
                                     {workGroup.workName}
                                   </div>
-                                  {workGroup.duties.map((duty) => (
+                                  {workGroup.duties.map((duty, dutyIndex) => (
                                     <div
-                                      key={duty.dutyId}
+                                      key={`duty-detail-${duty.dutyId}-${workGroup.workId}-${index}-${dutyIndex}`}
                                       className="flex items-center justify-between text-sm ml-4"
                                     >
                                       <span className="text-gray-700">
@@ -372,9 +370,9 @@ export default function CalculationModal({
                                 </div>
                               ))
                             : // Если нет группировки - отображаем все обязанности
-                              period.duties.map((duty) => (
+                              period.duties.map((duty, dutyIndex) => (
                                 <div
-                                  key={duty.dutyId}
+                                  key={`duty-alt-${duty.dutyId}-${index}-${dutyIndex}`}
                                   className="flex items-center justify-between text-sm"
                                 >
                                   <span className="text-gray-700">
@@ -430,9 +428,9 @@ export default function CalculationModal({
                   {calculation.paymentHistory.length > 0 ? (
                     <div className="space-y-3">
                       <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3">
-                        {calculation.paymentHistory.map((payment) => (
+                        {calculation.paymentHistory.map((payment, paymentIndex) => (
                           <div
-                            key={payment.id}
+                            key={`payment-${payment.id}-${paymentIndex}`}
                             className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                           >
                             <div className="flex items-center space-x-4">

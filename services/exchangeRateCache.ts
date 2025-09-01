@@ -10,6 +10,7 @@ import {
   loadChartData, 
   convertCurrency,
   cleanOldCache,
+  smartLoadMissingData,
   selectLatestRate,
   selectChartData,
   selectCacheStatus
@@ -50,8 +51,8 @@ class ExchangeRateCacheService {
 
   private async _doInitialize(currencyCode: string): Promise<CacheInitResult> {
     try {
-  
-
+      // ПРОВЕРЯЕМ ЦЕЛОСТНОСТЬ metadata ПОСЛЕ ВОЗМОЖНОГО УДАЛЕНИЯ
+      await indexedDBManager.ensureMetadataIntegrity();
 
       const cacheResult = await store.dispatch(loadFromCache(currencyCode));
       
@@ -68,19 +69,14 @@ class ExchangeRateCacheService {
       }
 
       
-      const needsUpdate = await this._shouldUpdate(lastUpdate);
-      
-      if (needsUpdate) {
-    
-
-        store.dispatch(updateFromAPI({ currencyCode, force: true }))
-          .then(() => {
-      
-          })
-          .catch((error) => {
-
-          });
-      }
+      // Используем умную загрузку недостающих данных
+      store.dispatch(smartLoadMissingData({ currencyCode }))
+        .then((result) => {
+          console.log('🚀 Умная загрузка завершена:', result.payload);
+        })
+        .catch((error) => {
+          console.error('❌ Ошибка умной загрузки:', error);
+        });
 
       
       this._scheduleCleanup();

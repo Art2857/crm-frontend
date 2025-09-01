@@ -142,23 +142,33 @@ export const Modal: React.FC<ModalProps> = ({
     return () => clearTimeout(timeoutId);
   }, [isOpen, handleClose]);
 
-  // Если модальное окно закрыто, ничего не рендерим
-  if (!isOpen) return null;
+  // ВСЕ ХУКИ ДОЛЖНЫ БЫТЬ В НАЧАЛЕ КОМПОНЕНТА!
+  // Проверяем, что мы в браузере (избегаем hydration mismatch)
+  const [isMounted, setIsMounted] = React.useState(false);
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-  // Формируем стили для позиционирования (мемоизируем на основе position)
-  const modalStyle: React.CSSProperties = position
-    ? {
-        position: 'fixed',
+  // Формируем стили для позиционирования
+  const modalStyle: React.CSSProperties = React.useMemo(() => {
+    if (position) {
+      return {
+        position: 'fixed' as const,
         zIndex: 9999,
         ...position,
-      }
-    : {
-        position: 'fixed',
-        zIndex: 9999,
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
       };
+    }
+    return {
+      position: 'fixed' as const,
+      zIndex: 9999,
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+    };
+  }, [position]);
+
+  // Если модальное окно закрыто или еще не смонтировано, ничего не рендерим
+  if (!isOpen || !isMounted) return null;
 
   const modalContent = (
     <>
@@ -187,20 +197,15 @@ export const Modal: React.FC<ModalProps> = ({
   );
 
   // Используем портал для рендеринга вне текущего DOM
-  if (typeof window !== 'undefined') {
-    // Находим или создаем контейнер для модальных окон
-    let modalRoot = document.getElementById('modal-root');
-    if (!modalRoot) {
-      modalRoot = document.createElement('div');
-      modalRoot.id = 'modal-root';
-      document.body.appendChild(modalRoot);
-    }
-
-    return createPortal(modalContent, modalRoot);
+  // Находим или создаем контейнер для модальных окон
+  let modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) {
+    modalRoot = document.createElement('div');
+    modalRoot.id = 'modal-root';
+    document.body.appendChild(modalRoot);
   }
 
-  // При серверном рендеринге возвращаем null
-  return null;
+  return createPortal(modalContent, modalRoot);
 };
 
 export default Modal;
