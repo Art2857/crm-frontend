@@ -98,12 +98,12 @@ export default function AdminUsersPage() {
   const calculateAge = (birthdayString: string | null): number | null => {
     if (!birthdayString) return null;
 
-    try {
-      const birthday = new Date(birthdayString);
-      if (isNaN(birthday.getTime())) {
-        console.warn('Invalid birthday date:', birthdayString);
-        return null;
-      }
+    // Теперь birthdayString уже Date объект
+    if (!(birthdayString instanceof Date) || isNaN(birthdayString.getTime())) {
+      console.warn('Invalid birthday date:', birthdayString);
+      return null;
+    }
+    const birthday = birthdayString;
 
       const today = new Date();
       let age = today.getFullYear() - birthday.getFullYear();
@@ -132,9 +132,10 @@ export default function AdminUsersPage() {
   const formatBirthday = (birthdayString: string | null): string => {
     if (!birthdayString) return 'Не указана';
 
-    try {
-      const date = new Date(birthdayString);
-      if (isNaN(date.getTime())) return 'Некорректная дата';
+    // Теперь birthdayString уже Date объект
+    if (!(birthdayString instanceof Date) || isNaN(birthdayString.getTime())) 
+      return 'Некорректная дата';
+    const date = birthdayString;
 
       // Форматируем дату в виде ДД.ММ.ГГГГ
       return date.toLocaleDateString('ru-RU');

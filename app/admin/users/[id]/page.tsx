@@ -334,7 +334,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           );
           const birthday = new Date(`${updatedData.birthday}T00:00:00Z`);
           if (!isNaN(birthday.getTime())) {
-            updatedData.birthday = birthday.toISOString();
+            updatedData.birthday = birthday; // Передаём Date объект
           } else {
             console.warn(
               'Invalid birthday date, sending as is:',

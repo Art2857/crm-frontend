@@ -116,7 +116,7 @@ export const fetchMyPayments = async (role: Role): Promise<MyPayments> => {
     let currentMonthReceived = 0;
 
     for (const p of history.payments) {
-      const paymentDate = new Date(p.paymentDate);
+      const paymentDate = p.paymentDate; // Уже Date объект
       const isCurrentMonth =
         paymentDate.getMonth() === currentMonth &&
         paymentDate.getFullYear() === currentYear;

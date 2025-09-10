@@ -14,7 +14,7 @@ import { WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
 import { privateApi } from '../../services/ApiClient';
 import { User } from '../../types/user';
-import { toDateObject, formatDateToISO } from '../../utils/date';
+// Убрали toDateObject и formatDateToISO - используем Date объекты напрямую
 
 type DutiesTabType = 'current' | 'history';
 
@@ -68,15 +68,8 @@ export function useWorkDetail(id: string) {
   const initialWorkData = useMemo(() => {
     if (!workData) return undefined;
     
-    // Преобразуем дату в формат YYYY-MM-DD для input type="date"
-    let releaseDateFormatted = '';
-    if (workData.releaseDate) {
-      // Используем функцию из utils/date.ts для правильного парсинга российских дат
-      const dateObj = toDateObject(workData.releaseDate);
-      if (dateObj) {
-        releaseDateFormatted = formatDateToISO(dateObj);
-      }
-    }
+    // Теперь releaseDate уже приходит как Date объект с бекенда
+    let releaseDateFormatted: Date | null = workData.releaseDate || null;
     
     return {
       name: workData.name,

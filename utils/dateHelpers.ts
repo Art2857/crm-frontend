@@ -34,33 +34,7 @@ export const formatDateSafe = (
   }
 };
 
-/**
- * Преобразование строковой даты в объект Date с проверкой валидности
- */
-export const parseDate = (date: Date | string | null | undefined): Date | null => {
-  if (!date) {
-    return null;
-  }
-
-  try {
-    let parsedDate: Date;
-    
-    if (typeof date === 'string') {
-      parsedDate = new Date(date);
-    } else {
-      parsedDate = date;
-    }
-    
-    // Проверяем, что дата валидна
-    if (isNaN(parsedDate.getTime())) {
-      return null;
-    }
-    
-    return parsedDate;
-  } catch {
-    return null;
-  }
-};
+// Удалили parseDate - теперь работаем с чистыми Date объектами
 
 /**
  * Форматирование даты для отображения в интерфейсе

@@ -130,10 +130,7 @@ export default function CustomPaymentModal({
       ? description.trim()
       : `${typeLabelMap[type] ?? type} по работе ${workName}`;
 
-    // Формируем дату с 00:00:00.000
-    const date = new Date(paymentDate);
-    date.setHours(0, 0, 0, 0);
-    const isoDate = date.toISOString();
+    // Теперь paymentDate уже приходит как Date объект - никаких преобразований!
 
     onSubmit({
       userId: selectedUserId,
@@ -143,7 +140,7 @@ export default function CustomPaymentModal({
       description: finalDescription,
       userName,
       workName,
-      paymentDate: isoDate,
+      paymentDate: paymentDate, // Передаём Date объект напрямую
     });
   };
 

@@ -5,7 +5,7 @@ import Tooltip from '../ui/Tooltip';
 import { Duty, DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
 import { formatCurrency, formatPercentage } from '../../utils/currency';
-import { getCurrentDateISO } from '../../utils/date';
+// Убрали getCurrentDateISO - используем Date объекты напрямую
 
 // Вспомогательная функция для преобразования строковых значений в числовые
 const toNumber = (value: any): number | null => {
@@ -79,7 +79,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRemoving, setIsRemoving] = useState<number | null>(null);
   const [effectiveDate, setEffectiveDate] =
-    useState<string>(getCurrentDateISO());
+    useState<Date>(new Date());
 
   // Преобразуем workSalary в число один раз для использования по всему компоненту
   const numericSalary = useMemo(() => toNumber(workSalary) || 0, [workSalary]);

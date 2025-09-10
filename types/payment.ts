@@ -6,8 +6,8 @@ export enum PaymentType {
 }
 
 export interface PaymentPeriodDetail {
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   workingDays: number;
   monthDays: number;
   duties: Array<{
@@ -23,8 +23,8 @@ export interface PaymentCalculation {
   totalDebt: number;
   paidAmount: number;
   remainingDebt: number;
-  periodStart: string;
-  periodEnd: string;
+  periodStart: Date;
+  periodEnd: Date;
   periodDetails: PaymentPeriodDetail[];
 }
 
@@ -37,10 +37,10 @@ export interface Payment {
   amount: number;
   paymentType: PaymentType;
   description: string | null;
-  paymentDate: string;
-  periodStart: string;
-  periodEnd: string;
-  createdAt: string;
+  paymentDate: Date;
+  periodStart: Date;
+  periodEnd: Date;
+  createdAt: Date;
   fromUser: {
     firstName: string;
     lastName: string;
@@ -76,7 +76,7 @@ export interface WorkDebt {
     email: string;
     totalDebt: number;
     isPaymentDue: boolean;
-    lastClosureDate: string | null;
+    lastClosureDate: Date | null;
     duties: Array<{
       dutyId: string;
       dutyName: string;
@@ -110,7 +110,7 @@ export interface MyDebts {
     };
     totalDebt: number;
     isPaymentDue: boolean;
-    lastClosureDate: string | null;
+    lastClosureDate: Date | null;
     duties: Array<{
       dutyId: string;
       dutyName: string;
@@ -134,14 +134,14 @@ export interface MyPayments {
 // DTO для запросов
 export interface GetPaymentDebtsDto {
   workId?: string;
-  periodEnd?: string;
+  periodEnd?: Date;
 }
 
 export interface CalculatePaymentDto {
   workId: string;
   userId: string;
-  periodStart?: string;
-  periodEnd?: string;
+  periodStart?: Date;
+  periodEnd?: Date;
   dutyId?: string;
 }
 
@@ -151,17 +151,17 @@ export interface MakePaymentDto {
   amount: number;
   paymentType: PaymentType;
   description?: string;
-  periodEnd?: string;
+  periodEnd?: Date;
   dutyId?: string;
-  paymentDate?: string; // Добавлено поле для даты выплаты
+  paymentDate?: Date; // Добавлено поле для даты выплаты
 }
 
 export interface PaymentHistoryDto {
   workId?: string;
   userId?: string;
   paymentType?: PaymentType;
-  startDate?: string;
-  endDate?: string;
+  startDate?: Date;
+  endDate?: Date;
   page?: number;
   limit?: number;
 }
@@ -171,7 +171,7 @@ export interface CreatePaymentAndCloseDto {
   workId: string;
   userId: string;
   amount: number;
-  paymentDate: string;
+  paymentDate: Date;
   description: string;
 }
 
@@ -179,7 +179,7 @@ export interface PaymentClosureResponseDto {
   id: string;
   workId: string;
   userId: string;
-  closureDate: string;
+  closureDate: Date;
 }
 
 export interface CreatePaymentAndCloseResponseDto {

@@ -50,7 +50,7 @@ export interface UpdateProfileDto {
   firstName?: string;
   lastName?: string;
   middleName?: string;
-  birthday?: string | null;
+  birthday?: Date | null;
   timezone?: string;
   workStart?: string;
   workEnd?: string;

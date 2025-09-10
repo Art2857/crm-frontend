@@ -124,12 +124,12 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
           return false;
         if (
           filters.startDate &&
-          new Date(createdPayment.paymentDate) < new Date(filters.startDate)
+          createdPayment.paymentDate < filters.startDate
         )
           return false;
         if (
           filters.endDate &&
-          new Date(createdPayment.paymentDate) > new Date(filters.endDate)
+          createdPayment.paymentDate > filters.endDate
         )
           return false;
         return true;

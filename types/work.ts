@@ -36,10 +36,10 @@ export interface Work {
   name: string;
   responsibleUserId: string;
   salary: string; // Decimal represented as string
-  releaseDate?: string; // Date as ISO string
+  releaseDate?: Date; // Date объект
   isArchived?: boolean; // Архивный статус работы
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   history?: WorkHistory[]; // Соответствие бэкенду
 }
 
@@ -49,9 +49,9 @@ export interface WorkHistory {
   name: string;
   responsibleUserId: string;
   salary: string; // Decimal represented as string
-  effectiveDate?: string; // Date as ISO string
-  updatedAt: string;
-  createdAt?: string; // Добавляем поле для совместимости с бэкендом
+  effectiveDate?: Date; // Date объект
+  updatedAt: Date;
+  createdAt?: Date; // Добавляем поле для совместимости с бэкендом
   details?: DistributionDetail[]; // Соответствие бэкенду
 }
 
@@ -69,15 +69,15 @@ export interface WorkExtended {
   actualHours?: number;
   initiatorId: string;
   assigneeId?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateWorkDto {
   name: string;
   responsibleUserId: string;
   salary: string; // Decimal represented as string
-  releaseDate: string; // Date as ISO string
+  releaseDate: Date; // Date объект
 }
 
 /**
@@ -97,7 +97,7 @@ export interface UpdateWorkDto {
   name?: string;
   responsibleUserId?: string;
   salary?: string; // Decimal represented as string
-  releaseDate?: string; // Date as ISO string
+  releaseDate?: Date; // Date объект
 }
 
 /**

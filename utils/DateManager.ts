@@ -219,19 +219,19 @@ export class DateManager {
   }
 
   /**
-   * Получить текущую дату в ISO формате
+   * Получить текущую дату как Date объект
    */
-  getCurrentDateISO(): string {
-    return this.formatISO(new Date());
+  getCurrentDate(): Date {
+    return new Date();
   }
 
   /**
-   * Получить вчерашнюю дату в ISO формате
+   * Получить вчерашнюю дату как Date объект
    */
-  getYesterdayISO(): string {
+  getYesterdayDate(): Date {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    return this.formatISO(yesterday);
+    return yesterday;
   }
 
   /**
@@ -318,42 +318,5 @@ export const useDateManager = () => {
   return dateManager;
 };
 
-/**
- * Вспомогательные функции для обратной совместимости
- */
-export const formatDateToISO = (date: DateInput): string => {
-  return dateManager.formatISO(date);
-};
-
-export const formatDateForDisplay = (
-  dateInput: DateInput,
-  includeTime: boolean = false
-): string => {
-  return includeTime
-    ? dateManager.formatRussianWithTime(dateInput)
-    : dateManager.formatRussian(dateInput);
-};
-
-export const toDateObject = (date: DateInput): Date | null => {
-  return dateManager.parseDate(date);
-};
-
-export const getCurrentDateISO = (): string => {
-  return dateManager.getCurrentDateISO();
-};
-
-export const isValidRussianDateFormat = (dateString: string): boolean => {
-  return dateManager.isValidRussianFormat(dateString);
-};
-
-export const russianDateToDate = (dateString: string): Date | null => {
-  return dateManager.parseDate(dateString);
-};
-
-export const formatedDateToDateObject = (date: string): Date => {
-  const parsed = dateManager.parseDate(date);
-  if (!parsed) {
-    throw new Error(`Failed to parse date: ${date}`);
-  }
-  return parsed;
-};
+// Удалили все вспомогательные функции преобразования дат - теперь работаем с чистыми Date объектами
+// Форматирование для рендера - использовать dateManager.formatRussian() напрямую

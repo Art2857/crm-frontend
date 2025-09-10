@@ -26,72 +26,20 @@ const LOCALES = {
  * @param date Строка с датой или объект Date
  * @returns Объект Date или null если передано невалидное значение
  */
-export const toDateObject = (
-  date: string | Date | null | undefined
-): Date | null => {
-  if (!date) return null;
-
-  if (date instanceof Date) {
-    return isNaN(date.getTime()) ? null : date;
-  }
-
-  try {
-    // Проверяем, является ли строка датой в российском формате DD.MM.YYYY
-    if (typeof date === 'string' && /^\d{2}\.\d{2}\.\d{4}$/.test(date)) {
-      // Парсим российскую дату напрямую
-      const parts = date.split('.');
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Месяцы в JavaScript начинаются с 0
-      const year = parseInt(parts[2], 10);
-
-      const russianDate = new Date(year, month, day);
-
-      // Проверяем валидность даты
-      if (
-        russianDate.getFullYear() === year &&
-        russianDate.getMonth() === month &&
-        russianDate.getDate() === day
-      ) {
-        return russianDate;
-      } else {
-        return null;
-      }
-    }
-
-    const dateObj = new Date(date);
-    return isNaN(dateObj.getTime()) ? null : dateObj;
-  } catch (e) {
-    console.error('Invalid date format', e);
-    return null;
-  }
-};
+// Удалили toDateObject - теперь работаем с чистыми Date объектами
 
 /**
  * Форматирует дату в формат 'YYYY-MM-DD'
  * @param date Дата для форматирования
  * @returns Строка с датой в формате ISO или пустая строка, если дата невалидна
  */
-export const formatDateToISO = (
-  date: Date | string | null | undefined
-): string => {
-  const dateObj = toDateObject(date);
-  if (!dateObj) return '';
-
-  // Гарантируем «дату без времени» независимо от TZ браузера
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-};
+// Удалили formatDateToISO - форматирование только для рендера
 
 /**
  * Возвращает текущую дату в формате 'YYYY-MM-DD'
  * @returns Текущая дата в формате ISO
  */
-export const getCurrentDateISO = (): string => {
-  return formatDateToISO(new Date());
-};
+// Удалили getCurrentDateISO - используем new Date() напрямую
 
 // Кэш для хранения отформатированных дат
 interface DateFormatCache {

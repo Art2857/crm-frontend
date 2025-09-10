@@ -372,16 +372,16 @@ export function buildUserDetailedCalculation(params: {
   });
 
   const sortedPaymentHistory = allPaymentHistory.sort((a, b) => {
-    const dateA = new Date(a.date || a.paymentDate || 0);
-    const dateB = new Date(b.date || b.paymentDate || 0);
-    return dateB.getTime() - dateA.getTime();
+    const dateA = a.date || a.paymentDate || new Date(0);
+    const dateB = b.date || b.paymentDate || new Date(0);
+    return (dateB as Date).getTime() - (dateA as Date).getTime();
   });
 
-  const startDate = firstWork.lastClosureDate || '2024-01-01';
+  const startDate = firstWork.lastClosureDate || new Date('2024-01-01');
   const endDate = getWorkPeriodDate(firstWork.workId);
 
-  const startDateObj = new Date(startDate);
-  const endDateObj = new Date(endDate);
+  const startDateObj = startDate;
+  const endDateObj = endDate;
   const workingDaysInPeriod = getWorkingDaysInPeriod(startDateObj, endDateObj);
   const workingDaysInMonth = getWorkingDaysInMonth(endDateObj);
 

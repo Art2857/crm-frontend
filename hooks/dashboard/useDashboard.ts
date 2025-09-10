@@ -42,11 +42,11 @@ export function useDashboard() {
     return `${u.lastName || ''} ${u.firstName || ''} ${u.middleName || ''}`.trim();
   };
 
-  const calculateAge = (birthday: string | null): number | null => {
+  const calculateAge = (birthday: Date | null): number | null => {
     if (!birthday) return null;
-    // Нормализуем дату рождения без времени для корректного возраста
-    const birth = new Date(birthday);
-    if (isNaN(birth.getTime())) return null;
+    // birthday уже Date объект
+    if (isNaN(birthday.getTime())) return null;
+    const birth = birthday;
     const today = new Date();
     let age = today.getFullYear() - birth.getFullYear();
     const md = today.getMonth() - birth.getMonth();
