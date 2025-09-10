@@ -1,7 +1,6 @@
 import { privateApi } from './ApiClient';
 import { DASHBOARD_ENDPOINTS } from './endpoints';
 import { logger } from '../utils/logger';
-import { Role } from '../types/user';
 
 export interface DutyData {
   name: string;
@@ -39,10 +38,10 @@ export interface DashboardData {
 
 export const dashboardService = {
   // Получение данных главной страницы
-  async getDashboardData(role: Role): Promise<DashboardData> {
+  async getDashboardData(): Promise<DashboardData> {
     try {
       const response = await privateApi.get<DashboardData>(
-        DASHBOARD_ENDPOINTS.base(role)
+        DASHBOARD_ENDPOINTS.base
       );
       return response.data;
     } catch (error) {

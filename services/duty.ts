@@ -14,14 +14,13 @@ import {
   DISTRIBUTION_DETAILS_ENDPOINTS,
 } from './endpoints';
 import { logger } from '../utils/logger';
-import { Role } from '../types/user';
 
 export const dutyService = {
   // Получение всех обязанностей
-  getAll: async ({ role }: { role: Role }): Promise<Duty[]> => {
+  getAll: async (): Promise<Duty[]> => {
     try {
       const response = await privateApi.get<Duty[]>(
-        DUTIES_ENDPOINTS.base(role)
+        DUTIES_ENDPOINTS.base
       );
       return response.data;
     } catch (error) {
@@ -31,10 +30,10 @@ export const dutyService = {
   },
 
   // Получение обязанности по ID
-  getById: async (role: Role, id: string): Promise<Duty> => {
+  getById: async (id: string): Promise<Duty> => {
     try {
       const response = await privateApi.get<Duty>(
-        DUTIES_ENDPOINTS.byId(role, id)
+        DUTIES_ENDPOINTS.byId(id)
       );
       return response.data;
     } catch (error) {
@@ -44,10 +43,10 @@ export const dutyService = {
   },
 
   // Создание новой обязанности
-  create: async (role: Role, data: CreateDutyDto): Promise<Duty> => {
+  create: async (data: CreateDutyDto): Promise<Duty> => {
     try {
       const response = await privateApi.post<Duty>(
-        DUTIES_ENDPOINTS.base(role),
+        DUTIES_ENDPOINTS.base,
         data
       );
       return response.data;
@@ -59,13 +58,12 @@ export const dutyService = {
 
   // Обновление обязанности
   update: async (
-    role: Role,
     id: string,
     data: UpdateDutyDto
   ): Promise<Duty> => {
     try {
       const response = await privateApi.patch<Duty>(
-        DUTIES_ENDPOINTS.byId(role, id),
+        DUTIES_ENDPOINTS.byId(id),
         data
       );
       return response.data;
@@ -76,10 +74,10 @@ export const dutyService = {
   },
 
   // Получение всех распределений
-  getAllDistributions: async (role: Role): Promise<Distribution[]> => {
+  getAllDistributions: async (): Promise<Distribution[]> => {
     try {
       const response = await privateApi.get<Distribution[]>(
-        DISTRIBUTIONS_ENDPOINTS.base(role)
+        DISTRIBUTIONS_ENDPOINTS.base
       );
       return response.data;
     } catch (error) {
@@ -90,12 +88,11 @@ export const dutyService = {
 
   // Получение распределения по ID с деталями
   getDistributionById: async (
-    role: Role,
     id: string
   ): Promise<DistributionWithDetails> => {
     try {
       const response = await privateApi.get<DistributionWithDetails>(
-        DISTRIBUTIONS_ENDPOINTS.byId(role, id)
+        DISTRIBUTIONS_ENDPOINTS.byId(id)
       );
       return response.data;
     } catch (error) {
@@ -106,7 +103,6 @@ export const dutyService = {
 
   // Создание нового распределения
   async createDistribution(
-    role: Role,
     data: {
       workHistoryId: string;
       effectiveDate?: string;
@@ -136,7 +132,7 @@ export const dutyService = {
       logger.debug('Преобразованные данные для API:', requestData);
 
       const response = await privateApi.post<DistributionWithDetails>(
-        DISTRIBUTIONS_ENDPOINTS.base(role),
+        DISTRIBUTIONS_ENDPOINTS.base,
         requestData
       );
 
@@ -151,12 +147,11 @@ export const dutyService = {
 
   // Получение распределения по workHistoryId
   getDistributionsByWorkHistoryId: async (
-    role: Role,
     workHistoryId: string
   ): Promise<DistributionWithDetails | null> => {
     try {
       const response = await privateApi.get<DistributionWithDetails>(
-        DISTRIBUTIONS_ENDPOINTS.byWorkHistoryId(role, workHistoryId)
+        DISTRIBUTIONS_ENDPOINTS.byWorkHistoryId(workHistoryId)
       );
       return response.data;
     } catch (error) {
@@ -174,12 +169,11 @@ export const dutyService = {
 
   // Получение всех распределений по workId (для работы)
   getDistributionsByWorkId: async (
-    role: Role,
     workId: string
   ): Promise<DistributionWithDetails[]> => {
     try {
       const response = await privateApi.get<DistributionWithDetails[]>(
-        DISTRIBUTIONS_ENDPOINTS.byWorkId(role, workId)
+        DISTRIBUTIONS_ENDPOINTS.byWorkId(workId)
       );
       return response.data;
     } catch (error) {
@@ -194,7 +188,6 @@ export const dutyService = {
 
   // Обновление распределения
   async updateDistribution(
-    role: Role,
     workHistoryId: string,
     data: {
       details: {
@@ -223,7 +216,7 @@ export const dutyService = {
       logger.debug('Преобразованные данные для API:', requestData);
 
       const response = await privateApi.patch<DistributionWithDetails>(
-        DISTRIBUTIONS_ENDPOINTS.byId(role, workHistoryId),
+        DISTRIBUTIONS_ENDPOINTS.byId(workHistoryId),
         requestData
       );
 
@@ -238,12 +231,11 @@ export const dutyService = {
 
   // Получение детали распределения по ID
   getDistributionDetailById: async (
-    role: Role,
     id: string
   ): Promise<DistributionDetail> => {
     try {
       const response = await privateApi.get<DistributionDetail>(
-        DISTRIBUTION_DETAILS_ENDPOINTS.byId(role, id)
+        DISTRIBUTION_DETAILS_ENDPOINTS.byId(id)
       );
       return response.data;
     } catch (error) {
@@ -254,7 +246,6 @@ export const dutyService = {
 
   // Создание детали распределения
   createDistributionDetail: async (
-    role: Role,
     data: {
       workHistoryId: string;
       dutyId: string;
@@ -265,7 +256,7 @@ export const dutyService = {
   ): Promise<DistributionDetail> => {
     try {
       const response = await privateApi.post<DistributionDetail>(
-        DISTRIBUTION_DETAILS_ENDPOINTS.base(role),
+        DISTRIBUTION_DETAILS_ENDPOINTS.base,
         data
       );
       return response.data;
@@ -277,7 +268,6 @@ export const dutyService = {
 
   // Обновление детали распределения
   updateDistributionDetail: async (
-    role: Role,
     id: string,
     data: {
       price?: string | null;
@@ -286,7 +276,7 @@ export const dutyService = {
   ): Promise<DistributionDetail> => {
     try {
       const response = await privateApi.patch<DistributionDetail>(
-        DISTRIBUTION_DETAILS_ENDPOINTS.byId(role, id),
+        DISTRIBUTION_DETAILS_ENDPOINTS.byId(id),
         data
       );
       return response.data;

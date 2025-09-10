@@ -6,7 +6,6 @@ import {
   WorkDetail,
   DetailedCalculation,
 } from '../types/payments';
-import { Role } from '../types/user';
 
 // ==========================
 // Types returned by backend
@@ -162,7 +161,6 @@ export const analyticsService = {
    * Возвращает уже готовые ResponsibleUser[]
    */
   async getPaymentsManagement(
-    role: Role,
     endDate?: string,
     worksIds?: string[],
     targetUserId?: string
@@ -205,7 +203,7 @@ export const analyticsService = {
           }>;
         }>;
       }>;
-    }>(ANALYTICS_ENDPOINTS.paymentsManagement(role), {
+    }>(ANALYTICS_ENDPOINTS.paymentsManagement, {
       params: { endDate, worksId: worksIds, workerId: targetUserId },
     });
 
@@ -277,31 +275,25 @@ export const analyticsService = {
 
   /** Получить детальный расчёт по работе/пользователю для модалки */
   async getPaymentsCalculation(params: {
-    role: Role;
     userId: string;
     workId: string;
     endDate: string;
   }): Promise<DetailedCalculation> {
-    // Убираем role из query параметров - роль должна браться из JWT!
-    const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
-      ANALYTICS_ENDPOINTS.paymentsCalculation(role),
-      { params: queryParams }
+      ANALYTICS_ENDPOINTS.paymentsCalculation,
+      { params }
     );
     return data;
   },
 
   /** Получить общий детальный расчёт по пользователю (все работы) */
   async getPaymentsCalculationUser(params: {
-    role: Role;
     userId: string;
     endDate: string;
   }): Promise<DetailedCalculation> {
-    // Убираем role из query параметров - роль должна браться из JWT!
-    const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
-      ANALYTICS_ENDPOINTS.paymentsCalculationUser(role),
-      { params: queryParams }
+      ANALYTICS_ENDPOINTS.paymentsCalculationUser,
+      { params }
     );
     return data;
   },
@@ -314,14 +306,12 @@ export const analyticsService = {
    */
   // legacy endpoint kept for backward-compat in rare places; prefer paymentsManagement
   async getUserWorksClosurePeriodsAnalysis(
-    role: Role,
     endDate?: string,
     worksIds?: string[],
     targetUserId?: string
   ): Promise<UsersWorksClosurePeriodsAnalysisResult> {
     // Redirect to new endpoint behaviour when possible
     const users = await this.getPaymentsManagement(
-      role,
       endDate,
       worksIds,
       targetUserId
@@ -345,10 +335,10 @@ export const analyticsService = {
   /**
    * Получить задолженности текущего пользователя
    */
-  async getMyDebts(role: Role): Promise<MyDebtsResponse> {
+  async getMyDebts(): Promise<MyDebtsResponse> {
     try {
       const response = await privateApi.get<MyDebtsResponse>(
-        ANALYTICS_ENDPOINTS.myDebts(role)
+        ANALYTICS_ENDPOINTS.myDebts
       );
       return response.data;
     } catch (error) {

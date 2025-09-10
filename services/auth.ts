@@ -7,7 +7,7 @@ import {
 import { publicApi, privateApi, authApi, ApiClient } from './ApiClient';
 import { AUTH_ENDPOINTS, USERS_ENDPOINTS } from './endpoints';
 import { accountManagerService } from './accountManager';
-import { Role, User } from '../types/user';
+import { User } from '../types/user';
 import { tokenStorage } from './tokenStorage';
 import { logger } from '../utils/logger';
 
@@ -169,9 +169,9 @@ export const authService = {
   },
 
   // Получение текущего пользователя (по токену)
-  getCurrentUser: async (role: Role): Promise<User> => {
+  getCurrentUser: async (): Promise<User> => {
     try {
-      const response = await privateApi.get<User>(USERS_ENDPOINTS.me(role), {
+      const response = await privateApi.get<User>(USERS_ENDPOINTS.me, {
         headers: ApiClient.getNoCacheHeaders(),
       });
 
