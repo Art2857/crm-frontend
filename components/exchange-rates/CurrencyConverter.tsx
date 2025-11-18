@@ -135,11 +135,15 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
     loadLatestUsdRate();
   }, []);
 
-  // Мгновенная конвертация при изменении суммы, валют или даты (БЕЗ debounce)
+  // Конвертация при изменении суммы, валют или даты с небольшим debounce,
+  // чтобы избежать двойных вызовов в React StrictMode и лишних запросов
   useEffect(() => {
     if (amount && parseFloat(amount) > 0) {
-      // МГНОВЕННАЯ конвертация без задержек!
-      handleConvert(amount);
+      const timer = setTimeout(() => {
+        handleConvert(amount);
+      }, 250);
+
+      return () => clearTimeout(timer);
     } else {
       setResult(null);
       setRate(null);
@@ -327,16 +331,16 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
                 </div>
               </div>
 
-                                 {/* Дополнительная информация о курсе */}
-                   {rate && !error && (
-                     <div className="text-center text-sm text-gray-600">
-                       Курс на {selectedDate}
-                       {!isWorkingDay(new Date(selectedDate)) && (
-                         <span className="text-orange-500 ml-1">(выходной, показан ближайший)</span>
-                       )}
-                       : <span className="font-medium">1 {fromCurrency} = {formatCurrency(rate)} {toCurrency}</span>
-                     </div>
-                   )}
+              {/* Дополнительная информация о курсе */}
+              {rate && !error && (
+                <div className="text-center text-sm text-gray-600">
+                  Курс на {selectedDate}
+                  {!isWorkingDay(new Date(selectedDate)) && (
+                    <span className="text-orange-500 ml-1">(выходной, показан ближайший)</span>
+                  )}
+                  : <span className="font-medium">1 {fromCurrency} = {formatCurrency(rate)} {toCurrency}</span>
+                </div>
+              )}
 
               {/* Ошибка */}
               {error && (
