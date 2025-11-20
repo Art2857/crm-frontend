@@ -92,9 +92,7 @@ export const workService = {
   // Список архивных работ
   getArchived: async (role: Role): Promise<Work[]> => {
     try {
-      const response = await privateApi.get<Work[]>(
-        `${WORKS_ENDPOINTS.base(role)}/archived/list`
-      );
+      const response = await privateApi.get<Work[]>(WORKS_ENDPOINTS.archived(role));
       return response.data;
     } catch (error) {
       logger.error('Error fetching archived works:', error);
