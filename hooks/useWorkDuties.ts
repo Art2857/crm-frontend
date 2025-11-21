@@ -5,7 +5,6 @@ import {
   createDistribution,
   clearWorkDistributions,
 } from '../store/slices/duties';
-import { DistributionWithDetails } from '../types/duty';
 import { workService } from '../services/work';
 import { Role } from '../types/user';
 
@@ -189,7 +188,6 @@ export const useWorkDuties = ({
           try {
             // Получаем последнюю запись истории работы
             const latestHistory = await workService.getLatestWorkHistory(
-              role,
               workId
             );
             historyId = latestHistory.id;

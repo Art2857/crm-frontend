@@ -162,7 +162,7 @@ export const analyticsService = {
    * Возвращает уже готовые ResponsibleUser[]
    */
   async getPaymentsManagement(
-    role: Role,
+    _role: Role,
     endDate?: string,
     worksIds?: string[],
     targetUserId?: string
@@ -205,7 +205,7 @@ export const analyticsService = {
           }>;
         }>;
       }>;
-    }>(ANALYTICS_ENDPOINTS.paymentsManagement(role), {
+    }>(ANALYTICS_ENDPOINTS.paymentsManagement, {
       params: { endDate, worksId: worksIds, workerId: targetUserId },
     });
 
@@ -285,7 +285,7 @@ export const analyticsService = {
     // Убираем role из query параметров - роль должна браться из JWT!
     const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
-      ANALYTICS_ENDPOINTS.paymentsCalculation(role),
+      ANALYTICS_ENDPOINTS.paymentsCalculation,
       { params: queryParams }
     );
     return data;
@@ -300,7 +300,7 @@ export const analyticsService = {
     // Убираем role из query параметров - роль должна браться из JWT!
     const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
-      ANALYTICS_ENDPOINTS.paymentsCalculationUser(role),
+      ANALYTICS_ENDPOINTS.paymentsCalculationUser,
       { params: queryParams }
     );
     return data;
@@ -345,11 +345,9 @@ export const analyticsService = {
   /**
    * Получить задолженности текущего пользователя
    */
-  async getMyDebts(role: Role): Promise<MyDebtsResponse> {
+  async getMyDebts(): Promise<MyDebtsResponse> {
     try {
-      const response = await privateApi.get<MyDebtsResponse>(
-        ANALYTICS_ENDPOINTS.myDebts(role)
-      );
+      const response = await privateApi.get<MyDebtsResponse>(ANALYTICS_ENDPOINTS.myDebts);
       return response.data;
     } catch (error) {
       logger.error('Error fetching my debts:', error);

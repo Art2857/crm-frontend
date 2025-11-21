@@ -32,7 +32,6 @@ export function useWorksAnalytics(showArchived = false) {
       try {
         logger.debug(`Загружаем аналитику работ (архив: ${archived})...`);
         const analyticsData = await workAnalyticsService.getAnalytics(
-          user.role,
           archived
         );
         setData(analyticsData);

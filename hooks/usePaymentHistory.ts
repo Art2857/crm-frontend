@@ -64,7 +64,7 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
       setLoading(true);
       setError(null);
 
-      const result = await fetchPaymentHistory(user.role, filters);
+      const result = await fetchPaymentHistory(filters);
 
       // Проверяем, что запрос не был отменен
       if (!abortControllerRef.current.signal.aborted) {

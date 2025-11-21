@@ -5,7 +5,6 @@ import { useAppSelector, useAppDispatch } from '../../store';
 import { useRouter } from 'next/navigation';
 import Layout from '../../components/layout/Layout';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
 import TimezoneSelector from '../../components/ui/TimezoneSelector';
 import { UpdateProfileDto, UserStatus } from '../../types/user';
 import { updateUserProfile } from '../../store/slices/users';
@@ -255,7 +254,7 @@ export default function ProfilePage() {
         });
 
         setTimeout(() => {
-          dispatch(getCurrentUser({ role: user.role }));
+          dispatch(getCurrentUser());
         }, 300);
       }
     } catch (err) {

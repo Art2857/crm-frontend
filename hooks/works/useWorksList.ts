@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUsersMap } from '../shared/useUsersMap';
 import { useAppDispatch, useAppSelector } from '../../store';
@@ -9,7 +9,6 @@ import { logger } from '../../utils/logger';
 import { Work } from '../../types/work';
 import { workService } from '../../services/work';
 import { useNotification } from '../../contexts/NotificationContext';
-import { User } from '../../types/user';
 
 export function useWorksList() {
   const router = useRouter();
@@ -43,7 +42,7 @@ export function useWorksList() {
       }
       if (!user) {
         try {
-          await dispatch(getCurrentUser({ role: 'WORKER' as any })).unwrap(); // Default role since we don't know user role yet
+        await dispatch(getCurrentUser()).unwrap(); // Default role since we don't know user role yet
         } catch (error) {
           logger.error('Ошибка при получении пользователя:', error);
           router.push('/login');
@@ -65,7 +64,7 @@ export function useWorksList() {
         const promises: Array<any> = [];
         promises.push(dispatch(fetchAllUsers({ role: user.role })));
         if (user.role === 'ADMIN') {
-          promises.push(dispatch(fetchAllWorks({ role: user.role })));
+          promises.push(dispatch(fetchAllWorks()));
           setViewType('all');
         } else {
           logger.debug('Fetching user works for userId:', user.id);
@@ -125,7 +124,7 @@ export function useWorksList() {
     setShowArchived(next);
     if (next && archivedWorks.length === 0) {
       try {
-        const list = await workService.getArchived(user.role);
+        const list = await workService.getArchived();
         setArchivedWorks(list);
       } catch (e) {
         notification.showError('Не удалось загрузить архивные работы');
@@ -136,13 +135,13 @@ export function useWorksList() {
   const handleArchive = useCallback(
     async (id: string) => {
       try {
-        await workService.archive(user.role as any, id);
+        await workService.archive(id);
         notification.showSuccess('Работа отправлена в архив');
         if (showArchived) {
-          const list = await workService.getArchived(user.role);
+          const list = await workService.getArchived();
           setArchivedWorks(list);
         } else {
-          dispatch(fetchAllWorks({ role: user.role }));
+          dispatch(fetchAllWorks());
         }
       } catch (e) {
         notification.showError('Ошибка при архивировании работы');
@@ -154,11 +153,11 @@ export function useWorksList() {
   const handleRestore = useCallback(
     async (id: string) => {
       try {
-        await workService.restore(user.role, id);
+        await workService.restore(id);
         notification.showSuccess('Работа восстановлена из архива');
-        const list = await workService.getArchived(user.role);
+        const list = await workService.getArchived();
         setArchivedWorks(list);
-        dispatch(fetchAllWorks({ role: user.role }));
+        dispatch(fetchAllWorks());
       } catch (e) {
         notification.showError('Ошибка при восстановлении работы');
       }
