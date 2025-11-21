@@ -75,7 +75,7 @@ export default function AuthChecker({
             (currentToken ? getRoleFromToken(currentToken) : null);
 
           if (role) {
-            await dispatch(getCurrentUser({ role })).unwrap();
+            await dispatch(getCurrentUser()).unwrap();
           } else {
             // Если не можем определить роль, очищаем состояние
             logger.warn('AuthChecker: не удалось определить роль пользователя');

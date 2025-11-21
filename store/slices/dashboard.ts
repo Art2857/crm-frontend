@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { dashboardService, DashboardData } from '../../services/dashboard';
-import { Role } from '../../types/user';
 import { logout } from './auth';
 
 interface DashboardState {
@@ -17,9 +16,9 @@ const initialState: DashboardState = {
 
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchData',
-  async ({ role }: { role: Role }, { rejectWithValue }) => {
+  async (_: void, { rejectWithValue }) => {
     try {
-      return await dashboardService.getDashboardData(role);
+      return await dashboardService.getDashboardData();
     } catch (error: any) {
       return rejectWithValue(
         error.message || 'Не удалось загрузить данные главной страницы'

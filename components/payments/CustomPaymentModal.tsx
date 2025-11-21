@@ -63,7 +63,7 @@ export default function CustomPaymentModal({
       (async () => {
         try {
           if (user?.id) {
-            const data = await workService.getByUserId(user.role, user.id);
+            const data = await workService.getByUserId(user.id);
             setWorks(data);
           } else {
             setWorks([]);
@@ -81,7 +81,6 @@ export default function CustomPaymentModal({
       (async () => {
         try {
           const users = await workExecuterService.getByWorkId(
-            user.role,
             selectedWorkId
           );
           setExecuters(users);

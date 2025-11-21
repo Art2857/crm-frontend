@@ -28,7 +28,7 @@ export function useDashboard() {
     // Проверяем, что пользователь полностью загружен перед запросом данных
     if (user && user.role) {
       logger.debug('useDashboard: загружаем данные дашборда для роли', user.role);
-      dispatch(fetchDashboardData({ role: user.role }));
+      dispatch(fetchDashboardData());
     } else {
       logger.debug('useDashboard: пользователь или роль не загружены', { 
         hasUser: !!user, 

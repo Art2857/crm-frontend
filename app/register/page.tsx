@@ -101,7 +101,7 @@ export default function RegisterPage() {
           );
 
           // Загружаем полные данные пользователя
-          await dispatch(getCurrentUser({ role: user.role }));
+          await dispatch(getCurrentUser());
 
           // После успешной регистрации перенаправляем на страницу аккаунтов
           router.push('/accounts');
@@ -116,7 +116,7 @@ export default function RegisterPage() {
 
         if (registerUser.fulfilled.match(resultAction)) {
           // Второй шаг - получить полные данные пользователя
-          await dispatch(getCurrentUser({ role: user.role }));
+          await dispatch(getCurrentUser());
           router.push('/profile');
         } else if (
           registerUser.rejected.match(resultAction) &&

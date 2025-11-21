@@ -78,7 +78,7 @@ export function usePaymentsData() {
 
   const fetchMyDebtsData = useCallback(async () => {
     try {
-      const myDebtsData = await analyticsService.getMyDebts(user.role);
+      const myDebtsData = await analyticsService.getMyDebts();
       setMyDebts(myDebtsData.debts as unknown as MyDebt[]);
     } catch (error) {
       logger.error('Ошибка загрузки моих задолженностей:', error);

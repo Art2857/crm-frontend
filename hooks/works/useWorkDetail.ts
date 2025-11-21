@@ -142,7 +142,7 @@ export function useWorkDetail(id: string) {
       );
       if (!confirmArchive) return;
 
-      await workService.archive(user.role, id);
+      await workService.archive(id);
       notification.showSuccess('Работа успешно архивирована');
       router.push('/works'); // Перенаправляем на список работ
     } catch (error) {
@@ -158,7 +158,7 @@ export function useWorkDetail(id: string) {
       );
       if (!confirmRestore) return;
 
-      await workService.restore(user.role, id);
+      await workService.restore(id);
       notification.showSuccess('Работа успешно восстановлена');
       // Обновляем данные работы
       await reloadWorkData();
@@ -171,7 +171,7 @@ export function useWorkDetail(id: string) {
   const loadWorkHistory = useCallback(async () => {
     try {
       setIsLoadingHistory(true);
-      const history = await workService.getHistory(user.role, id);
+      const history = await workService.getHistory(id);
       setWorkHistory(history);
     } catch (error) {
       console.error('Error loading work history:', error);
@@ -256,7 +256,7 @@ export function useWorkDetail(id: string) {
   const loadDutiesHistory = useCallback(async () => {
     setIsLoadingHistory(true);
     try {
-      const historyData = await workService.getHistory(user.role, id);
+      const historyData = await workService.getHistory(id);
       setWorkHistory(historyData);
       dutiesManagementHook.forceReload();
     } catch (error) {

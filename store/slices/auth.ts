@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authService } from '../../services/auth';
 import { AuthState, LoginDto, RegisterDto } from '../../types/auth';
-import { Role, User } from '../../types/user';
+import { User } from '../../types/user';
 import { updateUserProfile } from './users';
 
 // Начальное состояние
@@ -40,14 +40,14 @@ export const register = createAsyncThunk(
 
 export const getCurrentUser = createAsyncThunk(
   'auth/getCurrentUser',
-  async ({ role }: { role: Role }, { rejectWithValue }) => {
+  async (_: void, { rejectWithValue }) => {
     try {
       const token = authService.getToken();
       if (!token) {
         return rejectWithValue('Токен не найден');
       }
 
-      const user = await authService.getCurrentUser(role);
+      const user = await authService.getCurrentUser();
       return { user, token };
     } catch (error: any) {
       // При ошибке получения текущего пользователя, очищаем токен

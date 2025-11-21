@@ -15,7 +15,7 @@ export function useAccountSwitcher() {
 
   // Обновление данных пользователя
   const refreshUserData = () => {
-    dispatch(getCurrentUser({ role: user.role }));
+    dispatch(getCurrentUser());
   };
 
   // Слушаем событие переключения аккаунта

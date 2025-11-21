@@ -1,21 +1,16 @@
 import { privateApi } from './ApiClient';
 import { PAYMENTS_ENDPOINTS, ANALYTICS_ENDPOINTS } from './endpoints';
 import {
-  PaymentDebts,
-  PaymentCalculation,
   PaymentResponse,
   PaymentHistory,
   MyDebts,
   MyPayments,
-  GetPaymentDebtsDto,
-  CalculatePaymentDto,
   MakePaymentDto,
   PaymentHistoryDto,
   CreatePaymentAndCloseDto,
   CreatePaymentAndCloseResponseDto,
 } from '../types/payment';
 import { logger } from '../utils/logger';
-import { Role } from '../types/user';
 
 /**
  * Получает задолженности по выплатам (для ответственных)
@@ -33,12 +28,11 @@ import { Role } from '../types/user';
  * Производит выплату сотруднику
  */
 export const makePayment = async (
-  role: Role,
   paymentData: MakePaymentDto
 ): Promise<PaymentResponse> => {
   try {
     const response = await privateApi.post<PaymentResponse>(
-      PAYMENTS_ENDPOINTS.base(role),
+      PAYMENTS_ENDPOINTS.base,
       paymentData
     );
     return response.data;
@@ -52,7 +46,6 @@ export const makePayment = async (
  * Получает историю выплат
  */
 export const fetchPaymentHistory = async (
-  role: Role,
   params?: PaymentHistoryDto
 ): Promise<PaymentHistory> => {
   try {
@@ -68,8 +61,8 @@ export const fetchPaymentHistory = async (
     if (params?.limit) searchParams.append('limit', params.limit.toString());
 
     const url = searchParams.toString()
-      ? `${PAYMENTS_ENDPOINTS.history(role)}?${searchParams.toString()}`
-      : PAYMENTS_ENDPOINTS.history(role);
+      ? `${PAYMENTS_ENDPOINTS.history}?${searchParams.toString()}`
+      : PAYMENTS_ENDPOINTS.history;
 
     const response = await privateApi.get<PaymentHistory>(url);
     return response.data;
@@ -82,11 +75,9 @@ export const fetchPaymentHistory = async (
 /**
  * Получает задолженности текущего пользователя (что ему должны)
  */
-export const fetchMyDebts = async (role: Role): Promise<MyDebts> => {
+export const fetchMyDebts = async (): Promise<MyDebts> => {
   try {
-    const response = await privateApi.get<MyDebts>(
-      ANALYTICS_ENDPOINTS.myDebts(role)
-    );
+    const response = await privateApi.get<MyDebts>(ANALYTICS_ENDPOINTS.myDebts);
     return response.data;
   } catch (error) {
     logger.error('Error fetching my debts:', error);
@@ -97,11 +88,11 @@ export const fetchMyDebts = async (role: Role): Promise<MyDebts> => {
 /**
  * Получает статистику выплат пользователя
  */
-export const fetchMyPayments = async (role: Role): Promise<MyPayments> => {
+export const fetchMyPayments = async (): Promise<MyPayments> => {
   try {
     // Бэкенд не предоставляет /payments/my-payments. Используем /payments/history и агрегируем на клиенте
     const response = await privateApi.get<PaymentHistory>(
-      PAYMENTS_ENDPOINTS.history(role)
+      PAYMENTS_ENDPOINTS.history
     );
     const history = response.data;
 
@@ -148,11 +139,10 @@ export const fetchMyPayments = async (role: Role): Promise<MyPayments> => {
  * Удаляет выплату (отменяет ошибочную выплату)
  */
 export const deletePayment = async (
-  role: Role,
   paymentId: string
 ): Promise<void> => {
   try {
-    await privateApi.delete(PAYMENTS_ENDPOINTS.byId(role, paymentId));
+    await privateApi.delete(PAYMENTS_ENDPOINTS.byId(paymentId));
   } catch (error) {
     logger.error('Error deleting payment:', error);
     if (error instanceof Error) {
@@ -166,12 +156,11 @@ export const deletePayment = async (
  * Создает выплату и закрывает период
  */
 export const createPaymentAndClose = async (
-  role: Role,
   paymentData: CreatePaymentAndCloseDto
 ): Promise<CreatePaymentAndCloseResponseDto> => {
   try {
     const response = await privateApi.post<CreatePaymentAndCloseResponseDto>(
-      PAYMENTS_ENDPOINTS.createAndClose(role),
+      PAYMENTS_ENDPOINTS.createAndClose,
       paymentData
     );
     return response.data;
@@ -182,7 +171,6 @@ export const createPaymentAndClose = async (
 };
 
 export const closePeriod = async (
-  role: Role,
   params: {
     workId: string;
     userId: string;
@@ -190,7 +178,7 @@ export const closePeriod = async (
   }
 ) => {
   const { data } = await privateApi.post(
-    `${PAYMENTS_ENDPOINTS.base(role)}/close-period`,
+    `${PAYMENTS_ENDPOINTS.base}/close-period`,
     {
       workId: params.workId,
       targetUserId: params.userId,
@@ -201,7 +189,6 @@ export const closePeriod = async (
 };
 
 export const bulkCreateAndClose = async (
-  role: Role,
   items: Array<{
     workId: string;
     userId: string;
@@ -211,7 +198,7 @@ export const bulkCreateAndClose = async (
   }>
 ) => {
   const { data } = await privateApi.post(
-    PAYMENTS_ENDPOINTS.bulkCreateAndClose(role),
+    PAYMENTS_ENDPOINTS.bulkCreateAndClose,
     { items }
   );
   return data;

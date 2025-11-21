@@ -203,7 +203,7 @@ export default function PaymentsPage() {
       try {
         const { userId, workId, calculationDate } = e.detail || {};
         if (!userId || !workId || !calculationDate) return;
-        await closePeriod(user?.role, {
+        await closePeriod({
           workId,
           userId,
           closureDate: calculationDate,
@@ -270,7 +270,7 @@ export default function PaymentsPage() {
         paymentDate: endDate,
         description: `Мультивыплата по общему расчету (${w.workName})`,
       }));
-      await bulkCreateAndClose(user?.role, items);
+      await bulkCreateAndClose(items);
       await refreshAfterUserPayment(userId);
       setCalculationModalOpen(false);
       setSelectedCalculation(null);
@@ -502,7 +502,7 @@ export default function PaymentsPage() {
   const handlePaymentSubmit = async (data: PaymentModalData) => {
     try {
       // Используем новый эндпоинт create-payment-and-close
-      const result = await createPaymentAndClose(user?.role, {
+      const result = await createPaymentAndClose({
         workId: selectedPayment?.workId || '',
         userId: selectedPayment?.userId || '',
         amount: Math.round(data.amount), // Конвертируем в копейки
@@ -557,7 +557,7 @@ export default function PaymentsPage() {
 
   const handleCustomPaymentSubmit = async (data: CustomPaymentFormData) => {
     try {
-      const created = await makePayment(user?.role, {
+      const created = await makePayment({
         workId: data.workId,
         userId: data.userId,
         amount: Math.round(data.amount),

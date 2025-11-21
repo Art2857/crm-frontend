@@ -58,9 +58,9 @@ const handleThunkError = (error: unknown, defaultMessage: string): string => {
 // Асинхронные thunks
 export const fetchAllWorks = createAsyncThunk(
   'works/fetchAll',
-  async ({ role }: { role: Role }, { rejectWithValue }) => {
+  async (_: void, { rejectWithValue }) => {
     try {
-      return await workService.getAll(role);
+      return await workService.getAll();
     } catch (error) {
       // Проверяем на отмененный запрос
       if (error instanceof Error && error.message === 'REQUEST_CANCELLED') {
@@ -81,7 +81,7 @@ export const fetchUserWorks = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      return await workService.getByUserId(role, userId);
+      return await workService.getByUserId(userId);
     } catch (error) {
       // Проверяем на отмененный запрос
       if (error instanceof Error && error.message === 'REQUEST_CANCELLED') {
@@ -101,7 +101,7 @@ export const fetchUserWorksWithDuties = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      return await workService.getByUserId(role, userId);
+      return await workService.getByUserId(userId);
     } catch (error) {
       return rejectWithValue(
         handleThunkError(
@@ -120,7 +120,7 @@ export const fetchWorkById = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      return await workService.getById(role, workId);
+      return await workService.getById(workId);
     } catch (error) {
       return rejectWithValue(
         handleThunkError(error, 'Не удалось загрузить работу')
@@ -136,7 +136,7 @@ export const createWork = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      return await workService.create(role, data);
+      return await workService.create(data);
     } catch (error) {
       return rejectWithValue(
         handleThunkError(error, 'Не удалось создать работу')
@@ -152,7 +152,7 @@ export const updateWork = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      return await workService.update(role, id, data);
+      return await workService.update(id, data);
     } catch (error) {
       return rejectWithValue(
         handleThunkError(error, 'Не удалось обновить работу')

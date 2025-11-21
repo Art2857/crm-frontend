@@ -62,7 +62,7 @@ export default function PaymentHistoryTab({
     if (confirm('Вы уверены, что хотите удалить эту выплату?')) {
       try {
         setDeletingPaymentId(paymentId);
-        await deletePayment(user.role, paymentId);
+        await deletePayment(paymentId);
         await refetch(); // Перезагружаем данные после удаления
       } catch (error) {
         console.error('Error deleting payment:', error);

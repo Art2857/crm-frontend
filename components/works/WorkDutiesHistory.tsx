@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 import { DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
 import { formatDateForDisplay } from '../../utils/date';
-import { formatCurrency, formatPayment } from '../../utils/currency';
+import { formatCurrency } from '../../utils/currency';
 import { WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
 import { useAppSelector } from '../../store';
@@ -321,13 +321,9 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
     setIsUpdating(true);
     try {
-      await workService.updateWorkHistory(
-        user.role,
-        distribution.workHistory.id,
-        {
-          effectiveDate: tempDate,
-        }
-      );
+      await workService.updateWorkHistory(distribution.workHistory.id, {
+        effectiveDate: tempDate,
+      });
 
       setEditingEffectiveDate(null);
       setTempDate('');
@@ -348,7 +344,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
     setIsUpdating(true);
     try {
-      await workService.updateWorkHistory(user.role, workHistoryItem.id, {
+      await workService.updateWorkHistory(workHistoryItem.id, {
         effectiveDate: tempDate,
       });
 

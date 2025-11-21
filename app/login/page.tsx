@@ -90,7 +90,7 @@ export default function LoginPage() {
           );
 
           // Загружаем полные данные пользователя
-          await dispatch(getCurrentUser({ role: user.role }));
+          await dispatch(getCurrentUser());
 
           // После успешного входа перенаправляем на страницу аккаунтов
           router.push('/accounts');
@@ -105,7 +105,7 @@ export default function LoginPage() {
 
         if (login.fulfilled.match(resultAction)) {
           // Второй шаг - получить полные данные пользователя
-          await dispatch(getCurrentUser({ role: user.role }));
+          await dispatch(getCurrentUser());
           router.push('/dashboard');
         } else if (login.rejected.match(resultAction) && resultAction.payload) {
           setServerError(resultAction.payload as string);

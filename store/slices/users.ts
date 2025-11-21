@@ -28,7 +28,7 @@ export const fetchAllUsers = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const users = await userService.getAllUsers(role, getAllUsersParams);
+    const users = await userService.getAllUsers(getAllUsersParams);
       return users;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -48,7 +48,7 @@ export const fetchUserById = createAsyncThunk(
   'users/fetchById',
   async ({ role, id }: { role: Role; id: string }, { rejectWithValue }) => {
     try {
-      return await userService.getById(role, id);
+      return await userService.getById(id);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
@@ -70,7 +70,7 @@ export const updateUserProfile = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const user = await userService.updateProfile(role, userId, data);
+      const user = await userService.updateProfile(userId, data);
       return user;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -92,7 +92,7 @@ export const updateUserSensitiveData = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const user = await userService.updateSensitiveData(role, userId, data);
+      const user = await userService.updateSensitiveData(userId, data);
       return user;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -195,7 +195,7 @@ export const fetchUserHistory = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const userWithHistory = await userService.getUserHistory(role, userId);
+      const userWithHistory = await userService.getUserHistory(userId);
       return userWithHistory;
     } catch (error: any) {
       // Игнорируем отмененные запросы
