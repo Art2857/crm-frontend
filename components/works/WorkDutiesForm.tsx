@@ -480,13 +480,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
       return false;
     }
 
-    // Проверка распределения (не должно превышать 100%)
-    if (totalPercentage > 100) {
-      setValidationError(
-        `Общая сумма распределения (${totalPercentage.toFixed(2)}%) превышает 100%. Пожалуйста, скорректируйте значения.`
-      );
-      return false;
-    }
+    // Проверка распределения может превышать 100%
 
     setValidationError(null);
     return true;
