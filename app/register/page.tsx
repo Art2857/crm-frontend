@@ -178,6 +178,16 @@ export default function RegisterPage() {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: 'Некорректный email',
                 },
+                validate: (value) => {
+                  const hasUpper = /[A-Z]/.test(value);
+                  const hasLower = /[a-z]/.test(value);
+                  const hasNumber = /\d/.test(value);
+                  const hasSpecial = /[^A-Za-z0-9]/.test(value);
+                  return (
+                    hasUpper && hasLower && hasNumber && hasSpecial
+                  ) ||
+                    'Пароль должен содержать строчные, прописные буквы, цифры и спецсимволы';
+                },
               })}
             />
 
@@ -191,8 +201,8 @@ export default function RegisterPage() {
               {...register('password', {
                 required: 'Пароль обязателен',
                 minLength: {
-                  value: 6,
-                  message: 'Пароль должен содержать минимум 6 символов',
+                  value: 8,
+                  message: 'Пароль должен содержать минимум 8 символов',
                 },
               })}
             />
