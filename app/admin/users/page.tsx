@@ -8,48 +8,14 @@ import Button from '../../../components/ui/Button';
 import Link from 'next/link';
 import { User, Role } from '../../../types/user';
 import { fetchAllUsers } from '../../../store/slices/users';
-import { useConfirmation } from '../../../hooks/useConfirmation';
-import { privateApi } from '../../../services/ApiClient';
-import { useNotification } from '../../../contexts/NotificationContext';
+ 
 
 export default function AdminUsersPage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { users, isLoading } = useAppSelector((state) => state.users);
   const [showArchived, setShowArchived] = useState(false);
-  const notification = useNotification();
 
-  const archiveConfirm = useConfirmation<string>(async (id: string) => {
-    try {
-      await privateApi.patch(`/users/${id}/archive`);
-      notification.showSuccess('Пользователь успешно архивирован');
-      dispatch(fetchAllUsers({ role: user.role }));
-    } catch (error: any) {
-      let errorMessage = '';
-
-      const errorPayload = error instanceof Promise ? await error : error;
-      if (errorPayload?.originalData?.message) {
-        errorMessage = errorPayload.originalData.message;
-      } else if (errorPayload.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (errorPayload.message) {
-        errorMessage = error.message;
-      }
-
-      if (errorMessage) {
-        notification.showError(errorMessage, 10000);
-      } else {
-        notification.showError(
-          'Произошла ошибка при архивировании пользователя',
-          10000
-        );
-      }
-    }
-  });
-
-  const restoreConfirm = useConfirmation<string>(async (id: string) => {
-    await privateApi.patch(`/users/${id}/restore`);
-    dispatch(fetchAllUsers({ role: user.role }));
-  });
+  
   const displayedUsers = useMemo(
     () =>
       (users || []).filter(
@@ -267,40 +233,6 @@ export default function AdminUsersPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           {userItem?.id && (
                             <div className="flex items-center justify-end gap-3">
-                              {!!(userItem as any)?.isArchived ? (
-                                <Button
-                                  onClick={() =>
-                                    restoreConfirm.confirmAndExecute(
-                                      userItem.id,
-                                      'Восстановить пользователя из архива?',
-                                      {
-                                        confirmText: 'Восстановить',
-                                        variant: 'primary',
-                                      }
-                                    )
-                                  }
-                                  className="bg-green-600 hover:bg-green-700 text-white"
-                                >
-                                  Восстановить
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  onClick={() =>
-                                    archiveConfirm.confirmAndExecute(
-                                      userItem.id,
-                                      'Пользователь будет снят из всех актуальных распределений. Продолжить?',
-                                      {
-                                        confirmText: 'Архивировать',
-                                        variant: 'danger',
-                                      }
-                                    )
-                                  }
-                                  className="border-red-300 text-red-700 hover:bg-red-50"
-                                >
-                                  Архивировать
-                                </Button>
-                              )}
                               <Link
                                 href={`/admin/users/${userItem.id}`}
                                 className="text-primary-600 hover:text-primary-900"
