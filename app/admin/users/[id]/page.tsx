@@ -16,6 +16,9 @@ import {
   updateUserSensitiveData,
   clearCurrentUser,
 } from '../../../../store/slices/users';
+import { useConfirmation } from '../../../../hooks/useConfirmation';
+import { privateApi } from '../../../../services/ApiClient';
+import { useNotification } from '../../../../contexts/NotificationContext';
 
 // Опции для выбора дня зарплаты (1..28)
 const salaryDayOptions = [
@@ -52,6 +55,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   );
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const notification = useNotification();
   const [success, setSuccess] = useState('');
   const [serverError, setServerError] = useState('');
   const [activeTab, setActiveTab] = useState<'profile' | 'sensitive'>(
@@ -59,6 +63,46 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   );
 
   const userId = params.id;
+
+  const archiveConfirm = useConfirmation<string>(async (id: string) => {
+    try {
+      await privateApi.patch(`/users/${id}/archive`);
+      notification.showSuccess('Пользователь успешно архивирован');
+      await dispatch(fetchUserById({ role: user.role, id }));
+    } catch (error: any) {
+      let errorMessage = '';
+      const errorPayload = error instanceof Promise ? await error : error;
+      if (errorPayload?.originalData?.message) {
+        errorMessage = errorPayload.originalData.message;
+      } else if (errorPayload?.response?.data?.message) {
+        errorMessage = errorPayload.response.data.message;
+      } else if (errorPayload?.message) {
+        errorMessage = errorPayload.message;
+      }
+      if (errorMessage) notification.showError(errorMessage, 10000);
+      else notification.showError('Произошла ошибка при архивировании пользователя', 10000);
+    }
+  });
+
+  const restoreConfirm = useConfirmation<string>(async (id: string) => {
+    try {
+      await privateApi.patch(`/users/${id}/restore`);
+      notification.showSuccess('Пользователь восстановлен из архива');
+      await dispatch(fetchUserById({ role: user.role, id }));
+    } catch (error: any) {
+      let errorMessage = '';
+      const errorPayload = error instanceof Promise ? await error : error;
+      if (errorPayload?.originalData?.message) {
+        errorMessage = errorPayload.originalData.message;
+      } else if (errorPayload?.response?.data?.message) {
+        errorMessage = errorPayload.response.data.message;
+      } else if (errorPayload?.message) {
+        errorMessage = errorPayload.message;
+      }
+      if (errorMessage) notification.showError(errorMessage, 10000);
+      else notification.showError('Не удалось восстановить пользователя', 10000);
+    }
+  });
 
   const {
     values: profileValues,
@@ -656,7 +700,37 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 <div className="text-green-500 text-sm mt-4">{success}</div>
               )}
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-3">
+                {currentUser?.isArchived ? (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      restoreConfirm.confirmAndExecute(
+                        userId,
+                        'Восстановить пользователя из архива?',
+                        { confirmText: 'Восстановить', variant: 'primary' }
+                      )
+                    }
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Восстановить
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      archiveConfirm.confirmAndExecute(
+                        userId,
+                        'Архивировать пользователя? Он будет скрыт из активных списков. Продолжить?',
+                        { confirmText: 'Архивировать', variant: 'danger' }
+                      )
+                    }
+                    className="border-red-300 text-red-700 hover:bg-red-50"
+                  >
+                    Архивировать
+                  </Button>
+                )}
                 <Button type="submit" isLoading={isLoading}>
                   Сохранить изменения
                 </Button>
@@ -736,7 +810,37 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 <div className="text-green-500 text-sm mt-4">{success}</div>
               )}
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-3">
+                {currentUser?.isArchived ? (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      restoreConfirm.confirmAndExecute(
+                        userId,
+                        'Восстановить пользователя из архива?',
+                        { confirmText: 'Восстановить', variant: 'primary' }
+                      )
+                    }
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Восстановить
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      archiveConfirm.confirmAndExecute(
+                        userId,
+                        'Архивировать пользователя? Он будет скрыт из активных списков. Продолжить?',
+                        { confirmText: 'Архивировать', variant: 'danger' }
+                      )
+                    }
+                    className="border-red-300 text-red-700 hover:bg-red-50"
+                  >
+                    Архивировать
+                  </Button>
+                )}
                 <Button type="submit" isLoading={isLoading}>
                   Сохранить изменения
                 </Button>
