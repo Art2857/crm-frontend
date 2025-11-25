@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '../../../store';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
+import UsersFiltersBar from '../../../components/users/UsersFiltersBar';
 import Link from 'next/link';
 import { User, Role } from '../../../types/user';
 import { fetchAllUsers } from '../../../store/slices/users';
@@ -12,8 +13,25 @@ import { fetchAllUsers } from '../../../store/slices/users';
 
 export default function AdminUsersPage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  const { users, isLoading } = useAppSelector((state) => state.users);
+  const { users } = useAppSelector((state) => state.users);
   const [showArchived, setShowArchived] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('');
+  const [sort, setSort] = useState<
+    | 'name_asc'
+    | 'name_desc'
+    | 'salaryDay_asc'
+    | 'salaryDay_desc'
+    | 'createdAt_asc'
+    | 'createdAt_desc'
+  >('name_asc');
+
+  const clearFilters = () => {
+    setSearch('');
+    setRoleFilter('');
+    setSort('name_asc');
+  };
 
   
   const displayedUsers = useMemo(
@@ -38,11 +56,46 @@ export default function AdminUsersPage() {
       return;
     }
 
-    // Загрузка данных о пользователях
-    dispatch(fetchAllUsers({ role: user.role }));
+    // Загрузка данных о пользователях с фильтрами по умолчанию
+    dispatch(
+      fetchAllUsers({
+        role: user.role,
+        archivingStatus: showArchived ? 'archived' : 'actual',
+        search: search || undefined,
+        roleFilter: roleFilter || undefined,
+        orderBy: sort.startsWith('salaryDay')
+          ? 'salaryDay'
+          : sort.startsWith('createdAt')
+            ? 'createdAt'
+            : 'name',
+        orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
+      } as any)
+    );
   }, [isAuthenticated, router, user, dispatch]);
 
-  if (!user || ![Role.ADMIN, Role.MANAGER].includes(user.role) || isLoading) {
+  // Запрашиваем при изменении фильтров (с дебаунсом для поля поиска)
+  useEffect(() => {
+    if (!user || !isAuthenticated) return;
+    const timer = setTimeout(() => {
+      dispatch(
+        fetchAllUsers({
+          role: user.role,
+          archivingStatus: showArchived ? 'archived' : 'actual',
+          search: search || undefined,
+          roleFilter: roleFilter || undefined,
+          orderBy: sort.startsWith('salaryDay')
+            ? 'salaryDay'
+            : sort.startsWith('createdAt')
+              ? 'createdAt'
+              : 'name',
+          orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
+        } as any)
+      );
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [showArchived, search, roleFilter, sort, user, isAuthenticated, dispatch]);
+
+  if (!user || ![Role.ADMIN, Role.MANAGER].includes(user.role)) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-600"></div>
@@ -131,6 +184,9 @@ export default function AdminUsersPage() {
             >
               {showArchived ? 'Показать активных' : 'Показать архив'}
             </Button>
+            <Button variant={showFilters ? 'primary' : 'secondary'} onClick={() => setShowFilters((v) => !v)}>
+              Фильтры
+            </Button>
             <Button>
               <Link href="/admin/users/create" className="text-white">
                 Добавить пользователя
@@ -138,6 +194,18 @@ export default function AdminUsersPage() {
             </Button>
           </div>
         </div>
+
+        {showFilters && (
+          <UsersFiltersBar
+            search={search}
+            onSearchChange={setSearch}
+            roleFilter={roleFilter}
+            onRoleChange={setRoleFilter}
+            sort={sort as any}
+            onSortChange={(v) => setSort(v as any)}
+            onClear={clearFilters}
+          />
+        )}
 
         <Card>
           <div className="overflow-x-auto">

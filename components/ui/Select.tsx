@@ -31,9 +31,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     ref
   ) => {
     const baseClasses =
-      'block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm';
+      'px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 transition-all duration-200';
     const errorClasses = error
-      ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500'
+      ? 'bg-red-50 focus:bg-red-50 focus:ring-red-500 text-red-900'
       : '';
     const widthClass = fullWidth ? 'w-full' : '';
     const selectClasses = `${baseClasses} ${errorClasses} ${widthClass} ${className}`;
@@ -57,7 +57,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={props.id}
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             {label}
           </label>
@@ -73,7 +73,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             : // Иначе используем дочерние элементы
               children}
         </select>
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
       </div>
     );
   }

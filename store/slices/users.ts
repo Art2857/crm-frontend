@@ -18,17 +18,25 @@ const initialState: UsersState = {
 
 interface GetAllUsersParams {
   archivingStatus?: 'archived' | 'actual';
+  search?: string;
+  role?: string;
+  limit?: number;
+  offset?: number;
+  orderBy?: 'createdAt' | 'salaryDay' | 'name';
+  orderDirection?: 'asc' | 'desc';
 }
 
 // Асинхронные thunks
 export const fetchAllUsers = createAsyncThunk(
   'users/fetchAll',
   async (
-    { role, ...getAllUsersParams }: { role: Role } & GetAllUsersParams,
+    { role, roleFilter, ...restParams }: { role: Role; roleFilter?: string } & GetAllUsersParams,
     { rejectWithValue }
   ) => {
     try {
-    const users = await userService.getAllUsers(getAllUsersParams);
+    const params: any = { ...restParams };
+    if (roleFilter) params.role = roleFilter;
+    const users = await userService.getAllUsers(params as any);
       return users;
     } catch (error: any) {
       // Игнорируем отмененные запросы
