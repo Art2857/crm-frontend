@@ -73,6 +73,16 @@ export const dutyService = {
     }
   },
 
+  // Удаление обязанности
+  delete: async (id: string): Promise<void> => {
+    try {
+      await privateApi.delete(DUTIES_ENDPOINTS.byId(id));
+    } catch (error) {
+      logger.error(`Error deleting duty with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
   // Получение всех распределений
   getAllDistributions: async (): Promise<Distribution[]> => {
     try {

@@ -107,6 +107,51 @@ export const updateDuty = createAsyncThunk(
   }
 );
 
+// Удаление обязанности
+export const deleteDuty = createAsyncThunk(
+    'duties/delete',
+    async (
+        { role, id }: { role: Role; id: string },
+        { rejectWithValue }
+    ) => {
+      try {
+        await dutyService.delete(id);
+        return id;
+      } catch (error: any) {
+        const err = error instanceof Promise ? await error : error;
+
+        if (err?.message === 'REQUEST_CANCELLED') {
+          return rejectWithValue('REQUEST_CANCELLED');
+        }
+
+        const status =
+            err?.status ??
+            err?.response?.status ??
+            err?.originalStatus;
+
+        const serverMessage =
+            err?.response?.data?.message ??
+            err?.data?.message;
+
+        const apiMessage = err?.message as string | undefined;
+
+        let message =
+            (Array.isArray(serverMessage)
+                ? serverMessage.join(', ')
+                : serverMessage) ||
+            apiMessage ||
+            'Не удалось удалить обязанность';
+
+        if (status === 400) {
+          message = 'Нельзя удалить: обязанность используется в распределениях';
+        }
+
+        return rejectWithValue(message);
+      }
+    }
+);
+
+
 // Асинхронные thunks для распределений
 export const fetchAllDistributions = createAsyncThunk(
   'duties/fetchAllDistributions',
@@ -597,6 +642,26 @@ const dutiesSlice = createSlice({
     builder.addCase(fetchDistributionsByWorkId.rejected, (state, action) => {
       state.isLoading = false;
       // Игнорируем REQUEST_CANCELLED ошибки
+      if (action.payload !== 'REQUEST_CANCELLED') {
+        state.error = action.payload as string;
+      }
+    });
+
+    // Удаление обязанности
+    builder.addCase(deleteDuty.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    });
+    builder.addCase(deleteDuty.fulfilled, (state, action) => {
+      state.isLoading = false;
+      const deletedId = action.payload as string;
+      state.duties = state.duties.filter((d) => d.id !== deletedId);
+      if (state.currentDuty?.id === deletedId) {
+        state.currentDuty = null;
+      }
+    });
+    builder.addCase(deleteDuty.rejected, (state, action) => {
+      state.isLoading = false;
       if (action.payload !== 'REQUEST_CANCELLED') {
         state.error = action.payload as string;
       }

@@ -1,27 +1,31 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '../../../../store';
 import {
   fetchDutyById,
   updateDuty,
-  clearCurrentDuty,
+  fetchAllDistributions,
+  deleteDuty,
 } from '../../../../store/slices/duties';
 import Card from '../../../../components/ui/Card';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
 import Alert from '../../../../components/ui/Alert';
+import ConfirmModal from '../../../../components/ui/ConfirmModal';
 import { Role } from '../../../../types/user';
 
 export default function EditDutyPage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  const { currentDuty, isLoading, error } = useAppSelector(
+  const { currentDuty, isLoading, error, distributions } = useAppSelector(
     (state) => state.duties
   );
   const dispatch = useAppDispatch();
   const router = useRouter();
   const dutyId = params.id;
+  const loadedDutyRef = useRef(false);
+  const loadedDistributionsRef = useRef(false);
 
   const [name, setName] = useState('');
   const [basePrice, setBasePrice] = useState('');
@@ -29,6 +33,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     // Проверка аутентификации и прав администратора
@@ -42,14 +47,20 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       return;
     }
 
-    // Загружаем данные обязанности
-    dispatch(fetchDutyById({ role: user.role, dutyId }));
-
-    // Очищаем данные при размонтировании компонента
-    return () => {
-      dispatch(clearCurrentDuty());
-    };
-  }, [isAuthenticated, router, user, dispatch, dutyId]);
+    // Загружаем данные обязанности один раз (даже при двойном монтировании)
+    if (!loadedDutyRef.current && !isLoading && currentDuty?.id !== dutyId) {
+      dispatch(fetchDutyById({ role: user.role, dutyId }));
+      loadedDutyRef.current = true;
+    }
+    // Загружаем распределения один раз (избегаем дубликатов в strict mode)
+    if (
+      !loadedDistributionsRef.current &&
+      (!distributions || distributions.length === 0)
+    ) {
+      dispatch(fetchAllDistributions({ role: user.role }));
+      loadedDistributionsRef.current = true;
+    }
+  }, [isAuthenticated, router, user, dutyId, isLoading, currentDuty?.id, distributions?.length]);
 
   useEffect(() => {
     if (currentDuty) {
@@ -147,6 +158,18 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
 
   const handleCancel = () => {
     router.push('/admin/duties');
+  };
+
+  const isUsed = Boolean(
+    distributions?.some((d) => d.details?.some((dd) => dd.dutyId === dutyId))
+  );
+
+  const handleDelete = async () => {
+    if (!currentDuty) return;
+    const result = await dispatch(deleteDuty({ role: user.role, id: dutyId }));
+    if (deleteDuty.fulfilled.match(result)) {
+      router.push('/admin/duties');
+    }
   };
 
   if (!user || isLoading) {
@@ -279,16 +302,39 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3">
-              <Button type="button" variant="outline" onClick={handleCancel}>
-                Отмена
+            <div className="flex justify-between items-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDeleteModalOpen(true)}
+                disabled={isLoading || isUsed}
+                className="border-red-300 text-red-700 hover:bg-red-50"
+              >
+                {isLoading ? 'Удаление...' : 'Удалить'}
+
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Сохранение...' : 'Сохранить'}
-              </Button>
+
+              <div className="flex items-center space-x-3">
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Отмена
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Сохранение...' : 'Сохранить'}
+                </Button>
+              </div>
             </div>
           </form>
         </Card>
+        <ConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleDelete}
+          title="Удалить обязанность?"
+          message={`Вы действительно хотите удалить обязанность "${currentDuty?.name ?? ''}"? Это действие необратимо.`}
+          confirmText="Удалить"
+          cancelText="Отмена"
+          variant="danger"
+        />
       </div>
     </div>
   );
