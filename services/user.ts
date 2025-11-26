@@ -26,6 +26,12 @@ interface CreateUserDto {
 
 interface GetAllUsersParams {
   archivingStatus?: 'archived' | 'actual';
+  search?: string;
+  role?: string;
+  limit?: number;
+  offset?: number;
+  orderBy?: 'createdAt' | 'salaryDay' | 'name';
+  orderDirection?: 'asc' | 'desc';
 }
 
 export const userService = {
