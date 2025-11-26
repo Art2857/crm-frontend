@@ -7,6 +7,7 @@ import {
 } from '../types/work';
 import { privateApi } from './ApiClient';
 import { WORKS_ENDPOINTS, WORK_HISTORY_ENDPOINTS } from './endpoints';
+import { workAnalyticsService } from './workAnalytics';
 import { logger } from '../utils/logger';
 
 // Сервис для работы с работами
@@ -91,8 +92,20 @@ export const workService = {
   // Список архивных работ
   getArchived: async (): Promise<Work[]> => {
     try {
-      const response = await privateApi.get<Work[]>(`${WORKS_ENDPOINTS.base}/archived/list`);
-      return response.data;
+      const analytics = await workAnalyticsService.getAnalytics(true);
+      const list: Work[] = analytics.grouped.flatMap((group) =>
+        group.works.map((w) => ({
+          id: w.id,
+          name: w.name,
+          responsibleUserId: w.responsibleUserId,
+          salary: String(w.salary),
+          releaseDate: w.releaseDate || undefined,
+          createdAt: w.createdAt,
+          updatedAt: w.updatedAt,
+          isArchived: true,
+        }))
+      );
+      return list;
     } catch (error) {
       logger.error('Error fetching archived works:', error);
       throw error;
