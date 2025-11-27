@@ -429,6 +429,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   </p>
                 </div>
                 <WorkForm
+                  workId={id}
                   formData={formData}
                   users={users}
                   onChange={handleChange}

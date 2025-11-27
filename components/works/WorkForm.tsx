@@ -6,8 +6,10 @@ import Select from '../ui/Select';
 import { UpdateWorkDto } from '../../types/work';
 import { User } from '../../types/user';
 import { formatCurrency } from '../../utils/currency';
+import WorkDocuments from './WorkDocuments';
 
 interface WorkFormProps {
+  workId: string;
   formData: UpdateWorkDto;
   users: User[];
   onChange: (
@@ -22,6 +24,7 @@ interface WorkFormProps {
  * Компонент формы для редактирования данных работы
  */
 const WorkForm: React.FC<WorkFormProps> = ({
+  workId,
   formData,
   users,
   onChange,
@@ -320,6 +323,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Документы */}
+        <WorkDocuments workId={workId} />
 
         {/* Кнопки управления */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">

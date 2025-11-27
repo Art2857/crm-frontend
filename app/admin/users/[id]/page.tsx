@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import UsersDocuments from "../../../../components/users/UsersDocuments";
 import { useForm } from '../../../../hooks/useForm';
 import { useAppSelector, useAppDispatch } from '../../../../store';
 import Card from '../../../../components/ui/Card';
@@ -700,7 +701,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 <div className="text-green-500 text-sm mt-4">{success}</div>
               )}
 
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
                 {currentUser?.isArchived ? (
                   <Button
                     type="button"
@@ -800,6 +801,9 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 </div>
               )}
 
+              {/* Документы */}
+              <UsersDocuments userId={userId} />
+
               {((error && error !== 'REQUEST_CANCELLED') || serverError) && (
                 <div className="text-red-500 text-sm mt-4">
                   {error !== 'REQUEST_CANCELLED' ? error : ''}
@@ -810,7 +814,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 <div className="text-green-500 text-sm mt-4">{success}</div>
               )}
 
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
                 {currentUser?.isArchived ? (
                   <Button
                     type="button"

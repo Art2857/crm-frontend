@@ -98,6 +98,10 @@ const sanitizeRequestData = (data: any): any => {
   }
 
   // Handle objects
+  // Do not sanitize FormData (binary uploads)
+  if (typeof FormData !== 'undefined' && data instanceof FormData) {
+    return data;
+  }
   const sanitized = { ...data };
   for (const [key, value] of Object.entries(sanitized)) {
     if (typeof value === 'string') {
@@ -154,7 +158,7 @@ export class ApiClient {
       baseURL: this.options.baseURL,
       timeout: this.options.timeout,
       headers: {
-        'Content-Type': 'application/json',
+        // Do not force Content-Type so FormData can set boundary automatically
         Accept: 'application/json, text/plain, */*',
         'X-Requested-With': 'XMLHttpRequest',
         ...this.options.headers,
