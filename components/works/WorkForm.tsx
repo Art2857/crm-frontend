@@ -1,12 +1,11 @@
-import React, { useEffect, useRef } from 'react';
-import Card from '../ui/Card';
+import React, { useRef } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import { UpdateWorkDto } from '../../types/work';
 import { User } from '../../types/user';
 import { formatCurrency } from '../../utils/currency';
-import WorkDocuments from './WorkDocuments';
+import DocumentsManager from '../documents/DocumentsManager';
 
 interface WorkFormProps {
   workId: string;
@@ -70,45 +69,6 @@ const WorkForm: React.FC<WorkFormProps> = ({
   return (
     <div className="space-y-6">
       <form onSubmit={onSubmit} className="space-y-8">
-        {/* Предварительный просмотр изменений */}
-        {isFormValid && (
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border-l-4 border-green-400">
-            <div className="flex items-center mb-2">
-              <svg
-                className="w-5 h-5 text-green-600 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <h4 className="text-sm font-medium text-green-800">
-                Предварительный просмотр
-              </h4>
-            </div>
-            <div className="text-sm text-green-700">
-              <p>
-                <span className="font-medium">Название:</span> {formData.name}
-              </p>
-              <p>
-                <span className="font-medium">Бюджет:</span>{' '}
-                {formatCurrency(salaryValue)}
-              </p>
-              {formData.releaseDate && (
-                <p>
-                  <span className="font-medium">Дата выхода:</span>{' '}
-                  {formData.releaseDate}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Левая колонка - основная информация */}
           <div className="space-y-6">
@@ -325,7 +285,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
         </div>
 
         {/* Документы */}
-        <WorkDocuments workId={workId} />
+        <DocumentsManager mode="work" entityId={workId} />
 
         {/* Кнопки управления */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">

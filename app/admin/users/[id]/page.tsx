@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import UsersDocuments from "../../../../components/users/UsersDocuments";
+import DocumentsManager from "../../../../components/documents/DocumentsManager";
 import { useForm } from '../../../../hooks/useForm';
 import { useAppSelector, useAppDispatch } from '../../../../store';
 import Card from '../../../../components/ui/Card';
@@ -802,7 +802,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
               )}
 
               {/* Документы */}
-              <UsersDocuments userId={userId} />
+              <DocumentsManager mode="user" entityId={userId} />
 
               {((error && error !== 'REQUEST_CANCELLED') || serverError) && (
                 <div className="text-red-500 text-sm mt-4">

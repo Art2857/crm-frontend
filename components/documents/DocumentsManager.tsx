@@ -9,8 +9,12 @@ import { documentsService, UserDocument } from '../../services/documents';
 import { Eye, Download, Trash, X } from 'lucide-react';
 import { useConfirmation } from '../../hooks/useConfirmation';
 
+type Mode = 'user' | 'work';
+
 interface Props {
-  userId: string;
+  mode: Mode;
+  entityId: string;
+  label?: string;
 }
 
 const ACCEPT_TYPES = [
@@ -26,7 +30,7 @@ const ACCEPT_TYPES = [
 
 const ACCEPT_ATTR = ACCEPT_TYPES.join(',');
 
-export default function UsersDocuments( { userId }: Props) {
+export default function DocumentsManager({ mode, entityId, label = 'Документы' }: Props) {
   const notification = useNotification();
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState(false);
@@ -36,6 +40,7 @@ export default function UsersDocuments( { userId }: Props) {
   const [saving, setSaving] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<UserDocument | null>(null);
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+
   const deleteConfirm = useConfirmation<string>(async (id: string) => {
     try {
       await documentsService.delete(id);
@@ -53,11 +58,14 @@ export default function UsersDocuments( { userId }: Props) {
   const fetchDocs = async () => {
     try {
       setLoading(true);
-      const list = await documentsService.listForUser(userId);
+      const list =
+        mode === 'user'
+          ? await documentsService.listForUser(entityId)
+          : await documentsService.listForWork(entityId);
       setDocuments(list);
     } catch (err: any) {
       // eslint-disable-next-line no-console
-      console.error('Failed to load user documents', err);
+      console.error('Failed to load documents', err);
       const msg = err?.originalData?.message || err?.message || 'Не удалось загрузить документы';
       notification.showError(msg, 8000);
     } finally {
@@ -68,7 +76,7 @@ export default function UsersDocuments( { userId }: Props) {
   useEffect(() => {
     fetchDocs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [mode, entityId]);
 
   const onOpenAdd = () => {
     setAddName('');
@@ -92,9 +100,13 @@ export default function UsersDocuments( { userId }: Props) {
 
     try {
       setSaving(true);
-      await documentsService.uploadForUser({ userId, name: addName.trim(), file: addFile });
+      if (mode === 'user') {
+        await documentsService.uploadForUser({ userId: entityId, name: addName.trim(), file: addFile });
+      } else {
+        await documentsService.uploadForWork({ workId: entityId, name: addName.trim(), file: addFile });
+      }
       setIsAddOpen(false);
-      notification.showSuccess('Документ успешно добавлен');
+      notification.showSuccess('Документ успешно загружен');
       await fetchDocs();
     } catch (err: any) {
       // eslint-disable-next-line no-console
@@ -146,11 +158,14 @@ export default function UsersDocuments( { userId }: Props) {
 
   const onDownloadAll = async () => {
     try {
-      const blob = await documentsService.downloadUserZip(userId);
+      const blob =
+        mode === 'user'
+          ? await documentsService.downloadUserZip(entityId)
+          : await documentsService.downloadWorkZip(entityId);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `user-${userId}-documents.zip`;
+      a.download = `${mode}-${entityId}-documents.zip`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -175,6 +190,7 @@ export default function UsersDocuments( { userId }: Props) {
         Добавить документ
       </Button>
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasDocuments = !loading && documents.length > 0;
@@ -182,20 +198,20 @@ export default function UsersDocuments( { userId }: Props) {
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Документы</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
         <div className="flex items-center gap-2">
           {hasDocuments && (
-              <Button
-                  type="button"
-                  onClick={onDownloadAll}
-                  variant="outline"
-                  size="sm"
-                  aria-label="Скачать все документы"
-                  title="Скачать все документы"
-                  className="px-2 py-1 min-h-[32px] min-w-[32px]"
-              >
-                <Download className="w-4 h-4" />
-              </Button>
+            <Button
+              type="button"
+              onClick={onDownloadAll}
+              variant="outline"
+              size="sm"
+              aria-label="Скачать все документы"
+              title="Скачать все документы"
+              className="px-2 py-1 min-h-[32px] min-w-[32px]"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
           )}
           {AddButton}
         </div>
@@ -268,11 +284,11 @@ export default function UsersDocuments( { userId }: Props) {
         <div className="relative w-[380px] max-w-[90vw] p-4">
           {/* Крестик */}
           <button
-              type="button"
-              onClick={() => setIsDownloadOpen(false)}
-              className="absolute right-3 top-3 inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              aria-label="Закрыть"
-              title="Закрыть"
+            type="button"
+            onClick={() => setIsDownloadOpen(false)}
+            className="absolute right-3 top-3 inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            aria-label="Закрыть"
+            title="Закрыть"
           >
             <X className="w-4 h-4" />
           </button>
@@ -283,55 +299,53 @@ export default function UsersDocuments( { userId }: Props) {
             <div className="text-gray-500">Название</div>
             <div className="font-medium">{selectedDoc?.name}</div>
             {selectedDoc?.originalName && (
-                <div className="mt-2">
-                  <div className="text-gray-500">Оригинальное имя</div>
-                  <div className="text-gray-700 break-all">
-                    {selectedDoc.originalName}
-                  </div>
-                </div>
+              <div className="mt-2">
+                <div className="text-gray-500">Оригинальное имя</div>
+                <div className="text-gray-700 break-all">{selectedDoc.originalName}</div>
+              </div>
             )}
           </div>
 
           <div className="flex justify-end gap-2">
             {/* Удалить */}
             <Button
-                type="button"
-                onClick={() =>
-                    selectedDoc &&
-                    deleteConfirm.confirmAndExecute(selectedDoc.id, 'Удалить этот документ?', {
-                      title: 'Удаление документа',
-                      confirmText: 'Удалить',
-                      cancelText: 'Отмена',
-                      variant: 'danger',
-                    })
-                }
-                className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-red-50 border !border-red-300 !text-gray-700 hover:!text-white hover:!bg-red-500"
-                aria-label="Удалить документ"
-                title="Удалить"
+              type="button"
+              onClick={() =>
+                selectedDoc &&
+                deleteConfirm.confirmAndExecute(selectedDoc.id, 'Удалить этот документ?', {
+                  title: 'Удаление документа',
+                  confirmText: 'Удалить',
+                  cancelText: 'Отмена',
+                  variant: 'danger',
+                })
+              }
+              className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-red-50 border !border-red-300 !text-gray-700 hover:!text-white hover:!bg-red-500"
+              aria-label="Удалить документ"
+              title="Удалить"
             >
               <Trash className="w-4 h-4" />
             </Button>
 
             {/* Предпросмотр */}
             <Button
-                type="button"
-                variant="outline"
-                onClick={onPreview}
-                className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-green-50 !border-green-300 hover:!bg-green-500 hover:!text-white"
-                aria-label="Предпросмотр документа"
-                title="Предпросмотр"
+              type="button"
+              variant="outline"
+              onClick={onPreview}
+              className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-green-50 !border-green-300 hover:!bg-green-500 hover:!text-white"
+              aria-label="Предпросмотр документа"
+              title="Предпросмотр"
             >
               <Eye className="w-4 h-4" />
             </Button>
 
             {/* Скачать */}
             <Button
-                type="button"
-                variant="outline"
-                onClick={onDownload}
-                className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-blue-50 !border-blue-300 hover:!bg-blue-500 hover:!text-white"
-                aria-label="Скачать документ"
-                title="Скачать"
+              type="button"
+              variant="outline"
+              onClick={onDownload}
+              className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-blue-50 !border-blue-300 hover:!bg-blue-500 hover:!text-white"
+              aria-label="Скачать документ"
+              title="Скачать"
             >
               <Download className="w-4 h-4" />
             </Button>
@@ -341,3 +355,4 @@ export default function UsersDocuments( { userId }: Props) {
     </div>
   );
 }
+
