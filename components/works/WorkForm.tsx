@@ -6,8 +6,11 @@ import { UpdateWorkDto } from '../../types/work';
 import { User } from '../../types/user';
 import { formatCurrency } from '../../utils/currency';
 import DocumentsManager from '../documents/DocumentsManager';
+import { DocumentsStagingContext, DocumentsDeferredHandlers } from '../../contexts/DocumentsStagingContext';
 
 interface WorkFormProps {
+  // Регистрация обработчиков коммита/отмены для документов (отложенный режим)
+  onRegisterDocsHandlers?: (handlers: DocumentsDeferredHandlers) => void;
   workId: string;
   formData: UpdateWorkDto;
   users: User[];
@@ -23,6 +26,7 @@ interface WorkFormProps {
  * Компонент формы для редактирования данных работы
  */
 const WorkForm: React.FC<WorkFormProps> = ({
+  onRegisterDocsHandlers,
   workId,
   formData,
   users,
@@ -285,7 +289,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
         </div>
 
         {/* Документы */}
-        <DocumentsManager mode="work" entityId={workId} />
+        <DocumentsStagingContext.Provider value={{ isDeferred: true, mode: 'work', entityId: workId, registerHandlers: onRegisterDocsHandlers }}>
+          <DocumentsManager mode="work" entityId={workId} />
+        </DocumentsStagingContext.Provider>
 
         {/* Кнопки управления */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
