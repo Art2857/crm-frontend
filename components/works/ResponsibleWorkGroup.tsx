@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { WorkAnalyticsByResponsible } from '../../types/workAnalytics';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, formatAmountWithCurrency } from '../../utils/currency';
 import { formatDateForDisplay } from '../../utils/date';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -22,7 +22,35 @@ export default function ResponsibleWorkGroup({
   onViewWork,
   showArchived = false,
 }: ResponsibleWorkGroupProps) {
+  const [currencyMap, setCurrencyMap] = React.useState<Record<string, 'RUB' | 'USD'>>({});
 
+  React.useEffect(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('workCurrencyPreferences') : null;
+      if (raw) {
+        const map = JSON.parse(raw) as Record<string, string>;
+        const onlyRUUSD: Record<string, 'RUB' | 'USD'> = {};
+        Object.entries(map).forEach(([k, v]) => {
+          onlyRUUSD[k] = (v === 'USD' ? 'USD' : 'RUB');
+        });
+        setCurrencyMap(onlyRUUSD);
+      }
+    } catch {}
+  }, []);
+
+  const formatAmount = (value: number, currency: 'RUB' | 'USD') => {
+    try {
+      return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency,
+        currencyDisplay: 'narrowSymbol',
+        maximumFractionDigits: currency === 'RUB' ? 0 : 2,
+      }).format(value || 0);
+    } catch {
+      const base = Math.round(value || 0).toLocaleString('ru-RU');
+      return `${base} ${currency}`;
+    }
+  };
 
   // Сортируем работы внутри группы по доходу
   const sortedWorks = [...group.works].sort((a, b) => b.income - a.income);
@@ -253,9 +281,9 @@ export default function ResponsibleWorkGroup({
                         </div>
                         <span className="text-sm font-medium text-blue-700">Зарплата</span>
                       </div>
-                      <div className="font-semibold text-blue-800">
-                        {formatCurrency(work.salary)}
-                      </div>
+                    <div className="font-semibold text-blue-800">
+                      {formatAmountWithCurrency(Number(work.salary || 0), (currencyMap[work.id] || 'RUB'))}
+                    </div>
                     </div>
                   </div>
                 </div>
@@ -304,7 +332,7 @@ export default function ResponsibleWorkGroup({
                       {formatCurrency(work.expenses)}
                     </td>
                     <td className="py-3 px-4 text-right font-medium text-blue-700">
-                      {formatCurrency(work.salary)}
+                      {formatAmountWithCurrency(Number(work.salary || 0), (currencyMap[work.id] || 'RUB'))}
                     </td>
                     <td className="py-3 px-4 text-center w-12">
                       <button

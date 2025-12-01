@@ -131,6 +131,28 @@ export function formatPercentage(
 }
 
 /**
+ * Форматирует числовую сумму в указанной валюте.
+ * Поддерживает как минимум RUB и USD.
+ */
+export function formatAmountWithCurrency(
+  value: number | null | undefined,
+  currency: 'RUB' | 'USD'
+): string {
+  try {
+    const num = Number(value || 0);
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency,
+      currencyDisplay: 'narrowSymbol',
+      maximumFractionDigits: currency === 'RUB' ? 0 : 2,
+    }).format(num);
+  } catch {
+    const base = Math.round(Number(value || 0)).toLocaleString('ru-RU');
+    return `${base} ${currency}`;
+  }
+}
+
+/**
  * Форматирует полное представление оплаты с расчетом
  * Показывает фиксированную цену и процент в формате "14 000 ₽ + 20% = 50 000 ₽"
  * Если оба значения null, возвращает "Остаточная"
