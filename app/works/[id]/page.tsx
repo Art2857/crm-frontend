@@ -8,6 +8,7 @@ import Notification from '../../../components/ui/Notification';
 import DataLoader from '../../../components/ui/DataLoader';
 import WorkDetails from '../../../components/works/WorkDetails';
 import WorkForm from '../../../components/works/WorkForm';
+import type { DocumentsDeferredHandlers } from '../../../contexts/DocumentsStagingContext';
 import WorkDuties from '../../../components/works/WorkDuties';
 import WorkDutiesForm from '../../../components/works/WorkDutiesForm';
 import WorkDutiesHistory from '../../../components/works/WorkDutiesHistory';
@@ -50,7 +51,28 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     handleArchiveWork,
     handleRestoreWork,
   } = useWorkDetail(id);
-
+  const docsHandlersRef = React.useRef<DocumentsDeferredHandlers | null>(null);
+  // Флаг для коммита документов после успешного сохранения формы
+  const shouldCommitDocsRef = React.useRef(false);
+  const handleWorkFormSubmit = async (e: React.FormEvent) => {
+    // Помечаем, что после успешного сохранения формы нужно закоммитить документы
+    shouldCommitDocsRef.current = true;
+    await handleFormSubmit(e);
+  };
+  // Коммитим отложенные документы, когда isEditing меняется с true на false после сохранения
+  React.useEffect(() => {
+    if (!isEditing && shouldCommitDocsRef.current) {
+      (async () => {
+        try {
+          await docsHandlersRef.current?.commit?.();
+        } catch (e) {
+          // Игнорируем ошибки коммита здесь; статус сохранения формы уже показан в UI
+        } finally {
+          shouldCommitDocsRef.current = false;
+        }
+      })();
+    }
+  }, [isEditing]);
   // Состояние для табов (включая новый таб доходов)
   const [activeTab, setActiveTab] = React.useState<'duties' | 'income'>('duties');
 
@@ -428,13 +450,12 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     Измените основные параметры работы
                   </p>
                 </div>
-                <WorkForm
-                  workId={id}
+                <WorkForm onRegisterDocsHandlers={(h) => (docsHandlersRef.current = h)} workId={id}
                   formData={formData}
                   users={users}
                   onChange={handleChange}
-                  onSubmit={handleFormSubmit}
-                  onCancel={() => setIsEditing(false)}
+                  onSubmit={handleWorkFormSubmit}
+                  onCancel={() => { try { docsHandlersRef.current?.discard?.(); } catch(e) {} setIsEditing(false); }}
                   isLoading={isLoading}
                 />
               </div>
