@@ -143,6 +143,7 @@ export function formatAmountWithCurrency(
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
       currency,
+      minimumFractionDigits: 0,
       currencyDisplay: 'narrowSymbol',
       maximumFractionDigits: currency === 'RUB' ? 0 : 2,
     }).format(num);

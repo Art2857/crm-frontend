@@ -69,29 +69,14 @@ const WorkForm: React.FC<WorkFormProps> = ({
       ? parseFloat(formData.salary) || 0
       : formData.salary || 0;
 
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('RUB');
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(() => (formData.currency || 'RUB'));
   const [convertedBudget, setConvertedBudget] = useState<number>(salaryValue || 0);
   const [isConverting, setIsConverting] = useState<boolean>(false);
   const [convertError, setConvertError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('workCurrencyPreferences') : null;
-      if (raw) {
-        const map = JSON.parse(raw) as Record<string, string>;
-        if (map[workId]) setSelectedCurrency(map[workId]);
-      }
-    } catch {}
-  }, [workId]);
-
-  const persistCurrency = (currency: string) => {
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('workCurrencyPreferences') : null;
-      const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
-      map[workId] = currency;
-      localStorage.setItem('workCurrencyPreferences', JSON.stringify(map));
-    } catch {}
-  };
+    setSelectedCurrency(formData.currency || 'RUB');
+  }, [formData.currency]);
 
   // Currency formatting is centralized in utils/currency
   useEffect(() => {
@@ -253,7 +238,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
                   value={(selectedCurrency as 'RUB' | 'USD')}
                   onChange={(val) => {
                     setSelectedCurrency(val);
-                    persistCurrency(val);
+                    // Пробрасываем изменение валюты в форму
+                    const fakeEvent = {
+                      target: { name: 'currency', value: val, type: 'text' },
+                    } as unknown as React.ChangeEvent<HTMLInputElement>;
+                    onChange(fakeEvent);
                   }}
                   size="sm"
                 />
@@ -264,7 +253,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                   htmlFor="salary"
                   className="block text-sm font-medium text-primary-700 mb-2"
                 >
-                  Общий бюджет (руб.)
+                  Общий бюджет
                 </label>
                 <div className="relative">
                   <Input

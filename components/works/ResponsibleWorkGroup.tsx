@@ -2,10 +2,9 @@
 
 import React from 'react';
 import { WorkAnalyticsByResponsible } from '../../types/workAnalytics';
-import { formatCurrency, formatAmountWithCurrency } from '../../utils/currency';
-import { formatDateForDisplay } from '../../utils/date';
-import Button from '../ui/Button';
+import { formatAmountWithCurrency } from '../../utils/currency';
 import Card from '../ui/Card';
+import CurrencySwitch from '../ui/CurrencySwitch';
 
 interface ResponsibleWorkGroupProps {
   group: WorkAnalyticsByResponsible;
@@ -22,35 +21,34 @@ export default function ResponsibleWorkGroup({
   onViewWork,
   showArchived = false,
 }: ResponsibleWorkGroupProps) {
-  const [currencyMap, setCurrencyMap] = React.useState<Record<string, 'RUB' | 'USD'>>({});
+  const [totalsCurrency, setTotalsCurrency] = React.useState<'RUB' | 'USD'>('RUB');
 
+  // Сохраняем выбор валюты в localStorage
   React.useEffect(() => {
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('workCurrencyPreferences') : null;
-      if (raw) {
-        const map = JSON.parse(raw) as Record<string, string>;
-        const onlyRUUSD: Record<string, 'RUB' | 'USD'> = {};
-        Object.entries(map).forEach(([k, v]) => {
-          onlyRUUSD[k] = (v === 'USD' ? 'USD' : 'RUB');
-        });
-        setCurrencyMap(onlyRUUSD);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('workListCurrency', totalsCurrency);
       }
     } catch {}
-  }, []);
+  }, [totalsCurrency]);
 
-  const formatAmount = (value: number, currency: 'RUB' | 'USD') => {
-    try {
-      return new Intl.NumberFormat('ru-RU', {
-        style: 'currency',
-        currency,
-        currencyDisplay: 'narrowSymbol',
-        maximumFractionDigits: currency === 'RUB' ? 0 : 2,
-      }).format(value || 0);
-    } catch {
-      const base = Math.round(value || 0).toLocaleString('ru-RU');
-      return `${base} ${currency}`;
+  // Получаем totals в зависимости от выбранной валюты (без запросов!)
+  const totalsDisplay = React.useMemo(() => {
+    if (totalsCurrency === 'USD' && group.totalsUsd) {
+      return {
+        totalIncome: group.totalsUsd.totalIncome,
+        totalExpenses: group.totalsUsd.totalExpenses,
+        totalSalary: group.totalsUsd.totalSalary,
+      };
     }
-  };
+    return {
+      totalIncome: group.totals.totalIncome,
+      totalExpenses: group.totals.totalExpenses,
+      totalSalary: group.totals.totalSalary,
+    };
+  }, [group.totals, group.totalsUsd, totalsCurrency]);
+
+  // No per-work currency switchers; totalsCurrency controls all conversions
 
   // Сортируем работы внутри группы по доходу
   const sortedWorks = [...group.works].sort((a, b) => b.income - a.income);
@@ -120,7 +118,7 @@ export default function ResponsibleWorkGroup({
                       <div className={`text-lg sm:text-xl font-bold ${
                         group.totals.totalIncome >= 0 ? 'text-emerald-800' : 'text-red-800'
                       } truncate`}>
-                        {formatCurrency(group.totals.totalIncome)}
+                        {formatAmountWithCurrency(totalsDisplay.totalIncome, totalsCurrency)}
                       </div>
                     </div>
                   </div>
@@ -144,7 +142,7 @@ export default function ResponsibleWorkGroup({
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-rose-700 truncate">Расходы</div>
                       <div className="text-lg sm:text-xl font-bold text-rose-800 truncate">
-                        {formatCurrency(group.totals.totalExpenses)}
+                        {formatAmountWithCurrency(totalsDisplay.totalExpenses, totalsCurrency)}
                       </div>
                     </div>
                   </div>
@@ -164,7 +162,7 @@ export default function ResponsibleWorkGroup({
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-blue-700 truncate">Бюджет</div>
                       <div className="text-lg sm:text-xl font-bold text-blue-800 truncate">
-                        {formatCurrency(group.totals.totalSalary)}
+                        {formatAmountWithCurrency(totalsDisplay.totalSalary, totalsCurrency)}
                       </div>
                     </div>
                   </div>
@@ -173,12 +171,26 @@ export default function ResponsibleWorkGroup({
               </div>
             </div>
 
-            {/* Кнопка раскрытия */}
-            <div className="flex justify-center sm:justify-end">
+            <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0">
               <div
+                onClick={(e) => e.stopPropagation()}
+              >
+                <CurrencySwitch
+                  value={totalsCurrency}
+                  onChange={setTotalsCurrency}
+                  size="sm"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle();
+                }}
                 className={`transform transition-all duration-300 ${
                   isExpanded ? 'rotate-180' : ''
-                } flex justify-center items-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-gray-50 cursor-pointer`}
+                } flex justify-center items-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-gray-50`}
               >
                 <svg
                   className="w-5 h-5 text-gray-600"
@@ -193,7 +205,7 @@ export default function ResponsibleWorkGroup({
                     d="M19 9l-7 7-7-7"
                   />
                 </svg>
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -252,7 +264,10 @@ export default function ResponsibleWorkGroup({
                       <div className={`font-semibold ${
                         work.income >= 0 ? 'text-emerald-800' : 'text-red-800'
                       }`}>
-                        {formatCurrency(work.income)}
+                        {formatAmountWithCurrency(
+                          (work.originalIncome ?? Number(work.income || 0)),
+                          (work.currency === 'USD' ? 'USD' : 'RUB')
+                        )}
                       </div>
                     </div>
 
@@ -267,7 +282,10 @@ export default function ResponsibleWorkGroup({
                         <span className="text-sm font-medium text-rose-700">Расходы</span>
                       </div>
                       <div className="font-semibold text-rose-800">
-                        {formatCurrency(work.expenses)}
+                        {formatAmountWithCurrency(
+                          (work.originalExpenses ?? Number(work.expenses || 0)),
+                          (work.currency === 'USD' ? 'USD' : 'RUB')
+                        )}
                       </div>
                     </div>
 
@@ -281,8 +299,13 @@ export default function ResponsibleWorkGroup({
                         </div>
                         <span className="text-sm font-medium text-blue-700">Зарплата</span>
                       </div>
-                    <div className="font-semibold text-blue-800">
-                      {formatAmountWithCurrency(Number(work.salary || 0), (currencyMap[work.id] || 'RUB'))}
+                    <div className="flex items-center gap-2 font-semibold text-blue-800">
+                      <span>
+                        {formatAmountWithCurrency(
+                          (work.originalSalary ?? Number(work.salary || 0)),
+                          (work.currency === 'USD' ? 'USD' : 'RUB')
+                        )}
+                      </span>
                     </div>
                     </div>
                   </div>
@@ -323,16 +346,29 @@ export default function ResponsibleWorkGroup({
                         {work.name}
                       </div>
                     </td>
-                    <td
+                    <td 
                       className={`py-3 px-4 text-right font-medium ${work.income >= 0 ? 'text-emerald-600' : 'text-red-900'}`}
                     >
-                      {formatCurrency(work.income)}
+                      {formatAmountWithCurrency(
+                        (work.originalIncome ?? Number(work.income || 0)),
+                        (work.currency === 'USD' ? 'USD' : 'RUB')
+                      )}
                     </td>
                     <td className="py-3 px-4 text-right text-red-900 font-medium">
-                      {formatCurrency(work.expenses)}
+                      {formatAmountWithCurrency(
+                        (work.originalExpenses ?? Number(work.expenses || 0)),
+                        (work.currency === 'USD' ? 'USD' : 'RUB')
+                      )}
                     </td>
                     <td className="py-3 px-4 text-right font-medium text-blue-700">
-                      {formatAmountWithCurrency(Number(work.salary || 0), (currencyMap[work.id] || 'RUB'))}
+                      <div className="inline-flex items-center gap-3 justify-end">
+                        <span>
+                          {formatAmountWithCurrency(
+                            (work.originalSalary ?? Number(work.salary || 0)),
+                            (work.currency === 'USD' ? 'USD' : 'RUB')
+                          )}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-center w-12">
                       <button
@@ -354,3 +390,5 @@ export default function ResponsibleWorkGroup({
     </Card>
   );
 }
+
+

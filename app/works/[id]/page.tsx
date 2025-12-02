@@ -5,14 +5,13 @@ import { useRouter } from 'next/navigation';
 import Layout from '../../../components/layout/Layout';
 import Button from '../../../components/ui/Button';
 import Notification from '../../../components/ui/Notification';
-import DataLoader from '../../../components/ui/DataLoader';
 import WorkDetails from '../../../components/works/WorkDetails';
 import WorkForm from '../../../components/works/WorkForm';
 import WorkDuties from '../../../components/works/WorkDuties';
 import WorkDutiesForm from '../../../components/works/WorkDutiesForm';
 import WorkDutiesHistory from '../../../components/works/WorkDutiesHistory';
 import WorkIncomeManagement from '../../../components/work-income/WorkIncomeManagement';
-import { formatCurrency } from '../../../utils/currency';
+import { formatAmountWithCurrency } from '../../../utils/currency';
 import { formatDateForDisplay } from '../../../utils/date';
 import { useWorkDetail } from '../../../hooks/works/useWorkDetail';
 
@@ -50,6 +49,9 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     handleArchiveWork,
     handleRestoreWork,
   } = useWorkDetail(id);
+
+  const salaryCurrency: 'RUB' | 'USD' = (workData?.currency === 'USD' ? 'USD' : 'RUB');
+  const displaySalary = Number(workData?.salary || 0);
 
   // Состояние для табов (включая новый таб доходов)
   const [activeTab, setActiveTab] = React.useState<'duties' | 'income'>('duties');
@@ -394,11 +396,13 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                       </svg>
                       Общий бюджет
                     </div>
-                    <div className="text-4xl font-bold mb-1">
-                      {formatCurrency(workData.salary)}
+                    <div className="flex items-center justify-center gap-3 mb-1">
+                      <span className="text-4xl font-bold">
+                        {formatAmountWithCurrency(displaySalary, salaryCurrency)}
+                      </span>
                     </div>
                     <div className="text-xs text-primary-200">
-                      Российские рубли
+                      {salaryCurrency === 'RUB' ? 'Российские рубли' : 'Доллары США'}
                     </div>
                   </div>
                 </div>

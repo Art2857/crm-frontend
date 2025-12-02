@@ -35,7 +35,8 @@ export interface Work {
   id: string;
   name: string;
   responsibleUserId: string;
-  salary: string; // Decimal represented as string
+  salary: string; // Decimal represented as string (in base RUB for analytics)
+  currency?: 'RUB' | 'USD'; // Сохраненная валюта работы
   releaseDate?: string; // Date as ISO string
   isArchived?: boolean; // Архивный статус работы
   createdAt: string;
@@ -49,6 +50,7 @@ export interface WorkHistory {
   name: string;
   responsibleUserId: string;
   salary: string; // Decimal represented as string
+  currency?: 'RUB' | 'USD';
   effectiveDate?: string; // Date as ISO string
   updatedAt: string;
   createdAt?: string; // Добавляем поле для совместимости с бэкендом
@@ -78,6 +80,7 @@ export interface CreateWorkDto {
   responsibleUserId: string;
   salary: string; // Decimal represented as string
   releaseDate: string; // Date as ISO string
+  currency?: 'RUB' | 'USD';
 }
 
 /**
@@ -98,6 +101,7 @@ export interface UpdateWorkDto {
   responsibleUserId?: string;
   salary?: string; // Decimal represented as string
   releaseDate?: string; // Date as ISO string
+  currency?: 'RUB' | 'USD';
 }
 
 /**

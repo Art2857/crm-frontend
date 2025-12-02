@@ -23,7 +23,7 @@ export default function CurrencySwitch({ value, onChange, size = 'md', className
     <div className={`${containerBase} ${containerSize} ${containerColor} ${className}`} role="group" aria-label="Выбор валюты">
       <button
         type="button"
-        className={`${segmentBase} ${segmentSize} ${!isUSD ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+        className={`${segmentBase} ${segmentSize} ${!isUSD ? 'bg-primary-200 text-black' : 'text-gray-700 hover:bg-gray-50'}`}
         aria-pressed={!isUSD}
         onClick={() => onChange('RUB')}
       >
@@ -31,7 +31,7 @@ export default function CurrencySwitch({ value, onChange, size = 'md', className
       </button>
       <button
         type="button"
-        className={`${segmentBase} ${segmentSize} ${isUSD ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+        className={`${segmentBase} ${segmentSize} ${isUSD ? 'bg-primary-200 text-black' : 'text-gray-700 hover:bg-gray-50'}`}
         aria-pressed={isUSD}
         onClick={() => onChange('USD')}
       >

@@ -336,7 +336,7 @@ export class ApiClient {
           } catch {}
         }
 
-        return Promise.reject(this.handleError(error as AxiosError));
+        return Promise.reject(await this.handleError(error as AxiosError));
       }
     );
   }

@@ -10,12 +10,21 @@ export interface WorkAnalytics {
   name: string;
   responsibleUserId: string;
   responsibleUserName: string;
+  currency?: 'RUB' | 'USD';
   salary: number;
   releaseDate: string | null;
   expenses: number; // Расходы - сумма всех DistributionDetail.calculatedValue
   income: number; // Доходы - salary - expenses
   createdAt: string;
   updatedAt: string;
+  // USD значения (предвычисленные на бэкенде)
+  salaryUsd?: number;
+  expensesUsd?: number;
+  incomeUsd?: number;
+  // Оригинальные значения в валюте работы
+  originalSalary?: number;
+  originalExpenses?: number;
+  originalIncome?: number;
 }
 
 /**
@@ -31,6 +40,11 @@ export interface WorkAnalyticsByResponsible {
     totalIncome: number;
     worksCount: number;
   };
+  totalsUsd?: {
+    totalSalary: number;
+    totalExpenses: number;
+    totalIncome: number;
+  };
 }
 
 /**
@@ -44,5 +58,10 @@ export interface WorkAnalyticsResponse {
     totalIncome: number;
     worksCount: number;
     responsibleCount: number;
+  };
+  grandTotalsUsd?: {
+    totalSalary: number;
+    totalExpenses: number;
+    totalIncome: number;
   };
 }

@@ -82,6 +82,7 @@ export function useWorkDetail(id: string) {
       name: workData.name,
       responsibleUserId: workData.responsibleUserId,
       salary: workData.salary,
+      currency: workData.currency || 'RUB',
       releaseDate: releaseDateFormatted,
     };
   }, [workData]);
