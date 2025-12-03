@@ -140,13 +140,13 @@ export function formatAmountWithCurrency(
 ): string {
   try {
     const num = Number(value || 0);
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency,
+    const symbol = currency === 'USD' ? '$' : '₽';
+    const formatted = new Intl.NumberFormat('ru-RU', {
       minimumFractionDigits: 0,
-      currencyDisplay: 'narrowSymbol',
-      maximumFractionDigits: currency === 'RUB' ? 0 : 2,
+      maximumFractionDigits: 2,
+      useGrouping: true,
     }).format(num);
+    return `${formatted} ${symbol}`;
   } catch {
     const base = Math.round(Number(value || 0)).toLocaleString('ru-RU');
     return `${base} ${currency}`;
@@ -194,6 +194,42 @@ export function formatPayment(
     return text;
   } catch (error) {
     console.error('Ошибка при форматировании оплаты:', error);
+    return 'Ошибка расчета';
+  }
+}
+
+/**
+ * Форматирует представление оплаты с учётом валюты обязанности.
+ * Использует знак валюты для price и calculatedValue согласно переданной currency.
+ */
+export function formatPaymentWithCurrency(
+  price: number | null | undefined,
+  percentage: number | null | undefined,
+  calculatedValue: number | null | undefined,
+  currency: 'RUB' | 'USD'
+): string {
+  try {
+    if (price === null && percentage === null) return 'Остаточная';
+
+    const parts: string[] = [];
+
+    if (price !== null && price !== undefined) {
+      parts.push(formatAmountWithCurrency(price, currency));
+    }
+
+    if (percentage !== null && percentage !== undefined) {
+      parts.push(formatPercentage(percentage, false));
+    }
+
+    let text = parts.join(' + ');
+
+    if (calculatedValue !== null && calculatedValue !== undefined) {
+      text += ` = ${formatAmountWithCurrency(calculatedValue, currency)}`;
+    }
+
+    return text;
+  } catch (error) {
+    console.error('Ошибка при форматировании оплаты (валюта):', error);
     return 'Ошибка расчета';
   }
 }

@@ -3,6 +3,7 @@ export interface Duty {
   name: string;
   basePrice: string | null;
   basePercentage: string | null;
+  currency?: 'RUB' | 'USD';
   minValue: string | null;
   maxValue: string | null;
   createdAt: string;
@@ -32,6 +33,7 @@ export interface DistributionDetail {
   price: string | null;
   percentage: string | null;
   calculatedValue: string | null;
+  currency?: 'RUB' | 'USD';
   createdAt: string;
   duty?: Duty;
   user?: {
@@ -46,6 +48,7 @@ export interface CreateDutyDto {
   name: string;
   basePrice?: string | null;
   basePercentage?: string | null;
+  currency?: 'RUB' | 'USD';
   minValue?: string | null;
   maxValue?: string | null;
 }
@@ -54,6 +57,7 @@ export interface UpdateDutyDto {
   name?: string;
   basePrice?: string | null;
   basePercentage?: string | null;
+  currency?: 'RUB' | 'USD';
   minValue?: string | null;
   maxValue?: string | null;
 }
@@ -66,12 +70,25 @@ export interface CreateDistributionDto {
     userId: string;
     price?: string | null;
     percentage?: string | null;
+    currency?: 'RUB' | 'USD';
   }[];
+}
+
+/**
+ * Сокращённое представление обязанности в ответе распределения
+ * (соответствует DutyResponseDto на бэкенде)
+ */
+export interface DutyInDistribution {
+  id: string;
+  name: string;
+  basePrice: number | null;
+  basePercentage: number | null;
+  currency: 'RUB' | 'USD';
 }
 
 export interface DistributionWithDetails extends Distribution {
   details: (DistributionDetail & {
-    duty: Duty;
+    duty: DutyInDistribution;
     user: {
       id: string;
       firstName: string | null;

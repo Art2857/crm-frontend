@@ -618,7 +618,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   <div className="mb-4">
                     <Notification
                       successMessage=""
-                      errorMessage={dutiesErrorMessage}
+                      errorMessage={typeof dutiesErrorMessage === 'string' ? dutiesErrorMessage : String(dutiesErrorMessage)}
                       onClearSuccess={() => {}}
                       onClearError={clearDutiesMessages}
                     />
@@ -663,6 +663,8 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                             onSubmit={handleDutiesSubmit}
                             onCancel={() => setIsEditingDuties(false)}
                             workSalary={workData.salary}
+                            workCurrency={salaryCurrency}
+                            releaseDate={workData.releaseDate}
                             currentDistribution={
                               distributions.length > 0 ? distributions[0] : null
                             }
@@ -696,6 +698,8 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                           workHistory={workHistory}
                           users={users}
                           workSalary={workData.salary}
+                          workCurrency={salaryCurrency}
+                          releaseDate={workData.releaseDate}
                           currentUserId={user?.id}
                           showOnlyCurrentUser={showOnlyCurrentUserDuties}
                           onUpdate={loadDutiesHistory}

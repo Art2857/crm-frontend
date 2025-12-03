@@ -119,8 +119,9 @@ export const dutyService = {
       details: {
         dutyId: string;
         userId: string;
-        price?: number | null;
-        percentage?: number | null;
+        price?: number | string | null;
+        percentage?: number | string | null;
+        currency?: 'RUB' | 'USD';
       }[];
     }
   ): Promise<DistributionWithDetails> {
@@ -136,6 +137,7 @@ export const dutyService = {
           userId: detail.userId,
           price: detail.price?.toString() || null,
           percentage: detail.percentage?.toString() || null,
+          currency: detail.currency || 'RUB',
         })),
       };
 
@@ -205,6 +207,7 @@ export const dutyService = {
         userId: string;
         price?: string | null;
         percentage?: string | null;
+        currency?: 'RUB' | 'USD';
       }[];
       effectiveDate?: string;
     }
@@ -219,7 +222,13 @@ export const dutyService = {
       // Преобразуем данные в формат, ожидаемый API
       const requestData = {
         workHistoryId: workHistoryId,
-        details: data.details,
+        details: data.details.map((detail) => ({
+          dutyId: detail.dutyId,
+          userId: detail.userId,
+          price: detail.price,
+          percentage: detail.percentage,
+          currency: detail.currency || 'RUB',
+        })),
         effectiveDate: data.effectiveDate,
       };
 

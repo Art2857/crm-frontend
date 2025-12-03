@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
 import Card from '../ui/Card';
-import { Distribution, DistributionWithDetails } from '../../types/duty';
+import { DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
 import { formatDateForDisplay } from '../../utils/date';
-import { formatPayment } from '../../utils/currency';
-import { formatCurrency } from '../../utils/currency';
+import { formatPaymentWithCurrency } from '../../utils/currency';
 import { useUsersMap } from '../../hooks/shared/useUsersMap';
 
 interface WorkDutiesProps {
@@ -214,6 +213,9 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
                   const numericCalculatedValue = detail.calculatedValue
                     ? parseFloat(detail.calculatedValue)
                     : null;
+                  // Валюта берётся из detail (сохранённая валюта распределения), 
+                  // если не указана — fallback на валюту обязанности
+                  const detailCurrency = detail.currency || detail.duty.currency;
 
                   return (
                     <tr key={detail.id}>
@@ -224,10 +226,11 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
                         {userName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatPayment(
+                        {formatPaymentWithCurrency(
                           numericPrice,
                           numericPercentage,
-                          numericCalculatedValue
+                          numericCalculatedValue,
+                          detailCurrency
                         )}
                       </td>
                     </tr>

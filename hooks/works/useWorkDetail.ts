@@ -4,10 +4,10 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchWorkById } from '../../store/slices/works';
 import { fetchAllUsers } from '../../store/slices/users';
 import { fetchAllDuties } from '../../store/slices/duties';
-import { useDataLoader } from '../../hooks/useDataLoader';
-import { useWorkData } from '../../hooks/useWorkData';
-import { useWorkDuties } from '../../hooks/useWorkDuties';
-import { useBreadcrumbs } from '../../hooks/useBreadcrumbs';
+import { useDataLoader } from '../useDataLoader';
+import { useWorkData } from '../useWorkData';
+import { useWorkDuties } from '../useWorkDuties';
+import { useBreadcrumbs } from '../useBreadcrumbs';
 import { Breadcrumb } from '../../types/breadcrumb';
 import { useNotification } from '../../contexts/NotificationContext';
 import { WorkHistory } from '../../types/work';
@@ -210,6 +210,7 @@ export function useWorkDetail(id: string) {
         userId: string;
         price: string | null;
         percentage: string | null;
+        currency: 'RUB' | 'USD';
       }>,
       effectiveDate?: string
     ) => {
