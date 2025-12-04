@@ -111,7 +111,7 @@ export default function PaymentHistoryItem({
             }`}
           >
             {isReceived ? '+' : isSent ? '-' : ''}
-            {formatCurrency(payment.amount)}
+            {formatCurrency(payment.amount, payment.currency ?? 'RUB')}
           </p>
           {payment.periodStart && payment.periodEnd && (
             <p className="text-xs text-gray-500">

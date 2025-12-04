@@ -17,6 +17,7 @@ interface PaymentHistoryItem {
   description: string;
   date: string; // paymentDate
   createdAt?: string;
+  currency?: 'RUB' | 'USD';
 }
 
 interface PaymentHistorySectionProps {
@@ -115,7 +116,7 @@ export default function PaymentHistorySection({
 
                   <div className="text-right">
                     <p className="text-lg font-bold text-green-600">
-                      +{formatCurrency(payment.amount)}
+                      +{formatCurrency(payment.amount, payment.currency ?? 'RUB')}
                     </p>
                   </div>
                 </div>

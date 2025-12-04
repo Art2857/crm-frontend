@@ -136,6 +136,7 @@ export interface DetailedCalculation {
     description: string;
     date: string;
     createdAt: string;
+    currency?: 'RUB' | 'USD';
   }>;
 }
 

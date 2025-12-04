@@ -1194,20 +1194,6 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                 Добавить обязанность
               </Button>
 
-              {numericSalary > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowSalaryPreview(!showSalaryPreview)}
-                  disabled={isLoading}
-                  tabIndex={0}
-                >
-                  {showSalaryPreview
-                    ? 'Скрыть предпросмотр'
-                    : 'Показать предпросмотр'}
-                </Button>
-              )}
-
               <span className="text-sm text-gray-500 ml-auto">
                 {!unusedDutiesExist &&
                   dutyItems.length > 0 &&

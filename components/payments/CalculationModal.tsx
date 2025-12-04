@@ -53,21 +53,21 @@ export default function CalculationModal({
   const { formatRussian } = useDateManager();
   const { totals } = useCalculationView(calculation);
   const [displayCurrency, setDisplayCurrency] = useState<CurrencyType>('RUB');
-  
+
   // Sync initial currency when provided/opened
   useEffect(() => {
     if (isOpen && initialCurrency && (initialCurrency === 'USD' || initialCurrency === 'RUB')) {
       setDisplayCurrency(initialCurrency);
     }
   }, [isOpen, initialCurrency]);
-  
+
   // Используем хук для конвертации
   const { convert, isLoading: isLoadingRate } = useCurrencyConversion();
 
   // Конвертированные значения для отображения
   const displayValues = useMemo(() => {
     if (!calculation) {
-      return { totalAccrued: 0, totalPaid: 0, remainingDebt: 0 };
+      return { totalAccrued: 0, totalPaid: 0, remainingDebt: 0, nativeCurrency: 'RUB' as CurrencyType, actualTotalPaid: 0 };
     }
 
     const periods = calculation.periods || [];
@@ -85,13 +85,36 @@ export default function CalculationModal({
       }
     }
 
+    // Determine native currency from the first duty of the first period (if available)
+    // This aligns with WorkCard logic
+    let nativeCurrency: CurrencyType = 'RUB';
+    if (periods.length > 0) {
+      const firstPeriod = periods[0];
+      const duties = Array.isArray(firstPeriod.duties) ? firstPeriod.duties : [];
+      if (duties.length > 0) {
+        const firstDuty = duties[0] as { currency?: string };
+        if (firstDuty.currency === 'USD') {
+          nativeCurrency = 'USD';
+        }
+      }
+    }
+
     // Если периодов нет, используем totalAccrued (предполагаем RUB)
     if (periods.length === 0 || totalAccruedSum === 0) {
       totalAccruedSum = convert(calculation.totalAccrued, 'RUB', displayCurrency);
     }
 
     // totalPaid в рублях (выплаты в рублях); remaining считаем из конвертированных сумм
-    const totalPaidConverted = convert(calculation.totalPaid, 'RUB', displayCurrency);
+    let totalPaidConverted = 0;
+    if (calculation.paymentHistory && calculation.paymentHistory.length > 0) {
+      for (const payment of calculation.paymentHistory) {
+        const pCurrency = (payment.currency as CurrencyType) || 'RUB';
+        totalPaidConverted += convert(payment.amount, pCurrency, displayCurrency);
+      }
+    } else {
+      totalPaidConverted = convert(calculation.totalPaid, 'RUB', displayCurrency);
+    }
+
     // Compute remaining from same-base values to avoid currency drift
     const computedRemaining = Math.max(totalAccruedSum - totalPaidConverted, 0);
     // Align with WorkCard: cap paid by accrued in debts view
@@ -103,6 +126,8 @@ export default function CalculationModal({
       totalAccrued: Math.round(totalAccruedSum),
       totalPaid: Math.round(paidForDisplay),
       remainingDebt: Math.round(computedRemaining),
+      nativeCurrency,
+      actualTotalPaid: Math.round(totalPaidConverted),
     };
   }, [calculation, displayCurrency, convert, isDebtsView]);
 
@@ -111,11 +136,10 @@ export default function CalculationModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div
-        className={`p-6 max-w-full mx-auto max-h-[95vh] ${
-          calculation?.periods[0]?.duties.length === 1 && !showPaymentHistory
-            ? 'w-[70vw]'
-            : 'w-[90vw]'
-        }`}
+        className={`p-6 max-w-full mx-auto max-h-[95vh] ${calculation?.periods[0]?.duties.length === 1 && !showPaymentHistory
+          ? 'w-[70vw]'
+          : 'w-[90vw]'
+          }`}
       >
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -160,8 +184,8 @@ export default function CalculationModal({
 
         {/* Для расчета по конкретной обязанности показываем только расчеты */}
         {calculation?.periods[0]?.duties.length === 1 &&
-        !isDebtsView &&
-        !showPaymentHistory ? (
+          !isDebtsView &&
+          !showPaymentHistory ? (
           <div className="space-y-4">
             {/* Общая информация */}
             <div className="bg-blue-50 rounded-lg p-4 mb-6">
@@ -541,15 +565,14 @@ export default function CalculationModal({
                           >
                             <div className="flex items-center space-x-4">
                               <div
-                                className={`p-2 rounded-full ${
-                                  payment.type === 'SALARY'
-                                    ? 'bg-green-100'
-                                    : payment.type === 'BONUS'
-                                      ? 'bg-blue-100'
-                                      : payment.type === 'EXTRA'
-                                        ? 'bg-purple-100'
-                                        : 'bg-yellow-100'
-                                }`}
+                                className={`p-2 rounded-full ${payment.type === 'SALARY'
+                                  ? 'bg-green-100'
+                                  : payment.type === 'BONUS'
+                                    ? 'bg-blue-100'
+                                    : payment.type === 'EXTRA'
+                                      ? 'bg-purple-100'
+                                      : 'bg-yellow-100'
+                                  }`}
                               >
                                 {payment.type === 'SALARY' ? (
                                   <CurrencyDollarIcon className="h-5 w-5 text-green-600" />
@@ -603,7 +626,7 @@ export default function CalculationModal({
                             </div>
                             <div className="text-right">
                               <p className="text-lg font-bold text-green-600">
-                                +{formatCurrency(payment.amount)}
+                                +{formatCurrency(payment.amount, (payment.currency as CurrencyType) || 'RUB')}
                               </p>
                             </div>
                           </div>
@@ -616,7 +639,7 @@ export default function CalculationModal({
                             {`Итого ${isDebtsView ? 'получено' : 'выплачено'}:`}
                           </h5>
                           <span className="text-2xl font-bold text-green-700">
-                            {formatCurrency(totals.totalHistoryAmount)}
+                            {formatCurrency(displayValues.actualTotalPaid, displayCurrency)}
                           </span>
                         </div>
                       </div>

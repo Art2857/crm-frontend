@@ -45,7 +45,7 @@ export default function FinancialSummary({
         </p>
       </div>
       <div className="bg-green-50 rounded-lg p-2">
-        <p className="text-xs text-green-600 font-medium">Выплачено</p>
+        <p className="text-xs text-green-600 font-medium">Выплачено123</p>
         <p className="text-sm font-bold text-green-800">
           {formatCurrency(display.paid, currency)}
         </p>
@@ -57,21 +57,18 @@ export default function FinancialSummary({
         </p>
       </div>
       <div
-        className={`rounded-lg p-2 ${
-          remainingDebt > 0 ? "bg-red-50" : "bg-orange-50"
-        }`}
+        className={`rounded-lg p-2 ${remainingDebt > 0 ? "bg-red-50" : "bg-orange-50"
+          }`}
       >
         <p
-          className={`text-xs font-medium ${
-            remainingDebt > 0 ? "text-red-600" : "text-orange-600"
-          }`}
+          className={`text-xs font-medium ${remainingDebt > 0 ? "text-red-600" : "text-orange-600"
+            }`}
         >
           Остаток
         </p>
         <p
-          className={`text-sm font-bold ${
-            remainingDebt > 0 ? "text-red-800" : "text-orange-800"
-          }`}
+          className={`text-sm font-bold ${remainingDebt > 0 ? "text-red-800" : "text-orange-800"
+            }`}
         >
           {formatCurrency(display.remaining, currency)}
         </p>
