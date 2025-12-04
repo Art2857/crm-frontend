@@ -5,6 +5,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import CurrencySwitch from '../ui/CurrencySwitch';
 import TextArea from '../ui/TextArea';
 import {
   BanknotesIcon,
@@ -46,6 +47,7 @@ export default function CustomPaymentModal({
   const [amount, setAmount] = useState(
     defaultAmount ? String(defaultAmount) : ''
   );
+  const [currency, setCurrency] = useState<'RUB' | 'USD'>('RUB');
   const [type, setType] = useState('SALARY');
   const [description, setDescription] = useState(
     defaultAmount ? 'Выплата' : ''
@@ -143,6 +145,7 @@ export default function CustomPaymentModal({
       userName,
       workName,
       paymentDate: isoDate,
+          currency,
     });
   };
 
@@ -250,7 +253,7 @@ export default function CustomPaymentModal({
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-lg">₽</span>
+                    <span className="text-gray-500 text-lg">{currency === 'USD' ? '$' : '₽'}</span>
                   </div>
                   <Input
                     id="customAmount"
@@ -261,6 +264,9 @@ export default function CustomPaymentModal({
                     className="pl-8 pr-4 py-3 text-lg rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all w-full"
                     required
                   />
+                  <div className="absolute inset-y-0 right-2 flex items-center">
+                    <CurrencySwitch value={currency} onChange={setCurrency} size="sm" />
+                  </div>
                 </div>
                 {/* TODO: показать долг, когда будет API */}
               </div>
@@ -390,3 +396,5 @@ export default function CustomPaymentModal({
     </Modal>
   );
 }
+
+

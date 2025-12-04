@@ -1,25 +1,61 @@
 import { useMemo } from 'react';
 import { MyDebt } from '../../services/analytics';
-import { ResponsibleUser } from '../../types/payments';
+import { ResponsibleUser, DutyDetail } from '../../types/payments';
+import { useCurrencyConversion, DisplayCurrency } from '../useCurrencyConversion';
+
+/**
+ * Рассчитывает сумму долга по обязанностям с конвертацией в целевую валюту
+ */
+function calculateDebtWithConversion(
+  duties: DutyDetail[],
+  targetCurrency: DisplayCurrency,
+  convert: (amount: number, from: 'RUB' | 'USD', to: 'RUB' | 'USD') => number
+): number {
+  return duties.reduce((sum, duty) => {
+    const dutyCurrency = (duty.currency as 'RUB' | 'USD') || 'RUB';
+    const debtInTargetCurrency = convert(duty.debt, dutyCurrency, targetCurrency);
+    return sum + debtInTargetCurrency;
+  }, 0);
+}
 
 export function usePaymentStats(
   responsibleUsers: ResponsibleUser[],
-  myDebts: MyDebt[]
+  myDebts: MyDebt[],
+  displayCurrency: DisplayCurrency = 'RUB'
 ) {
-  // Сумма к выплате ответственным: учитываем только положительные остатки
-  const totalResponsibleDebt = useMemo(
-    () =>
-      responsibleUsers.reduce(
-        (sum, u) => sum + Math.max(u.remainingDebt ?? u.totalDebt ?? 0, 0),
-        0
-      ),
-    [responsibleUsers]
-  );
+  const { convert, rate, isLoading } = useCurrencyConversion();
 
-  const totalMyDebt = useMemo(
-    () => myDebts.reduce((sum, d) => sum + (d.totalDebt || 0), 0),
-    [myDebts]
-  );
+  // Сумма к выплате ответственным с учётом валюты обязанностей
+  const totalResponsibleDebt = useMemo(() => {
+    if (!Array.isArray(responsibleUsers)) return 0;
+    
+    return responsibleUsers.reduce((userSum, user) => {
+      const userDebt = user.works.reduce((workSum, work) => {
+        // Считаем долг по каждой обязанности с конвертацией
+        const workDebt = calculateDebtWithConversion(
+          work.duties,
+          displayCurrency,
+          convert
+        );
+        return workSum + Math.max(workDebt, 0);
+      }, 0);
+      return userSum + userDebt;
+    }, 0);
+  }, [responsibleUsers, displayCurrency, convert]);
+
+  // Сумма моих долгов с учётом валюты
+  const totalMyDebt = useMemo(() => {
+    if (!Array.isArray(myDebts)) return 0;
+    
+    return myDebts.reduce((sum, debt) => {
+      const debtAmount = debt.duties.reduce((dutySum, duty) => {
+        const dutyCurrency = (duty.currency as 'RUB' | 'USD') || 'RUB';
+        const debtInTargetCurrency = convert(duty.totalDebt, dutyCurrency, displayCurrency);
+        return dutySum + debtInTargetCurrency;
+      }, 0);
+      return sum + debtAmount;
+    }, 0);
+  }, [myDebts, displayCurrency, convert]);
 
   // Количество «просроченных» — количество работ с индикатором «требует внимания»
   const overdueCount = useMemo(() => {
@@ -35,5 +71,11 @@ export function usePaymentStats(
     }, 0);
   }, [responsibleUsers]);
 
-  return { totalResponsibleDebt, totalMyDebt, overdueCount };
+  return { 
+    totalResponsibleDebt, 
+    totalMyDebt, 
+    overdueCount,
+    exchangeRate: rate,
+    isLoadingRate: isLoading,
+  };
 }

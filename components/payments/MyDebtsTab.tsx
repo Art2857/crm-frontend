@@ -3,7 +3,7 @@
 import React from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { formatCurrency } from '../../utils/payments';
+import { formatCurrency, CurrencyType } from '../../utils/payments';
 import {
   CheckCircleIcon,
   UserIcon,
@@ -96,43 +96,46 @@ export default function MyDebtsTab({
               <h4 className="text-sm font-semibold text-gray-700">
                 Мои обязанности:
               </h4>
-              {debt.duties.map((duty: DutyDebt, index) => (
-                <div
-                  key={duty.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${
-                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full" />
-                    <div>
-                      <p className="font-medium text-gray-900">{duty.name}</p>
-                      <p className="text-xs text-gray-500">
-                        {formatCurrency(duty.monthlyAmount)}/мес
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-green-600">
-                        {formatCurrency(duty.totalDebt)}
-                      </p>
-                      <p className="text-xs text-gray-500">мне должны</p>
+              {debt.duties.map((duty: DutyDebt, index) => {
+                const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
+                return (
+                  <div
+                    key={duty.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full" />
+                      <div>
+                        <p className="font-medium text-gray-900">{duty.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatCurrency(duty.monthlyAmount, dutyCurrency)}/мес
+                        </p>
+                      </div>
                     </div>
 
-                    <Button
-                      onClick={() =>
-                        onShowCalculation('current-user', debt.workId, duty.id)
-                      }
-                      size="sm"
-                      className="bg-green-100 text-green-600 hover:bg-green-200 border border-green-200"
-                    >
-                      <EyeIcon className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-green-600">
+                          {formatCurrency(duty.totalDebt, dutyCurrency)}
+                        </p>
+                        <p className="text-xs text-gray-500">мне должны</p>
+                      </div>
+
+                      <Button
+                        onClick={() =>
+                          onShowCalculation('current-user', debt.workId, duty.id)
+                        }
+                        size="sm"
+                        className="bg-green-100 text-green-600 hover:bg-green-200 border border-green-200"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Общая информация */}

@@ -8,6 +8,7 @@ import UserCard from './UserCard';
 import WorkCard from './WorkCard';
 import DutyCard from './DutyCard';
 import WorkPeriodSelector from './WorkPeriodSelector';
+import type { CurrencyType } from '../../utils/payments';
 
 interface PaymentManagementTabProps {
   works: WorkDetail[];
@@ -114,6 +115,12 @@ export default function PaymentManagementTab({
                           key={duty.dutyId}
                           duty={duty}
                           index={index}
+                          userCurrencyByDuty={Object.fromEntries(
+                            (user.duties || []).map((d) => [
+                              d.dutyId,
+                              ((d.currency === 'USD' ? 'USD' : 'RUB') as CurrencyType),
+                            ])
+                          )}
                           onShowCalculation={(dutyId) =>
                             onShowCalculation(user.userId, work.workId, dutyId)
                           }

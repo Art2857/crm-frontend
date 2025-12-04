@@ -10,66 +10,88 @@ import {
 } from '@heroicons/react/24/outline';
 import { MyDebt } from '../../services/analytics';
 import { ResponsibleUser } from '../../types/payments';
+import CurrencySwitch from '../ui/CurrencySwitch';
+import { DisplayCurrency } from '../../hooks/useCurrencyConversion';
+import { usePaymentStats } from '../../hooks/payments/usePaymentStats';
 
 interface PaymentStatisticsProps {
   responsibleUsers: ResponsibleUser[];
   myDebts: MyDebt[];
+  displayCurrency: DisplayCurrency;
+  onCurrencyChange: (currency: DisplayCurrency) => void;
 }
-
-import { usePaymentStats } from '../../hooks/payments/usePaymentStats';
 
 export default function PaymentStatistics({
   responsibleUsers,
   myDebts,
+  displayCurrency,
+  onCurrencyChange,
 }: PaymentStatisticsProps) {
-  const { totalResponsibleDebt, totalMyDebt, overdueCount } = usePaymentStats(
+  const { totalResponsibleDebt, totalMyDebt, overdueCount, exchangeRate, isLoadingRate } = usePaymentStats(
     responsibleUsers,
-    myDebts
+    myDebts,
+    displayCurrency
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-        <div className="flex items-center">
-          <div className="bg-blue-600 p-3 rounded-full">
-            <BanknotesIcon className="h-6 w-6 text-white" />
-          </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium text-blue-600">
-              К выплате (ответственный)
-            </p>
-            <p className="text-2xl font-bold text-blue-900">
-              {formatCurrency(totalResponsibleDebt)}
-            </p>
-          </div>
-        </div>
-      </Card>
+    <div className="mb-8">
+      {/* Переключатель валюты */}
+      <div className="flex justify-end mb-4 items-center gap-3">
+        {exchangeRate !== null && (
+          <span className="text-sm text-gray-500">
+            Курс: 1 $ = {exchangeRate.toFixed(2)} ₽
+          </span>
+        )}
+        <CurrencySwitch
+          value={displayCurrency}
+          onChange={onCurrencyChange}
+          size="md"
+        />
+      </div>
 
-      <Card className="p-6 bg-gradient-to-r from-green-50 to-green-100 border-green-200">
-        <div className="flex items-center">
-          <div className="bg-green-600 p-3 rounded-full">
-            <CurrencyDollarIcon className="h-6 w-6 text-white" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-6 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+          <div className="flex items-center">
+            <div className="bg-blue-600 p-3 rounded-full">
+              <BanknotesIcon className="h-6 w-6 text-white" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-blue-600">
+                К выплате (ответственный)
+              </p>
+              <p className="text-2xl font-bold text-blue-900">
+                {isLoadingRate ? '...' : formatCurrency(totalResponsibleDebt, displayCurrency)}
+              </p>
+            </div>
           </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium text-green-600">Мои долги</p>
-            <p className="text-2xl font-bold text-green-900">
-              {formatCurrency(totalMyDebt)}
-            </p>
-          </div>
-        </div>
-      </Card>
+        </Card>
 
-      <Card className="p-6 bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
-        <div className="flex items-center">
-          <div className="bg-orange-600 p-3 rounded-full">
-            <ClockIcon className="h-6 w-6 text-white" />
+        <Card className="p-6 bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+          <div className="flex items-center">
+            <div className="bg-green-600 p-3 rounded-full">
+              <CurrencyDollarIcon className="h-6 w-6 text-white" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-green-600">Мне должны</p>
+              <p className="text-2xl font-bold text-green-900">
+                {isLoadingRate ? '...' : formatCurrency(totalMyDebt, displayCurrency)}
+              </p>
+            </div>
           </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium text-orange-600">Просроченные</p>
-            <p className="text-2xl font-bold text-orange-900">{overdueCount}</p>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+          <div className="flex items-center">
+            <div className="bg-orange-600 p-3 rounded-full">
+              <ClockIcon className="h-6 w-6 text-white" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-orange-600">Просроченные</p>
+              <p className="text-2xl font-bold text-orange-900">{overdueCount}</p>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

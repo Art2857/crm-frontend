@@ -36,14 +36,17 @@ import { bulkCreateAndClose } from '../../services/payment';
 import { PaymentType } from '../../types/payment';
 import { useNotification } from '../../contexts/NotificationContext';
 import { logger } from '../../utils/logger';
-import { buildUserDetailedCalculation } from '../../utils/paymentCalculations';
 import { usePaymentsData } from '../../hooks/payments/usePaymentsData';
 import { usePeriodDates } from '../../hooks/payments/usePeriodDates';
+import { DisplayCurrency } from '../../hooks/useCurrencyConversion';
 
 export default function PaymentsPage() {
   // Получаем данные текущего пользователя из Redux store
   const { user } = useAppSelector((state) => state.auth);
   const notification = useNotification();
+
+  // Валюта отображения итогов
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>('RUB');
 
   const [activeTab, setActiveTab] = useState<
     'management' | 'debts' | 'history'
@@ -61,6 +64,8 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(false);
 
   // Модальные окна
+  
+  const [defaultCalculationCurrency, setDefaultCalculationCurrency] = useState<DisplayCurrency>('RUB');
   const [calculationModalOpen, setCalculationModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [customPaymentModalOpen, setCustomPaymentModalOpen] = useState(false);
@@ -150,21 +155,36 @@ export default function PaymentsPage() {
 
         // Если запрошен расчёт по конкретной обязанности — фильтруем периоды локально
         const filtered = dutyId
-          ? {
-              ...calc,
-              periods: calc.periods.map((p) => {
+          ? (() => {
+              const filteredPeriods = calc.periods.map((p) => {
                 const duties = p.duties.filter((d) => d.dutyId === dutyId);
                 const totalAmount = duties.reduce(
                   (s, d) => s + d.calculatedAmount,
                   0
                 );
                 return { ...p, duties, totalAmount };
-              }),
-              totalAccrued: calc.periods
-                .map((p) => p.duties.filter((d) => d.dutyId === dutyId))
-                .flat()
-                .reduce((s, d) => s + d.calculatedAmount, 0),
-            }
+              });
+              const dutyAccrued = filteredPeriods
+                .flatMap((p) => p.duties)
+                .reduce((s, d) => s + d.calculatedAmount, 0);
+
+              // Pull duty-level debt from already loaded management data
+              const userEntry = usersData.find((u) => u.userId === userId);
+              const workEntry = userEntry?.works.find((w) => w.workId === workId);
+              const dutyEntry = workEntry?.users
+                ?.find((u) => u.userId === userId)
+                ?.duties.find((d) => d.dutyId === dutyId);
+              const dutyDebt = Math.max(dutyEntry?.debt ?? 0, 0);
+              const dutyPaid = Math.max(dutyAccrued - dutyDebt, 0);
+
+              return {
+                ...calc,
+                periods: filteredPeriods,
+                totalAccrued: dutyAccrued,
+                totalPaid: dutyPaid,
+                remainingDebt: dutyDebt,
+              } as DetailedCalculation;
+            })()
           : calc;
 
         setSelectedCalculation(filtered);
@@ -179,7 +199,7 @@ export default function PaymentsPage() {
         setLoading(false);
       }
     },
-    [getWorkPeriodDate, user?.role]
+    [getWorkPeriodDate, user?.role, usersData]
   );
 
   // Инициализация данных один раз на монтировании
@@ -563,8 +583,11 @@ export default function PaymentsPage() {
         amount: Math.round(data.amount),
         paymentType: data.type as PaymentType,
         description: data.description,
-        paymentDate: data.paymentDate, // Добавлено поле даты выплаты
+        paymentDate: data.paymentDate,
+        currency: data.currency,
       });
+      
+      setDefaultCalculationCurrency(data.currency as DisplayCurrency);
 
       // Определяем, нужно ли обновлять данные для всех работ пользователя
       // Если это выплата через общий расчет пользователя
@@ -646,6 +669,8 @@ export default function PaymentsPage() {
         <PaymentStatistics
           responsibleUsers={responsibleUsersSummary}
           myDebts={myDebts}
+          displayCurrency={displayCurrency}
+          onCurrencyChange={setDisplayCurrency}
         />
 
         {/* Навигация по вкладкам */}
@@ -659,8 +684,10 @@ export default function PaymentsPage() {
         {/* Содержимое вкладок */}
         {activeTab === 'management' && (
           <div className="space-y-6">
-            {usersData.map((user) => (
-              <UserCard
+            {usersData.map((user) => {
+              const userAccrued = user.works?.reduce((s, w) => s + (w.totalAccrued ?? 0), 0) || 0;
+              return (
+              <UserCard currency={displayCurrency === 'USD' ? 'USD' : 'RUB' }
                 key={user.userId}
                 user={user}
                 isExpanded={expandedUsers.has(user.userId)}
@@ -668,6 +695,7 @@ export default function PaymentsPage() {
                 onShowCalculation={(userId) => {
                   handleShowUserCalculation(userId);
                 }}
+                accruedOverride={userAccrued}
               >
                 <div className="space-y-4">
                   {/* Дата расчетного периода для пользователя */}
@@ -678,7 +706,7 @@ export default function PaymentsPage() {
                   />
 
                   {user.works?.map((work) => (
-                    <WorkCard
+                    <WorkCard currency={displayCurrency === 'USD' ? 'USD' : 'RUB' }
                       key={work.workId}
                       work={work}
                       isExpanded={expandedWorks.has(work.workId)}
@@ -720,7 +748,7 @@ export default function PaymentsPage() {
                   ))}
                 </div>
               </UserCard>
-            ))}
+            )})}
           </div>
         )}
 
@@ -758,6 +786,7 @@ export default function PaymentsPage() {
           isUserCalculation={isUserCalculation}
           showPaymentHistory={calculationModalShowPaymentHistory}
           onBulkPayAllWorks={handleBulkPayAllWorks}
+          initialCurrency={defaultCalculationCurrency}
         />
 
         <PaymentModal

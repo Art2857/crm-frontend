@@ -229,49 +229,47 @@ export const convertCurrency = createAsyncThunk(
     try {
       let rate: ExchangeRate | null = null;
 
-      if (date) {
+      // Поддерживаем только конвертации USD<->RUB, используем курс USD как базовый
+      if (!((fromCurrency === 'USD' && toCurrency === 'RUB') || (fromCurrency === 'RUB' && toCurrency === 'USD'))) {
+        throw new Error(`Конвертация ${fromCurrency} -> ${toCurrency} не поддерживается`);
+      }
+
+      const rateCurrency = 'USD';
+      const normalizedDate = date ? new Date(date).toISOString().split('T')[0] : undefined;
+
+      if (normalizedDate) {
         // Ищем курс на конкретную дату
-        const rateKey = createRateKey(fromCurrency, date);
+        const rateKey = createRateKey(rateCurrency, normalizedDate);
         rate = state.exchangeRates.rates[rateKey] || null;
-        
 
-        
-        // Если в Redux нет, ищем в IndexedDB
         if (!rate) {
-
-          const cached = await indexedDBManager.getRateByDate(fromCurrency, date);
+          const cached = await indexedDBManager.getSmartRateByDate(rateCurrency, normalizedDate);
           rate = cached ? cacheToExchangeRate(cached) : null;
-
         }
       } else {
         // Просто ищем последний курс через IndexedDB (динамически!)
-        const cached = await indexedDBManager.getLatestRate(fromCurrency);
+        const cached = await indexedDBManager.getLatestRate(rateCurrency);
         rate = cached ? cacheToExchangeRate(cached) : null;
         
         console.log('🔍 Получили из IndexedDB последний курс:', rate);
       }
 
       if (!rate) {
-        // Последний fallback - попробуем найти любые данные USD и подгрузить недостающие
-
-        
-        // Попробуем подгрузить данные для этой даты с API
-        if (date && fromCurrency === 'USD') {
-
+        // Попробуем подгрузить данные для этой даты с API (только для USD)
+        if (normalizedDate) {
           try {
             const apiService = await import('../../services/exchangeRates');
-            const result = await apiService.exchangeRatesService.getRateByDate('USD', new Date(date));
+            const result = await apiService.exchangeRatesService.getRateByDate('USD', new Date(normalizedDate));
             if (result) {
-              rate = result;
-
+              rate = result as ExchangeRate;
             }
           } catch (apiError) {
             console.warn('API fallback failed:', apiError);
           }
         }
-        
+
         if (!rate) {
-          throw new Error(`Курс ${fromCurrency} не найден для даты ${date || 'latest'}`);
+          throw new Error(`Курс USD не найден для даты ${normalizedDate || 'latest'}`);
         }
       }
 

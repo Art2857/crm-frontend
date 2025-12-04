@@ -1,12 +1,28 @@
 // Утилиты для системы выплат
 
-export const formatCurrency = (amount: number) => {
+export type CurrencyType = 'RUB' | 'USD';
+
+export const formatCurrency = (
+  amount: number,
+  currency: CurrencyType = 'RUB'
+) => {
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency',
-    currency: 'RUB',
+    currency,
     minimumFractionDigits: 0,
   }).format(amount);
 };
+
+// Safely resolve duty currency from either a top-level `currency` field
+// or a nested `duty.currency` field. Defaults to 'RUB' if missing/unknown.
+export function resolveDutyCurrency<T extends { duty?: { currency?: string } }>(
+  obj: T & { currency?: string }
+): CurrencyType {
+  const top = obj.currency;
+  const nested = obj.duty?.currency;
+  const val = (top ?? nested) === 'USD' ? 'USD' : 'RUB';
+  return val as CurrencyType;
+}
 
 export const getPaymentTypeColor = (type: string) => {
   const colors = {

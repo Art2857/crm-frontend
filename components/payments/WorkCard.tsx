@@ -18,6 +18,8 @@ interface WorkCardProps {
   onToggleExpanded: (workId: string) => void;
   onShowCalculation: (workId: string) => void;
   children?: React.ReactNode;
+  accruedOverride?: number;
+  currency?: 'RUB' | 'USD';
 }
 
 export default function WorkCard({
@@ -26,9 +28,11 @@ export default function WorkCard({
   onToggleExpanded,
   onShowCalculation,
   children,
+  accruedOverride,
+  currency = 'RUB',
 }: WorkCardProps) {
   const { formatRussian } = useDateManager();
-  const accrued = work.totalAccrued ?? 0;
+  const accrued = typeof accruedOverride === 'number' ? accruedOverride : (work.totalAccrued ?? 0);
   const paidForDisplay = Math.min(work.paidAmount || 0, accrued);
   return (
     <div className="group">
@@ -64,6 +68,7 @@ export default function WorkCard({
                 remainingDebt={work.totalDebt}
                 overpaidAmount={work.overpaidAmount}
                 isPaymentDue={work.isPaymentDue}
+                currency={currency}
               />
 
               <div className="flex items-center space-x-2">

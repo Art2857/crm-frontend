@@ -32,10 +32,13 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   const usersMap = useUsersMap(users);
 
   // Получаем последнее распределение (самое актуальное)
-  const latestDistribution = useMemo<DistributionWithDetails | undefined>(
-    () => distributions[0],
-    [distributions]
-  );
+  const latestDistribution = useMemo<DistributionWithDetails | undefined>(() => {
+    if (!distributions || distributions.length === 0) return undefined;
+    const firstWithDetails = distributions.find(
+      (d) => Array.isArray(d.details) && d.details.length > 0
+    );
+    return firstWithDetails || distributions[0];
+  }, [distributions]);
 
   // Фильтруем детали распределения по текущему пользователю, если нужно
   const filteredDetails = useMemo(() => {

@@ -22,6 +22,8 @@ interface UserCardProps {
   onToggleExpanded: (userId: string) => void;
   onShowCalculation?: (userId: string) => void;
   children?: React.ReactNode;
+  accruedOverride?: number;
+  currency?: 'RUB' | 'USD';
 }
 
 export default function UserCard({
@@ -30,6 +32,8 @@ export default function UserCard({
   onToggleExpanded,
   onShowCalculation,
   children,
+  accruedOverride,
+  currency = 'RUB',
 }: UserCardProps) {
   const { formatRussian } = useDateManager();
   return (
@@ -100,11 +104,12 @@ export default function UserCard({
             {/* Финансовая информация и управление */}
             <div className="flex items-center space-x-4">
               <FinancialSummary
-                totalAccrued={user.totalAccrued}
+                totalAccrued={typeof accruedOverride === 'number' ? accruedOverride : user.totalAccrued}
                 totalPaid={user.totalPaid}
                 remainingDebt={user.remainingDebt}
                 overpaidAmount={user.overpaidAmount}
                 isPaymentDue={user.isPaymentDue}
+                currency={currency}
               />
 
               <div className="flex items-center space-x-2">
