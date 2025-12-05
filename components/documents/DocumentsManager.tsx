@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Modal from '../ui/Modal';
@@ -8,6 +8,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { documentsService, UserDocument } from '../../services/documents';
 import { Eye, Download, Trash, X } from 'lucide-react';
 import { useConfirmation } from '../../hooks/useConfirmation';
+import { useDocumentsStaging } from '../../contexts/DocumentsStagingContext';
 
 type Mode = 'user' | 'work';
 
@@ -15,6 +16,14 @@ interface Props {
   mode: Mode;
   entityId: string;
   label?: string;
+  // Если true, добавления/удаления выполняются локально и применяются только при коммите
+  deferred?: boolean;
+  // Регистрирует обработчики, чтобы родитель мог закоммитить или отменить отложенные изменения
+  onRegisterDeferredHandlers?: (handlers: {
+    commit: () => Promise<void>;
+    discard: () => void;
+    hasPending: () => boolean;
+  }) => void;
 }
 
 const ACCEPT_TYPES = [
@@ -32,6 +41,7 @@ const ACCEPT_ATTR = ACCEPT_TYPES.join(',');
 
 export default function DocumentsManager({ mode, entityId, label = 'Документы' }: Props) {
   const notification = useNotification();
+  const staging = useDocumentsStaging();
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -40,6 +50,11 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
   const [saving, setSaving] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<UserDocument | null>(null);
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+
+  // Состояние отложенного режима (локальное накопление изменений)
+  const [pendingAdds, setPendingAdds] = useState<Array<{ tempId: string; name: string; file: File }>>([]);
+  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
+  const committingRef = useRef(false);
 
   const deleteConfirm = useConfirmation<string>(async (id: string) => {
     try {
@@ -100,6 +115,16 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
 
     try {
       setSaving(true);
+      const isDeferred = staging.isDeferred && staging.mode === mode && staging.entityId === entityId;
+      if (isDeferred) {
+        setPendingAdds((prev) => [
+          ...prev,
+          { tempId: `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, name: addName.trim(), file: addFile },
+        ]);
+        setIsAddOpen(false);
+        notification.showSuccess('Документ добавлен в черновик изменений');
+        return;
+      }
       if (mode === 'user') {
         await documentsService.uploadForUser({ userId: entityId, name: addName.trim(), file: addFile });
       } else {
@@ -118,7 +143,7 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     }
   };
 
-  const onClickDoc = (doc: UserDocument) => {
+  const onClickDoc = (doc: any) => {
     setSelectedDoc(doc);
     setIsDownloadOpen(true);
   };
@@ -126,6 +151,19 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
   const onDownload = async () => {
     if (!selectedDoc) return;
     try {
+      if ((selectedDoc as any).__pending) {
+        const local: any = selectedDoc as any;
+        const url = URL.createObjectURL(local.file);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = local.name || local.file?.name || 'document';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setIsDownloadOpen(false);
+        return;
+      }
       const { url, filename } = await documentsService.getDownloadUrl(selectedDoc.id);
       const a = document.createElement('a');
       a.href = url;
@@ -145,6 +183,14 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
   const onPreview = async () => {
     if (!selectedDoc) return;
     try {
+      if ((selectedDoc as any).__pending) {
+        const local: any = selectedDoc as any;
+        const url = URL.createObjectURL(local.file);
+        window.open(url, '_blank', 'noopener,noreferrer');
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        setIsDownloadOpen(false);
+        return;
+      }
       const { url } = await documentsService.getPreviewUrl(selectedDoc.id);
       window.open(url, '_blank', 'noopener,noreferrer');
       setIsDownloadOpen(false);
@@ -193,7 +239,44 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hasDocuments = !loading && documents.length > 0;
+  const isDeferred = staging.isDeferred && staging.mode === mode && staging.entityId === entityId;
+  const stagedKept = useMemo(() => (isDeferred ? documents.filter((d) => !pendingDeletes.has(d.id)) : documents), [documents, pendingDeletes, isDeferred]);
+  const stagedPending = useMemo(() => (isDeferred ? pendingAdds.map((p) => ({ ...p, __pending: true as const })) : []), [pendingAdds, isDeferred]);
+  const displayDocs = useMemo<any[]>(() => (isDeferred ? [...stagedKept, ...stagedPending] : documents as any), [isDeferred, stagedKept, stagedPending, documents]);
+  const hasDocuments = !loading && displayDocs.length > 0;
+  // Регистрируем в родителе обработчики коммита/отмены отложенных изменений через контекст
+  useEffect(() => {
+    if (!(staging.isDeferred && staging.mode === mode && staging.entityId === entityId)) return;
+    if (!staging.registerHandlers) return;
+    const commit = async () => {
+      if (committingRef.current) return;
+      committingRef.current = true;
+      try {
+        for (const p of pendingAdds) {
+          if (mode === 'user') {
+            await documentsService.uploadForUser({ userId: entityId, name: p.name, file: p.file });
+          } else {
+            await documentsService.uploadForWork({ workId: entityId, name: p.name, file: p.file });
+          }
+        }
+        for (const id of Array.from(pendingDeletes)) {
+          await documentsService.delete(id);
+        }
+        setPendingAdds([]);
+        setPendingDeletes(new Set());
+        await fetchDocs();
+      } finally {
+        committingRef.current = false;
+      }
+    };
+    const discard = () => {
+      setPendingAdds([]);
+      setPendingDeletes(new Set());
+      fetchDocs();
+    };
+    const hasPending = () => pendingAdds.length > 0 || pendingDeletes.size > 0;
+    staging.registerHandlers({ commit, discard, hasPending });
+  }, [staging.isDeferred, staging.mode, staging.entityId, mode, entityId, pendingAdds, pendingDeletes]);
 
   return (
     <div className="mb-4">
@@ -219,11 +302,11 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
 
       {loading ? (
         <div className="text-sm text-gray-500">Загрузка документов…</div>
-      ) : documents.length === 0 ? (
+      ) : displayDocs.length === 0 ? (
         <div className="text-sm text-gray-500">Документов пока нет</div>
       ) : (
         <div className="text-sm text-gray-900 mt-1">
-          {documents.map((doc, idx) => (
+          {displayDocs.map((doc, idx) => (
             <React.Fragment key={doc.id}>
               <button
                 type="button"
@@ -233,7 +316,7 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
               >
                 {doc.name}
               </button>
-              {idx < documents.length - 1 && (
+              {idx < displayDocs.length - 1 && (
                 <span className="mx-1 text-gray-400">,</span>
               )}
             </React.Fragment>
@@ -310,15 +393,18 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
             {/* Удалить */}
             <Button
               type="button"
-              onClick={() =>
-                selectedDoc &&
-                deleteConfirm.confirmAndExecute(selectedDoc.id, 'Удалить этот документ?', {
-                  title: 'Удаление документа',
-                  confirmText: 'Удалить',
-                  cancelText: 'Отмена',
-                  variant: 'danger',
-                })
-              }
+              onClick={() => {
+                if (!selectedDoc) return;
+                if ((selectedDoc as any).__pending) {
+                  setPendingAdds((prev) => prev.filter((p) => p.tempId !== (selectedDoc as any).tempId));
+                  setIsDownloadOpen(false);
+                } else if (staging.isDeferred && staging.mode === mode && staging.entityId === entityId) {
+                  setPendingDeletes((prev) => new Set([...Array.from(prev), (selectedDoc as any).id]));
+                  setIsDownloadOpen(false);
+                } else {
+                  deleteConfirm.confirmAndExecute((selectedDoc as any).id, 'Удалить этот документ?', { variant: 'danger' });
+                }
+              }}
               className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-red-50 border !border-red-300 !text-gray-700 hover:!text-white hover:!bg-red-500"
               aria-label="Удалить документ"
               title="Удалить"
