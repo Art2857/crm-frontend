@@ -45,7 +45,7 @@ export default function FinancialSummary({
         </p>
       </div>
       <div className="bg-green-50 rounded-lg p-2">
-        <p className="text-xs text-green-600 font-medium">Выплачено123</p>
+        <p className="text-xs text-green-600 font-medium">Выплачено</p>
         <p className="text-sm font-bold text-green-800">
           {formatCurrency(display.paid, currency)}
         </p>
