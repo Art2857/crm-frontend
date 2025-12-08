@@ -57,10 +57,9 @@ export const authService = {
   },
 
   register: async (data: RegisterDto): Promise<AuthResponse> => {
-    const response = await authApi.post<AuthResponse>(
-      AUTH_ENDPOINTS.register,
-      data
-    );
+    const token = tokenStorage.getAccessToken();
+    const client = token ? privateApi : authApi;
+    const response = await client.post<AuthResponse>(AUTH_ENDPOINTS.register, data);
 
     tokenStorage.setAccessToken(response.data.access_token);
     if (response.data.refresh_token) {
@@ -78,10 +77,9 @@ export const authService = {
 
   // Метод для добавления нового аккаунта через регистрацию без замены текущего
   addAccountRegister: async (data: RegisterDto): Promise<AuthResponse> => {
-    const response = await authApi.post<AuthResponse>(
-      AUTH_ENDPOINTS.register,
-      data
-    );
+    const token = tokenStorage.getAccessToken();
+    const client = token ? privateApi : authApi;
+    const response = await client.post<AuthResponse>(AUTH_ENDPOINTS.register, data);
 
     tokenStorage.setAccessToken(response.data.access_token);
     if (response.data.refresh_token) {
@@ -234,10 +232,9 @@ export const registerUser = async (
   userData: RegisterDto
 ): Promise<AuthResponse> => {
   try {
-    const response = await authApi.post<AuthResponse>(
-      AUTH_ENDPOINTS.register,
-      userData
-    );
+    const token = tokenStorage.getAccessToken();
+    const client = token ? privateApi : authApi;
+    const response = await client.post<AuthResponse>(AUTH_ENDPOINTS.register, userData);
     return response.data;
   } catch (error) {
     console.error('Ошибка при регистрации:', error);
