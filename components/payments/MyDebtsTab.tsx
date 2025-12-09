@@ -16,6 +16,7 @@ import { useDateManager } from '../../hooks/useDateManager';
 
 interface MyDebtsTabProps {
   myDebts: MyDebt[];
+  currentUserId?: string;
   onShowCalculation: (
     userId: string,
     workId: string,
@@ -25,6 +26,7 @@ interface MyDebtsTabProps {
 
 export default function MyDebtsTab({
   myDebts,
+  currentUserId,
   onShowCalculation,
 }: MyDebtsTabProps) {
   const { formatRussian } = useDateManager();
@@ -41,6 +43,12 @@ export default function MyDebtsTab({
     );
   }
 
+  const handleShowCalculation = (workId: string, dutyId?: string) => {
+    if (currentUserId) {
+      onShowCalculation(currentUserId, workId, dutyId);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {myDebts.map((debt) => (
@@ -53,11 +61,10 @@ export default function MyDebtsTab({
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-4">
                 <div
-                  className={`w-4 h-4 rounded-full ${
-                    debt.isPaymentDue
-                      ? 'bg-red-400 animate-pulse'
-                      : 'bg-yellow-400'
-                  }`}
+                  className={`w-4 h-4 rounded-full ${debt.isPaymentDue
+                    ? 'bg-red-400 animate-pulse'
+                    : 'bg-yellow-400'
+                    }`}
                 />
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">
@@ -101,9 +108,8 @@ export default function MyDebtsTab({
                 return (
                   <div
                     key={duty.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${
-                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                    }`}
+                    className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-blue-400 rounded-full" />
@@ -124,9 +130,7 @@ export default function MyDebtsTab({
                       </div>
 
                       <Button
-                        onClick={() =>
-                          onShowCalculation('current-user', debt.workId, duty.id)
-                        }
+                        onClick={() => handleShowCalculation(debt.workId, duty.id)}
                         size="sm"
                         className="bg-green-100 text-green-600 hover:bg-green-200 border border-green-200"
                       >
@@ -145,7 +149,7 @@ export default function MyDebtsTab({
                   Общая задолженность:
                 </span>
                 <Button
-                  onClick={() => onShowCalculation('current-user', debt.workId)}
+                  onClick={() => handleShowCalculation(debt.workId)}
                   size="sm"
                   className="bg-blue-100 text-blue-600 hover:bg-blue-200 border border-blue-200"
                 >
@@ -156,9 +160,8 @@ export default function MyDebtsTab({
 
               <div className="text-right">
                 <p
-                  className={`text-2xl font-bold ${
-                    debt.isPaymentDue ? 'text-red-600' : 'text-green-600'
-                  }`}
+                  className={`text-2xl font-bold ${debt.isPaymentDue ? 'text-red-600' : 'text-green-600'
+                    }`}
                 >
                   {formatCurrency(debt.totalDebt)}
                 </p>

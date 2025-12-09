@@ -136,7 +136,7 @@ export default function CalculationModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div
-        className={`p-6 max-w-full mx-auto max-h-[95vh] ${calculation?.periods[0]?.duties.length === 1 && !showPaymentHistory
+        className={`p-6 max-w-full mx-auto max-h-[95vh] overflow-y-auto ${calculation?.periods[0]?.duties.length === 1 && !showPaymentHistory
           ? 'w-[70vw]'
           : 'w-[90vw]'
           }`}
@@ -268,50 +268,50 @@ export default function CalculationModal({
                       {/* Отображаем обязанности с группировкой по работам */}
                       {period.workGroups && period.workGroups.length > 0
                         ? // Если есть группировка по работам - используем её
-                          period.workGroups.map((workGroup, wgIndex) => (
-                            <div key={`workgroup-${workGroup.workId}-${index}-${wgIndex}`} className="space-y-1">
-                              <div className="font-medium text-gray-800 text-sm mb-1">
-                                {workGroup.workName}
-                              </div>
-                              {workGroup.duties.map((duty, dutyIndex) => {
-                                const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
-                                return (
-                                  <div
-                                    key={`duty-${duty.dutyId}-${workGroup.workId}-${index}-${dutyIndex}`}
-                                    className="flex items-center justify-between text-sm ml-4"
-                                  >
-                                    <span className="text-gray-700">
-                                      {duty.dutyName}:
-                                    </span>
-                                    <span className="font-mono">
-                                      {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
-                                      {period.days}/{period.monthDays} ={' '}
-                                      {formatCurrency(duty.calculatedAmount, dutyCurrency)}
-                                    </span>
-                                  </div>
-                                );
-                              })}
+                        period.workGroups.map((workGroup, wgIndex) => (
+                          <div key={`workgroup-${workGroup.workId}-${index}-${wgIndex}`} className="space-y-1">
+                            <div className="font-medium text-gray-800 text-sm mb-1">
+                              {workGroup.workName}
                             </div>
-                          ))
+                            {workGroup.duties.map((duty, dutyIndex) => {
+                              const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
+                              return (
+                                <div
+                                  key={`duty-${duty.dutyId}-${workGroup.workId}-${index}-${dutyIndex}`}
+                                  className="flex items-center justify-between text-sm ml-4"
+                                >
+                                  <span className="text-gray-700">
+                                    {duty.dutyName}:
+                                  </span>
+                                  <span className="font-mono">
+                                    {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
+                                    {period.days}/{period.monthDays} ={' '}
+                                    {formatCurrency(duty.calculatedAmount, dutyCurrency)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ))
                         : // Если нет группировки - отображаем как раньше
-                          period.duties.map((duty, dutyIndex) => {
-                            const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
-                            return (
-                              <div
-                                key={`duty-${duty.dutyId}-${index}-${dutyIndex}`}
-                                className="flex items-center justify-between text-sm"
-                              >
-                                <span className="text-gray-700">
-                                  {duty.dutyName}:
-                                </span>
-                                <span className="font-mono">
-                                  {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
-                                  {period.days}/{period.monthDays} ={' '}
-                                  {formatCurrency(duty.calculatedAmount, dutyCurrency)}
-                                </span>
-                              </div>
-                            );
-                          })}
+                        period.duties.map((duty, dutyIndex) => {
+                          const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
+                          return (
+                            <div
+                              key={`duty-${duty.dutyId}-${index}-${dutyIndex}`}
+                              className="flex items-center justify-between text-sm"
+                            >
+                              <span className="text-gray-700">
+                                {duty.dutyName}:
+                              </span>
+                              <span className="font-mono">
+                                {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
+                                {period.days}/{period.monthDays} ={' '}
+                                {formatCurrency(duty.calculatedAmount, dutyCurrency)}
+                              </span>
+                            </div>
+                          );
+                        })}
                       <hr className="border-gray-300" />
                       <div className="flex items-center justify-between font-medium">
                         <span>Итого за период:</span>
@@ -320,17 +320,17 @@ export default function CalculationModal({
                             (
                               Array.isArray(period.workGroups) && period.workGroups.length > 0
                                 ? period.workGroups.reduce((sum, wg) =>
-                                    sum + wg.duties.reduce((s, duty) => {
-                                      const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
-                                      const amt = Number(duty.calculatedAmount) || 0;
-                                      return s + convert(amt, dutyCurrency, displayCurrency);
-                                    }, 0),
-                                  0)
-                                : (Array.isArray(period.duties) ? period.duties : []).reduce((s, duty: any) => {
+                                  sum + wg.duties.reduce((s, duty) => {
                                     const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
                                     const amt = Number(duty.calculatedAmount) || 0;
                                     return s + convert(amt, dutyCurrency, displayCurrency);
-                                  }, 0)
+                                  }, 0),
+                                  0)
+                                : (Array.isArray(period.duties) ? period.duties : []).reduce((s, duty: any) => {
+                                  const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
+                                  const amt = Number(duty.calculatedAmount) || 0;
+                                  return s + convert(amt, dutyCurrency, displayCurrency);
+                                }, 0)
                             ),
                             displayCurrency
                           )}
@@ -426,7 +426,7 @@ export default function CalculationModal({
                 <h4 className="text-lg font-medium text-gray-900">
                   Разбивка по периодам изменения обязанностей:
                 </h4>
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                <div className="space-y-4 max-h-[410px] overflow-y-auto pr-2">
                   {calculation.periods.map((period, index) => {
                     const periodStartLocalDateString =
                       formatRussian(period.startDate) || 'Неизвестная дата';
@@ -450,63 +450,63 @@ export default function CalculationModal({
                           {/* Отображаем обязанности с группировкой по работам */}
                           {period.workGroups && period.workGroups.length > 0
                             ? // Если есть группировка по работам - используем её
-                              period.workGroups.map((workGroup, wgIndex) => (
-                                <div
-                                  key={`workgroup-detail-${workGroup.workId}-${index}-${wgIndex}`}
-                                  className="space-y-1"
-                                >
-                                  <div className="font-medium text-gray-800 text-sm mb-1">
-                                    {workGroup.workName}
-                                  </div>
-                                  {workGroup.duties.map((duty, dutyIndex) => {
-                                    const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
-                                    return (
-                                      <div
-                                        key={`duty-detail-${duty.dutyId}-${workGroup.workId}-${index}-${dutyIndex}`}
-                                        className="flex items-center justify-between text-sm ml-4"
-                                      >
-                                        <span className="text-gray-700">
-                                          {duty.dutyName}:
-                                        </span>
-                                        <span className="font-mono">
-                                          {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
-                                          {period.days || 0}/
-                                          {period.monthDays || 0} ={' '}
-                                          {formatCurrency(duty.calculatedAmount, dutyCurrency)}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
+                            period.workGroups.map((workGroup, wgIndex) => (
+                              <div
+                                key={`workgroup-detail-${workGroup.workId}-${index}-${wgIndex}`}
+                                className="space-y-1"
+                              >
+                                <div className="font-medium text-gray-800 text-sm mb-1">
+                                  {workGroup.workName}
                                 </div>
-                              ))
+                                {workGroup.duties.map((duty, dutyIndex) => {
+                                  const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
+                                  return (
+                                    <div
+                                      key={`duty-detail-${duty.dutyId}-${workGroup.workId}-${index}-${dutyIndex}`}
+                                      className="flex items-center justify-between text-sm ml-4"
+                                    >
+                                      <span className="text-gray-700">
+                                        {duty.dutyName}:
+                                      </span>
+                                      <span className="font-mono">
+                                        {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
+                                        {period.days || 0}/
+                                        {period.monthDays || 0} ={' '}
+                                        {formatCurrency(duty.calculatedAmount, dutyCurrency)}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ))
                             : // Если нет группировки - отображаем все обязанности
-                              period.duties.map((duty, dutyIndex) => {
-                                const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
-                                return (
-                                  <div
-                                    key={`duty-alt-${duty.dutyId}-${index}-${dutyIndex}`}
-                                    className="flex items-center justify-between text-sm"
-                                  >
-                                    <span className="text-gray-700">
-                                      {duty.workName ? (
-                                        <>
-                                          <span className="text-gray-500 mr-1">
-                                            {duty.workName}:
-                                          </span>
-                                          {duty.dutyName}:
-                                        </>
-                                      ) : (
-                                        <>{duty.dutyName}:</>
-                                      )}
-                                    </span>
-                                    <span className="font-mono">
-                                      {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
-                                      {period.days || 0}/{period.monthDays || 0} ={' '}
-                                      {formatCurrency(duty.calculatedAmount, dutyCurrency)}
-                                    </span>
-                                  </div>
-                                );
-                              })}
+                            period.duties.map((duty, dutyIndex) => {
+                              const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
+                              return (
+                                <div
+                                  key={`duty-alt-${duty.dutyId}-${index}-${dutyIndex}`}
+                                  className="flex items-center justify-between text-sm"
+                                >
+                                  <span className="text-gray-700">
+                                    {duty.workName ? (
+                                      <>
+                                        <span className="text-gray-500 mr-1">
+                                          {duty.workName}:
+                                        </span>
+                                        {duty.dutyName}:
+                                      </>
+                                    ) : (
+                                      <>{duty.dutyName}:</>
+                                    )}
+                                  </span>
+                                  <span className="font-mono">
+                                    {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
+                                    {period.days || 0}/{period.monthDays || 0} ={' '}
+                                    {formatCurrency(duty.calculatedAmount, dutyCurrency)}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           <hr className="border-gray-300" />
                           <div className="flex items-center justify-between font-medium">
                             <span>Итого за период:</span>
@@ -515,17 +515,17 @@ export default function CalculationModal({
                                 (
                                   Array.isArray(period.workGroups) && period.workGroups.length > 0
                                     ? period.workGroups.reduce((sum, wg) =>
-                                        sum + wg.duties.reduce((s, duty) => {
-                                          const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
-                                          const amt = Number(duty.calculatedAmount) || 0;
-                                          return s + convert(amt, dutyCurrency, displayCurrency);
-                                        }, 0),
-                                      0)
-                                    : (Array.isArray(period.duties) ? period.duties : []).reduce((s, duty: any) => {
+                                      sum + wg.duties.reduce((s, duty) => {
                                         const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
                                         const amt = Number(duty.calculatedAmount) || 0;
                                         return s + convert(amt, dutyCurrency, displayCurrency);
-                                      }, 0)
+                                      }, 0),
+                                      0)
+                                    : (Array.isArray(period.duties) ? period.duties : []).reduce((s, duty: any) => {
+                                      const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
+                                      const amt = Number(duty.calculatedAmount) || 0;
+                                      return s + convert(amt, dutyCurrency, displayCurrency);
+                                    }, 0)
                                 ),
                                 displayCurrency
                               )}

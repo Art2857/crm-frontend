@@ -64,7 +64,7 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(false);
 
   // Модальные окна
-  
+
   const [defaultCalculationCurrency, setDefaultCalculationCurrency] = useState<DisplayCurrency>('RUB');
   const [calculationModalOpen, setCalculationModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -142,7 +142,7 @@ export default function PaymentsPage() {
         console.error('Пользователь не авторизован');
         return;
       }
-      
+
       try {
         setLoading(true);
         const endDate = getWorkPeriodDate(workId);
@@ -156,35 +156,35 @@ export default function PaymentsPage() {
         // Если запрошен расчёт по конкретной обязанности — фильтруем периоды локально
         const filtered = dutyId
           ? (() => {
-              const filteredPeriods = calc.periods.map((p) => {
-                const duties = p.duties.filter((d) => d.dutyId === dutyId);
-                const totalAmount = duties.reduce(
-                  (s, d) => s + d.calculatedAmount,
-                  0
-                );
-                return { ...p, duties, totalAmount };
-              });
-              const dutyAccrued = filteredPeriods
-                .flatMap((p) => p.duties)
-                .reduce((s, d) => s + d.calculatedAmount, 0);
+            const filteredPeriods = calc.periods.map((p) => {
+              const duties = p.duties.filter((d) => d.dutyId === dutyId);
+              const totalAmount = duties.reduce(
+                (s, d) => s + d.calculatedAmount,
+                0
+              );
+              return { ...p, duties, totalAmount };
+            });
+            const dutyAccrued = filteredPeriods
+              .flatMap((p) => p.duties)
+              .reduce((s, d) => s + d.calculatedAmount, 0);
 
-              // Pull duty-level debt from already loaded management data
-              const userEntry = usersData.find((u) => u.userId === userId);
-              const workEntry = userEntry?.works.find((w) => w.workId === workId);
-              const dutyEntry = workEntry?.users
-                ?.find((u) => u.userId === userId)
-                ?.duties.find((d) => d.dutyId === dutyId);
-              const dutyDebt = Math.max(dutyEntry?.debt ?? 0, 0);
-              const dutyPaid = Math.max(dutyAccrued - dutyDebt, 0);
+            // Pull duty-level debt from already loaded management data
+            const userEntry = usersData.find((u) => u.userId === userId);
+            const workEntry = userEntry?.works.find((w) => w.workId === workId);
+            const dutyEntry = workEntry?.users
+              ?.find((u) => u.userId === userId)
+              ?.duties.find((d) => d.dutyId === dutyId);
+            const dutyDebt = Math.max(dutyEntry?.debt ?? 0, 0);
+            const dutyPaid = Math.max(dutyAccrued - dutyDebt, 0);
 
-              return {
-                ...calc,
-                periods: filteredPeriods,
-                totalAccrued: dutyAccrued,
-                totalPaid: dutyPaid,
-                remainingDebt: dutyDebt,
-              } as DetailedCalculation;
-            })()
+            return {
+              ...calc,
+              periods: filteredPeriods,
+              totalAccrued: dutyAccrued,
+              totalPaid: dutyPaid,
+              remainingDebt: dutyDebt,
+            } as DetailedCalculation;
+          })()
           : calc;
 
         setSelectedCalculation(filtered);
@@ -586,7 +586,7 @@ export default function PaymentsPage() {
         paymentDate: data.paymentDate,
         currency: data.currency,
       });
-      
+
       setDefaultCalculationCurrency(data.currency as DisplayCurrency);
 
       // Определяем, нужно ли обновлять данные для всех работ пользователя
@@ -687,74 +687,76 @@ export default function PaymentsPage() {
             {usersData.map((user) => {
               const userAccrued = user.works?.reduce((s, w) => s + (w.totalAccrued ?? 0), 0) || 0;
               return (
-              <UserCard currency={displayCurrency === 'USD' ? 'USD' : 'RUB' }
-                key={user.userId}
-                user={user}
-                isExpanded={expandedUsers.has(user.userId)}
-                onToggleExpanded={toggleUserExpanded}
-                onShowCalculation={(userId) => {
-                  handleShowUserCalculation(userId);
-                }}
-                accruedOverride={userAccrued}
-              >
-                <div className="space-y-4">
-                  {/* Дата расчетного периода для пользователя */}
-                  <UserPeriodSelector
-                    userId={user.userId}
-                    selectedDate={getUserPeriodDate(user.userId)}
-                    onDateSet={handleUserPeriodDateChange}
-                  />
+                <UserCard currency={displayCurrency === 'USD' ? 'USD' : 'RUB'}
+                  key={user.userId}
+                  user={user}
+                  isExpanded={expandedUsers.has(user.userId)}
+                  onToggleExpanded={toggleUserExpanded}
+                  onShowCalculation={(userId) => {
+                    handleShowUserCalculation(userId);
+                  }}
+                  accruedOverride={userAccrued}
+                >
+                  <div className="space-y-4">
+                    {/* Дата расчетного периода для пользователя */}
+                    <UserPeriodSelector
+                      userId={user.userId}
+                      selectedDate={getUserPeriodDate(user.userId)}
+                      onDateSet={handleUserPeriodDateChange}
+                    />
 
-                  {user.works?.map((work) => (
-                    <WorkCard currency={displayCurrency === 'USD' ? 'USD' : 'RUB' }
-                      key={work.workId}
-                      work={work}
-                      isExpanded={expandedWorks.has(work.workId)}
-                      onToggleExpanded={toggleWorkExpanded}
-                      onShowCalculation={(workId) => {
-                        handleShowCalculation(user.userId, workId);
-                      }}
-                    >
-                      <div className="space-y-4">
-                        {/* Дата расчетного периода */}
-                        {/* Убрали выбор даты на уровне работы — дата задаётся только в пользователе */}
+                    {user.works?.map((work) => (
+                      <WorkCard currency={displayCurrency === 'USD' ? 'USD' : 'RUB'}
+                        key={work.workId}
+                        work={work}
+                        isExpanded={expandedWorks.has(work.workId)}
+                        onToggleExpanded={toggleWorkExpanded}
+                        onShowCalculation={(workId) => {
+                          handleShowCalculation(user.userId, workId);
+                        }}
+                      >
+                        <div className="space-y-4">
+                          {/* Дата расчетного периода */}
+                          {/* Убрали выбор даты на уровне работы — дата задаётся только в пользователе */}
 
-                        {/* Обязанности пользователя */}
-                        <div>
-                          <h5 className="text-sm font-semibold text-gray-700 mb-2">
-                            Обязанности:
-                          </h5>
-                          <div className="space-y-2">
-                            {work.users
-                              ?.find((u) => u.userId === user.userId)
-                              ?.duties.map((duty, index) => (
-                                <DutyCard
-                                  key={duty.dutyId}
-                                  duty={duty}
-                                  index={index}
-                                  onShowCalculation={(dutyId) => {
-                                    handleShowCalculation(
-                                      user.userId,
-                                      work.workId,
-                                      dutyId
-                                    );
-                                  }}
-                                />
-                              ))}
+                          {/* Обязанности пользователя */}
+                          <div>
+                            <h5 className="text-sm font-semibold text-gray-700 mb-2">
+                              Обязанности:
+                            </h5>
+                            <div className="space-y-2">
+                              {work.users
+                                ?.find((u) => u.userId === user.userId)
+                                ?.duties.map((duty, index) => (
+                                  <DutyCard
+                                    key={duty.dutyId}
+                                    duty={duty}
+                                    index={index}
+                                    onShowCalculation={(dutyId) => {
+                                      handleShowCalculation(
+                                        user.userId,
+                                        work.workId,
+                                        dutyId
+                                      );
+                                    }}
+                                  />
+                                ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </WorkCard>
-                  ))}
-                </div>
-              </UserCard>
-            )})}
+                      </WorkCard>
+                    ))}
+                  </div>
+                </UserCard>
+              )
+            })}
           </div>
         )}
 
         {activeTab === 'debts' && (
           <MyDebtsTab
             myDebts={myDebts}
+            currentUserId={user?.id}
             onShowCalculation={handleShowCalculation}
           />
         )}
