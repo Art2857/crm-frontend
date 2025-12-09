@@ -10,7 +10,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { MyDebt } from '../../services/analytics';
 import { ResponsibleUser } from '../../types/payments';
-import CurrencySwitch from '../ui/CurrencySwitch';
 import { DisplayCurrency } from '../../hooks/useCurrencyConversion';
 import { usePaymentStats } from '../../hooks/payments/usePaymentStats';
 
@@ -25,9 +24,8 @@ export default function PaymentStatistics({
   responsibleUsers,
   myDebts,
   displayCurrency,
-  onCurrencyChange,
 }: PaymentStatisticsProps) {
-  const { totalResponsibleDebt, totalMyDebt, overdueCount, exchangeRate, isLoadingRate } = usePaymentStats(
+  const { totalResponsibleDebt, totalMyDebt, overdueCount, isLoadingRate } = usePaymentStats(
     responsibleUsers,
     myDebts,
     displayCurrency
@@ -35,20 +33,6 @@ export default function PaymentStatistics({
 
   return (
     <div className="mb-8">
-      {/* Переключатель валюты */}
-      <div className="flex justify-end mb-4 items-center gap-3">
-        {exchangeRate !== null && (
-          <span className="text-sm text-gray-500">
-            Курс: 1 $ = {exchangeRate.toFixed(2)} ₽
-          </span>
-        )}
-        <CurrencySwitch
-          value={displayCurrency}
-          onChange={onCurrencyChange}
-          size="md"
-        />
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-6 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
           <div className="flex items-center">
