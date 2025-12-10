@@ -126,7 +126,9 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
       try {
         const rate = await indexedDBManager.getLatestRate('USD');
         console.log('🏆 Получили последний курс USD из IndexedDB:', rate);
-        setUsdToRubRate(rate);
+        if (rate) {
+          setUsdToRubRate(rate);
+        }
       } catch (error) {
         console.error('❌ Ошибка загрузки курса USD:', error);
       }
@@ -134,6 +136,16 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
     
     loadLatestUsdRate();
   }, []);
+
+  // Подписываемся на обновление курса в Redux (если он придет позже или обновится)
+  const latestRate = useAppSelector(state => selectLatestRate(state, 'USD'));
+
+  useEffect(() => {
+    if (latestRate) {
+      console.log('🔄 Redux обновил курс USD:', latestRate);
+      setUsdToRubRate(latestRate);
+    }
+  }, [latestRate]);
 
   // Конвертация при изменении суммы, валют или даты с небольшим debounce,
   // чтобы избежать двойных вызовов в React StrictMode и лишних запросов
@@ -203,44 +215,44 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
                 </>
               )}
             </div>
-                             <p className="text-sm text-gray-500">
-                   Официальный курс Центрального банка России<br />
-                   {usdToRubRate?.date ? (
-                     (() => {
-                                             try {
-                        // Парсинг даты в формате DD.MM.YYYY
-                        const dateStr = usdToRubRate.date;
-                        let date: Date;
-                        
-                        // Если дата в формате DD.MM.YYYY - конвертируем
-                        if (dateStr.includes('.')) {
-                          const [day, month, year] = dateStr.split('.');
-                          date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                        } else {
-                          // Иначе пробуем обычный парсинг
-                          date = new Date(dateStr);
-                        }
-                        
-                        // Проверяем валидность даты
-                        if (isNaN(date.getTime())) {
-                          console.warn('Invalid date in usdToRubRate:', dateStr);
-                          return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`;
-                        }
-                         
-                         return `Курс за ${date.toLocaleDateString('ru-RU', { 
-                           year: 'numeric', 
-                           month: '2-digit', 
-                           day: '2-digit' 
-                         })}`;
-                       } catch (error) {
-                         console.error('Error parsing date:', error);
-                         return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`; // Fallback
-                       }
-                     })()
-                   ) : (
-                     `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}` // Fallback если нет данных
-                   )}
-                 </p>
+            <p className="text-sm text-gray-500">
+              Официальный курс Центрального банка России<br />
+              {usdToRubRate?.date ? (
+                (() => {
+                  try {
+                    // Парсинг даты в формате DD.MM.YYYY
+                    const dateStr = usdToRubRate.date;
+                    let date: Date;
+
+                    // Если дата в формате DD.MM.YYYY - конвертируем
+                    if (dateStr.includes('.')) {
+                      const [day, month, year] = dateStr.split('.');
+                      date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                    } else {
+                      // Иначе пробуем обычный парсинг
+                      date = new Date(dateStr);
+                    }
+
+                    // Проверяем валидность даты
+                    if (isNaN(date.getTime())) {
+                      console.warn('Invalid date in usdToRubRate:', dateStr);
+                      return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`;
+                    }
+
+                    return `Курс за ${date.toLocaleDateString('ru-RU', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit'
+                    })}`;
+                  } catch (error) {
+                    console.error('Error parsing date:', error);
+                    return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`; // Fallback
+                  }
+                })()
+              ) : (
+                `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}` // Fallback если нет данных
+              )}
+            </p>
           </div>
 
           {/* Правая часть - конвертер */}
@@ -282,25 +294,25 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
                   
                   {/* Выбор даты - минимально */}
                   <div className="flex items-center gap-2">
-                                             <input
-                           type="date"
-                           value={selectedDate}
-                           onChange={handleDateChange}
-                           max={getLastWorkingDay().toISOString().split('T')[0]}
-                           min="2020-01-01"
-                           className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                           title="Дата курса (только рабочие дни)"
-                           onInput={(e) => {
-                             // Дополнительная валидация на стороне клиента
-                             const input = e.target as HTMLInputElement;
-                             const inputDate = new Date(input.value);
-                             if (!isWorkingDay(inputDate)) {
-                               input.setCustomValidity('Выберите рабочий день (вторник-суббота)');
-                             } else {
-                               input.setCustomValidity('');
-                             }
-                           }}
-                         />
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={handleDateChange}
+                      max={getLastWorkingDay().toISOString().split('T')[0]}
+                      min="2020-01-01"
+                      className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      title="Дата курса (только рабочие дни)"
+                      onInput={(e) => {
+                        // Дополнительная валидация на стороне клиента
+                        const input = e.target as HTMLInputElement;
+                        const inputDate = new Date(input.value);
+                        if (!isWorkingDay(inputDate)) {
+                          input.setCustomValidity('Выберите рабочий день (вторник-суббота)');
+                        } else {
+                          input.setCustomValidity('');
+                        }
+                      }}
+                    />
                   </div>
                 </div>
 
