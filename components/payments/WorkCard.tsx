@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import {
@@ -40,13 +41,18 @@ export default function WorkCard({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div
-                className={`w-3 h-3 rounded-full ${
-                  work.requiresAttention ? 'bg-red-400' : 'bg-green-400'
-                }`}
+                className={`w-3 h-3 rounded-full ${work.requiresAttention ? 'bg-red-400' : 'bg-green-400'
+                  }`}
               />
               <div>
                 <h4 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                  {work.workName}
+                  <Link
+                    href={`/works/${work.workId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="hover:underline"
+                  >
+                    {work.workName}
+                  </Link>
                 </h4>
                 {work.lastClosureDate && (
                   <p className="text-sm text-gray-500">
