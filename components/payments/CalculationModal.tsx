@@ -250,7 +250,7 @@ export default function CalculationModal({
 
             {/* Основной контент - только разбивка по периодам для обязанности */}
             <div className="space-y-4">
-              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+              <div className="space-y-4 max-h-[510px] overflow-y-auto pr-2">
                 {calculation.periods.map((period, index) => (
                   <div key={`period-${period.startDate}-${period.endDate}-${index}`} className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
