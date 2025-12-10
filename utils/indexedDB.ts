@@ -44,21 +44,21 @@ class IndexedDBManager {
         }
 
         // Store для курсов валют с новой схемой
-        const ratesStore = db.createObjectStore('rates', { 
+        const ratesStore = db.createObjectStore('rates', {
           keyPath: ['currencyCode', 'date'] // Composite key для upsert
         });
         ratesStore.createIndex('currencyCode', 'currencyCode', { unique: false });
         ratesStore.createIndex('date', 'date', { unique: false });
-        
+
         // Store для метаданных
         if (!db.objectStoreNames.contains('metadata')) {
-          const metadataStore = db.createObjectStore('metadata', { 
-            keyPath: 'id', 
-            autoIncrement: true 
+          const metadataStore = db.createObjectStore('metadata', {
+            keyPath: 'id',
+            autoIncrement: true
           });
           metadataStore.createIndex('key', 'key', { unique: true });
         }
-        
+
 
       };
     });
@@ -77,7 +77,7 @@ class IndexedDBManager {
   // Сохранение курсов валют
   async saveRates(rates: CachedExchangeRate[]): Promise<void> {
     if (rates.length === 0) return;
-    
+
     const db = await this.ensureDB();
     const transaction = db.transaction(['rates'], 'readwrite');
     const store = transaction.objectStore('rates');
@@ -90,18 +90,18 @@ class IndexedDBManager {
         // Если createdAt уже есть, оставляем, иначе устанавливаем текущее время
         createdAt: rate.createdAt || new Date().toISOString()
       };
-      
+
       // put автоматически создаёт или обновляет запись
       store.put(rateWithTimestamps);
     }
 
     return new Promise((resolve, reject) => {
       transaction.oncomplete = () => {
-        
+
         resolve();
       };
       transaction.onerror = () => {
-        
+
         reject(transaction.error);
       };
     });
@@ -126,55 +126,55 @@ class IndexedDBManager {
       const db = await this.ensureDB();
       const transaction = db.transaction(['rates'], 'readonly');
       const store = transaction.objectStore('rates');
-      
+
       // БЕРЕМ ТЕКУЩУЮ ДАТУ
       const today = new Date();
-      
-      // Получаем все доступные курсы для проверки
-      const allRates = await new Promise<CachedExchangeRate[]>((resolve, reject) => {
-        const allRatesRequest = store.index('currencyCode').getAll(currencyCode);
-        allRatesRequest.onsuccess = () => resolve(allRatesRequest.result || []);
-        allRatesRequest.onerror = () => reject(allRatesRequest.error);
-      });
-      
+
       // ИДЕМ НАЗАД ПО ДНЯМ И ПРОВЕРЯЕМ КАЖДУЮ ДАТУ!
       for (let i = 0; i <= 365; i++) {
         const checkDate = new Date(today);
         checkDate.setDate(checkDate.getDate() - i);
-        
-        // Конвертируем в формат DD.MM.YYYY (как в IndexedDB)
+
+        // 1. Проверяем формат DD.MM.YYYY (как в API РФ)
         const day = checkDate.getDate().toString().padStart(2, '0');
         const month = (checkDate.getMonth() + 1).toString().padStart(2, '0');
         const year = checkDate.getFullYear();
-        const dateStr = `${day}.${month}.${year}`;
-        
+        const dateStrRU = `${day}.${month}.${year}`;
+
+        // 2. Проверяем формат YYYY-MM-DD (ISO)
+        const dateStrISO = checkDate.toISOString().split('T')[0];
+
         // Логируем только если включен debug режим
-        if (i < 10 && process.env.NODE_ENV === 'development') {
-          console.log(`🔍 Проверяем дату: ${dateStr}`);
+        if (i < 3 && process.env.NODE_ENV === 'development') {
+          console.log(`🔍 Проверяем даты: ${dateStrRU} / ${dateStrISO}`);
         }
-        
-        // ПРОВЕРЯЕМ ЕСТЬ ЛИ ЗАПИСЬ НА ЭТУ ДАТУ
+
+        // ПРОВЕРЯЕМ ЕСТЬ ЛИ ЗАПИСЬ НА ЭТУ ДАТУ (ОБА ФОРМАТА)
         const rate = await new Promise<CachedExchangeRate | null>((resolve, reject) => {
-          const request = store.get([currencyCode, dateStr]);
-          request.onsuccess = () => {
-            const result = request.result;
-            if (result && process.env.NODE_ENV === 'development') {
-              console.log(`✅ НАШЛИ курс на ${dateStr}: ${result.rate}`);
+          // Сначала пробуем RU формат
+          const requestRU = store.get([currencyCode, dateStrRU]);
+          requestRU.onsuccess = () => {
+            if (requestRU.result) {
+              resolve(requestRU.result);
+            } else {
+              // Если нет, пробуем ISO формат
+              const requestISO = store.get([currencyCode, dateStrISO]);
+              requestISO.onsuccess = () => resolve(requestISO.result || null);
+              requestISO.onerror = () => resolve(null); // Не фейлим общую промису
             }
-            resolve(result || null);
           };
-          request.onerror = () => reject(request.error);
+          requestRU.onerror = () => resolve(null);
         });
-        
+
         // ЕСЛИ НАШЛИ - ВОЗВРАЩАЕМ!
         if (rate) {
           if (process.env.NODE_ENV === 'development') {
-            console.log(`🏆 НАШЛИ последний курс за ${dateStr}: ${rate.rate}`);
+            console.log(`🏆 НАШЛИ последний курс за ${rate.date}: ${rate.rate}`);
           }
           return rate;
         }
       }
-      
+
       if (process.env.NODE_ENV === 'development') {
         console.log('❌ Не нашли ни одного курса за 365 дней!');
       }
@@ -231,8 +231,8 @@ class IndexedDBManager {
 
   // Получение курсов за период
   async getRatesInRange(
-    currencyCode: string, 
-    fromDate: string, 
+    currencyCode: string,
+    fromDate: string,
     toDate: string
   ): Promise<CachedExchangeRate[]> {
     const db = await this.ensureDB();
@@ -360,24 +360,24 @@ class IndexedDBManager {
   async ensureMetadataIntegrity(): Promise<void> {
     try {
       console.log('🔍 Проверяем целостность metadata...');
-      
+
       const lastUpdate = await this.getMetadata('lastUpdate');
       const lastSyncDate = await this.getMetadata('lastSyncDate');
-      
+
       // Если metadata пустая, восстанавливаем базовые значения
       if (!lastUpdate || !lastSyncDate) {
         console.log('⚠️ metadata неполная, восстанавливаем...');
-        
+
         // Получаем последнюю дату из реальных данных
         const allRates = await this.getAllRates('USD');
-        
+
         if (allRates.length > 0) {
           // Находим самую позднюю дату в данных
           allRates.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
           const latestDataTime = allRates[0].updatedAt;
-          
+
           console.log(`🔧 Восстанавливаем metadata на основе данных от ${latestDataTime}`);
-          
+
           if (!lastUpdate) {
             await this.setMetadata('lastUpdate', latestDataTime);
           }
@@ -388,7 +388,7 @@ class IndexedDBManager {
           // Нет данных - устанавливаем заведомо старую дату для принудительного обновления
           console.log('🆆 Нет данных, форсируем обновление');
           const oldDate = '2020-01-01T00:00:00.000Z'; // Старая дата = принудительное обновление
-          
+
           if (!lastUpdate) {
             await this.setMetadata('lastUpdate', oldDate);
           }
@@ -396,7 +396,7 @@ class IndexedDBManager {
             await this.setMetadata('lastSyncDate', oldDate);
           }
         }
-        
+
         console.log('✅ metadata восстановлена!');
       } else {
         console.log('✅ metadata в порядке');
@@ -431,11 +431,11 @@ class IndexedDBManager {
   async clearMetadataSafely(): Promise<void> {
     try {
       console.log('🗑️ Очищаем metadata...');
-      
+
       const db = await this.ensureDB();
       const transaction = db.transaction(['metadata'], 'readwrite');
       const store = transaction.objectStore('metadata');
-      
+
       await new Promise<void>((resolve, reject) => {
         const request = store.clear();
         request.onsuccess = () => {
@@ -444,10 +444,10 @@ class IndexedDBManager {
         };
         request.onerror = () => reject(request.error);
       });
-      
+
       // Немедленно восстанавливаем
       await this.ensureMetadataIntegrity();
-      
+
     } catch (error) {
       console.error('❌ Ошибка очистки metadata:', error);
       throw error;
@@ -458,14 +458,14 @@ class IndexedDBManager {
   async forceUpdate(): Promise<void> {
     try {
       console.log('🚀 ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ!');
-      
+
       // Ставим старую дату для принудительного обновления
       const oldDate = '2020-01-01T00:00:00.000Z';
       await this.setMetadata('lastUpdate', oldDate);
       await this.setMetadata('lastSyncDate', oldDate);
-      
+
       console.log('✅ metadata сброшена для принудительного обновления');
-      
+
     } catch (error) {
       console.error('❌ Ошибка принудительного обновления:', error);
       throw error;
@@ -479,7 +479,7 @@ export const indexedDBManager = new IndexedDBManager();
 // Инициализация при импорте
 if (typeof window !== 'undefined') {
   indexedDBManager.init().catch(console.error);
-  
+
   // ДОБАВЛЯЕМ ОТЛАДОЧНЫЕ ФУНКЦИИ В КОНСОЛЬ!
   (window as any).__debugExchangeRates = {
     forceUpdate: async () => {
@@ -497,19 +497,19 @@ if (typeof window !== 'undefined') {
       console.log(`💰 Последний курс ${currency}:`, rate);
       return rate;
     },
-    
+
     // ВРЕМЕННАЯ ФУНКЦИЯ ДЛЯ ОТЛАДКИ ПРОБЛЕМЫ С РАБОЧИМИ ДНЯМИ
     forceReloadAndCheck: async () => {
       console.log('🔄 ПРИНУДИТЕЛЬНАЯ ПЕРЕЗАГРУЗКА С ОТЛАДКОЙ РАБОЧИХ ДНЕЙ');
-      
+
       try {
         // Используем forceUpdate для сброса метаданных
         await indexedDBManager.forceUpdate();
         console.log('🗑️ Метаданные сброшены для принудительной загрузки');
-        
+
         console.log('📡 Принудительно перезагрузи страницу для отладки');
         console.log('📊 В логах будет подробная информация о рабочих днях ЦБ РФ');
-        
+
       } catch (error) {
         console.error('❌ Ошибка при сбросе:', error);
         console.log('🔄 Просто перезагрузи страницу для отладки');
@@ -531,9 +531,9 @@ if (typeof window !== 'undefined') {
       }
     }
   };
-  
+
   console.log('🛫 Отладка: вызови __debugExchangeRates.forceUpdate() для принудительного обновления!');
-  
+
   // АВТОМАТИЧЕСКОЕ ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ПРИ ПЕРВОМ ЗАПУСКЕ
   setTimeout(async () => {
     try {
@@ -546,14 +546,14 @@ if (typeof window !== 'undefined') {
 
       const cacheInfo = await (window as any).__debugExchangeRates.getCacheInfo();
       const latestRate = await indexedDBManager.getLatestRate('USD');
-      
+
       if (!latestRate || latestRate.date < '20.08.2025') {
         console.log('🚀 Автоматическое принудительное обновление - старые данные!');
         await indexedDBManager.forceUpdate();
-        
+
         // Устанавливаем флаг, что обновление было выполнено
         sessionStorage.setItem('exchangeRatesForceUpdated', 'true');
-        
+
         // Перезагружаем только один раз
         location.reload();
       }

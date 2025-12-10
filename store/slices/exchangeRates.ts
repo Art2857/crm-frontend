@@ -702,9 +702,7 @@ export const selectLatestRate = createSelector(
     (_: any, currencyCode: string) => currencyCode,
   ],
   (latestRates, currencyCode) => {
-    // НЕ полагаемся на latestRates - они могут быть старыми!
-    // Возвращаем null - компонент пойдет в IndexedDB
-    return null;
+    return latestRates[currencyCode] || null;
   }
 );
 
