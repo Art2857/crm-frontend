@@ -5,7 +5,7 @@ import {
   UserWithHistory,
   UserHistory,
 } from '../types/user';
-import { privateApi, authApi, ApiClient } from './ApiClient';
+import { privateApi, ApiClient } from './ApiClient';
 import { USERS_ENDPOINTS, AUTH_ENDPOINTS } from './endpoints';
 import { AuthResponse } from '../types/auth';
 import { toDateObject } from '../utils/date';
@@ -199,7 +199,8 @@ export const userService = {
   // Создание нового пользователя (только для админа)
   createUser: async (data: CreateUserDto): Promise<User> => {
     try {
-      const response = await authApi.post<AuthResponse>(
+      // Если есть токен, используем приватный клиент, чтобы пробросить Authorization
+      const response = await privateApi.post<AuthResponse>(
         AUTH_ENDPOINTS.register,
         data
       );
