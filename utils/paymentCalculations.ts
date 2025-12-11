@@ -3,6 +3,8 @@ import {
   PeriodCalculation,
   ResponsibleUser,
   WorkDetail,
+  DutyDebt,
+  DutyDetail,
 } from '../types/payments';
 import { MyDebt } from '../services/analytics';
 import { getSalaryWorkingDaysInMonth as getWorkingDaysInMonth, getSalaryWorkingDaysInPeriod as getWorkingDaysInPeriod } from './salary-working-days';
@@ -147,6 +149,7 @@ export function buildWorkDetailedCalculation(params: {
                 dutyName: duty.name,
                 monthlyAmount: duty.monthlyAmount,
                 calculatedAmount: period.accrued,
+                currency: (duty as DutyDebt).currency as 'RUB' | 'USD' | undefined,
               },
             ],
             totalAmount: period.accrued,
@@ -183,6 +186,7 @@ export function buildWorkDetailedCalculation(params: {
           dutyName: duty.name,
           monthlyAmount: duty.monthlyAmount,
           calculatedAmount: period.accrued,
+          currency: (duty as DutyDebt).currency as 'RUB' | 'USD' | undefined,
         }));
         const totalAmount = dutiesForPeriod.reduce(
           (s: number, d: any) => s + d.calculatedAmount,
@@ -209,15 +213,29 @@ export function buildWorkDetailedCalculation(params: {
         const periodStartDate = parseRuDate(p.startDate);
         const periodEndDate = parseRuDate(p.endDate);
         const workingDaysInMonth = getWorkingDaysInMonth(periodEndDate);
-        const dutiesCalc = p.distributionDetails.map((dd: any) => {
+        const userDuties: DutyDetail[] = (userWorkEntry?.duties || []) as DutyDetail[];
+        const currencyMap = new Map<string, 'RUB' | 'USD'>();
+        userDuties.forEach((ud) => {
+          const cur: 'RUB' | 'USD' = ud.currency === 'USD' ? 'USD' : 'RUB';
+          currencyMap.set(ud.dutyId, cur);
+        });
+
+        const dutiesCalc = p.distributionDetails.map((dd: {
+          dutyId: string;
+          price: number | null;
+          percentage: number | null;
+          calculatedValuePeriod?: number;
+          duty?: { name?: string | null };
+        }) => {
           const price = Number(dd.price) || 0;
           const perc = Number(dd.percentage) || 0;
           const monthlyAmount = price + (salary * perc) / 100;
           return {
             dutyId: dd.dutyId,
-            dutyName: dd.duty?.name || '—',
+            dutyName: dd.duty?.name || '-',
             monthlyAmount,
             calculatedAmount: Math.round(Number(dd.calculatedValuePeriod) || 0),
+            currency: currencyMap.get(dd.dutyId),
           };
         });
         const filteredDuties = dutyId

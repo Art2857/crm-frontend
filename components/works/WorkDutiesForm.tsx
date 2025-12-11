@@ -1,17 +1,36 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Tooltip from '../ui/Tooltip';
 import { Duty, DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
-import { formatCurrency, formatPercentage } from '../../utils/currency';
+import { formatAmountWithCurrency } from '../../utils/currency';
 import { getCurrentDateISO } from '../../utils/date';
+import CurrencySwitch from '../ui/CurrencySwitch';
+import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
 
 // Вспомогательная функция для преобразования строковых значений в числовые
-const toNumber = (value: any): number | null => {
+const toNumber = (value: string | number | null | undefined): number | null => {
   if (value === null || value === undefined) return null;
   const num = Number(value);
   return isNaN(num) ? null : num;
+};
+
+// Округление до decimals знаков с удалением лишних нулей в конце
+const toFixedTrim = (value: number, decimals: number = 2): string => {
+  if (value === null || value === undefined || isNaN(Number(value))) return '';
+  const str = Number(value).toFixed(decimals);
+  // Удаляем конечные нули, потом возможные конечные точки
+  return str.replace(/(\.\d*[1-9])0+$/, '$1').replace(/\.0+$/, '').replace(/\.$/, '');
+};
+
+// Проверка, что строковое значение пустое (null/undefined/пустая строка после trim)
+const isEmpty = (v?: string | null) => v == null || v.trim() === '';
+
+// Преобразование в целое число (проценты), округляя до ближайшего целого
+const toIntString = (value: number): string => {
+  if (value === null || value === undefined || isNaN(Number(value))) return '';
+  return String(Math.round(Number(value)));
 };
 
 interface DutyFormItem {
@@ -19,6 +38,7 @@ interface DutyFormItem {
   userId: string;
   price: string;
   percentage: string;
+  currency: 'RUB' | 'USD';
 }
 
 interface SalaryDistribution {
@@ -39,12 +59,15 @@ interface WorkDutiesFormProps {
       userId: string;
       price: string | null;
       percentage: string | null;
+      currency: 'RUB' | 'USD';
     }>,
     effectiveDate?: string
   ) => void;
   onCancel: () => void;
   isLoading?: boolean;
   workSalary?: string;
+  workCurrency?: 'RUB' | 'USD';
+  releaseDate?: string;
 }
 
 // Генерация разных цветов для диаграммы
@@ -72,6 +95,8 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
   onCancel,
   isLoading = false,
   workSalary = '',
+  workCurrency = 'RUB',
+  releaseDate,
 }) => {
   const [dutyItems, setDutyItems] = useState<DutyFormItem[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -80,13 +105,42 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
   const [isRemoving, setIsRemoving] = useState<number | null>(null);
   const [effectiveDate, setEffectiveDate] =
     useState<string>(getCurrentDateISO());
+  const [convertingIndex, setConvertingIndex] = useState<number | null>(null);
+  
+  const { convert, convertSync, rate: exchangeRate, isLoading: isLoadingRate } = useCurrencyConversion({
+    date: releaseDate,
+  });
 
   // Преобразуем workSalary в число один раз для использования по всему компоненту
   const numericSalary = useMemo(() => toNumber(workSalary) || 0, [workSalary]);
 
-  // Рассчитываем общий процент для отображения индикатора
+  /**
+   * Конвертирует сумму в валюту работы работы для расчёта долей
+   * Использует синхронную конвертацию (по дате) если курс уже загружен
+   */
+  const convertToWorkCurrency = useCallback((
+    amount: number,
+    fromCurrency: 'RUB' | 'USD'
+  ): number => {
+    if (fromCurrency === workCurrency) {
+      return amount;
+    }
+    
+    // Пробуем синхронную конвертацию (по дате)
+    const converted = convertSync(amount, fromCurrency, workCurrency);
+    if (converted !== null) {
+      return converted;
+    }
+    
+    // Если курс ещё не загружен, возвращаем исходную сумму
+    // (будет пересчитано после загрузки курса)
+    return amount;
+  }, [workCurrency, convertSync]);
+
+  // Рассчитываем общий процент для индикатора прогресса
+  // Все суммы конвертируются в валюту работы работы перед суммированием
   const totalPercentage = useMemo(() => {
-    // Если нет зарплаты работы, используем старый способ расчета по процентам
+    // Если нет зарплаты работы, возвращаем только сумму процентов от должностей
     if (!numericSalary) {
       let total = 0;
       dutyItems.forEach((item) => {
@@ -98,16 +152,19 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
       return total;
     }
 
-    // Рассчитываем общую сумму всех обязанностей
+    // Рассчитываем общую сумму всех обязанностей в валюте работы
     let totalDutiesAmount = 0;
 
     dutyItems.forEach((item) => {
-      // Фиксированная сумма
+      // Фиксированная сумма (конвертируется в валюту работы)
       if (item.price && item.price !== '') {
-        totalDutiesAmount += toNumber(item.price) || 0;
+        const priceInDutyCurrency = toNumber(item.price) || 0;
+        // Конвертируем в валюту работы работы
+        const priceInWorkCurrency = convertToWorkCurrency(priceInDutyCurrency, item.currency);
+        totalDutiesAmount += priceInWorkCurrency;
       }
 
-      // Процентная часть
+      // Процентная часть (всегда в валюте работы работы)
       if (item.percentage && item.percentage !== '' && numericSalary) {
         const percentage = toNumber(item.percentage) || 0;
         totalDutiesAmount += (percentage / 100) * numericSalary;
@@ -118,7 +175,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
     const percentage = (totalDutiesAmount / numericSalary) * 100;
 
     return percentage;
-  }, [dutyItems, numericSalary]);
+  }, [dutyItems, numericSalary, convertToWorkCurrency]);
 
   // Проверяем, превышает ли сумма процентов 100%
   const exceedsWorkSalary = useMemo(() => {
@@ -142,13 +199,15 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
         price: detail.price !== null ? detail.price.toString() : '',
         percentage:
           detail.percentage !== null ? detail.percentage.toString() : '',
+        // Используем валюту из duty или валюту работы
+        currency: (detail.currency || detail.duty.currency || workCurrency) as 'RUB' | 'USD',
       }));
 
       setDutyItems(items);
     } else {
       setDutyItems([]);
     }
-  }, [currentDistribution]);
+  }, [currentDistribution, workCurrency]);
 
   // Получение стандартных значений для обязанности
   const getDefaultValuesForDuty = (dutyId: string) => {
@@ -164,14 +223,65 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
         selectedDuty?.basePercentage !== undefined
           ? selectedDuty.basePercentage.toString()
           : '',
+      currency: (selectedDuty?.currency || workCurrency) as 'RUB' | 'USD',
     };
   };
 
-  // Получение данных для предварительного просмотра распределения зарплаты
+  /**
+   * Конвертирует сумму обязанности при переключении валюты
+   * Использует курс на дату releaseDate работы
+   */
+  const handleCurrencyChange = useCallback(async (
+    index: number,
+    newCurrency: 'RUB' | 'USD'
+  ) => {
+    const item = dutyItems[index];
+    if (!item || item.currency === newCurrency) return;
+
+    const oldCurrency = item.currency;
+    const priceValue = toNumber(item.price);
+
+    // Если цена не указана, просто меняем валюту
+    if (priceValue === null || priceValue === 0) {
+      const newItems = [...dutyItems];
+      newItems[index] = { ...newItems[index], currency: newCurrency };
+      setDutyItems(newItems);
+      return;
+    }
+
+    setConvertingIndex(index);
+
+    try {
+      // Конвертируем цену в новую валюту
+      const convertedPrice = await convert(priceValue, oldCurrency, newCurrency);
+
+      const newItems = [...dutyItems];
+      newItems[index] = {
+        ...newItems[index],
+        currency: newCurrency,
+        // Округляем до 2 знаков, без лишних нулей
+        price: toFixedTrim(convertedPrice, 2),
+      };
+      setDutyItems(newItems);
+
+      // Сбрасываем ошибку валидации при изменении валюты
+      if (validationError) {
+        setValidationError(null);
+      }
+    } catch (error) {
+      console.error('Ошибка конвертации валюты:', error);
+      setValidationError('Не удалось сконвертировать валюту. Попробуйте ещё раз.');
+    } finally {
+      setConvertingIndex(null);
+    }
+  }, [dutyItems, convert, validationError]);
+
+  // Вычисляем данные для пропорционального отображения распределения зарплаты
+  // Все суммы конвертируются в валюту работы работы
   const salaryDistributionData = useMemo(() => {
-    const numericSalary =
+    const numericSalaryValue =
       typeof workSalary === 'string' ? Number(workSalary) : 0;
-    if (!numericSalary) return [];
+    if (!numericSalaryValue) return [];
 
     // Создаем ключ для группировки обязанностей по сотруднику и обязанности
     type DutyKey = string; // "dutyId:userId"
@@ -194,7 +304,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
     dutyItems.forEach((item) => {
       const key = `${item.dutyId}:${item.userId}`;
       const dutyName =
-        duties.find((d) => d.id === item.dutyId)?.name || 'Обязанность';
+        duties.find((d) => d.id === item.dutyId)?.name || 'Неизвестно';
       const userName =
         users.find((u) => u.id === item.userId)?.lastName || 'Пользователь';
 
@@ -212,17 +322,19 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
 
       const dutyData = dutyMap.get(key)!;
 
-      // Добавляем фиксированную сумму, если она есть
+      // Добавляем фиксированную сумму, если она есть (конвертируем в валюту работы работы)
       if (item.price && item.price !== '') {
-        const price = Number(item.price);
-        dutyData.fixedAmount += price;
-        totalAmount += price;
+        const priceInDutyCurrency = Number(item.price);
+        // Конвертируем в валюту работы работы
+        const priceInWorkCurrency = convertToWorkCurrency(priceInDutyCurrency, item.currency);
+        dutyData.fixedAmount += priceInWorkCurrency;
+        totalAmount += priceInWorkCurrency;
       }
 
-      // Добавляем процентную часть, если она есть
-      if (item.percentage && item.percentage !== '' && numericSalary) {
+      // Добавляем процентную часть, если она есть (всегда в валюте работы)
+      if (item.percentage && item.percentage !== '' && numericSalaryValue) {
         const percentage = Number(item.percentage);
-        const amount = (percentage / 100) * numericSalary;
+        const amount = (percentage / 100) * numericSalaryValue;
         dutyData.percentageAmount += amount;
         dutyData.percentage = percentage;
         totalAmount += amount;
@@ -235,7 +347,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
 
     dutyMap.forEach((item) => {
       const totalValue = item.fixedAmount + item.percentageAmount;
-      let label = `${item.dutyName} (${item.userName})`;
+      const label = `${item.dutyName} (${item.userName})`;
 
       data.push({
         label,
@@ -245,17 +357,17 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
     });
 
     // Добавляем оставшуюся часть зарплаты (если есть)
-    const remaining = numericSalary - totalAmount;
+    const remaining = numericSalaryValue - totalAmount;
     if (remaining > 0) {
       data.push({
-        label: 'Нераспределенные средства',
+        label: 'Нераспределённая зарплата',
         value: remaining,
         color: '#CBD5E0', // серый цвет для нераспределенных средств
       });
     }
 
     return data;
-  }, [dutyItems, workSalary, duties, users]);
+  }, [dutyItems, workSalary, duties, users, convertToWorkCurrency]);
 
   // Получаем расчеты для каждой обязанности
   const dutyCalculations = useMemo(() => {
@@ -284,9 +396,10 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
       let fixedAmount = 0;
       let percentageAmount = 0;
 
-      // Добавляем фиксированную сумму, если она есть
+      // Добавляем фиксированную сумму, если она есть (конвертируем в валюту работы работы)
       if (item.price && item.price !== '') {
-        fixedAmount = Number(item.price);
+        const priceInDutyCurrency = Number(item.price) || 0;
+        fixedAmount = convertToWorkCurrency(priceInDutyCurrency, item.currency);
       }
 
       // Добавляем процентную часть, если она есть
@@ -336,9 +449,14 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
         let percentComplete: number | null = null;
         let isExceeded = false;
 
-        // Преобразуем строковые значения в числовые для корректного сравнения
-        const minValueNumeric = toNumber(selectedDuty.minValue);
-        const maxValueNumeric = toNumber(selectedDuty.maxValue);
+      // Конвертируем минимумы максимумы и максимумы для обязанности сравнения в соответствии с валютой работы
+      const minOriginal = toNumber(selectedDuty.minValue);
+      const maxOriginal = toNumber(selectedDuty.maxValue);
+      const dutyCurrency = (selectedDuty.currency as 'RUB' | 'USD') || workCurrency;
+      const minValueNumeric =
+        minOriginal !== null ? convertToWorkCurrency(minOriginal, dutyCurrency) : null;
+      const maxValueNumeric =
+        maxOriginal !== null ? convertToWorkCurrency(maxOriginal, dutyCurrency) : null;
 
         if (maxValueNumeric !== null && totalAmount > maxValueNumeric) {
           status = 'error';
@@ -374,7 +492,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
     });
 
     return calculations;
-  }, [dutyItems, duties, workSalary]);
+  }, [dutyItems, duties, workSalary, convertToWorkCurrency, workCurrency]);
 
   // Обработчик изменения поля
   const handleChange = (
@@ -393,6 +511,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
         [field]: value,
         price: defaultValues.price,
         percentage: defaultValues.percentage,
+        currency: defaultValues.currency,
       };
     } else {
       // Для других полей просто обновляем значение
@@ -426,7 +545,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
     const defaultDuty = unusedDuties[0].id;
 
     // Получаем стандартные значения для выбранной обязанности
-    const { price, percentage } = getDefaultValuesForDuty(defaultDuty);
+    const { price, percentage, currency } = getDefaultValuesForDuty(defaultDuty);
 
     setDutyItems([
       ...dutyItems,
@@ -435,6 +554,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
         userId: defaultUser,
         price,
         percentage,
+        currency,
       },
     ]);
   };
@@ -470,7 +590,9 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
     // Проверяем, что у каждой непустой записи заполнены обязательные поля
     const invalidDuties = dutyItems.some(
       (item) =>
-        !item.dutyId || !item.userId || (!item.price && !item.percentage)
+        !item.dutyId ||
+        !item.userId ||
+        (isEmpty(item.price) && isEmpty(item.percentage))
     );
 
     if (invalidDuties) {
@@ -521,15 +643,15 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Преобразуем данные формы в формат для отправки
+      // Формируем данные для отправки
+      // Цена и валюта сохраняются как есть — в той валюте, которую выбрал пользователь
       const formattedDuties = dutyItems.map((item) => ({
         dutyId: item.dutyId,
         userId: item.userId,
-        price: item.price && item.price.trim() !== '' ? item.price : null,
-        percentage:
-          item.percentage && item.percentage.trim() !== ''
-            ? item.percentage
-            : null,
+        price: !isEmpty(item.price) ? item.price : null,
+        percentage: !isEmpty(item.percentage) ? item.percentage : null,
+        // Сохраняем валюту, выбранную пользователем для этой обязанности
+        currency: item.currency,
       }));
 
       // Имитация задержки для демонстрации индикатора загрузки
@@ -606,9 +728,9 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
               ></div>
               <span className="text-sm truncate">{item.label}</span>
               <span className="text-sm font-medium ml-1">
-                {formatCurrency(item.value)}{' '}
-                {toNumber(workSalary) > 0
-                  ? `(${Math.round((item.value / toNumber(workSalary)) * 100)}%)`
+                {formatAmountWithCurrency(item.value, workCurrency)}{' '}
+                {(toNumber(workSalary) ?? 0) > 0
+                  ? `(${Math.round((item.value / (toNumber(workSalary) ?? 1)) * 100)}%)`
                   : ''}
               </span>
             </div>
@@ -623,7 +745,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
           <div className="border-b pb-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+            <h3 className="text-lg font-medium text-gray-900">
               Редактирование обязанностей
             </h3>
 
@@ -650,18 +772,28 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                       disabled={isLoading}
                       tabIndex={0}
                     >
-                      {duties.map((duty) => (
-                        <option key={duty.id} value={duty.id}>
-                          {duty.name}
-                          {duty.minValue !== null && duty.maxValue !== null
-                            ? ` (${formatCurrency(duty.minValue, false)} - ${formatCurrency(duty.maxValue, false)})`
-                            : duty.minValue !== null
-                              ? ` (мин: ${formatCurrency(duty.minValue, false)})`
-                              : duty.maxValue !== null
-                                ? ` (макс: ${formatCurrency(duty.maxValue, false)})`
-                                : ''}
-                        </option>
-                      ))}
+                      {duties.map((duty) => {
+                        const dutyCurrency: 'RUB' | 'USD' =
+                          ((duty.currency as 'RUB' | 'USD') || workCurrency || 'RUB');
+                        const minLabel =
+                          duty.minValue !== null && duty.minValue !== undefined
+                            ? formatAmountWithCurrency(Number(duty.minValue || 0), dutyCurrency)
+                            : null;
+                        const maxLabel =
+                          duty.maxValue !== null && duty.maxValue !== undefined
+                            ? formatAmountWithCurrency(Number(duty.maxValue || 0), dutyCurrency)
+                            : null;
+                        let range = '';
+                        if (minLabel && maxLabel) range = ` (${minLabel} - ${maxLabel})`;
+                        else if (minLabel) range = ` (мин: ${minLabel})`;
+                        else if (maxLabel) range = ` (макс: ${maxLabel})`;
+                        return (
+                          <option key={duty.id} value={duty.id}>
+                            {duty.name}
+                            {range}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -689,36 +821,51 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                   </div>
 
                   <div className="flex-1 md:w-1/6">
-                    <Tooltip
-                      content="Цена указывается в тысячах рублей. Например, 10 соответствует 10 000 ₽"
-                      placement="top"
-                    >
-                      <label className="block text-sm font-medium text-gray-700 mb-1 cursor-help">
-                        Цена (тыс. ₽)
-                      </label>
-                    </Tooltip>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="Цена"
-                      value={item.price}
-                      onChange={(e) =>
-                        handleChange(index, 'price', e.target.value)
-                      }
-                      disabled={isLoading}
-                      tabIndex={0}
+                    <div className="flex items-center justify-between mb-1">
+                      <Tooltip
+                        content={`Цена обязанности в ${item.currency === 'USD' ? 'долларах' : 'рублях'}. При переключении валюты сумма автоматически пересчитается по курсу на дату релиза.`}
+                        placement="top"
+                      >
+                        <label className="block text-sm font-medium text-gray-700 cursor-help">
+                          Цена ({item.currency === 'USD' ? '$' : '₽'})
+                        </label>
+                      </Tooltip>
+                      {/* CurrencySwitch для каждой обязанности */}
+                      <CurrencySwitch
+                        value={item.currency}
+                        onChange={(newCurrency) => handleCurrencyChange(index, newCurrency)}
+                        size="sm"
+                      />
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className={`mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${convertingIndex === index ? 'opacity-50' : ''}`}
+                        placeholder="Цена"
+                        value={item.price}
+                        onChange={(e) =>
+                          handleChange(index, 'price', e.target.value)
+                        }
+                        disabled={isLoading || convertingIndex === index}
+                        tabIndex={0}
                       onBlur={(e) => {
                         if (e.target.value !== '') {
-                          const value = Number(e.target.value);
-                          if (!isNaN(value)) {
-                            handleChange(index, 'price', value.toFixed(2));
+                          const valueNum = Number(e.target.value);
+                          if (!isNaN(valueNum)) {
+                            handleChange(index, 'price', toFixedTrim(valueNum, 2));
                           }
                         }
                       }}
-                      aria-label="Цена в тысячах рублей"
-                    />
+                        aria-label={`Цена в ${item.currency === 'USD' ? 'долларах' : 'рублях'}`}
+                      />
+                      {convertingIndex === index && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-indigo-500"></div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex-1 md:w-1/6">
@@ -732,7 +879,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                     </Tooltip>
                     <input
                       type="number"
-                      step="0.0001"
+                      step="1"
                       min="0"
                       max="100"
                       className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -747,7 +894,9 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                         if (e.target.value !== '') {
                           const value = Number(e.target.value);
                           if (!isNaN(value)) {
-                            handleChange(index, 'percentage', value.toFixed(4));
+                            // Всегда сохраняем как целое число (проценты)
+                            const bounded = Math.max(0, Math.min(100, value));
+                            handleChange(index, 'percentage', toIntString(bounded));
                           }
                         }
                       }}
@@ -761,16 +910,24 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                       placement="top"
                     >
                       <label className="block text-sm font-medium text-gray-700 mb-1 cursor-help">
-                        Сумма
+                        Итого
                       </label>
                     </Tooltip>
                     {(() => {
                       // Вычисляем сумму обязанности
-                      let total = 0;
+                      // totalWork — в валюте работы (для сравнения лимитов)
+                      // totalDisplay — в валюте обязанности (для отображения)
+                      let totalWork = 0;
+                      let totalDisplay = 0;
 
                       // Фиксированная сумма
                       if (item.price && item.price !== '') {
-                        total += Number(item.price) || 0;
+                        const priceInDutyCurrency = Number(item.price) || 0;
+                        totalWork += convertToWorkCurrency(
+                          priceInDutyCurrency,
+                          item.currency
+                        );
+                        totalDisplay += priceInDutyCurrency;
                       }
 
                       // Процентная часть
@@ -780,7 +937,16 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                         numericSalary
                       ) {
                         const percentage = Number(item.percentage) || 0;
-                        total += (percentage / 100) * numericSalary;
+                        const percentAmountWork =
+                          (percentage / 100) * numericSalary;
+                        totalWork += percentAmountWork;
+                        const percentAmountItem =
+                          convertSync(
+                            percentAmountWork,
+                            workCurrency,
+                            item.currency
+                          ) ?? percentAmountWork;
+                        totalDisplay += percentAmountItem;
                       }
 
                       // Получаем выбранную обязанность
@@ -788,15 +954,24 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                         (duty) => duty.id === item.dutyId
                       );
 
-                      // Преобразуем строковые значения в числовые для корректного сравнения
-                      const minValueNumeric = toNumber(selectedDuty?.minValue);
-                      const maxValueNumeric = toNumber(selectedDuty?.maxValue);
+                      // Конвертируем минимумы максимумы и максимумы в соответствующую валюту в валюту работы работы для сравнения лимитов
+                      const minOriginal = toNumber(selectedDuty?.minValue);
+                      const maxOriginal = toNumber(selectedDuty?.maxValue);
+                      const dutyCurrency = (selectedDuty?.currency as 'RUB' | 'USD') || workCurrency;
+                      const minValueNumeric =
+                        minOriginal !== null
+                          ? convertToWorkCurrency(minOriginal, dutyCurrency)
+                          : null;
+                      const maxValueNumeric =
+                        maxOriginal !== null
+                          ? convertToWorkCurrency(maxOriginal, dutyCurrency)
+                          : null;
 
                       // Проверяем, соответствует ли сумма ограничениям
                       const isBelow =
-                        minValueNumeric !== null && total < minValueNumeric;
+                        minValueNumeric !== null && totalWork < minValueNumeric;
                       const isAbove =
-                        maxValueNumeric !== null && total > maxValueNumeric;
+                        maxValueNumeric !== null && totalWork > maxValueNumeric;
 
                       // Проверяем, активна ли обязанность (заполнены ли поля)
                       const isActive =
@@ -813,18 +988,35 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
 
                         // Если сумма ниже минимального значения, увеличиваем до минимума
                         if (isBelow && minValueNumeric !== null) {
+                          // Конвертируем минимальную сумму в валюту текущей обязанности для корректного отображения
+                          const minInItemCurrency =
+                            minOriginal !== null
+                              ? convertSync(
+                                  minOriginal,
+                                  dutyCurrency,
+                                  item.currency
+                                ) ?? minOriginal
+                              : null;
                           handleChange(
                             index,
                             'price',
-                            minValueNumeric.toString()
+                            (minInItemCurrency ?? minValueNumeric).toString()
                           );
                         }
                         // Если сумма выше максимального значения, уменьшаем до максимума
                         else if (isAbove && maxValueNumeric !== null) {
+                          const maxInItemCurrency =
+                            maxOriginal !== null
+                              ? convertSync(
+                                  maxOriginal,
+                                  dutyCurrency,
+                                  item.currency
+                                ) ?? maxOriginal
+                              : null;
                           handleChange(
                             index,
                             'price',
-                            maxValueNumeric.toString()
+                            (maxInItemCurrency ?? maxValueNumeric).toString()
                           );
                         }
                         // В противном случае, устанавливаем 10% от зарплаты работы
@@ -847,9 +1039,9 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
 
                       // Создаем текст подсказки
                       const tooltipText = isBelow
-                        ? `Сумма ниже минимального ограничения (${formatCurrency(selectedDuty?.minValue)}). Нажмите, чтобы исправить.`
+                        ? `Сумма ниже минимального ограничения (${selectedDuty?.minValue != null ? formatAmountWithCurrency(Number(selectedDuty?.minValue || 0), dutyCurrency) : ''}). Нажмите, чтобы исправить.`
                         : isAbove
-                          ? `Сумма превышает максимальное ограничение (${formatCurrency(selectedDuty?.maxValue)}). Нажмите, чтобы исправить.`
+                          ? `Сумма превышает максимальное ограничение (${selectedDuty?.maxValue != null ? formatAmountWithCurrency(Number(selectedDuty?.maxValue || 0), dutyCurrency) : ''}). Нажмите, чтобы исправить.`
                           : '';
 
                       // Стиль курсора для интерактивных элементов
@@ -871,15 +1063,17 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                           title={tooltipText}
                           style={cursorStyle}
                         >
-                          {isActive ? formatCurrency(total) : '—'}
+                          {isActive
+                            ? formatAmountWithCurrency(totalDisplay, item.currency)
+                            : '—'}
                           {isBelow && (
                             <div className="text-xs text-red-500 mt-1">
-                              Мин: {formatCurrency(selectedDuty?.minValue)}
+                              Мин: {formatAmountWithCurrency(Number(selectedDuty?.minValue || 0), (selectedDuty?.currency === 'USD' ? 'USD' : 'RUB'))}
                             </div>
                           )}
                           {isAbove && (
                             <div className="text-xs text-orange-500 mt-1">
-                              Макс: {formatCurrency(selectedDuty?.maxValue)}
+                              Макс: {formatAmountWithCurrency(Number(selectedDuty?.maxValue || 0), (selectedDuty?.currency === 'USD' ? 'USD' : 'RUB'))}
                             </div>
                           )}
                         </div>
@@ -951,9 +1145,9 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
               <div className="mt-4 mb-6">
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium text-gray-700">
-                    Распределено от зарплаты:{' '}
+                    Распределено от зарплаты ({workCurrency}):{' '}
                     {numericSalary > 0
-                      ? `${formatCurrency((totalPercentage * numericSalary) / 100)} (${Math.round(totalPercentage)}%)`
+                      ? `${formatAmountWithCurrency((totalPercentage * numericSalary) / 100, workCurrency)} (${Math.round(totalPercentage)}%)`
                       : `${Math.min(totalPercentage, 9999.9999).toFixed(4)}%`}
                   </span>
                   <span
@@ -966,7 +1160,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                     {exceedsWorkSalary
                       ? 'Превышено!'
                       : numericSalary > 0
-                        ? `Осталось: ${formatCurrency(((100 - totalPercentage) * numericSalary) / 100)} (${Math.round(100 - totalPercentage)}%)`
+                        ? `Осталось: ${formatAmountWithCurrency(((100 - totalPercentage) * numericSalary) / 100, workCurrency)} (${Math.round(100 - totalPercentage)}%)`
                         : `Осталось: 0.0000%`}
                   </span>
                 </div>
@@ -999,20 +1193,6 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
               >
                 Добавить обязанность
               </Button>
-
-              {numericSalary > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowSalaryPreview(!showSalaryPreview)}
-                  disabled={isLoading}
-                  tabIndex={0}
-                >
-                  {showSalaryPreview
-                    ? 'Скрыть предпросмотр'
-                    : 'Показать предпросмотр'}
-                </Button>
-              )}
 
               <span className="text-sm text-gray-500 ml-auto">
                 {!unusedDutiesExist &&

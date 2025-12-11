@@ -23,7 +23,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const prevValueRef = useRef(props.value);
 
     // Создаем копию пропсов для безопасного изменения
-    const inputProps = { ...props };
+    const inputProps = { ...props } as InputProps;
 
     // Обеспечиваем корректное преобразование значений для управляемого компонента
     if (
@@ -35,10 +35,30 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       // Это особенно важно для числовых полей
       inputProps.value = inputProps.value;
 
-      // Для поля зарплаты (salary) убираем ограничения на валидацию, чтобы разрешить любое значение
-      if (inputProps.name === 'salary' && inputProps.type === 'number') {
-        // Устанавливаем меньший шаг для более точного контроля
-        inputProps.step = '1';
+      // Для числовых полей по умолчанию предотвращаем случайное изменение колёсиком/стрелками
+      if (inputProps.type === 'number') {
+        if (!inputProps.step) {
+          (inputProps as any).step = '1';
+        }
+
+        const originalOnWheel = inputProps.onWheel as any;
+        const originalOnKeyDown = inputProps.onKeyDown as any;
+
+        (inputProps as any).onWheel = (e: React.WheelEvent<HTMLInputElement>) => {
+          // Блокируем изменение значения колёсиком, когда инпут в фокусе
+          e.preventDefault();
+          // Не продолжаем всплытие нативного изменения
+          (e.currentTarget as HTMLInputElement).blur();
+          if (typeof originalOnWheel === 'function') originalOnWheel(e);
+        };
+
+        (inputProps as any).onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+          // Блокируем ArrowUp/ArrowDown, чтобы не менять значение на +/-1 случайно
+          if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
+          }
+          if (typeof originalOnKeyDown === 'function') originalOnKeyDown(e);
+        };
       }
     }
 

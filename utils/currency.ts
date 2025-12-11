@@ -131,6 +131,29 @@ export function formatPercentage(
 }
 
 /**
+ * Форматирует числовую сумму в указанной валюте.
+ * Поддерживает как минимум RUB и USD.
+ */
+export function formatAmountWithCurrency(
+  value: number | null | undefined,
+  currency: 'RUB' | 'USD'
+): string {
+  try {
+    const num = Number(value || 0);
+    const symbol = currency === 'USD' ? '$' : '₽';
+    const formatted = new Intl.NumberFormat('ru-RU', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+      useGrouping: true,
+    }).format(num);
+    return `${formatted} ${symbol}`;
+  } catch {
+    const base = Math.round(Number(value || 0)).toLocaleString('ru-RU');
+    return `${base} ${currency}`;
+  }
+}
+
+/**
  * Форматирует полное представление оплаты с расчетом
  * Показывает фиксированную цену и процент в формате "14 000 ₽ + 20% = 50 000 ₽"
  * Если оба значения null, возвращает "Остаточная"
@@ -171,6 +194,42 @@ export function formatPayment(
     return text;
   } catch (error) {
     console.error('Ошибка при форматировании оплаты:', error);
+    return 'Ошибка расчета';
+  }
+}
+
+/**
+ * Форматирует представление оплаты с учётом валюты обязанности.
+ * Использует знак валюты для price и calculatedValue согласно переданной currency.
+ */
+export function formatPaymentWithCurrency(
+  price: number | null | undefined,
+  percentage: number | null | undefined,
+  calculatedValue: number | null | undefined,
+  currency: 'RUB' | 'USD'
+): string {
+  try {
+    if (price === null && percentage === null) return 'Остаточная';
+
+    const parts: string[] = [];
+
+    if (price !== null && price !== undefined) {
+      parts.push(formatAmountWithCurrency(price, currency));
+    }
+
+    if (percentage !== null && percentage !== undefined) {
+      parts.push(formatPercentage(percentage, false));
+    }
+
+    let text = parts.join(' + ');
+
+    if (calculatedValue !== null && calculatedValue !== undefined) {
+      text += ` = ${formatAmountWithCurrency(calculatedValue, currency)}`;
+    }
+
+    return text;
+  } catch (error) {
+    console.error('Ошибка при форматировании оплаты (валюта):', error);
     return 'Ошибка расчета';
   }
 }

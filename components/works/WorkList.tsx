@@ -5,6 +5,7 @@ import Card from '../ui/Card';
 import { Work } from '../../types/work';
 import { formatCurrency } from '../../utils/currency';
 import { formatDateForDisplay } from '../../utils/date';
+import { formatAmountWithCurrency } from '../../utils/currency';
 
 interface WorkListProps {
   works: Work[];
@@ -17,6 +18,8 @@ export default function WorkList({
   getResponsibleName,
   onViewWork,
 }: WorkListProps) {
+// Formatting centralized in utils/currency
+
   if (!works || works.length === 0) {
     return (
       <Card className="p-8 text-center">
@@ -59,7 +62,14 @@ export default function WorkList({
                   {getResponsibleName(work)}
                 </td>
                 <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-600">
-                  {formatCurrency(work.salary)}
+                  <div className="flex items-center justify-center space-x-3">
+                    <span>
+                      {formatAmountWithCurrency(
+                        Number(work.salary || 0),
+                        (work.currency === 'USD' ? 'USD' : 'RUB')
+                      )}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-600">
                   {formatDateForDisplay(work.releaseDate)}

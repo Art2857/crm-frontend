@@ -13,6 +13,7 @@ import Card from '../../../../components/ui/Card';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
 import Alert from '../../../../components/ui/Alert';
+import CurrencySwitch from '../../../../components/ui/CurrencySwitch';
 import ConfirmModal from '../../../../components/ui/ConfirmModal';
 import { Role } from '../../../../types/user';
 
@@ -32,6 +33,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
   const [basePercentage, setBasePercentage] = useState('');
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
+  const [currency, setCurrency] = useState<'RUB' | 'USD'>('RUB');
   const [formError, setFormError] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -69,6 +71,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       setBasePercentage(currentDuty.basePercentage?.toString() || '');
       setMinValue(currentDuty.minValue?.toString() || '');
       setMaxValue(currentDuty.maxValue?.toString() || '');
+      setCurrency(currentDuty.currency === 'USD' ? 'USD' : 'RUB');
     }
   }, [currentDuty]);
 
@@ -142,6 +145,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       name,
       basePrice: formatNumberValue(basePrice),
       basePercentage: formatNumberValue(basePercentage),
+      currency,
       minValue: formatNumberValue(minValue),
       maxValue: formatNumberValue(maxValue),
     };
@@ -198,6 +202,12 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
             )}
 
             <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">
+                  Валюта значений
+                </label>
+                <CurrencySwitch value={currency} onChange={setCurrency} size="sm" />
+              </div>
               <div>
                 <label
                   htmlFor="name"

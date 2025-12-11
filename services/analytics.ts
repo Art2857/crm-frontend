@@ -114,6 +114,7 @@ interface DutyDebt {
   id: string; // ← ПРАВИЛЬНО! Backend возвращает id
   name: string; // ← ПРАВИЛЬНО! Backend возвращает name
   monthlyAmount: number;
+  currency?: string;
   totalAccrued: number;
   totalDebt: number;
   totalPaid: number;
@@ -202,6 +203,7 @@ export const analyticsService = {
             dutyName: string;
             monthlyAmount: number;
             debt: number;
+            currency?: string;
           }>;
         }>;
       }>;
@@ -217,9 +219,11 @@ export const analyticsService = {
           dutyName: d.dutyName,
           monthlyAmount: d.monthlyAmount,
           debt: d.debt,
+          currency: d.currency,
         }));
-        const totalAccrued = duties.reduce((sum, d) => sum + (d.debt || 0), 0);
-        const overpaidAmount = Math.max(w.totals.paid - totalAccrued, 0);
+        // Use backend aggregated RUB totals to avoid extra per-work calls
+        const totalAccruedRub = w.totals.accrued;
+        const overpaidAmount = Math.max(w.totals.paid - totalAccruedRub, 0);
         const requiresAttention = w.requiresAttention || false;
         return {
           workId: w.workId,
@@ -227,7 +231,7 @@ export const analyticsService = {
           duties,
           totalDebt: w.totals.debt,
           paidAmount: w.totals.paid,
-          totalAccrued,
+          totalAccrued: totalAccruedRub,
           overpaidAmount,
           requiresAttention,
           isPaymentDue: w.totals.debt > 0,

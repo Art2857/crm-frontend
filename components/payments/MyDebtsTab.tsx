@@ -3,7 +3,7 @@
 import React from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { formatCurrency } from '../../utils/payments';
+import { formatCurrency, CurrencyType } from '../../utils/payments';
 import {
   CheckCircleIcon,
   UserIcon,
@@ -16,6 +16,7 @@ import { useDateManager } from '../../hooks/useDateManager';
 
 interface MyDebtsTabProps {
   myDebts: MyDebt[];
+  currentUserId?: string;
   onShowCalculation: (
     userId: string,
     workId: string,
@@ -25,6 +26,7 @@ interface MyDebtsTabProps {
 
 export default function MyDebtsTab({
   myDebts,
+  currentUserId,
   onShowCalculation,
 }: MyDebtsTabProps) {
   const { formatRussian } = useDateManager();
@@ -41,6 +43,12 @@ export default function MyDebtsTab({
     );
   }
 
+  const handleShowCalculation = (workId: string, dutyId?: string) => {
+    if (currentUserId) {
+      onShowCalculation(currentUserId, workId, dutyId);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {myDebts.map((debt) => (
@@ -53,11 +61,10 @@ export default function MyDebtsTab({
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-4">
                 <div
-                  className={`w-4 h-4 rounded-full ${
-                    debt.isPaymentDue
-                      ? 'bg-red-400 animate-pulse'
-                      : 'bg-yellow-400'
-                  }`}
+                  className={`w-4 h-4 rounded-full ${debt.isPaymentDue
+                    ? 'bg-red-400 animate-pulse'
+                    : 'bg-yellow-400'
+                    }`}
                 />
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">
@@ -96,43 +103,43 @@ export default function MyDebtsTab({
               <h4 className="text-sm font-semibold text-gray-700">
                 Мои обязанности:
               </h4>
-              {debt.duties.map((duty: DutyDebt, index) => (
-                <div
-                  key={duty.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${
-                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full" />
-                    <div>
-                      <p className="font-medium text-gray-900">{duty.name}</p>
-                      <p className="text-xs text-gray-500">
-                        {formatCurrency(duty.monthlyAmount)}/мес
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-green-600">
-                        {formatCurrency(duty.totalDebt)}
-                      </p>
-                      <p className="text-xs text-gray-500">мне должны</p>
+              {debt.duties.map((duty: DutyDebt, index) => {
+                const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
+                return (
+                  <div
+                    key={duty.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full" />
+                      <div>
+                        <p className="font-medium text-gray-900">{duty.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatCurrency(duty.monthlyAmount, dutyCurrency)}/мес
+                        </p>
+                      </div>
                     </div>
 
-                    <Button
-                      onClick={() =>
-                        onShowCalculation('current-user', debt.workId, duty.id)
-                      }
-                      size="sm"
-                      className="bg-green-100 text-green-600 hover:bg-green-200 border border-green-200"
-                    >
-                      <EyeIcon className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-green-600">
+                          {formatCurrency(duty.totalDebt, dutyCurrency)}
+                        </p>
+                        <p className="text-xs text-gray-500">мне должны</p>
+                      </div>
+
+                      <Button
+                        onClick={() => handleShowCalculation(debt.workId, duty.id)}
+                        size="sm"
+                        className="bg-green-100 text-green-600 hover:bg-green-200 border border-green-200"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Общая информация */}
@@ -142,7 +149,7 @@ export default function MyDebtsTab({
                   Общая задолженность:
                 </span>
                 <Button
-                  onClick={() => onShowCalculation('current-user', debt.workId)}
+                  onClick={() => handleShowCalculation(debt.workId)}
                   size="sm"
                   className="bg-blue-100 text-blue-600 hover:bg-blue-200 border border-blue-200"
                 >
@@ -153,9 +160,8 @@ export default function MyDebtsTab({
 
               <div className="text-right">
                 <p
-                  className={`text-2xl font-bold ${
-                    debt.isPaymentDue ? 'text-red-600' : 'text-green-600'
-                  }`}
+                  className={`text-2xl font-bold ${debt.isPaymentDue ? 'text-red-600' : 'text-green-600'
+                    }`}
                 >
                   {formatCurrency(debt.totalDebt)}
                 </p>

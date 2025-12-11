@@ -8,6 +8,7 @@ import Card from '../../../../components/ui/Card';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
 import Alert from '../../../../components/ui/Alert';
+import CurrencySwitch from '../../../../components/ui/CurrencySwitch';
 import { Role } from '../../../../types/user';
 
 export default function CreateDutyPage() {
@@ -21,6 +22,7 @@ export default function CreateDutyPage() {
   const [basePercentage, setBasePercentage] = useState('');
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
+  const [currency, setCurrency] = useState<'RUB' | 'USD'>('RUB');
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -89,6 +91,7 @@ export default function CreateDutyPage() {
       name,
       basePrice: basePrice ? basePrice : null,
       basePercentage: basePercentage ? basePercentage : null,
+      currency,
       minValue: minValue ? minValue : null,
       maxValue: maxValue ? maxValue : null,
     };
@@ -129,6 +132,12 @@ export default function CreateDutyPage() {
             )}
 
             <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">
+                  Валюта значений
+                </label>
+                <CurrencySwitch value={currency} onChange={setCurrency} size="sm" />
+              </div>
               <div>
                 <label
                   htmlFor="name"

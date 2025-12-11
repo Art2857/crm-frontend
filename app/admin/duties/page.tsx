@@ -6,10 +6,9 @@ import { useAppSelector, useAppDispatch } from '../../../store';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import Link from 'next/link';
-import { Duty } from '../../../types/duty';
 import { Role } from '../../../types/user';
 import { fetchAllDuties } from '../../../store/slices/duties';
-import { formatCurrency, formatPercentage } from '../../../utils/currency';
+import { formatPercentage, formatAmountWithCurrency } from '../../../utils/currency';
 
 export default function AdminDutiesPage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -100,7 +99,7 @@ export default function AdminDutiesPage() {
                       {duty.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {duty.basePrice ? formatCurrency(duty.basePrice) : '—'}
+                      {duty.basePrice ? formatAmountWithCurrency(Number(duty.basePrice), (duty.currency === 'USD' ? 'USD' : 'RUB')) : '—'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {duty.basePercentage
@@ -111,10 +110,10 @@ export default function AdminDutiesPage() {
                       {duty.minValue === null && duty.maxValue === null
                         ? '—'
                         : duty.minValue !== null && duty.maxValue !== null
-                          ? `${formatCurrency(duty.minValue)} — ${formatCurrency(duty.maxValue)}`
+                          ? `${formatAmountWithCurrency(Number(duty.minValue), duty.currency === 'USD' ? 'USD' : 'RUB')} — ${formatAmountWithCurrency(Number(duty.maxValue), duty.currency === 'USD' ? 'USD' : 'RUB')}`
                           : duty.minValue !== null
-                            ? `Мин: ${formatCurrency(duty.minValue)}`
-                            : `Макс: ${formatCurrency(duty.maxValue)}`}
+                            ? `Мин: ${formatAmountWithCurrency(Number(duty.minValue), duty.currency === 'USD' ? 'USD' : 'RUB')}`
+                            : `Макс: ${formatAmountWithCurrency(Number(duty.maxValue), duty.currency === 'USD' ? 'USD' : 'RUB')}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link

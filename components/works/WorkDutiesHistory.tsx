@@ -4,17 +4,20 @@ import Button from '../ui/Button';
 import { DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
 import { formatDateForDisplay } from '../../utils/date';
-import { formatCurrency } from '../../utils/currency';
+import { formatAmountWithCurrency } from '../../utils/currency';
 import { WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
 import { useAppSelector } from '../../store';
 import { useUsersMap } from '../../hooks/shared/useUsersMap';
+import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
 
 interface WorkDutiesHistoryProps {
   distributions: DistributionWithDetails[] | null;
   workHistory: WorkHistory[] | null;
   users: User[];
   workSalary: string;
+  workCurrency?: 'RUB' | 'USD';
+  releaseDate?: string;
   currentUserId?: string; // Добавляем ID текущего пользователя
   showOnlyCurrentUser?: boolean; // Флаг для отображения только обязанностей текущего пользователя
   onUpdate?: () => void; // Callback для обновления данных после изменений
@@ -49,6 +52,8 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   workHistory,
   users,
   workSalary,
+  workCurrency = 'RUB',
+  releaseDate,
   currentUserId,
   showOnlyCurrentUser = false,
   onUpdate,
@@ -58,6 +63,47 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
   // Создаем карту пользователей для быстрого поиска по id
   const usersMap = useUsersMap(users);
+  const { convertSync } = useCurrencyConversion({ date: releaseDate });
+
+  const renderPayment = (
+    detail: DistributionWithDetails['details'][number],
+    numericSalaryValue: number
+  ): string => {
+    const numericPrice = detail.price ? parseFloat(detail.price) : null;
+    const numericPercentage = detail.percentage
+      ? parseFloat(detail.percentage)
+      : null;
+
+    const dutyCurrency: 'RUB' | 'USD' =
+      (detail.duty?.currency as any) || (workCurrency || 'RUB');
+
+    const pricePart = numericPrice ?? null; // assumed already in duty currency
+    let percentPartInDuty: number | null = null;
+    if (
+      numericPercentage !== null &&
+      !Number.isNaN(Number(numericPercentage)) &&
+      numericSalaryValue
+    ) {
+      const percentAmountWork = (Number(numericPercentage) / 100) * numericSalaryValue;
+      const converted = convertSync(percentAmountWork, workCurrency || 'RUB', dutyCurrency);
+      percentPartInDuty = converted ?? percentAmountWork;
+    }
+
+    if (pricePart === null && percentPartInDuty === null) return '��� ������';
+
+    const parts: string[] = [];
+    if (pricePart !== null)
+      parts.push(formatAmountWithCurrency(pricePart, dutyCurrency));
+    if (numericPercentage !== null)
+      parts.push(`${Number(numericPercentage)}%`);
+
+    let text = parts.join(' + ');
+    const total = (pricePart ?? 0) + (percentPartInDuty ?? 0);
+    if (!Number.isNaN(total) && (pricePart !== null || percentPartInDuty !== null)) {
+      text += ` = ${formatAmountWithCurrency(total, dutyCurrency)}`;
+    }
+    return text;
+  };
 
   // Состояние для редактирования effectiveDate
   const [editingEffectiveDate, setEditingEffectiveDate] = useState<
@@ -698,50 +744,12 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                 const diffInfo = differences[key];
                 const isChanged = diffInfo?.changed;
 
-                // Преобразуем строковые значения в числа для функции formatPayment
-                const numericPrice = detail.price
-                  ? parseFloat(detail.price)
-                  : null;
-                const numericPercentage = detail.percentage
-                  ? parseFloat(detail.percentage)
-                  : null;
-                const numericCalculatedValue = detail.calculatedValue
-                  ? parseFloat(detail.calculatedValue)
-                  : null;
-
                 // Преобразуем workSalary в число для расчетов
-                const numericSalary =
+                const numericSalaryValue =
                   typeof workSalary === 'string'
                     ? parseFloat(workSalary)
                     : workSalary;
 
-                // Расширенное форматирование с процентами и суммой
-                const formattedPayment = () => {
-                  // Всегда используем calculatedValue, если он есть
-                  if (numericCalculatedValue !== null) {
-                    if (numericPrice !== null && numericPercentage !== null) {
-                      // Если указаны и цена, и процент - показываем формулу с готовым результатом
-                      return `${formatCurrency(numericPrice)} + ${numericPercentage}% = ${formatCurrency(numericCalculatedValue)}`;
-                    } else if (numericPrice !== null) {
-                      // Только фиксированная цена
-                      return formatCurrency(numericCalculatedValue);
-                    } else if (numericPercentage !== null) {
-                      // Только процент - показываем процент и готовый результат
-                      return `${numericPercentage}% = ${formatCurrency(numericCalculatedValue)}`;
-                    } else {
-                      // Есть только calculatedValue без деталей
-                      return formatCurrency(numericCalculatedValue);
-                    }
-                  } else if (numericPrice !== null) {
-                    // Если нет calculatedValue, но есть фиксированная цена
-                    return formatCurrency(numericPrice);
-                  } else if (numericPercentage !== null) {
-                    // Если нет calculatedValue, но есть процент - показываем только процент
-                    return `${numericPercentage}%`;
-                  } else {
-                    return 'Не указано';
-                  }
-                };
 
                 return (
                   <tr
@@ -764,7 +772,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                       {userName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {formattedPayment()}
+                      {renderPayment(detail, typeof numericSalaryValue === 'number' ? numericSalaryValue : Number(numericSalaryValue || 0))}
                     </td>
                   </tr>
                 );

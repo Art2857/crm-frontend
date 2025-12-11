@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Button from '../ui/Button';
-import { formatCurrency } from '../../utils/payments';
+import { formatCurrency, CurrencyType } from '../../utils/payments';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { DutyDetail } from '../../types/payments';
 
@@ -10,13 +10,19 @@ interface DutyCardProps {
   duty: DutyDetail;
   index: number;
   onShowCalculation: (dutyId: string) => void;
+  // Optional map to override currency by duty from responsible user's distributions
+  userCurrencyByDuty?: Record<string, CurrencyType>;
 }
 
 export default function DutyCard({
   duty,
   index,
   onShowCalculation,
+  userCurrencyByDuty,
 }: DutyCardProps) {
+  const currency = (userCurrencyByDuty?.[duty.dutyId] as CurrencyType) ||
+    ((duty.currency as CurrencyType) || 'RUB');
+
   return (
     <div
       className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${
@@ -28,7 +34,7 @@ export default function DutyCard({
         <div>
           <p className="font-medium text-gray-900">{duty.dutyName}</p>
           <p className="text-xs text-gray-500">
-            {formatCurrency(duty.monthlyAmount)}/мес
+            {formatCurrency(duty.monthlyAmount, currency)}/мес
           </p>
         </div>
       </div>
@@ -36,7 +42,7 @@ export default function DutyCard({
       <div className="flex items-center space-x-4">
         <div className="text-right">
           <p className="text-lg font-bold text-red-600">
-            {formatCurrency(duty.debt)}
+            {formatCurrency(duty.debt, currency)}
           </p>
           <p className="text-xs text-gray-500">к выплате</p>
         </div>

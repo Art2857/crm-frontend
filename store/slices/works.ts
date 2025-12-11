@@ -34,6 +34,9 @@ const initialState: WorksState = {
 
 /**
  * Обработчик ошибок для thunks
+ * @param error - ошибка из catch
+ * @param defaultMessage - сообщение по умолчанию (используется как контекст)
+ * @returns строка с сообщением об ошибке с контекстом
  */
 const handleThunkError = (error: unknown, defaultMessage: string): string => {
   // Ошибки протаскиваем в state, лишние логи не нужны
@@ -44,12 +47,17 @@ const handleThunkError = (error: unknown, defaultMessage: string): string => {
     throw new Error('REQUEST_CANCELLED'); // Прокидываем специальную ошибку
   }
 
+  let errorMessage: string | undefined;
+
   if (error instanceof Error) {
-    return error.message;
+    errorMessage = error.message;
+  } else if (typeof error === 'string') {
+    errorMessage = error;
   }
 
-  if (typeof error === 'string') {
-    return error;
+  // Если есть конкретное сообщение от сервера - добавляем контекст
+  if (errorMessage && errorMessage !== defaultMessage) {
+    return `${defaultMessage}: ${errorMessage}`;
   }
 
   return defaultMessage;
@@ -238,6 +246,7 @@ const worksSlice = createSlice({
           name: action.payload.name,
           responsibleUserId: action.payload.responsibleUserId,
           salary: action.payload.salary,
+          currency: action.payload.currency || 'RUB',
           releaseDate: action.payload.effectiveDate,
           createdAt: action.payload.createdAt || new Date().toISOString(),
           updatedAt: action.payload.updatedAt,

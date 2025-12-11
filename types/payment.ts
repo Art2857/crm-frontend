@@ -28,35 +28,38 @@ export interface PaymentCalculation {
   periodDetails: PaymentPeriodDetail[];
 }
 
+// Core payment entity used in history and responses
 export interface Payment {
   id: string;
+  workId: string;
   fromUserId: string;
   toUserId: string;
-  workId: string;
-  dutyId: string | null;
   amount: number;
   paymentType: PaymentType;
-  description: string | null;
-  paymentDate: string;
-  periodStart: string;
-  periodEnd: string;
-  createdAt: string;
-  fromUser: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  toUser: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
+  description?: string | null;
+  paymentDate: string; // YYYY-MM-DD
+  createdAt?: string;
+  periodStart?: string | null;
+  periodEnd?: string | null;
   work: {
+    id: string;
     name: string;
   };
   duty?: {
+    id: string;
     name: string;
+  } | null;
+  fromUser: {
+    id: string;
+    firstName: string;
+    lastName: string;
   };
+  toUser: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  currency?: 'RUB' | 'USD';
 }
 
 export interface PaymentResponse {
@@ -131,7 +134,7 @@ export interface MyPayments {
   recentPayments: Payment[];
 }
 
-// DTO для запросов
+// DTOs
 export interface GetPaymentDebtsDto {
   workId?: string;
   periodEnd?: string;
@@ -145,15 +148,15 @@ export interface CalculatePaymentDto {
   dutyId?: string;
 }
 
+// Create a one-off payment
 export interface MakePaymentDto {
   workId: string;
   userId: string;
   amount: number;
   paymentType: PaymentType;
   description?: string;
-  periodEnd?: string;
-  dutyId?: string;
-  paymentDate?: string; // Добавлено поле для даты выплаты
+  paymentDate: string; // YYYY-MM-DD
+  currency?: 'RUB' | 'USD';
 }
 
 export interface PaymentHistoryDto {
@@ -166,13 +169,14 @@ export interface PaymentHistoryDto {
   limit?: number;
 }
 
-// Новые типы для create-payment-and-close
+// create-payment-and-close
 export interface CreatePaymentAndCloseDto {
   workId: string;
   userId: string;
   amount: number;
-  paymentDate: string;
-  description: string;
+  paymentDate: string; // YYYY-MM-DD
+  description?: string;
+  currency?: 'RUB' | 'USD';
 }
 
 export interface PaymentClosureResponseDto {

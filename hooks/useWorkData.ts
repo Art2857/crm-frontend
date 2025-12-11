@@ -13,6 +13,7 @@ interface UseWorkDataParams {
     name: string;
     responsibleUserId: string;
     salary: string | number;
+    currency?: 'RUB' | 'USD';
     releaseDate?: string;
   };
   isAuthenticated: boolean;
@@ -73,6 +74,7 @@ export const useWorkData = ({
       name: '',
       responsibleUserId: '',
       salary: '',
+      currency: 'RUB' as const,
       releaseDate: '',
     };
     
@@ -95,6 +97,7 @@ export const useWorkData = ({
         name: initialData.name,
         responsibleUserId: initialData.responsibleUserId,
         salary: typeof initialData.salary === 'number' ? initialData.salary.toString() : initialData.salary,
+        currency: initialData.currency || 'RUB',
         releaseDate: initialData.releaseDate || '',
       };
       

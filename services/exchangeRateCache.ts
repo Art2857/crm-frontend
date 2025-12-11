@@ -35,6 +35,25 @@ export interface ConversionResult {
 class ExchangeRateCacheService {
   private initialized = false;
   private initPromise: Promise<CacheInitResult> | null = null;
+  
+  // Return current USD->RUB rate using Redux/IndexedDB only (no API fallback)
+  async getUsdRubRate(date?: string): Promise<number> {
+    if (!this.initialized) {
+      await this.initialize();
+    }
+    const normalizedDate = date ? new Date(date).toISOString().split('T')[0] : undefined;
+    const result = await store.dispatch(convertCurrency({
+      amount: 1,
+      fromCurrency: 'USD',
+      toCurrency: 'RUB',
+      date: normalizedDate,
+    }));
+    if (result.payload && typeof result.payload === 'object') {
+      const payload: any = result.payload;
+      return payload.rate as number;
+    }
+    throw new Error('Rate is not available');
+  }
 
   /**
    * Инициализация системы кеширования
@@ -194,11 +213,12 @@ class ExchangeRateCacheService {
     await this._ensureInitialized();
     
     try {
+      const normalizedDate = date ? new Date(date).toISOString().split('T')[0] : undefined;
       const result = await store.dispatch(convertCurrency({
         amount,
         fromCurrency,
         toCurrency,
-        date,
+        date: normalizedDate,
       }));
 
       if (result.payload && typeof result.payload === 'object') {
@@ -236,7 +256,9 @@ class ExchangeRateCacheService {
           instant: false,
         };
       } catch (apiError) {
-        throw new Error(`Не удалось получить курс: ${error.message}`);
+        const err = apiError as any;
+        const msg = (err && err.message) ? err.message : 'Неизвестная ошибка API';
+        throw new Error(`Не удалось получить курс: ${msg}`);
       }
     }
   }

@@ -13,6 +13,7 @@ export interface DutyDetail {
   dutyName: string;
   monthlyAmount: number;
   debt: number;
+  currency?: string;
   accrued?: number;
   paid?: number;
   periods?: DutyPeriod[];
@@ -55,6 +56,7 @@ export interface DutyDebt {
   id: string;
   name: string;
   monthlyAmount: number;
+  currency?: string;
   totalAccrued: number;
   totalDebt: number;
   totalPaid: number;
@@ -91,6 +93,7 @@ export interface WorkDutiesGroup {
     dutyName: string;
     monthlyAmount: number;
     calculatedAmount: number;
+    currency?: string;
     periods?: DutyPeriod[];
   }>;
 }
@@ -105,6 +108,7 @@ export interface PeriodCalculation {
     dutyName: string;
     monthlyAmount: number;
     calculatedAmount: number;
+    currency?: string;
     // Для общего расчёта пользователя отображаем источник обязанности
     workId?: string;
     workName?: string;
@@ -132,6 +136,7 @@ export interface DetailedCalculation {
     description: string;
     date: string;
     createdAt: string;
+    currency?: 'RUB' | 'USD';
   }>;
 }
 
@@ -160,7 +165,8 @@ export interface CustomPaymentFormData {
   description: string;
   userName: string;
   workName: string;
-  paymentDate: string; // Новое поле для даты выплаты
+  paymentDate: string; // ���� ������� � ������� �����
+  currency: 'RUB' | 'USD';
 }
 
 export interface UserWorkDebt {

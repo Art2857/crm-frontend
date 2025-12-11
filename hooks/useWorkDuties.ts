@@ -161,6 +161,7 @@ export const useWorkDuties = ({
         userId: string;
         price: string | null;
         percentage: string | null;
+        currency?: 'RUB' | 'USD';
       }>,
       effectiveDate?: string,
       workHistoryId?: string
@@ -225,29 +226,29 @@ export const useWorkDuties = ({
         // Улучшенная обработка ошибок
         let errorMsg = 'Не удалось обновить распределение обязанностей';
 
-        if (error.formattedMessage) {
+        if (typeof error.formattedMessage === 'string' && error.formattedMessage) {
           // Если есть отформатированное сообщение, используем его
           errorMsg = error.formattedMessage;
-        } else if (error.message) {
-          // Проверяем, есть ли структурированные ошибки валидации
-          if (
-            error.validationErrors &&
-            error.errorMessages &&
-            error.errorMessages.length > 0
-          ) {
-            // Используем первое сообщение из массива
-            errorMsg = error.errorMessages[0];
-          } else if (
-            error.details &&
-            Array.isArray(error.details) &&
-            error.details.length > 0
-          ) {
-            // Если есть детализированные сообщения об ошибках
-            errorMsg = error.details.join('\n');
-          } else {
-            // Просто используем сообщение ошибки
-            errorMsg = error.message;
-          }
+        } else if (
+          error.errorMessages &&
+          Array.isArray(error.errorMessages) &&
+          error.errorMessages.length > 0
+        ) {
+          // Используем первое сообщение из массива
+          errorMsg = String(error.errorMessages[0]);
+        } else if (
+          error.details &&
+          Array.isArray(error.details) &&
+          error.details.length > 0
+        ) {
+          // Если есть детализированные сообщения об ошибках
+          errorMsg = error.details.map((d: unknown) => String(d)).join('\n');
+        } else if (typeof error.message === 'string' && error.message) {
+          // Просто используем сообщение ошибки (только если это строка)
+          errorMsg = error.message;
+        } else if (error.message && typeof error.message === 'object') {
+          // Если message - объект, пытаемся извлечь текст
+          errorMsg = error.message.message || JSON.stringify(error.message);
         }
 
         setErrorMessage(errorMsg);

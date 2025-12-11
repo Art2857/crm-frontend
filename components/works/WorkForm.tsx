@@ -1,10 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import CurrencySwitch from '../ui/CurrencySwitch';
 import { UpdateWorkDto } from '../../types/work';
 import { User } from '../../types/user';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, formatAmountWithCurrency } from '../../utils/currency';
+import { exchangeRateFacade } from '../../services/exchangeRateFacade';
+import { exchangeRateCacheService } from '../../services/exchangeRateCache';
 import DocumentsManager from '../documents/DocumentsManager';
 import { DocumentsStagingContext, DocumentsDeferredHandlers } from '../../contexts/DocumentsStagingContext';
 
@@ -69,6 +72,23 @@ const WorkForm: React.FC<WorkFormProps> = ({
     typeof formData.salary === 'string'
       ? parseFloat(formData.salary) || 0
       : formData.salary || 0;
+
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(() => (formData.currency || 'RUB'));
+  const [convertedBudget, setConvertedBudget] = useState<number>(salaryValue || 0);
+  const [isConverting, setIsConverting] = useState<boolean>(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedCurrency(formData.currency || 'RUB');
+  }, [formData.currency]);
+
+  // Currency formatting is centralized in utils/currency
+  useEffect(() => {
+    setIsConverting(false)
+    setConvertError(null)
+    const value = !salaryValue || isNaN(salaryValue) ? 0 : salaryValue
+    setConvertedBudget(value)
+  }, [salaryValue, selectedCurrency])
 
   return (
     <div className="space-y-6">
@@ -201,21 +221,35 @@ const WorkForm: React.FC<WorkFormProps> = ({
           {/* Правая колонка - финансовая информация */}
           <div className="space-y-6">
             <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg p-6 border border-primary-200">
-              <h3 className="text-lg font-semibold text-primary-800 mb-4 flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2 text-primary-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                  />
-                </svg>
-                Финансы проекта
+              <h3 className="text-lg font-semibold text-primary-800 mb-4 flex items-center justify-between">
+                <span className="flex items-center">
+                  <svg
+                    className="w-5 h-5 mr-2 text-primary-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                    />
+                  </svg>
+                  Финансы проекта
+                </span>
+                <CurrencySwitch
+                  value={(selectedCurrency as 'RUB' | 'USD')}
+                  onChange={(val) => {
+                    setSelectedCurrency(val);
+                    // Пробрасываем изменение валюты в форму
+                    const fakeEvent = {
+                      target: { name: 'currency', value: val, type: 'text' },
+                    } as unknown as React.ChangeEvent<HTMLInputElement>;
+                    onChange(fakeEvent);
+                  }}
+                  size="sm"
+                />
               </h3>
 
               <div>
@@ -223,7 +257,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                   htmlFor="salary"
                   className="block text-sm font-medium text-primary-700 mb-2"
                 >
-                  Общий бюджет (руб.)
+                  Общий бюджет
                 </label>
                 <div className="relative">
                   <Input
@@ -239,7 +273,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     placeholder="0"
                   />
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-primary-500 text-sm">₽</span>
+                    <span className="text-primary-500 text-sm">{selectedCurrency === 'USD' ? '$' : '₽'}</span>
                   </div>
                 </div>
                 <p className="mt-1 text-xs text-primary-600">
@@ -251,9 +285,16 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     <div className="text-xs text-primary-600 mb-1">
                       Форматированная сумма:
                     </div>
-                    <div className="text-lg font-semibold text-primary-800">
-                      {formatCurrency(salaryValue)}
+                    <div className="text-xs text-primary-600 mb-1 flex items-center justify-between">
+                      <span>({selectedCurrency})</span>
+                      {isConverting && <span className="text-[11px] text-primary-500">Конвертация</span>}
                     </div>
+                    <div className="text-lg font-semibold text-primary-800">
+                      {formatAmountWithCurrency(convertedBudget, selectedCurrency as 'RUB' | 'USD')}
+                    </div>
+                    {convertError && (
+                      <div className="mt-2 text-[11px] text-red-600">{convertError}</div>
+                    )}
                   </div>
                 )}
               </div>
@@ -345,3 +386,6 @@ const WorkForm: React.FC<WorkFormProps> = ({
 };
 
 export default WorkForm;
+
+
+

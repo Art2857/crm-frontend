@@ -8,10 +8,10 @@ import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
+import CurrencySwitch from '../../../components/ui/CurrencySwitch';
 import { createWork } from '../../../store/slices/works';
 import { fetchAllUsers } from '../../../store/slices/users';
 import { CreateWorkDto } from '../../../types/work';
-import { useBreadcrumbs } from '../../../hooks/useBreadcrumbs';
 import Alert from '../../../components/ui/Alert';
 
 export default function CreateWorkPage() {
@@ -25,6 +25,7 @@ export default function CreateWorkPage() {
     responsibleUserId: '',
     salary: '0',
     releaseDate: '',
+    currency: 'RUB',
   });
   const [success, setSuccess] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -170,24 +171,39 @@ export default function CreateWorkPage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="salary"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Зарплата по работе (руб.)
-                </label>
-                <Input
-                  id="salary"
-                  name="salary"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={formData.salary || ''}
-                  onChange={handleChange}
-                  className="mt-1"
-                  placeholder="Введите зарплату"
-                  error={formErrors.salary}
-                />
+                <div className="flex items-center mb-1">
+                  <label
+                    htmlFor="salary"
+                    className="block text-sm font-medium text-gray-700 mr-4"
+                  >
+                    Бюджет проекта
+                  </label>
+                  <CurrencySwitch
+                    value={formData.currency as 'RUB' | 'USD'}
+                    onChange={(val) => setFormData((p) => ({ ...p, currency: val }))}
+                    size="sm"
+                  />
+                </div>
+
+                <div className="relative">
+                  <Input
+                    id="salary"
+                    name="salary"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.salary || ''}
+                    onChange={handleChange}
+                    className=" pl-8 "
+                    placeholder="Введите бюджет"
+                    error={formErrors.salary}
+                  />
+                  <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 pl-4 flex items-center transform">
+                    <span className="text-gray-500 text-sm">
+                      {formData.currency === 'USD' ? '$' : '₽'}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div>
