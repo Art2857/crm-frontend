@@ -60,6 +60,7 @@ export interface Payment {
     lastName: string;
   };
   currency?: 'RUB' | 'USD';
+  exchangeRate?: number;
 }
 
 export interface PaymentResponse {
