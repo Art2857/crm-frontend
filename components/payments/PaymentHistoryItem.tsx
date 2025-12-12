@@ -119,6 +119,13 @@ export default function PaymentHistoryItem({
               {formatRussian(payment.periodEnd) || 'Неизвестная дата'}
             </p>
           )}
+
+          {/* exchangeRate теперь есть почти всегда, но на всякий случай оставим проверку */}
+          {payment.exchangeRate != null && (
+            <p className="text-xs text-gray-500 mt-1">
+              Курс: {payment.exchangeRate}
+            </p>
+          )}
         </div>
         {isSent && (
           <Button
@@ -136,6 +143,6 @@ export default function PaymentHistoryItem({
           </Button>
         )}
       </div>
-    </div>
+    </div >
   );
 }
