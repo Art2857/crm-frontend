@@ -34,7 +34,7 @@ export default function WorkCard({
 }: WorkCardProps) {
   const { formatRussian } = useDateManager();
   const accrued = typeof accruedOverride === 'number' ? accruedOverride : (work.totalAccrued ?? 0);
-  const paidForDisplay = Math.min(work.paidAmount || 0, accrued);
+  const paidForDisplay = work.paidAmount || 0;
   return (
     <div className="group">
       <Card className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md">
