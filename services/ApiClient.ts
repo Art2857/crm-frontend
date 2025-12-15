@@ -129,7 +129,7 @@ const sanitizeRequestData = (data: any): any => {
  * Класс для работы с API
  */
 export class ApiClient {
-  private axiosInstance: AxiosInstance;
+  public axiosInstance: AxiosInstance;
   private pendingRequests: RequestMap = {};
   private options: Required<ApiClientOptions>;
 

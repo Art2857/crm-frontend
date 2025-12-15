@@ -158,34 +158,42 @@ const WorksPage = () => {
         <div className="flex justify-between items-center mb-8 border-b pb-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Работы</h1>
-            <p className="text-gray-600 mt-1">Управляйте работами и аналитикой</p>
+            <p className="text-gray-600 mt-1">
+              Управляйте работами и аналитикой
+            </p>
           </div>
           <div className="flex space-x-3">
-            {user?.role === 'ADMIN' && (
-              <>
-                <Button
-                  variant={showWorks ? 'primary' : 'secondary'}
-                  onClick={() => setShowWorks((v) => !v)}
-                  className="rounded-lg px-4 py-2 shadow-sm"
-                >
-                  {showWorks ? 'Показать по сотрудникам' : 'Показать все работы'}
-                </Button>
-                <Button
-                  variant={(showWorks ? listShowArchived : showArchived) ? 'primary' : 'secondary'}
-                  onClick={() => (showWorks ? toggleListArchived() : setShowArchived(!showArchived))}
-                  className="rounded-lg px-4 py-2 shadow-sm"
-                  disabled={showWorks ? listLoading : analyticsLoading}
-                >
-                  {(showWorks ? listShowArchived : showArchived) ? 'Показать активные' : 'Показать архив'}
-                </Button>
-                <Button
-                  onClick={handleCreateWork}
-                  className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg px-4 py-2 shadow-sm hover:from-primary-700 hover:to-primary-800"
-                >
-                  Создать работу
-                </Button>
-              </>
-            )}
+            <Button
+              variant={showWorks ? 'primary' : 'secondary'}
+              onClick={() => setShowWorks((v) => !v)}
+              className="rounded-lg px-4 py-2 shadow-sm"
+            >
+              {showWorks ? 'Показать по сотрудникам' : 'Показать все работы'}
+            </Button>
+            <Button
+              variant={
+                (showWorks ? listShowArchived : showArchived)
+                  ? 'primary'
+                  : 'secondary'
+              }
+              onClick={() =>
+                showWorks
+                  ? toggleListArchived()
+                  : setShowArchived(!showArchived)
+              }
+              className="rounded-lg px-4 py-2 shadow-sm"
+              disabled={showWorks ? listLoading : analyticsLoading}
+            >
+              {(showWorks ? listShowArchived : showArchived)
+                ? 'Показать активные'
+                : 'Показать архив'}
+            </Button>
+              <Button
+                onClick={handleCreateWork}
+                className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg px-4 py-2 shadow-sm hover:from-primary-700 hover:to-primary-800"
+              >
+                Создать работу
+              </Button>
           </div>
         </div>
 

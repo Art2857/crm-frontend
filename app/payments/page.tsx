@@ -15,7 +15,6 @@ import PaymentModal from '../../components/payments/PaymentModal';
 import CustomPaymentModal from '../../components/payments/CustomPaymentModal';
 import UserCard from '../../components/payments/UserCard';
 import WorkCard from '../../components/payments/WorkCard';
-import WorkPeriodSelector from '../../components/payments/WorkPeriodSelector';
 import DutyCard from '../../components/payments/DutyCard';
 import UserPeriodSelector from '../../components/payments/UserPeriodSelector';
 
@@ -27,12 +26,14 @@ import {
   CustomPaymentFormData,
 } from '../../types/payments';
 import {
-  makePayment,
-  createPaymentAndClose,
   closePeriod,
 } from '../../services/payment';
 import { analyticsService } from '../../services/analytics';
-import { bulkCreateAndClose } from '../../services/payment';
+import {
+  useCreatePaymentMutation,
+  useCreatePaymentAndCloseMutation,
+  useBulkCreateAndCloseMutation,
+} from '../../store/services/api';
 import { PaymentType } from '../../types/payment';
 import { useNotification } from '../../contexts/NotificationContext';
 import { logger } from '../../utils/logger';
@@ -62,6 +63,10 @@ export default function PaymentsPage() {
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [expandedWorks, setExpandedWorks] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+
+  const [makePayment] = useCreatePaymentMutation();
+  const [createPaymentAndClose] = useCreatePaymentAndCloseMutation();
+  const [bulkCreateAndClose] = useBulkCreateAndCloseMutation();
 
   // Модальные окна
 
@@ -290,7 +295,7 @@ export default function PaymentsPage() {
         paymentDate: endDate,
         description: `Мультивыплата по общему расчету (${w.workName})`,
       }));
-      await bulkCreateAndClose(items);
+      await bulkCreateAndClose({ items }).unwrap();
       await refreshAfterUserPayment(userId);
       setCalculationModalOpen(false);
       setSelectedCalculation(null);
@@ -528,7 +533,7 @@ export default function PaymentsPage() {
         amount: Math.round(data.amount), // Конвертируем в копейки
         paymentDate: data.date, // Текущая дата
         description: data.description,
-      });
+      }).unwrap();
 
       if (selectedPayment?.workId && selectedPayment?.userId) {
         await refreshAfterPayment(
@@ -585,7 +590,7 @@ export default function PaymentsPage() {
         description: data.description,
         paymentDate: data.paymentDate,
         currency: data.currency,
-      });
+      }).unwrap();
 
       setDefaultCalculationCurrency(data.currency as DisplayCurrency);
 
