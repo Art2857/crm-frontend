@@ -7,9 +7,11 @@ import usersReducer from './slices/users';
 import breadcrumbsReducer from './slices/breadcrumbs';
 import dashboardReducer from './slices/dashboard';
 import exchangeRatesReducer from './slices/exchangeRates';
+import { api } from './services/api';
 
 export const store = configureStore({
   reducer: {
+    [api.reducerPath]: api.reducer,
     auth: authReducer,
     works: worksReducer,
     duties: dutiesReducer,
@@ -24,7 +26,7 @@ export const store = configureStore({
         // Игнорируем некоторые неселиализуемые значения в состоянии
         ignoredActions: ['persist/PERSIST'],
       },
-    }),
+    }).concat(api.middleware),
 });
 
 // Типизация для dispatch и selector

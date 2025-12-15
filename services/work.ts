@@ -36,6 +36,19 @@ export const workService = {
     }
   },
 
+  // Получить работы, связанные с пользователем (ответственный или есть обязанности)
+  getByUserDuties: async (userId: string): Promise<Work[]> => {
+    try {
+      const response = await privateApi.get<Work[]>(
+        WORKS_ENDPOINTS.byDuties(userId)
+      );
+      return response.data;
+    } catch (error) {
+      logger.error(`Error fetching works by duties for user ${userId}:`, error);
+      throw error;
+    }
+  },
+
   // Получить одну работу с историей
   getById: async (id: string): Promise<WorkWithHistory> => {
     try {
@@ -67,7 +80,7 @@ export const workService = {
   archive: async (id: string): Promise<Work> => {
     try {
       const response = await privateApi.post<Work>(
-        `${WORKS_ENDPOINTS.byId( id)}/archive`
+        `${WORKS_ENDPOINTS.byId(id)}/archive`
       );
       return response.data;
     } catch (error) {

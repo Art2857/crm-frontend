@@ -55,7 +55,7 @@ export default function UserHistoryPage({
       return;
     }
 
-    if (user?.role !== Role.ADMIN) {
+    if (![Role.ADMIN, Role.MANAGER].includes(user?.role as Role)) {
       router.push('/dashboard');
       return;
     }
@@ -354,11 +354,10 @@ export default function UserHistoryPage({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            historyItem.role === Role.ADMIN
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${historyItem.role === Role.ADMIN
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-blue-100 text-blue-800'
+                            }`}
                         >
                           {historyItem.role === Role.ADMIN
                             ? 'Администратор'

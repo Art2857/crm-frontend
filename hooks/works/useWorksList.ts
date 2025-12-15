@@ -42,7 +42,7 @@ export function useWorksList() {
       }
       if (!user) {
         try {
-        await dispatch(getCurrentUser()).unwrap(); // Default role since we don't know user role yet
+          await dispatch(getCurrentUser()).unwrap(); // Default role since we don't know user role yet
         } catch (error) {
           logger.error('Ошибка при получении пользователя:', error);
           router.push('/login');
@@ -63,7 +63,7 @@ export function useWorksList() {
         });
         const promises: Array<any> = [];
         promises.push(dispatch(fetchAllUsers({ role: user.role })));
-        if (user.role === 'ADMIN') {
+        if (user.role === 'ADMIN' || user.role === 'MANAGER') {
           promises.push(dispatch(fetchAllWorks()));
           setViewType('all');
         } else {
@@ -105,7 +105,7 @@ export function useWorksList() {
   );
 
   const handleToggleView = useCallback(async () => {
-    if (user.role === 'ADMIN') {
+    if (user.role === 'ADMIN' || user.role === 'MANAGER') {
       const newViewType = viewType === 'all' ? 'user' : 'all';
       if (newViewType === 'user' && userWorks.length === 0) {
         logger.debug('Loading user works for admin:', user.id);

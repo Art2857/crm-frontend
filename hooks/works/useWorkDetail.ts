@@ -39,7 +39,11 @@ export function useWorkDetail(id: string) {
       const work = await dispatch(
         fetchWorkById({ role: user.role, workId: id })
       ).unwrap();
-      if (user?.role === 'ADMIN') {
+      if (
+        user?.role === 'ADMIN' ||
+        user?.role === 'MANAGER' ||
+        user?.role === 'WORKER'
+      ) {
         await Promise.all([
           dispatch(
             fetchAllUsers({ role: user.role, archivingStatus: 'actual' })
@@ -240,10 +244,33 @@ export function useWorkDetail(id: string) {
     ]
   );
 
-  const canEdit = useMemo(() => {
+  const canEditWork = useMemo(() => {
     if (!user || !workData) return false;
-    return user.role === 'ADMIN';
+    if (user.role === 'ADMIN' || user.role === 'MANAGER') return true;
+
+    if (user.role === 'WORKER') {
+      return workData.responsibleUserId === user.id;
+    }
+
+    return false;
   }, [user, workData]);
+
+  const canDistributeDuties = useMemo(() => {
+    if (!user || !workData) return false;
+    if (user.role === 'ADMIN' || user.role === 'MANAGER') return true;
+
+    if (user.role === 'WORKER') {
+      const isResponsibleForWork = workData.responsibleUserId === user.id;
+      // Проверяем, есть ли пользователь в последнем (актуальном) распределении обязанностей
+      const latestDist = dutiesManagementHook.distributions?.[0];
+      const isParticipant =
+        latestDist?.details.some((detail) => detail.userId === user.id) ?? false;
+
+      return isResponsibleForWork || isParticipant;
+    }
+
+    return false;
+  }, [user, workData, dutiesManagementHook.distributions]);
 
   const isResponsible = useMemo(() => {
     if (!user || !workData) return false;
@@ -252,7 +279,12 @@ export function useWorkDetail(id: string) {
 
   const showOnlyCurrentUserDuties = useMemo(() => {
     if (!user || !workData) return true;
-    return user.role !== 'ADMIN' && !isResponsible;
+    return (
+      user.role !== 'ADMIN' &&
+      user.role !== 'MANAGER' &&
+      user.role !== 'WORKER' &&
+      !isResponsible
+    );
   }, [user, workData, isResponsible]);
 
   const loadDutiesHistory = useCallback(async () => {
@@ -321,7 +353,8 @@ export function useWorkDetail(id: string) {
     isLoadingHistory,
     workHistory,
     // access
-    canEdit,
+    canEdit: canEditWork,
+    canDistributeDuties,
     isResponsible,
     showOnlyCurrentUserDuties,
     // view helpers

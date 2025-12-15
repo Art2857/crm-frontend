@@ -41,6 +41,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     isLoadingHistory,
     workHistory,
     canEdit,
+    canDistributeDuties,
     isResponsible,
     showOnlyCurrentUserDuties,
     responsibleName,
@@ -208,11 +209,10 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   <Button
                     variant={isEditing ? 'secondary' : 'primary'}
                     onClick={() => setIsEditing(!isEditing)}
-                    className={`px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 ${
-                      isEditing
+                    className={`px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 ${isEditing
                         ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
                         : 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 shadow-lg hover:shadow-xl'
-                    }`}
+                      }`}
                   >
                     <svg
                       className="w-4 h-4 mr-2"
@@ -513,8 +513,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
               <div className="flex">
                 <button
                   onClick={() => setActiveTab('duties')}
-                  className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
-                    activeTab === 'duties'
+                  className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${activeTab === 'duties'
                       ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                   }`}
@@ -538,11 +537,10 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 </button>
                 <button
                   onClick={() => setActiveTab('income')}
-                  className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
-                    activeTab === 'income'
+                  className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${activeTab === 'income'
                       ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center">
                     <svg
@@ -570,11 +568,10 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 <div className="flex">
                   <button
                     onClick={() => setDutiesTab('current')}
-                    className={`flex-1 py-3 px-6 text-center font-medium text-xs transition-all duration-200 ${
-                      dutiesTab === 'current'
+                    className={`flex-1 py-3 px-6 text-center font-medium text-xs transition-all duration-200 ${dutiesTab === 'current'
                         ? 'border-b-2 border-primary-500 text-primary-600 bg-white'
                         : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-center">
                       <svg
@@ -595,11 +592,10 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   </button>
                   <button
                     onClick={() => setDutiesTab('history')}
-                    className={`flex-1 py-3 px-6 text-center font-medium text-xs transition-all duration-200 ${
-                      dutiesTab === 'history'
+                    className={`flex-1 py-3 px-6 text-center font-medium text-xs transition-all duration-200 ${dutiesTab === 'history'
                         ? 'border-b-2 border-primary-500 text-primary-600 bg-white'
                         : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-center">
                       <svg
@@ -700,7 +696,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                           workSalary={workData.salary}
                           currentUserId={user?.id}
                           showOnlyCurrentUser={showOnlyCurrentUserDuties}
-                          canEdit={canEdit && !isEditingDuties}
+                          canEdit={canDistributeDuties && !isEditingDuties}
                           onEditDuties={() => setIsEditingDuties(true)}
                         />
                       )}
@@ -725,7 +721,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                           currentUserId={user?.id}
                           showOnlyCurrentUser={showOnlyCurrentUserDuties}
                           onUpdate={loadDutiesHistory}
-                          canEdit={canEdit}
+                          canEdit={canDistributeDuties}
                         />
                       )}
                     </div>

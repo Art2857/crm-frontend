@@ -89,7 +89,7 @@ export const fetchUserWorks = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      return await workService.getByUserId(userId);
+      return await workService.getByUserDuties(userId);
     } catch (error) {
       // Проверяем на отмененный запрос
       if (error instanceof Error && error.message === 'REQUEST_CANCELLED') {
@@ -109,7 +109,7 @@ export const fetchUserWorksWithDuties = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      return await workService.getByUserId(userId);
+      return await workService.getByUserDuties(userId);
     } catch (error) {
       return rejectWithValue(
         handleThunkError(

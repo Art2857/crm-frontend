@@ -23,7 +23,7 @@ export default function AdminDutiesPage() {
       return;
     }
 
-    if (user?.role !== Role.ADMIN) {
+    if (![Role.ADMIN, Role.MANAGER].includes(user?.role as Role)) {
       router.push('/dashboard');
       return;
     }
