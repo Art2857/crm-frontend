@@ -87,7 +87,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     {
       name: 'Обязанности',
       href: '/admin/duties',
-      visible: isAuthenticated && isAdmin,
+      visible: isAuthenticated && (isAdmin || isManager),
     },
     { name: 'Аккаунты', href: '/accounts', visible: isAuthenticated },
   ];

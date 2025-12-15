@@ -171,7 +171,7 @@ export default function CreateUserPage() {
       return;
     }
 
-    if (user?.role !== Role.ADMIN) {
+    if (![Role.ADMIN, Role.MANAGER].includes(user?.role as Role)) {
       router.push('/dashboard');
       return;
     }
@@ -314,7 +314,7 @@ export default function CreateUserPage() {
     }
   };
 
-  if (!user || user.role !== Role.ADMIN) {
+  if (!user || ![Role.ADMIN, Role.MANAGER].includes(user.role)) {
     return null;
   }
 
