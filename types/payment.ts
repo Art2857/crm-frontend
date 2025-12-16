@@ -97,6 +97,7 @@ export interface PaymentDebts {
 export interface PaymentHistory {
   payments: Payment[];
   total: number;
+  totalAmountRub: number;
   page: number;
   limit: number;
   totalPages: number;
