@@ -43,14 +43,22 @@ const createChartKey = (currencyCode: string, fromDate: string, toDate: string) 
   `${currencyCode}-${fromDate}-${toDate}`;
 
 // Конвертация между форматами
-const exchangeRateToCache = (rate: ExchangeRate): CachedExchangeRate => ({
-  currencyCode: rate.currencyCode,
-  rate: rate.rate,
-  nominal: rate.nominal,
-  date: rate.date,
-  createdAt: rate.createdAt,
-  updatedAt: rate.updatedAt,
-});
+const exchangeRateToCache = (rate: ExchangeRate): CachedExchangeRate => {
+  // Гарантируем формат YYYY-MM-DD для ключа
+  let dateStr = rate.date;
+  if (dateStr && dateStr.includes('T')) {
+    dateStr = dateStr.split('T')[0];
+  }
+
+  return {
+    currencyCode: rate.currencyCode,
+    rate: rate.rate,
+    nominal: rate.nominal,
+    date: dateStr,
+    createdAt: rate.createdAt,
+    updatedAt: rate.updatedAt,
+  };
+};
 
 const cacheToExchangeRate = (cached: CachedExchangeRate): ExchangeRate => ({
   id: cached.id?.toString() || '',
@@ -431,9 +439,8 @@ export const smartLoadMissingData = createAsyncThunk(
         // Проверим какие рабочие дни ЦБ РФ пропущены в ответе
         if (response?.data) {
           const receivedDates = response.data.map(r => {
-            // Конвертируем DD.MM.YYYY в YYYY-MM-DD для сравнения
-            const [day, month, year] = r.date.split('.');
-            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            const date = r.date;
+            return date.includes('T') ? date.split('T')[0] : date;
           });
           
           console.log('📋 Полученные даты в ISO формате:', receivedDates.slice(0, 10));
@@ -441,12 +448,6 @@ export const smartLoadMissingData = createAsyncThunk(
           const missingWorkingDays = expectedWorkingDays.filter(expected => !receivedDates.includes(expected));
           if (missingWorkingDays.length > 0) {
             console.warn('⚠️ ПРОПУЩЕНЫ рабочие дни ЦБ РФ:', missingWorkingDays);
-            
-            // Проверим конкретно 23.08.2025
-            if (missingWorkingDays.includes('2025-08-23')) {
-              console.error('🚨 КРИТИЧНО: 23.08.2025 (суббота) отсутствует в ответе API!');
-              console.error('🏦 По логике ЦБ РФ суббота должна быть рабочим днем!');
-            }
           } else {
             console.log('✅ Все ожидаемые рабочие дни получены с API');
           }
@@ -469,14 +470,7 @@ export const smartLoadMissingData = createAsyncThunk(
         // Находим МАКСИМАЛЬНУЮ дату среди загруженных данных через рефакторенные утилиты
         const dates = response.data.map(rate => rate.date);
         const sortedDates = dates.sort((a, b) => {
-          // Правильное сравнение дат DD.MM.YYYY
-          const [dayA, monthA, yearA] = a.split('.').map(Number);
-          const [dayB, monthB, yearB] = b.split('.').map(Number);
-          
-          const dateA = new Date(yearA, monthA - 1, dayA);
-          const dateB = new Date(yearB, monthB - 1, dayB);
-          
-          return dateB.getTime() - dateA.getTime(); // Убывание (новые сначала)
+          return new Date(b).getTime() - new Date(a).getTime();
         });
         
         const maxDate = sortedDates[0] || '';
