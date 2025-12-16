@@ -24,6 +24,7 @@ const salaryDayOptions = [
 const roleOptions = [
   { value: Role.WORKER, label: 'Работник' },
   { value: Role.ADMIN, label: 'Администратор' },
+  { value: Role.MANAGER, label: 'Менеджер' },
 ];
 
 type CreateUserFormData = {
@@ -335,7 +336,7 @@ export default function CreateUserPage() {
         </div>
 
         <Card>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <Input
@@ -356,27 +357,24 @@ export default function CreateUserPage() {
                   >
                     Пароль
                   </label>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2 items-start">
                     <div className="relative flex-grow">
-                      <input
+                      <Input
                         id="password"
                         name="password"
                         type={isPasswordVisible ? 'text' : 'password'}
-                        className={`block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm w-full ${errors.password ? 'border-red-300 text-red-900' : ''}`}
+                        fullWidth
                         value={values.password}
                         onChange={handleChange}
+                        error={errors.password}
                       />
-                      {errors.password && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.password}
-                        </p>
-                      )}
                     </div>
                     <Button
                       type="button"
                       variant="secondary"
                       size="sm"
                       onClick={togglePasswordVisibility}
+                      className="h-[46px]"
                     >
                       {isPasswordVisible ? 'Скрыть' : 'Показать'}
                     </Button>
@@ -385,6 +383,7 @@ export default function CreateUserPage() {
                       variant="secondary"
                       size="sm"
                       onClick={generateRandomPassword}
+                      className="h-[46px]"
                     >
                       Сгенерировать
                     </Button>
@@ -399,28 +398,6 @@ export default function CreateUserPage() {
                     </ul>
                   </div>
                 </div>
-
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  label="Имя"
-                  fullWidth
-                  value={values.firstName}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  error={errors.firstName}
-                />
-
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  label="Фамилия"
-                  fullWidth
-                  value={values.lastName}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  error={errors.lastName}
-                />
               </div>
 
               <div>
@@ -447,21 +424,41 @@ export default function CreateUserPage() {
                   error={errors.birthday}
                 />
 
-                <label className="block text-sm font-medium text-gray-700 mb-1 mt-4">
-                  Роль пользователя
-                </label>
-                <select
+                <Select
                   id="role"
                   name="role"
-                  className="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  label="Роль пользователя"
+                  options={roleOptions}
+                  fullWidth
                   value={values.role}
                   onChange={handleChange}
-                >
-                  <option value={Role.WORKER}>Работник</option>
-                  <option value={Role.ADMIN}>Администратор</option>
-                  <option value={Role.MANAGER}>Менеджер</option>
-                </select>
+                  error={errors.role as string}
+                />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                id="firstName"
+                name="firstName"
+                label="Имя"
+                fullWidth
+                value={values.firstName}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={errors.firstName}
+              />
+
+              <Input
+                id="lastName"
+                name="lastName"
+                label="Фамилия"
+                fullWidth
+                value={values.lastName}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={errors.lastName}
+              />
             </div>
 
             <div>

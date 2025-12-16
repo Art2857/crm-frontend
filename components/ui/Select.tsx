@@ -2,8 +2,9 @@ import React, {
   SelectHTMLAttributes,
   forwardRef,
   useRef,
-  useEffect,
+  useState,
 } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 interface Option {
   value: string;
@@ -36,7 +37,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       ? 'bg-red-50 focus:bg-red-50 focus:ring-red-500 text-red-900'
       : '';
     const widthClass = fullWidth ? 'w-full' : '';
-    const selectClasses = `${baseClasses} ${errorClasses} ${widthClass} ${className}`;
+    const [isOpen, setIsOpen] = useState(false);
     const isFirstRender = useRef(true);
 
     // Обработка значения перед рендерингом
@@ -49,8 +50,48 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       selectProps.value = String(selectProps.value);
     }
 
-    // Логируем только при первом рендере или реальном изменении значения
+    const handleBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
+      setIsOpen(false);
+      if (props.onBlur) {
+        props.onBlur(e);
+      }
+    };
 
+    const handleClick = (e: React.MouseEvent<HTMLSelectElement>) => {
+      setIsOpen((prev) => !prev);
+      if (props.onClick) {
+        props.onClick(e);
+      }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setIsOpen(false);
+      if (props.onChange) {
+        props.onChange(e);
+      }
+    };
+
+    // Добавляем обработку клавиатуры для улучшения UX
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLSelectElement>) => {
+      if (['Enter', ' ', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+        setIsOpen(true);
+      } else if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+
+      if (props.onKeyDown) {
+        props.onKeyDown(e);
+      }
+    };
+
+    // Обновляем selectProps с нашими обработчиками
+    selectProps.onBlur = handleBlur;
+    selectProps.onClick = handleClick;
+    selectProps.onChange = handleChange;
+    selectProps.onKeyDown = handleKeyDown;
+
+    // Добавляем appearance-none для скрытия дефолтной стрелки и pr-10 для отступа под иконку
+    const selectClasses = `${baseClasses} appearance-none pr-10 ${errorClasses} ${widthClass} ${className}`;
 
     return (
       <div className={`${fullWidth ? 'w-full' : ''} mb-4`}>
@@ -62,17 +103,25 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             {label}
           </label>
         )}
-        <select ref={ref} className={selectClasses} {...selectProps}>
-          {options
-            ? // Если переданы опции в виде массива, рендерим их
+        <div className="relative">
+          <select ref={ref} className={selectClasses} {...selectProps}>
+            {options
+              ? // Если переданы опции в виде массива, рендерим их
               options.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))
-            : // Иначе используем дочерние элементы
+              : // Иначе используем дочерние элементы
               children}
-        </select>
+          </select>
+          <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+            <ChevronDown
+              className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
+                }`}
+            />
+          </div>
+        </div>
         {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
       </div>
     );
