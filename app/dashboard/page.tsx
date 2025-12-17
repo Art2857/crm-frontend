@@ -4,6 +4,7 @@ import React from 'react';
 import Layout from '../../components/layout/Layout';
 import { useDashboard } from '../../hooks/dashboard/useDashboard';
 import UserSummaryCard from '../../components/dashboard/UserSummaryCard';
+import { formatDateToISO } from '../../utils/date';
 import WorkDutiesTable from '../../components/dashboard/WorkDutiesTable';
 
 export default function DashboardPage() {
@@ -59,9 +60,6 @@ export default function DashboardPage() {
     );
   }
 
-  const safeFullName = fullName;
-  const safeAge = age;
-
   return (
     <Layout>
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -71,11 +69,11 @@ export default function DashboardPage() {
 
         <div className="mb-10">
           <UserSummaryCard
-            fullName={safeFullName}
+            fullName={fullName}
             email={user.email}
             salary={data.salary}
             salaryDayText={formatSalaryDay(user.salaryDay)}
-            birthdayText={user.birthday || undefined}
+            birthdayText={formatDateToISO(user.birthday) || undefined}
             ageText={age ? `${age} лет` : undefined}
           />
         </div>
