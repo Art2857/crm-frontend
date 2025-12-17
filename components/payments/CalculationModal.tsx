@@ -14,7 +14,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { DetailedCalculation } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
-import { useCalculationView } from '../../hooks/payments/useCalculationView';
 import CurrencySwitch from '../ui/CurrencySwitch';
 import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
 
@@ -182,8 +181,17 @@ export default function CalculationModal({
               })()}
             </h3>
           </div>
-          <div className="flex items-center gap-3">
-            <CurrencySwitch value={displayCurrency} onChange={setDisplayCurrency} size="sm" />
+          <div className="flex items-center gap-3 relative">
+            <div className="relative">
+              <CurrencySwitch value={displayCurrency} onChange={setDisplayCurrency} size="sm" />
+              <div className="absolute right-0 top-full mt-1 text-xs leading-none text-gray-500 whitespace-nowrap bg-white px-1 rounded pointer-events-none z-10 antialiased">
+                {isLoadingRate
+                  ? 'Курс: загрузка...'
+                  : rate
+                    ? `Курс: 1 USD = ${formatCurrency(rate, 'RUB')}`
+                    : 'Курс недоступен'}
+              </div>
+            </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -765,4 +773,3 @@ export default function CalculationModal({
     </Modal>
   );
 }
-

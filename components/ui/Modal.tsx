@@ -183,16 +183,30 @@ export const Modal: React.FC<ModalProps> = ({
       ></div>
 
       {/* Само модальное окно */}
-      <div
-        ref={modalRef}
-        className={`bg-white rounded-md shadow-lg ${className}`}
-        style={modalStyle}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-        onTouchEnd={(e) => e.stopPropagation()}
-      >
-        {children}
-      </div>
+      {position ? (
+        <div
+          ref={modalRef}
+          className={`bg-white rounded-md shadow-lg ${className}`}
+          style={modalStyle}
+          onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+        >
+          {children}
+        </div>
+      ) : (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div
+            ref={modalRef}
+            className={`bg-white rounded-md shadow-lg ${className}`}
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
+            {children}
+          </div>
+        </div>
+      )}
     </>
   );
 
