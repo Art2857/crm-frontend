@@ -157,7 +157,7 @@ export default function DutyForm({
               <div>
                 <Input
                   id="basePrice"
-                  label={`Базовая цена (${formData.currency === 'RUB' ? 'тыс. руб.' : 'USD'})`}
+                  label={`Базовая цена (${formData.currency === 'RUB' ? 'RUB' : 'USD'})`}
                   value={formData.basePrice}
                   onChange={(e) => handleChange('basePrice', e.target.value)}
                   placeholder="10"
