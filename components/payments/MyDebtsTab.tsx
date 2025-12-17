@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { formatCurrency, CurrencyType } from '../../utils/payments';
@@ -68,7 +69,9 @@ export default function MyDebtsTab({
                 />
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">
-                    {debt.workName}
+                    <Link href={`/works/${debt.workId}`} className="hover:underline">
+                      {debt.workName}
+                    </Link>
                   </h3>
                   <div className="flex items-center space-x-2 text-sm text-gray-500">
                     <UserIcon className="h-4 w-4" />
