@@ -38,7 +38,6 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       : '';
     const widthClass = fullWidth ? 'w-full' : '';
     const [isOpen, setIsOpen] = useState(false);
-    const isFirstRender = useRef(true);
 
     // Обработка значения перед рендерингом
     const selectProps = { ...props };
@@ -101,6 +100,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             className="block text-sm font-medium text-gray-700 mb-2"
           >
             {label}
+            {props.required && (
+              <span aria-hidden="true" className="text-red-500 ml-1">*</span>
+            )}
           </label>
         )}
         <div className="relative">

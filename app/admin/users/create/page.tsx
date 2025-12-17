@@ -343,6 +343,7 @@ export default function CreateUserPage() {
                   id="email"
                   name="email"
                   label="Email"
+                  required
                   type="email"
                   fullWidth
                   value={values.email}
@@ -356,12 +357,14 @@ export default function CreateUserPage() {
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Пароль
+                    <span aria-hidden="true" className="text-red-500 ml-1">*</span>
                   </label>
                   <div className="flex space-x-2 items-start">
                     <div className="relative flex-grow">
                       <Input
                         id="password"
                         name="password"
+                        required
                         type={isPasswordVisible ? 'text' : 'password'}
                         fullWidth
                         value={values.password}
@@ -442,6 +445,7 @@ export default function CreateUserPage() {
                 id="firstName"
                 name="firstName"
                 label="Имя"
+                required
                 fullWidth
                 value={values.firstName}
                 onChange={handleChange}
@@ -453,6 +457,7 @@ export default function CreateUserPage() {
                 id="lastName"
                 name="lastName"
                 label="Фамилия"
+                required
                 fullWidth
                 value={values.lastName}
                 onChange={handleChange}
@@ -466,6 +471,7 @@ export default function CreateUserPage() {
                 id="salaryDay"
                 name="salaryDay"
                 label="День выплаты зарплаты"
+                required
                 options={salaryDayOptions}
                 fullWidth
                 value={values.salaryDay}

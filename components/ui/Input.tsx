@@ -75,6 +75,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             className="block text-mb font-medium text-gray-700 mb-2"
           >
             {label}
+            {props.required && (
+              <span aria-hidden="true" className="text-red-500 ml-1">*</span>
+            )}
           </label>
         )}
         <input ref={ref} className={inputClasses} {...inputProps} />
