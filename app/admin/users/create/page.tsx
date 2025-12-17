@@ -103,9 +103,9 @@ export default function CreateUserPage() {
         isDate: true,
       },
       salaryDay: {
+        required: true,
         pattern: /^([1-9]|1[0-9]|2[0-8])$/,
         validate: (value) =>
-          value === '' ||
           (/^([1-9]|1[0-9]|2[0-8])$/.test(value) &&
             parseInt(value) >= 1 &&
             parseInt(value) <= 28) ||
