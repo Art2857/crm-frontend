@@ -51,7 +51,7 @@ export default function PaymentTabs({
             } flex items-center space-x-2`}
           >
             <UserIcon className="h-5 w-5" />
-            <span>Мои задолженности</span>
+            <span>Предстоящая выручка</span>
             {myDebts.some((d) => d.isPaymentDue) && (
               <Badge className="bg-red-100 text-red-800 ml-2">!</Badge>
             )}

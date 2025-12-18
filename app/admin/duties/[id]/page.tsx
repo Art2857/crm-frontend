@@ -9,12 +9,8 @@ import {
   fetchAllDistributions,
   deleteDuty,
 } from '../../../../store/slices/duties';
-import Card from '../../../../components/ui/Card';
-import Button from '../../../../components/ui/Button';
-import Input from '../../../../components/ui/Input';
-import Alert from '../../../../components/ui/Alert';
-import CurrencySwitch from '../../../../components/ui/CurrencySwitch';
 import ConfirmModal from '../../../../components/ui/ConfirmModal';
+import DutyForm, { DutyFormData } from '../../../../components/duties/DutyForm';
 import { Role } from '../../../../types/user';
 
 export default function EditDutyPage({ params }: { params: { id: string } }) {
@@ -28,13 +24,6 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
   const loadedDutyRef = useRef(false);
   const loadedDistributionsRef = useRef(false);
 
-  const [name, setName] = useState('');
-  const [basePrice, setBasePrice] = useState('');
-  const [basePercentage, setBasePercentage] = useState('');
-  const [minValue, setMinValue] = useState('');
-  const [maxValue, setMaxValue] = useState('');
-  const [currency, setCurrency] = useState<'RUB' | 'USD'>('RUB');
-  const [formError, setFormError] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
@@ -64,66 +53,23 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
     }
   }, [isAuthenticated, router, user, dutyId, isLoading, currentDuty?.id, distributions?.length]);
 
+  // Промежуточное состояние для формы
+  const [initialData, setInitialData] = useState<DutyFormData | null>(null);
+
   useEffect(() => {
     if (currentDuty) {
-      setName(currentDuty.name);
-      setBasePrice(currentDuty.basePrice?.toString() || '');
-      setBasePercentage(currentDuty.basePercentage?.toString() || '');
-      setMinValue(currentDuty.minValue?.toString() || '');
-      setMaxValue(currentDuty.maxValue?.toString() || '');
-      setCurrency(currentDuty.currency === 'USD' ? 'USD' : 'RUB');
+      setInitialData({
+        name: currentDuty.name,
+        basePrice: currentDuty.basePrice?.toString() || '',
+        basePercentage: currentDuty.basePercentage?.toString() || '',
+        minValue: currentDuty.minValue?.toString() || '',
+        maxValue: currentDuty.maxValue?.toString() || '',
+        currency: currentDuty.currency === 'USD' ? 'USD' : 'RUB',
+      });
     }
   }, [currentDuty]);
 
-  const validateForm = (): boolean => {
-    if (!name.trim()) {
-      setFormError('Название обязанности обязательно');
-      return false;
-    }
-
-    // Проверяем, что хотя бы одно из полей заполнено или оба пустые
-    if (basePrice && isNaN(parseFloat(basePrice))) {
-      setFormError('Базовая цена должна быть числом');
-      return false;
-    }
-
-    if (basePercentage && isNaN(parseFloat(basePercentage))) {
-      setFormError('Базовый процент должен быть числом');
-      return false;
-    }
-
-    if (
-      basePercentage &&
-      (parseFloat(basePercentage) < 0 || parseFloat(basePercentage) > 100)
-    ) {
-      setFormError('Базовый процент должен быть от 0 до 100');
-      return false;
-    }
-
-    if (minValue && isNaN(parseFloat(minValue))) {
-      setFormError('Минимальное значение должно быть числом');
-      return false;
-    }
-
-    if (maxValue && isNaN(parseFloat(maxValue))) {
-      setFormError('Максимальное значение должно быть числом');
-      return false;
-    }
-
-    if (minValue && maxValue && parseFloat(minValue) > parseFloat(maxValue)) {
-      setFormError('Минимальное значение не может быть больше максимального');
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-
-    if (!validateForm()) return;
-
+  const handleSubmit = async (formData: DutyFormData) => {
     // Функция для безопасного форматирования числовых значений
     const formatNumberValue = (value: string | null): string | null => {
       if (!value || value.trim() === '') return null;
@@ -142,15 +88,13 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
     };
 
     const dutyData = {
-      name,
-      basePrice: formatNumberValue(basePrice),
-      basePercentage: formatNumberValue(basePercentage),
-      currency,
-      minValue: formatNumberValue(minValue),
-      maxValue: formatNumberValue(maxValue),
+      name: formData.name,
+      basePrice: formatNumberValue(formData.basePrice),
+      basePercentage: formatNumberValue(formData.basePercentage),
+      currency: formData.currency,
+      minValue: formatNumberValue(formData.minValue),
+      maxValue: formatNumberValue(formData.maxValue),
     };
-
-
 
     const resultAction = await dispatch(
       updateDuty({ role: user.role, id: dutyId, data: dutyData })
@@ -193,148 +137,18 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
           </h1>
         </div>
 
-        <Card>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {(formError || (error && error !== 'REQUEST_CANCELLED')) && (
-              <Alert type="error">
-                {formError || (error !== 'REQUEST_CANCELLED' ? error : '')}
-              </Alert>
-            )}
+        <DutyForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          onDelete={() => setIsDeleteModalOpen(true)}
+          isLoading={isLoading}
+          error={error}
+          submitLabel="Сохранить"
+          savingLabel="Сохранение..."
+          isUsed={isUsed}
+        />
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Валюта значений
-                </label>
-                <CurrencySwitch value={currency} onChange={setCurrency} size="sm" />
-              </div>
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Название обязанности *
-                </label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Название обязанности"
-                  required
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="basePrice"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Базовая цена (тыс. руб.)
-                </label>
-                <Input
-                  id="basePrice"
-                  value={basePrice}
-                  onChange={(e) => setBasePrice(e.target.value)}
-                  placeholder="10"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  Оставьте поле пустым, если не требуется указывать цену
-                </p>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="basePercentage"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Базовый процент от зарплаты (%)
-                </label>
-                <Input
-                  id="basePercentage"
-                  value={basePercentage}
-                  onChange={(e) => setBasePercentage(e.target.value)}
-                  placeholder="20"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  Оставьте поле пустым, если не требуется указывать процент
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="minValue"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Минимальное значение суммы
-                  </label>
-                  <Input
-                    id="minValue"
-                    value={minValue}
-                    onChange={(e) => setMinValue(e.target.value)}
-                    placeholder="15000"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">
-                    Минимальная сумма стоимости и процента
-                  </p>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="maxValue"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Максимальное значение суммы
-                  </label>
-                  <Input
-                    id="maxValue"
-                    value={maxValue}
-                    onChange={(e) => setMaxValue(e.target.value)}
-                    placeholder="50000"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">
-                    Максимальная сумма стоимости и процента
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDeleteModalOpen(true)}
-                disabled={isLoading || isUsed}
-                className="border-red-300 text-red-700 hover:bg-red-50"
-              >
-                {isLoading ? 'Удаление...' : 'Удалить'}
-
-              </Button>
-
-              <div className="flex items-center space-x-3">
-                <Button type="button" variant="outline" onClick={handleCancel}>
-                  Отмена
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Сохранение...' : 'Сохранить'}
-                </Button>
-              </div>
-            </div>
-          </form>
-        </Card>
         <ConfirmModal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}

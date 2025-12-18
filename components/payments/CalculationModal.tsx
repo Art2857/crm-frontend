@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { formatCurrency, CurrencyType } from '../../utils/payments';
+import { buildDutyFormulaView } from '../../utils/paymentsFormula';
 import {
   CalendarIcon,
   CurrencyDollarIcon,
@@ -13,7 +14,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { DetailedCalculation } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
-import { useCalculationView } from '../../hooks/payments/useCalculationView';
 import CurrencySwitch from '../ui/CurrencySwitch';
 import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
 
@@ -51,7 +51,6 @@ export default function CalculationModal({
 }: CalculationModalProps) {
   // Hooks must be called unconditionally
   const { formatRussian } = useDateManager();
-  const { totals } = useCalculationView(calculation);
   const [displayCurrency, setDisplayCurrency] = useState<CurrencyType>('RUB');
 
   // Sync initial currency when provided/opened
@@ -62,7 +61,30 @@ export default function CalculationModal({
   }, [isOpen, initialCurrency]);
 
   // Используем хук для конвертации
-  const { convert, isLoading: isLoadingRate } = useCurrencyConversion();
+  const { convert, isLoading: isLoadingRate, rate } = useCurrencyConversion();
+
+  const renderDutyFormula = useCallback(
+    (monthlyAmount, calculatedAmount, dutyCurrency, days, monthDays) => {
+      const view = buildDutyFormulaView({
+        monthlyAmount,
+        calculatedAmount,
+        dutyCurrency,
+        days,
+        monthDays,
+        displayCurrency,
+        rate,
+      });
+
+      return (
+        <span className="font-mono">
+        {view.left}
+          {view.op ? ` ${view.op} ${view.rateText} ` : ' '}
+          = {view.right}
+      </span>
+      );
+    },
+    [displayCurrency, rate]
+  );
 
   // Конвертированные значения для отображения
   const displayValues = useMemo(() => {
@@ -159,8 +181,17 @@ export default function CalculationModal({
               })()}
             </h3>
           </div>
-          <div className="flex items-center gap-3">
-            <CurrencySwitch value={displayCurrency} onChange={setDisplayCurrency} size="sm" />
+          <div className="flex items-center gap-3 relative">
+            <div className="relative">
+              <CurrencySwitch value={displayCurrency} onChange={setDisplayCurrency} size="sm" />
+              <div className="absolute right-0 top-full mt-1 text-xs leading-none text-gray-500 whitespace-nowrap bg-white px-1 rounded pointer-events-none z-10 antialiased">
+                {isLoadingRate
+                  ? 'Курс: загрузка...'
+                  : rate
+                    ? `Курс: 1 USD = ${formatCurrency(rate, 'RUB')}`
+                    : 'Курс недоступен'}
+              </div>
+            </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -283,11 +314,13 @@ export default function CalculationModal({
                                   <span className="text-gray-700">
                                     {duty.dutyName}:
                                   </span>
-                                  <span className="font-mono">
-                                    {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
-                                    {period.days}/{period.monthDays} ={' '}
-                                    {formatCurrency(duty.calculatedAmount, dutyCurrency)}
-                                  </span>
+                                  {renderDutyFormula(
+                                    duty.monthlyAmount as number,
+                                    duty.calculatedAmount as number,
+                                    dutyCurrency,
+                                    period.days,
+                                    period.monthDays
+                                  )}
                                 </div>
                               );
                             })}
@@ -304,11 +337,13 @@ export default function CalculationModal({
                               <span className="text-gray-700">
                                 {duty.dutyName}:
                               </span>
-                              <span className="font-mono">
-                                {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
-                                {period.days}/{period.monthDays} ={' '}
-                                {formatCurrency(duty.calculatedAmount, dutyCurrency)}
-                              </span>
+                              {renderDutyFormula(
+                                duty.monthlyAmount as number,
+                                duty.calculatedAmount as number,
+                                dutyCurrency,
+                                period.days,
+                                period.monthDays
+                              )}
                             </div>
                           );
                         })}
@@ -468,12 +503,13 @@ export default function CalculationModal({
                                       <span className="text-gray-700">
                                         {duty.dutyName}:
                                       </span>
-                                      <span className="font-mono">
-                                        {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
-                                        {period.days || 0}/
-                                        {period.monthDays || 0} ={' '}
-                                        {formatCurrency(duty.calculatedAmount, dutyCurrency)}
-                                      </span>
+                                      {renderDutyFormula(
+                                        duty.monthlyAmount as number,
+                                        duty.calculatedAmount as number,
+                                        dutyCurrency,
+                                        period.days,
+                                        period.monthDays
+                                      )}
                                     </div>
                                   );
                                 })}
@@ -499,11 +535,13 @@ export default function CalculationModal({
                                       <>{duty.dutyName}:</>
                                     )}
                                   </span>
-                                  <span className="font-mono">
-                                    {formatCurrency(duty.monthlyAmount, dutyCurrency)} ×{' '}
-                                    {period.days || 0}/{period.monthDays || 0} ={' '}
-                                    {formatCurrency(duty.calculatedAmount, dutyCurrency)}
-                                  </span>
+                                  {renderDutyFormula(
+                                    duty.monthlyAmount as number,
+                                    duty.calculatedAmount as number,
+                                    dutyCurrency,
+                                    period.days,
+                                    period.monthDays
+                                  )}
                                 </div>
                               );
                             })}
@@ -735,4 +773,3 @@ export default function CalculationModal({
     </Modal>
   );
 }
-

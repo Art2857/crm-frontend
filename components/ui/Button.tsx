@@ -33,7 +33,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     // Базовые классы для всех кнопок
     const baseClasses =
-      'inline-flex items-center justify-center font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-150 ease-in-out';
+      'inline-flex items-center justify-center font-medium rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors duration-150 ease-in-out';
 
     // Классы для разных размеров
     const sizeClasses = {
@@ -45,13 +45,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // Классы для разных вариантов
     const variantClasses = {
       primary:
-        'text-white bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 disabled:bg-primary-300',
+        'text-white bg-primary-600 hover:bg-primary-700 focus-visible:ring-primary-500 disabled:bg-primary-300',
       secondary:
-        'text-white bg-gray-600 hover:bg-gray-700 focus:ring-gray-500 disabled:bg-gray-400',
+        'text-white bg-gray-600 hover:bg-gray-700 focus-visible:ring-gray-500 disabled:bg-gray-400',
       danger:
-        'text-white bg-red-600 hover:bg-red-700 focus:ring-red-500 disabled:bg-red-400',
+        'text-white bg-red-600 hover:bg-red-700 focus-visible:ring-red-500 disabled:bg-red-400',
       outline:
-        'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-400',
+        'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus-visible:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-400',
     };
 
     // Класс для ширины

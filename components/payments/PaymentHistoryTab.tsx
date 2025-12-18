@@ -4,7 +4,7 @@ import React from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Pagination from '../ui/Pagination';
-import { DocumentTextIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { usePaymentHistory } from '../../hooks/usePaymentHistory';
 import PaymentHistoryFilters from './PaymentHistoryFilters';
 import PaymentHistoryItem from './PaymentHistoryItem';
@@ -39,6 +39,7 @@ export default function PaymentHistoryTab({
   const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(
     null
   );
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handleFiltersChange = (newFilters: Partial<PaymentHistoryDto>) => {
     setFilters(newFilters);
@@ -112,33 +113,45 @@ export default function PaymentHistoryTab({
   return (
     <div className="space-y-6">
       {/* Фильтры */}
-      <PaymentHistoryFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        onClearFilters={handleClearFilters}
-      />
+      {filtersOpen && (
+        <PaymentHistoryFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          onClearFilters={handleClearFilters}
+        />
+      )}
 
       <Card className="overflow-hidden">
         <div className="p-6 pb-0">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              История выплат
-            </h2>
-            <div className="flex items-center space-x-4">
+            <div className="flex">
+              <h2 className="text-xl font-semibold text-gray-900">
+                История выплат
+              </h2>
               {totalAmountRub > 0 && (
-                <div className="flex items-center space-x-2 text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200">
+                <div className="flex items-center space-x-2 text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200 ml-6">
                   <span className="font-medium">Всего получено:</span>
                   <span className="font-bold">
                     {formatCurrency(totalAmountRub, 'RUB')}
                   </span>
                 </div>
               )}
+            </div>
+            <div className="flex items-center gap-2">
               {loading && (
                 <div className="flex items-center space-x-2 text-gray-500">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
                   <span className="text-sm">Загрузка...</span>
                 </div>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFiltersOpen((v) => !v)}
+                icon={<FunnelIcon className="h-4 w-4" />}
+              >
+                {filtersOpen ? 'Скрыть фильтры' : 'Показать фильтры'}
+              </Button>
             </div>
           </div>
         </div>
@@ -181,14 +194,14 @@ export default function PaymentHistoryTab({
               {(filters.paymentType ||
                 filters.startDate ||
                 filters.endDate) && (
-                  <Button
-                    onClick={handleClearFilters}
-                    variant="outline"
-                    className="mt-4"
-                  >
-                    Очистить фильтры
-                  </Button>
-                )}
+                <Button
+                  onClick={handleClearFilters}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  Очистить фильтры
+                </Button>
+              )}
             </div>
           )}
         </div>

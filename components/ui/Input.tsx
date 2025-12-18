@@ -14,7 +14,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, fullWidth = false, className = '', ...props }, ref) => {
     const baseClasses =
-      'px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 transition-all duration-200 placeholder-gray-400';
+      'px-4 py-3 bg-gray-100 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 transition-all duration-200 placeholder-gray-400';
     const errorClasses = error
       ? 'bg-red-50 focus:bg-red-50 focus:ring-red-500 text-red-900 placeholder-red-400'
       : '';
@@ -72,9 +72,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={props.id}
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-mb font-medium text-gray-700 mb-2"
           >
             {label}
+            {props.required && (
+              <span aria-hidden="true" className="text-red-500 ml-1">*</span>
+            )}
           </label>
         )}
         <input ref={ref} className={inputClasses} {...inputProps} />
