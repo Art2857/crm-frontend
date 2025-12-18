@@ -6,6 +6,7 @@ import { useGetPaymentHistoryQuery } from '../store/services/api';
 interface UsePaymentHistoryResult {
   payments: PaymentHistory['payments'];
   total: number;
+  totalAmountRub: number;
   page: number;
   limit: number;
   totalPages: number;
@@ -48,6 +49,7 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
   return {
     payments: data?.payments || [],
     total: data?.total || 0,
+    totalAmountRub: data?.totalAmountRub || 0,
     page: data?.page || filters.page || 1,
     limit: data?.limit || filters.limit || 20,
     totalPages: data?.totalPages || 0,

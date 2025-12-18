@@ -12,6 +12,7 @@ import { PaymentHistoryDto } from '../../types/payment';
 import { deletePayment } from '../../services/payment';
 import { useState } from 'react';
 import { useAppSelector } from '../../store';
+import { formatCurrency } from '../../utils/payments';
 
 interface PaymentHistoryTabProps {
   currentUserId?: string;
@@ -24,6 +25,7 @@ export default function PaymentHistoryTab({
   const {
     payments,
     total,
+    totalAmountRub,
     page,
     limit,
     totalPages,
@@ -122,13 +124,23 @@ export default function PaymentHistoryTab({
       <Card className="overflow-hidden">
         <div className="p-6 pb-0">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">История выплат</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              История выплат
+            </h2>
+            {totalAmountRub > 0 && (
+              <div className="flex items-center space-x-2 text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200">
+                <span className="font-medium">Всего получено:</span>
+                <span className="font-bold">
+                    {formatCurrency(totalAmountRub, 'RUB')}
+                  </span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               {loading && (
-                <div className="flex items-center space-x-2 text-gray-500">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                  <span className="text-sm">Загрузка...</span>
-                </div>
+              <div className="flex items-center space-x-2 text-gray-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                <span className="text-sm">Загрузка...</span>
+              </div>
               )}
               <Button
                 variant="outline"
@@ -180,14 +192,14 @@ export default function PaymentHistoryTab({
               {(filters.paymentType ||
                 filters.startDate ||
                 filters.endDate) && (
-                <Button
-                  onClick={handleClearFilters}
-                  variant="outline"
-                  className="mt-4"
-                >
-                  Очистить фильтры
-                </Button>
-              )}
+                  <Button
+                    onClick={handleClearFilters}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    Очистить фильтры
+                  </Button>
+                )}
             </div>
           )}
         </div>
