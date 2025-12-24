@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatCurrency } from '../../utils/currency';
+import { formatDateToISO } from '../../utils/date';
 
 interface DutyRow {
   name: string;
@@ -130,7 +131,7 @@ export default function WorkDutiesTable({
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {duty.assignedAt}
+                      {formatDateToISO(duty.assignedAt)}
                     </td>
                   </tr>
                 ))}
