@@ -113,40 +113,6 @@ export default function AdminUsersPage() {
     );
   };
 
-  // Вычисление возраста на основе даты рождения
-  const calculateAge = (birthdayString: string | null): number | null => {
-    if (!birthdayString) return null;
-
-    try {
-      const birthday = new Date(birthdayString);
-      if (isNaN(birthday.getTime())) {
-        console.warn('Invalid birthday date:', birthdayString);
-        return null;
-      }
-
-      const today = new Date();
-      let age = today.getFullYear() - birthday.getFullYear();
-      const monthDiff = today.getMonth() - birthday.getMonth();
-
-      // Если день рождения в этом году еще не наступил
-      if (
-        monthDiff < 0 ||
-        (monthDiff === 0 && today.getDate() < birthday.getDate())
-      ) {
-        age--;
-      }
-
-      return age;
-    } catch (error) {
-      console.error(
-        'Error calculating age from birthday:',
-        birthdayString,
-        error
-      );
-      return null;
-    }
-  };
-
   // Форматирование даты рождения для отображения
   const formatBirthday = (birthdayString: string | null): string => {
     if (!birthdayString) return 'Не указана';
@@ -214,37 +180,32 @@ export default function AdminUsersPage() {
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4"
                   >
                     ФИО
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4"
                   >
                     Email
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6"
                   >
                     Роль
                   </th>
+
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Возраст
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6"
                   >
                     День зарплаты
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6"
                   >
                     Действия
                   </th>
@@ -290,28 +251,52 @@ export default function AdminUsersPage() {
                                 : 'Работник'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {calculateAge(userItem?.birthday)
-                            ? `${calculateAge(userItem?.birthday)} лет`
-                            : 'Возраст не указан'}
-                        </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatSalaryDay(userItem?.salaryDay)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                           {userItem?.id && (
-                            <div className="flex items-center justify-end gap-3">
+                            <div className="flex items-center justify-center gap-2">
                               <Link
                                 href={`/admin/users/${userItem.id}`}
-                                className="text-primary-600 hover:text-primary-900"
+                                className="text-primary-600 hover:text-primary-900 p-1.5 rounded-full hover:bg-primary-50 transition-colors"
+                                title="Редактировать"
                               >
-                                Редактировать
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth={1.5}
+                                  stroke="currentColor"
+                                  className="w-5 h-5"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                                  />
+                                </svg>
                               </Link>
                               <Link
                                 href={`/admin/users/${userItem.id}/history`}
-                                className="text-secondary-600 hover:text-secondary-900"
+                                className="text-secondary-600 hover:text-secondary-900 p-1.5 rounded-full hover:bg-secondary-50 transition-colors"
+                                title="История"
                               >
-                                История
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth={1.5}
+                                  stroke="currentColor"
+                                  className="w-5 h-5"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                  />
+                                </svg>
                               </Link>
                             </div>
                           )}
