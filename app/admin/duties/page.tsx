@@ -66,15 +66,11 @@ export default function AdminDutiesPage() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
             />
-            <Button>
-              <Link href="/admin/duties/create" className="text-white">
-                Добавить обязанность
-              </Link>
+            <Button onClick={() => router.push('/admin/duties/create')}>
+              Добавить обязанность
             </Button>
           </div>
         </div>
-
-
         <Card>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
