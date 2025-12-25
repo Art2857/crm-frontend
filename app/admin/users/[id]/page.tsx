@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import DocumentsManager from "../../../../components/documents/DocumentsManager";
+import DocumentsManager from '../../../../components/documents/DocumentsManager';
 import { useForm } from '../../../../hooks/useForm';
 import { useAppSelector, useAppDispatch } from '../../../../store';
 import Card from '../../../../components/ui/Card';
@@ -28,6 +28,13 @@ const salaryDayOptions = [
     value: String(i + 1),
     label: `${i + 1} число`,
   })),
+];
+
+const statusOptions = [
+  { value: UserStatus.WORKING, label: 'На рабочем месте' },
+  { value: UserStatus.AWAY, label: 'Отсутствую' },
+  { value: UserStatus.LUNCH, label: 'Обедаю' },
+  { value: UserStatus.SLEEP, label: 'Сплю' },
 ];
 
 type UpdateProfileFormData = {
@@ -62,6 +69,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   const [activeTab, setActiveTab] = useState<'profile' | 'sensitive'>(
     'profile'
   );
+  const [isPreferencesFocused, setIsPreferencesFocused] = useState(false);
 
   const userId = params.id;
 
@@ -81,7 +89,11 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         errorMessage = errorPayload.message;
       }
       if (errorMessage) notification.showError(errorMessage, 10000);
-      else notification.showError('Произошла ошибка при архивировании пользователя', 10000);
+      else
+        notification.showError(
+          'Произошла ошибка при архивировании пользователя',
+          10000
+        );
     }
   });
 
@@ -101,7 +113,8 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         errorMessage = errorPayload.message;
       }
       if (errorMessage) notification.showError(errorMessage, 10000);
-      else notification.showError('Не удалось восстановить пользователя', 10000);
+      else
+        notification.showError('Не удалось восстановить пользователя', 10000);
     }
   });
 
@@ -209,7 +222,6 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
     // eslint-disable-next-line no-console
 
-
     // Загрузка данных пользователя
     dispatch(fetchUserById({ role: user.role, id: userId }));
 
@@ -223,7 +235,6 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (currentUser) {
       // eslint-disable-next-line no-console
-
 
       // Заполнение формы профиля
       setProfileValue('firstName', currentUser.firstName || '');
@@ -340,7 +351,6 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
       // Логируем данные формы для отладки
       // eslint-disable-next-line no-console
-
 
       // Валидация перед отправкой
       if (!validateProfileForm()) {
@@ -631,7 +641,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                   label="Часовой пояс"
                   value={profileValues.timezone || ''}
                   onChange={(tz) => setProfileValue('timezone', tz)}
-                  selectClassName="w-full"
+                  selectClassName="w-full !bg-gray-100"
                 />
               </div>
 
@@ -660,22 +670,16 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 />
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Статус
-                </label>
-                <select
-                  name="status"
-                  value={profileValues.status as any}
-                  onChange={handleProfileChange}
-                  className="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                >
-                  <option value={UserStatus.WORKING}>На рабочем месте</option>
-                  <option value={UserStatus.AWAY}>Отсутствую</option>
-                  <option value={UserStatus.LUNCH}>Обедаю</option>
-                  <option value={UserStatus.SLEEP}>Сплю</option>
-                </select>
-              </div>
+              <Select
+                id="status"
+                name="status"
+                label="Статус"
+                options={statusOptions}
+                fullWidth
+                className="!bg-gray-100"
+                value={profileValues.status as string}
+                onChange={handleProfileChange}
+              />
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -684,10 +688,16 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 <textarea
                   id="preferences"
                   name="preferences"
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  rows={4}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 transition-all duration-300 ease-in-out bg-gray-100 resize-none"
+                  style={{
+                    height: isPreferencesFocused ? '120px' : '42px',
+                    minHeight: '42px'
+                  }}
+                  rows={1}
                   value={profileValues.preferences || ''}
                   onChange={handleProfileChange}
+                  onFocus={() => setIsPreferencesFocused(true)}
+                  onBlur={() => setIsPreferencesFocused(false)}
                 />
               </div>
 
