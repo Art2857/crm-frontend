@@ -154,8 +154,8 @@ const WorksPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8 border-b pb-4">
+      <div className="max-w-7xl mx-auto pb-8 pt-2 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Работы</h1>
             <p className="text-gray-600 mt-1">
@@ -188,12 +188,12 @@ const WorksPage = () => {
                 ? 'Показать активные'
                 : 'Показать архив'}
             </Button>
-              <Button
-                onClick={handleCreateWork}
-                className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg px-4 py-2 shadow-sm hover:from-primary-700 hover:to-primary-800"
-              >
-                Создать работу
-              </Button>
+            <Button
+              onClick={handleCreateWork}
+              className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg px-4 py-2 shadow-sm hover:from-primary-700 hover:to-primary-800"
+            >
+              Создать работу
+            </Button>
           </div>
         </div>
 

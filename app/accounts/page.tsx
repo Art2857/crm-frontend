@@ -112,7 +112,7 @@ export default function AccountsPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pb-8 pt-0">
         <h1 className="text-2xl font-bold mb-6">Управление аккаунтами</h1>
 
         <Card className="mb-6">

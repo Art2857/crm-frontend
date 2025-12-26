@@ -1,21 +1,13 @@
 'use client';
 
-import React, {
-  ReactNode,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-} from 'react';
+import React, { ReactNode, useState, useEffect, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store';
 import Link from 'next/link';
 import { Role } from '../../types/user';
 import { logout } from '../../store/slices/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Breadcrumbs from '../ui/Breadcrumbs';
 import { useBreadcrumbs } from '../../hooks/useBreadcrumbs';
-import AccountMenu from '../ui/AccountMenu';
-import useAccountSwitcher from '../../hooks/useAccountSwitcher';
 import { useModal } from '../../contexts/ModalContext';
 
 interface LayoutProps {
@@ -25,16 +17,11 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const { confirm } = useModal();
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { breadcrumbs } = useBreadcrumbs();
-  const { lastSwitchedAccountId } = useAccountSwitcher();
-  const { confirm } = useModal();
-
-  // Ссылки на кнопки для меню аккаунтов
-  const desktopMenuButtonRef = useRef<HTMLButtonElement>(null);
-  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
 
   const isAdmin = user?.role === Role.ADMIN;
   const isManager = user?.role === Role.MANAGER;
@@ -56,29 +43,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [dispatch, router, confirm]);
 
-  // Мемоизируем обработчик переключения меню аккаунтов
-  const toggleAccountMenu = useCallback(
-    (e?: React.MouseEvent | React.TouchEvent) => {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      setIsAccountMenuOpen((prev) => !prev);
-    },
-    []
-  );
-
-  // Мемоизируем обработчик закрытия меню аккаунтов
-  const closeAccountMenu = useCallback(() => {
-    setIsAccountMenuOpen(false);
-  }, []);
-
   const navigation = [
     { name: 'Главная', href: '/dashboard', visible: isAuthenticated },
-    { name: 'Профиль', href: '/profile', visible: isAuthenticated },
     { name: 'Работы', href: '/works', visible: isAuthenticated },
     { name: 'Выплаты', href: '/payments', visible: isAuthenticated },
-    { name: 'Котировки валют', href: '/exchange-rates', visible: isAuthenticated },
+    {
+      name: 'Котировки валют',
+      href: '/exchange-rates',
+      visible: isAuthenticated,
+    },
     {
       name: 'Пользователи',
       href: '/admin/users',
@@ -91,13 +64,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     },
     { name: 'Аккаунты', href: '/accounts', visible: isAuthenticated },
   ];
-
-  // Закрываем выпадающий список аккаунтов после переключения
-  useEffect(() => {
-    if (lastSwitchedAccountId) {
-      setIsAccountMenuOpen(false);
-    }
-  }, [lastSwitchedAccountId]);
 
   // Обработчик клика вне меню для закрытия мобильного меню
   useEffect(() => {
@@ -155,28 +121,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="hidden sm:ml-6 sm:flex sm:items-center">
               <div className="ml-3 relative">
                 <div className="flex items-center">
-                  <button
-                    type="button"
-                    ref={desktopMenuButtonRef}
-                    className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 rounded-full"
-                    onClick={toggleAccountMenu}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleAccountMenu(e);
-                    }}
+                  <Link
+                    href="/profile"
+                    className="flex items-center p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                   >
-                    <span className="mr-2">
-                      {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
-                        user?.email ||
-                        'Пользователь'}
-                    </span>
+                    <span className="sr-only">Профиль</span>
                     <svg
-                      className="h-4 w-4 text-gray-400"
+                      className="h-6 w-6"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -185,20 +136,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                       />
                     </svg>
-                  </button>
-
-                  {/* Меню аккаунтов для десктопа */}
-                  {isAuthenticated && user && (
-                    <AccountMenu
-                      currentUserId={user.id}
-                      isOpen={isAccountMenuOpen}
-                      onClose={closeAccountMenu}
-                      triggerRef={desktopMenuButtonRef}
-                    />
-                  )}
+                  </Link>
 
                   <button
                     type="button"
@@ -270,37 +211,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center px-4">
               <div className="ml-3">
-                <button
-                  ref={mobileMenuButtonRef}
-                  className="w-full text-left"
-                  onClick={toggleAccountMenu}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onTouchEnd={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleAccountMenu(e);
-                  }}
-                >
+                <Link href="/profile" className="w-full text-left">
                   <div className="text-base font-medium text-gray-800">
                     {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
                       user?.email ||
                       'Пользователь'}
                   </div>
                   <div className="text-xs text-gray-500">{user?.email}</div>
-                </button>
-
-                {/* Меню аккаунтов для мобильных устройств */}
-                {isAuthenticated && user && (
-                  <AccountMenu
-                    currentUserId={user.id}
-                    isOpen={isAccountMenuOpen}
-                    onClose={closeAccountMenu}
-                    triggerRef={mobileMenuButtonRef}
-                  />
-                )}
+                </Link>
               </div>
             </div>
             <div className="mt-3 space-y-1">
