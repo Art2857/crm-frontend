@@ -773,7 +773,7 @@ export default function PaymentsPage() {
         )}
 
         {activeTab === 'history' && (
-          <PaymentHistoryTab currentUserId={user?.id} />
+          <PaymentHistoryTab key={user?.id} currentUserId={user?.id} />
         )}
 
         {/* Модальные окна */}

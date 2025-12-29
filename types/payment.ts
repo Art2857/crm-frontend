@@ -169,6 +169,7 @@ export interface PaymentHistoryDto {
   endDate?: string;
   page?: number;
   limit?: number;
+  viewerId?: string;
 }
 
 // create-payment-and-close

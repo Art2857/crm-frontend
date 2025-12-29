@@ -34,7 +34,7 @@ export default function PaymentHistoryTab({
     filters,
     setFilters,
     refetch,
-  } = usePaymentHistory();
+  } = usePaymentHistory(currentUserId);
 
   const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(
     null
@@ -77,6 +77,13 @@ export default function PaymentHistoryTab({
       }
     }
   };
+
+  // Force refetch on mount to ensure data is fresh, especially after mutations
+  // that might have occurred while this tab was inactive/unmounted
+  React.useEffect(() => {
+    refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Показываем ошибку только если она действительно есть и не связана с загрузкой
   if (error && !loading) {

@@ -17,10 +17,11 @@ interface UsePaymentHistoryResult {
   refetch: () => void;
 }
 
-export function usePaymentHistory(): UsePaymentHistoryResult {
+export function usePaymentHistory(userId?: string): UsePaymentHistoryResult {
   const [filters, setFiltersState] = useState<PaymentHistoryDto>({
     page: 1,
     limit: 20,
+    viewerId: userId,
   });
 
   const {
@@ -29,7 +30,9 @@ export function usePaymentHistory(): UsePaymentHistoryResult {
     isFetching,
     error: queryError,
     refetch,
-  } = useGetPaymentHistoryQuery(filters);
+  } = useGetPaymentHistoryQuery(filters, {
+    refetchOnMountOrArgChange: true,
+  });
 
   const setFilters = useCallback((newFilters: Partial<PaymentHistoryDto>) => {
     setFiltersState((prev) => ({
