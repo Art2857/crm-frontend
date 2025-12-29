@@ -9,7 +9,6 @@ import UsersFiltersBar from '../../../components/users/UsersFiltersBar';
 import Link from 'next/link';
 import { User, Role } from '../../../types/user';
 import { fetchAllUsers } from '../../../store/slices/users';
- 
 
 export default function AdminUsersPage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -33,7 +32,6 @@ export default function AdminUsersPage() {
     setSort('name_asc');
   };
 
-  
   const displayedUsers = useMemo(
     () =>
       (users || []).filter(
@@ -150,13 +148,14 @@ export default function AdminUsersPage() {
             >
               {showArchived ? 'Показать активных' : 'Показать архив'}
             </Button>
-            <Button variant={showFilters ? 'primary' : 'secondary'} onClick={() => setShowFilters((v) => !v)}>
+            <Button
+              variant={showFilters ? 'primary' : 'secondary'}
+              onClick={() => setShowFilters((v) => !v)}
+            >
               Фильтры
             </Button>
-            <Button>
-              <Link href="/admin/users/create" className="text-white">
-                Добавить пользователя
-              </Link>
+            <Button onClick={() => router.push('/admin/users/create')}>
+              Добавить пользователя
             </Button>
           </div>
         </div>
