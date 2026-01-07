@@ -584,7 +584,7 @@ export class ApiClient {
           }
 
           if (errorMessages.length > 0 || Object.keys(errors).length > 0) {
-            let finalMessage = 'Ошибки валидации';
+            let finalMessage = 'Проверьте введённые данные и попробуйте снова';
 
             if (errorMessages.length > 0) {
               finalMessage = errorMessages.join('; ');
@@ -602,7 +602,9 @@ export class ApiClient {
         }
 
         errorMessage =
-          typeof data === 'string' ? data : 'Ошибка валидации данных';
+          typeof data === 'string'
+            ? data
+            : 'Проверьте введённые данные и попробуйте снова';
       } else if (status === 403) {
         errorMessage = 'У вас нет прав для выполнения этого действия';
       } else if (status === 404) {
