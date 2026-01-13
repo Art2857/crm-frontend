@@ -5,6 +5,8 @@
 
 const ACCESS_TOKEN_KEY = 'token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
+const ACCESS_TOKEN_EXPIRES_AT_KEY = 'access_token_expires_at';
+const REFRESH_TOKEN_EXPIRES_AT_KEY = 'refresh_token_expires_at';
 const CURRENT_ACCOUNT_ID_KEY = 'crm_current_account_id';
 
 const safeGetItem = (key: string): string | null => {
@@ -40,8 +42,22 @@ export const tokenStorage = {
   getCurrentAccountId(): string | null {
     return safeGetItem(CURRENT_ACCOUNT_ID_KEY);
   },
+  getAccessTokenExpiresAt(): string | null {
+    return safeGetItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  },
+  setAccessTokenExpiresAt(expiresAt: string | null): void {
+    safeSetItem(ACCESS_TOKEN_EXPIRES_AT_KEY, expiresAt);
+  },
+  getRefreshTokenExpiresAt(): string | null {
+    return safeGetItem(REFRESH_TOKEN_EXPIRES_AT_KEY);
+  },
+  setRefreshTokenExpiresAt(expiresAt: string | null): void {
+    safeSetItem(REFRESH_TOKEN_EXPIRES_AT_KEY, expiresAt);
+  },
   clearAll(): void {
     this.setAccessToken(null);
     this.setRefreshToken(null);
+    this.setAccessTokenExpiresAt(null);
+    this.setRefreshTokenExpiresAt(null);
   },
 };

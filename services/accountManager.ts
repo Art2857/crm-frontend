@@ -1,10 +1,14 @@
 import { User } from '../types/user';
 import { tokenStorage } from './tokenStorage';
+import { isAccessTokenExpired, isRefreshTokenExpired, refreshTokens } from './tokenRefresh';
 
 export interface SavedAccount {
   id: string;
   user: User;
   token: string;
+  refreshToken?: string; // Refresh token
+  accessTokenExpiresAt?: string; // ISO timestamp
+  refreshTokenExpiresAt?: string; // ISO timestamp
   lastUsed: string; // ISO timestamp
 }
 
@@ -21,7 +25,19 @@ export const accountManagerService = {
     if (!accountsJson) return [];
 
     try {
-      return JSON.parse(accountsJson);
+      const accounts = JSON.parse(accountsJson);
+      // Migration: mark accounts without expiration dates as expired
+      return accounts.map((account: SavedAccount) => {
+        if (!account.refreshToken || !account.accessTokenExpiresAt || !account.refreshTokenExpiresAt) {
+          return {
+            ...account,
+            refreshToken: account.refreshToken || '',
+            accessTokenExpiresAt: new Date(0).toISOString(),
+            refreshTokenExpiresAt: new Date(0).toISOString(),
+          };
+        }
+        return account;
+      });
     } catch (error) {
       console.error('Ошибка при чтении сохраненных аккаунтов:', error);
       return [];
@@ -32,19 +48,25 @@ export const accountManagerService = {
   saveAccount(
     user: User,
     token: string,
+    refreshToken?: string,
+    accessTokenExpiresAt?: string,
+    refreshTokenExpiresAt?: string,
     setAsCurrent: boolean = true
   ): SavedAccount {
     const accounts = this.getSavedAccounts();
 
     // Проверяем, существует ли уже аккаунт с таким email
     const existingAccountIndex = accounts.findIndex(
-      (acc) => acc.user.email === user.email
+      (acc: SavedAccount) => acc.user.email === user.email
     );
 
     const account: SavedAccount = {
       id: user.id,
       user,
       token,
+      refreshToken,
+      accessTokenExpiresAt,
+      refreshTokenExpiresAt,
       lastUsed: new Date().toISOString(),
     };
 
@@ -69,7 +91,7 @@ export const accountManagerService = {
   // Удаление аккаунта
   removeAccount(accountId: string): void {
     let accounts = this.getSavedAccounts();
-    accounts = accounts.filter((acc) => acc.id !== accountId);
+    accounts = accounts.filter((acc: SavedAccount) => acc.id !== accountId);
     localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
 
     // Если удалили текущий аккаунт, выберем другой или очистим
@@ -83,7 +105,7 @@ export const accountManagerService = {
   // Получение аккаунта по ID
   getAccountById(accountId: string): SavedAccount | null {
     const accounts = this.getSavedAccounts();
-    return accounts.find((acc) => acc.id === accountId) || null;
+    return accounts.find((acc: SavedAccount) => acc.id === accountId) || null;
   },
 
   // Установка текущего аккаунта
@@ -93,7 +115,7 @@ export const accountManagerService = {
 
       // Обновляем время последнего использования
       const accounts = this.getSavedAccounts();
-      const account = accounts.find((acc) => acc.id === accountId);
+      const account = accounts.find((acc: SavedAccount) => acc.id === accountId);
       if (account) {
         account.lastUsed = new Date().toISOString();
         localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
@@ -117,13 +139,80 @@ export const accountManagerService = {
   },
 
   // Переключение на другой аккаунт
-  switchToAccount(accountId: string): SavedAccount | null {
+  async switchToAccount(accountId: string): Promise<SavedAccount | null> {
     const account = this.getAccountById(accountId);
     if (!account) return null;
 
-    // Обновляем текущий аккаунт и токен
+    // Check if access token is expired
+    const accessExpired = isAccessTokenExpired(account.accessTokenExpiresAt);
+    const refreshExpired = isRefreshTokenExpired(account.refreshTokenExpiresAt);
+
+    // If refresh token is expired, emit event for re-auth popup
+    if (refreshExpired) {
+      if (typeof window !== 'undefined') {
+        const event = new CustomEvent('refreshTokenExpired', {
+          detail: {
+            email: account.user.email,
+            accountId: account.id
+          },
+        });
+        window.dispatchEvent(event);
+      }
+      throw new Error('Refresh token expired. Re-authentication required.');
+    }
+
+    // If access token is expired but refresh token is valid, refresh tokens
+    if (accessExpired && account.refreshToken) {
+      try {
+        const response = await refreshTokens(account.refreshToken);
+
+        // Update account with new tokens
+        const updatedAccount = this.saveAccount(
+          response.user,
+          response.access_token,
+          response.refresh_token,
+          response.access_token_expires_at,
+          response.refresh_token_expires_at,
+          true
+        );
+
+        // Dispatch account switched event
+        if (typeof window !== 'undefined') {
+          const event = new CustomEvent('accountSwitched', {
+            detail: { accountId: accountId },
+          });
+          window.dispatchEvent(event);
+        }
+
+        return updatedAccount;
+      } catch (error) {
+        console.error('Failed to refresh tokens during account switch:', error);
+        // If refresh fails, emit re-auth event
+        if (typeof window !== 'undefined') {
+          const event = new CustomEvent('refreshTokenExpired', {
+            detail: {
+              email: account.user.email,
+              accountId: account.id
+            },
+          });
+          window.dispatchEvent(event);
+        }
+        throw new Error('Failed to refresh tokens. Re-authentication required.');
+      }
+    }
+
+    // Tokens are valid, proceed with switch
     this.setCurrentAccountId(accountId);
     tokenStorage.setAccessToken(account.token);
+    if (account.refreshToken) {
+      tokenStorage.setRefreshToken(account.refreshToken);
+    }
+    if (account.accessTokenExpiresAt) {
+      tokenStorage.setAccessTokenExpiresAt(account.accessTokenExpiresAt);
+    }
+    if (account.refreshTokenExpiresAt) {
+      tokenStorage.setRefreshTokenExpiresAt(account.refreshTokenExpiresAt);
+    }
 
     // Dispatch a custom event to notify the app that the account has changed
     if (typeof window !== 'undefined') {

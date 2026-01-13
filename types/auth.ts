@@ -20,6 +20,8 @@ export interface RefreshTokenDto {
 export interface AuthResponse {
   access_token: string;
   refresh_token?: string;
+  access_token_expires_at?: string; // ISO timestamp
+  refresh_token_expires_at?: string; // ISO timestamp
   user: User;
 }
 

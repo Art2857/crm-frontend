@@ -11,6 +11,7 @@ import { SavedAccount } from '../../services/accountManager';
 import { setCredentials, logout } from '../../store/slices/auth';
 import accountNavigation from '../../utils/accountNavigation';
 import { useModal } from '../../contexts/ModalContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { useBreadcrumbs } from '../../hooks/useBreadcrumbs';
 
 export default function AccountsPage() {
@@ -20,6 +21,7 @@ export default function AccountsPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { confirm, alert } = useModal();
+  const { showSuccess, showError, showInfo } = useNotification();
 
   // Инициализируем хук хлебных крошек
   useBreadcrumbs();
@@ -49,7 +51,7 @@ export default function AccountsPage() {
 
     setIsLoading(true);
     try {
-      const account = authService.switchAccount(accountId);
+      const account = await authService.switchAccount(accountId);
       if (account) {
         dispatch(
           setCredentials({
@@ -57,10 +59,22 @@ export default function AccountsPage() {
             token: account.token,
           })
         );
+        showSuccess('Аккаунт успешно переключен');
+
+        // Reload accounts list to show updated data
+        loadAccounts();
+
+        // Stay on accounts page
         router.push('/accounts');
       }
     } catch (error) {
-      console.error('Ошибка при переключении аккаунта:', error);
+      console.error('Error switching account:', error);
+
+      if (error instanceof Error && error.message.includes('Re-authentication required')) {
+        showInfo('Переключение аккаунта отменено');
+      } else {
+        showError('Не удалось переключить аккаунт. Попробуйте еще раз.');
+      }
     } finally {
       setIsLoading(false);
     }

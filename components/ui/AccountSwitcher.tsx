@@ -110,7 +110,7 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
     setAccounts(savedAccounts);
   };
 
-  const handleSwitchAccount = (accountId: string) => {
+  const handleSwitchAccount = async (accountId: string) => {
     if (accountId === currentUserId) {
       return;
     }
@@ -118,7 +118,7 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
     setIsLoading(true);
     try {
       // Переключаем аккаунт через сервис
-      const account = authService.switchAccount(accountId);
+      const account = await authService.switchAccount(accountId);
       if (account) {
         // Обновляем Redux store
         dispatch(
@@ -138,6 +138,10 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
       }
     } catch (error) {
       console.error('Ошибка при переключении аккаунта:', error);
+
+      if (error instanceof Error && error.message.includes('Re-authentication required')) {
+        onClose();
+      }
     } finally {
       setIsLoading(false);
     }
