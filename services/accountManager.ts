@@ -17,6 +17,12 @@ const CURRENT_ACCOUNT_ID_KEY = 'crm_current_account_id';
 
 // Сервис для управления сохраненными аккаунтами
 export const accountManagerService = {
+  _isSwitching: false,
+
+  isSwitching(): boolean {
+    return this._isSwitching;
+  },
+
   // Получение всех сохраненных аккаунтов
   getSavedAccounts(): SavedAccount[] {
     if (typeof window === 'undefined') return [];
@@ -28,6 +34,8 @@ export const accountManagerService = {
       const accounts = JSON.parse(accountsJson);
       // Migration: mark accounts without expiration dates as expired
       return accounts.map((account: SavedAccount) => {
+        if (!account || !account.user) return null;
+
         if (!account.refreshToken || !account.accessTokenExpiresAt || !account.refreshTokenExpiresAt) {
           return {
             ...account,
@@ -37,7 +45,7 @@ export const accountManagerService = {
           };
         }
         return account;
-      });
+      }).filter(Boolean);
     } catch (error) {
       console.error('Ошибка при чтении сохраненных аккаунтов:', error);
       return [];
@@ -53,11 +61,16 @@ export const accountManagerService = {
     refreshTokenExpiresAt?: string,
     setAsCurrent: boolean = true
   ): SavedAccount {
+    if (!user) {
+      console.error('Attempts to save account with undefined user');
+      throw new Error('User data is required to save account');
+    }
+
     const accounts = this.getSavedAccounts();
 
     // Проверяем, существует ли уже аккаунт с таким email
     const existingAccountIndex = accounts.findIndex(
-      (acc: SavedAccount) => acc.user.email === user.email
+      (acc: SavedAccount) => acc?.user?.email === user.email
     );
 
     const account: SavedAccount = {
@@ -140,54 +153,23 @@ export const accountManagerService = {
 
   // Переключение на другой аккаунт
   async switchToAccount(accountId: string): Promise<SavedAccount | null> {
-    const account = this.getAccountById(accountId);
-    if (!account) return null;
-
-    // Check if access token is expired
-    const accessExpired = isAccessTokenExpired(account.accessTokenExpiresAt);
-    const refreshExpired = isRefreshTokenExpired(account.refreshTokenExpiresAt);
-
-    // If refresh token is expired, emit event for re-auth popup
-    if (refreshExpired) {
-      if (typeof window !== 'undefined') {
-        const event = new CustomEvent('refreshTokenExpired', {
-          detail: {
-            email: account.user.email,
-            accountId: account.id
-          },
-        });
-        window.dispatchEvent(event);
-      }
-      throw new Error('Refresh token expired. Re-authentication required.');
+    if (this._isSwitching) {
+      console.warn('Account switch already in progress');
+      return null;
     }
 
-    // If access token is expired but refresh token is valid, refresh tokens
-    if (accessExpired && account.refreshToken) {
-      try {
-        const response = await refreshTokens(account.refreshToken);
+    this._isSwitching = true;
 
-        // Update account with new tokens
-        const updatedAccount = this.saveAccount(
-          response.user,
-          response.access_token,
-          response.refresh_token,
-          response.access_token_expires_at,
-          response.refresh_token_expires_at,
-          true
-        );
+    try {
+      const account = this.getAccountById(accountId);
+      if (!account) return null;
 
-        // Dispatch account switched event
-        if (typeof window !== 'undefined') {
-          const event = new CustomEvent('accountSwitched', {
-            detail: { accountId: accountId },
-          });
-          window.dispatchEvent(event);
-        }
+      // Check if access token is expired
+      const accessExpired = isAccessTokenExpired(account.accessTokenExpiresAt);
+      const refreshExpired = isRefreshTokenExpired(account.refreshTokenExpiresAt);
 
-        return updatedAccount;
-      } catch (error) {
-        console.error('Failed to refresh tokens during account switch:', error);
-        // If refresh fails, emit re-auth event
+      // If refresh token is expired, emit event for re-auth popup
+      if (refreshExpired) {
         if (typeof window !== 'undefined') {
           const event = new CustomEvent('refreshTokenExpired', {
             detail: {
@@ -197,32 +179,76 @@ export const accountManagerService = {
           });
           window.dispatchEvent(event);
         }
-        throw new Error('Failed to refresh tokens. Re-authentication required.');
+        throw new Error('Refresh token expired. Re-authentication required.');
       }
-    }
 
-    // Tokens are valid, proceed with switch
-    this.setCurrentAccountId(accountId);
-    tokenStorage.setAccessToken(account.token);
-    if (account.refreshToken) {
-      tokenStorage.setRefreshToken(account.refreshToken);
-    }
-    if (account.accessTokenExpiresAt) {
-      tokenStorage.setAccessTokenExpiresAt(account.accessTokenExpiresAt);
-    }
-    if (account.refreshTokenExpiresAt) {
-      tokenStorage.setRefreshTokenExpiresAt(account.refreshTokenExpiresAt);
-    }
+      // If access token is expired but refresh token is valid, refresh tokens
+      if (accessExpired && account.refreshToken) {
+        try {
+          const response = await refreshTokens(account.refreshToken);
 
-    // Dispatch a custom event to notify the app that the account has changed
-    if (typeof window !== 'undefined') {
-      const event = new CustomEvent('accountSwitched', {
-        detail: { accountId: accountId },
-      });
-      window.dispatchEvent(event);
-    }
+          // Update account with new tokens
+          // IMPORTANT: Use response.user if available, otherwise fallback to existing account.user
+          // because refresh endpoint might not return user object
+          const updatedAccount = this.saveAccount(
+            response.user || account.user,
+            response.access_token,
+            response.refresh_token,
+            response.access_token_expires_at,
+            response.refresh_token_expires_at,
+            true
+          );
 
-    return account;
+          // Dispatch account switched event
+          if (typeof window !== 'undefined') {
+            const event = new CustomEvent('accountSwitched', {
+              detail: { accountId: accountId },
+            });
+            window.dispatchEvent(event);
+          }
+
+          return updatedAccount;
+        } catch (error) {
+          console.error('Failed to refresh tokens during account switch:', error);
+          // If refresh fails, emit re-auth event
+          if (typeof window !== 'undefined') {
+            const event = new CustomEvent('refreshTokenExpired', {
+              detail: {
+                email: account.user.email,
+                accountId: account.id
+              },
+            });
+            window.dispatchEvent(event);
+          }
+          throw new Error('Failed to refresh tokens. Re-authentication required.');
+        }
+      }
+
+      // Tokens are valid, proceed with switch
+      this.setCurrentAccountId(accountId);
+      tokenStorage.setAccessToken(account.token);
+      if (account.refreshToken) {
+        tokenStorage.setRefreshToken(account.refreshToken);
+      }
+      if (account.accessTokenExpiresAt) {
+        tokenStorage.setAccessTokenExpiresAt(account.accessTokenExpiresAt);
+      }
+      if (account.refreshTokenExpiresAt) {
+        tokenStorage.setRefreshTokenExpiresAt(account.refreshTokenExpiresAt);
+      }
+
+      // Dispatch a custom event to notify the app that the account has changed
+      if (typeof window !== 'undefined') {
+        const event = new CustomEvent('accountSwitched', {
+          detail: { accountId: accountId },
+        });
+        window.dispatchEvent(event);
+      }
+
+      return account;
+    } finally {
+      this._isSwitching = false;
+    }
   },
 
   // Очистка всех аккаунтов
