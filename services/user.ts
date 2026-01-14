@@ -217,14 +217,20 @@ export const userService = {
       });
 
       // Проверяем есть ли ответ от сервера
-      if (!error.response) {
+      // ApiError имеет свойство status, если ответ получен
+      // Если status отсутствует и это не ошибка валидации, значит ответа не было
+      if (!error.status && !error.isValidationError && !error.response) {
         throw new Error(
           'Нет ответа от сервера. Проверьте подключение к интернету.'
         );
       }
 
+      // Получаем статус и данные из ошибки (поддержка и ApiError и AxiosError)
+      const status = error.status || error.response?.status;
+      const responseData = error.originalData || error.response?.data;
+
       // Проверяем ответ на слишком много запросов
-      if (error.response.status === 429) {
+      if (status === 429) {
         throw new Error(
           'Слишком много запросов. Пожалуйста, попробуйте позже.'
         );
@@ -269,13 +275,11 @@ export const userService = {
         }
 
         // Если есть оригинальный объект ответа, используем его
-        if (error.originalData && typeof error.originalData === 'object') {
-          const data = error.originalData;
-
-          if (Array.isArray(data.message)) {
-            throw new Error(`Ошибки валидации:\n${data.message.join('\n')}`);
-          } else if (typeof data.message === 'string') {
-            throw new Error(data.message);
+        if (responseData && typeof responseData === 'object') {
+          if (Array.isArray(responseData.message)) {
+            throw new Error(`Проверьте введённые данные и попробуйте снова:\n${responseData.message.join('\n')}`);
+          } else if (typeof responseData.message === 'string') {
+            throw new Error(responseData.message);
           }
         }
 
@@ -284,23 +288,23 @@ export const userService = {
       }
 
       // Особые случаи ошибок
-      if (error.response?.status === 409) {
+      if (status === 409) {
         // Конфликт - обычно, пользователь с таким email уже существует
         throw new Error(`Пользователь с указанным email уже существует.`);
-      } else if (error.response?.status === 500) {
+      } else if (status === 500) {
         // Внутренняя ошибка сервера - более информативное сообщение
         const errorMessage =
-          error.response.data?.message ||
+          responseData?.message ||
           'Внутренняя ошибка сервера. Обратитесь к администратору.';
         throw new Error(errorMessage);
       }
 
       // Получаем сообщение из ответа сервера, если есть
-      if (error.response?.data?.message) {
-        if (Array.isArray(error.response.data.message)) {
-          throw new Error(error.response.data.message.join('\n'));
+      if (responseData?.message) {
+        if (Array.isArray(responseData.message)) {
+          throw new Error(responseData.message.join('\n'));
         } else {
-          throw new Error(error.response.data.message);
+          throw new Error(responseData.message);
         }
       }
 
