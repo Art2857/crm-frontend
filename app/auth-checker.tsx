@@ -7,6 +7,7 @@ import { authService } from '../services/auth';
 import { tokenStorage } from '../services/tokenStorage';
 import { logger } from '../utils/logger';
 import { isJwtExpired, getRoleFromToken } from '../utils/jwt';
+import { accountManagerService } from '../services/accountManager';
 
 export default function AuthChecker({
   children,
@@ -112,8 +113,16 @@ export default function AuthChecker({
   useEffect(() => {
     const onVisibilityChange = async () => {
       if (document.visibilityState !== 'visible') return;
+
+      // Skip verification if account switching is in progress
+      if (accountManagerService.isSwitching()) {
+        logger.info('AuthChecker: пропуск проверки, выполняется переключение аккаунта');
+        return;
+      }
+
       const token = tokenStorage.getAccessToken();
       if (!token) return;
+      
       if (isJwtExpired(token)) {
         try {
           logger.info(
@@ -132,10 +141,39 @@ export default function AuthChecker({
         }
       }
     };
+
+    const onAccountSwitched = async (event: CustomEvent<{ accountId: string }>) => {
+      logger.info(
+        `🔄 AuthChecker: переключение аккаунта на ${event.detail.accountId}`
+      );
+      // Wait for a small delay to ensure local storage is fully synced
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      try {
+        await dispatch(getCurrentUser()).unwrap();
+        logger.info('✅ AuthChecker: данные нового аккаунта загружены');
+      } catch (error) {
+        logger.error(
+          '❌ AuthChecker: ошибка загрузки данных после переключения:',
+          error
+        );
+      }
+    };
+
     document.addEventListener('visibilitychange', onVisibilityChange);
-    return () =>
+    window.addEventListener(
+      'accountSwitched',
+      onAccountSwitched as EventListener
+    );
+
+    return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
-  }, []);
+      window.removeEventListener(
+        'accountSwitched',
+        onAccountSwitched as EventListener
+      );
+    };
+  }, [dispatch]);
 
   // Если инициализация еще не завершена, показываем индикатор загрузки
   if (isInitializing || authLoading) {

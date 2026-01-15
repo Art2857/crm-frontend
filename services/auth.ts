@@ -6,7 +6,7 @@ import {
 } from '../types/auth';
 import { privateApi, authApi, ApiClient } from './ApiClient';
 import { AUTH_ENDPOINTS, USERS_ENDPOINTS } from './endpoints';
-import { accountManagerService } from './accountManager';
+import { accountManagerService, SavedAccount } from './accountManager';
 import { User } from '../types/user';
 import { tokenStorage } from './tokenStorage';
 
@@ -22,11 +22,20 @@ export const authService = {
     if (response.data.refresh_token) {
       tokenStorage.setRefreshToken(response.data.refresh_token);
     }
+    if (response.data.access_token_expires_at) {
+      tokenStorage.setAccessTokenExpiresAt(response.data.access_token_expires_at);
+    }
+    if (response.data.refresh_token_expires_at) {
+      tokenStorage.setRefreshTokenExpiresAt(response.data.refresh_token_expires_at);
+    }
     // Сохраняем аккаунт в менеджере аккаунтов
     if (typeof window !== 'undefined') {
       accountManagerService.saveAccount(
         response.data.user,
-        response.data.access_token
+        response.data.access_token,
+        response.data.refresh_token,
+        response.data.access_token_expires_at,
+        response.data.refresh_token_expires_at
       );
     }
 
@@ -45,10 +54,19 @@ export const authService = {
     if (response.data.refresh_token) {
       tokenStorage.setRefreshToken(response.data.refresh_token);
     }
+    if (response.data.access_token_expires_at) {
+      tokenStorage.setAccessTokenExpiresAt(response.data.access_token_expires_at);
+    }
+    if (response.data.refresh_token_expires_at) {
+      tokenStorage.setRefreshTokenExpiresAt(response.data.refresh_token_expires_at);
+    }
     if (typeof window !== 'undefined') {
       accountManagerService.saveAccount(
         response.data.user,
         response.data.access_token,
+        response.data.refresh_token,
+        response.data.access_token_expires_at,
+        response.data.refresh_token_expires_at,
         true
       );
     }
@@ -65,10 +83,19 @@ export const authService = {
     if (response.data.refresh_token) {
       tokenStorage.setRefreshToken(response.data.refresh_token);
     }
+    if (response.data.access_token_expires_at) {
+      tokenStorage.setAccessTokenExpiresAt(response.data.access_token_expires_at);
+    }
+    if (response.data.refresh_token_expires_at) {
+      tokenStorage.setRefreshTokenExpiresAt(response.data.refresh_token_expires_at);
+    }
     if (typeof window !== 'undefined') {
       accountManagerService.saveAccount(
         response.data.user,
-        response.data.access_token
+        response.data.access_token,
+        response.data.refresh_token,
+        response.data.access_token_expires_at,
+        response.data.refresh_token_expires_at
       );
     }
 
@@ -85,10 +112,19 @@ export const authService = {
     if (response.data.refresh_token) {
       tokenStorage.setRefreshToken(response.data.refresh_token);
     }
+    if (response.data.access_token_expires_at) {
+      tokenStorage.setAccessTokenExpiresAt(response.data.access_token_expires_at);
+    }
+    if (response.data.refresh_token_expires_at) {
+      tokenStorage.setRefreshTokenExpiresAt(response.data.refresh_token_expires_at);
+    }
     if (typeof window !== 'undefined') {
       accountManagerService.saveAccount(
         response.data.user,
         response.data.access_token,
+        response.data.refresh_token,
+        response.data.access_token_expires_at,
+        response.data.refresh_token_expires_at,
         true
       );
     }
@@ -125,18 +161,27 @@ export const authService = {
     if (response.data.refresh_token) {
       tokenStorage.setRefreshToken(response.data.refresh_token);
     }
+    if (response.data.access_token_expires_at) {
+      tokenStorage.setAccessTokenExpiresAt(response.data.access_token_expires_at);
+    }
+    if (response.data.refresh_token_expires_at) {
+      tokenStorage.setRefreshTokenExpiresAt(response.data.refresh_token_expires_at);
+    }
     // Обновляем данные в менеджере аккаунтов
     if (typeof window !== 'undefined') {
       const userId = accountManagerService.getCurrentAccountId();
       if (userId) {
         const accounts = accountManagerService.getSavedAccounts();
         const currentAccount = accounts.find(
-          (account) => account.id === userId
+          (account: SavedAccount) => account.id === userId
         );
         if (currentAccount && response.data.user) {
           accountManagerService.saveAccount(
             response.data.user,
-            response.data.access_token
+            response.data.access_token,
+            response.data.refresh_token,
+            response.data.access_token_expires_at,
+            response.data.refresh_token_expires_at
           );
         }
       }
@@ -197,8 +242,8 @@ export const authService = {
     return accountManagerService.getSavedAccounts();
   },
 
-  switchAccount: (accountId: string) => {
-    const account = accountManagerService.switchToAccount(accountId);
+  switchAccount: async (accountId: string) => {
+    const account = await accountManagerService.switchToAccount(accountId);
     return account;
   },
 

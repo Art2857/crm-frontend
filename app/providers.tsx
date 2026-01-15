@@ -8,6 +8,7 @@ import { NotificationProvider } from '../contexts/NotificationContext';
 import NotificationList from '../components/ui/NotificationList';
 import ModalProvider from '../contexts/ModalContext';
 import { TimezoneProvider } from '../contexts/TimezoneContext';
+import { ReAuthProvider } from '../contexts/ReAuthContext';
 import { initializeTimezoneSupport } from '../services/TimezoneApiClient';
 
 // Компонент для инициализации timezone поддержки
@@ -24,16 +25,18 @@ function TimezoneInitializer({ children }: { children: React.ReactNode }) {
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
-      <NotificationProvider>
-        <ModalProvider>
-          <TimezoneProvider>
-            <TimezoneInitializer>
-              <AuthChecker>{children}</AuthChecker>
-              <NotificationList />
-            </TimezoneInitializer>
-          </TimezoneProvider>
-        </ModalProvider>
-      </NotificationProvider>
+      <ReAuthProvider>
+        <NotificationProvider>
+          <ModalProvider>
+            <TimezoneProvider>
+              <TimezoneInitializer>
+                <AuthChecker>{children}</AuthChecker>
+                <NotificationList />
+              </TimezoneInitializer>
+            </TimezoneProvider>
+          </ModalProvider>
+        </NotificationProvider>
+      </ReAuthProvider>
     </Provider>
   );
 }
