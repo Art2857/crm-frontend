@@ -123,11 +123,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="flex items-center">
                   <Link
                     href="/profile"
-                    className="flex items-center p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    className="flex items-center space-x-2 p-1 rounded-full text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
                   >
                     <span className="sr-only">Профиль</span>
                     <svg
-                      className="h-6 w-6"
+                      className="h-6 w-6 text-gray-400"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -139,6 +139,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                       />
                     </svg>
+                    <span className="text-sm font-medium hidden sm:block">
+                      {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
+                        user?.email ||
+                        'Пользователь'}
+                    </span>
                   </Link>
 
                   <button
@@ -209,18 +214,34 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               ))}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
-            <div className="flex items-center px-4">
-              <div className="ml-3">
-                <Link href="/profile" className="w-full text-left">
-                  <div className="text-base font-medium text-gray-800">
-                    {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
-                      user?.email ||
-                      'Пользователь'}
-                  </div>
-                  <div className="text-xs text-gray-500">{user?.email}</div>
-                </Link>
+            <Link
+              href="/profile"
+              className="flex items-center px-4 hover:bg-gray-50 transition-colors py-2"
+            >
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-10 w-10 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
               </div>
-            </div>
+              <div className="ml-3">
+                <div className="text-base font-medium text-gray-800">
+                  {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
+                    user?.email ||
+                    'Пользователь'}
+                </div>
+                <div className="text-xs text-gray-500">{user?.email}</div>
+              </div>
+            </Link>
             <div className="mt-3 space-y-1">
               <button
                 className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 w-full text-left"
