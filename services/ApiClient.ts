@@ -606,7 +606,16 @@ export class ApiClient {
             ? data
             : 'Проверьте введённые данные и попробуйте снова';
       } else if (status === 403) {
-        errorMessage = 'У вас нет прав для выполнения этого действия';
+        if (
+          typeof data === 'object' &&
+          data !== null &&
+          'message' in data &&
+          typeof data.message === 'string'
+        ) {
+          errorMessage = data.message;
+        } else {
+          errorMessage = 'У вас нет прав для выполнения этого действия';
+        }
       } else if (status === 404) {
         errorMessage = 'Запрашиваемый ресурс не найден';
       } else if (status === 500) {
