@@ -176,10 +176,6 @@ export default function LoginPage() {
               error={errors.password?.message}
               {...register('password', {
                 required: 'Пароль обязателен',
-                minLength: {
-                  value: 6,
-                  message: 'Пароль должен содержать минимум 6 символов',
-                },
               })}
             />
 

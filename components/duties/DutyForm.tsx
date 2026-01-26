@@ -128,7 +128,7 @@ export default function DutyForm({
           <div>
             <Input
               id="name"
-              label="Название обязанности *"
+              label="Название обязанности"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               placeholder="Название обязанности"
