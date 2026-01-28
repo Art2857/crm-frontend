@@ -202,6 +202,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 stroke="#E5E7EB"
               />
               <XAxis
+                xAxisId={0}
                 dataKey="date"
                 type="number"
                 domain={xDomain}
@@ -210,6 +211,14 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 tick={<CustomAxisTick />}
                 tickLine={false}
                 interval={0}
+              />
+              <XAxis
+                xAxisId={1}
+                dataKey="date"
+                type="number"
+                domain={xDomain}
+                ticks={ticks}
+                hide
               />
               <YAxis
                 stroke="#9CA3AF"
@@ -270,11 +279,11 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                   const hasViolation = chartData.some((d) => {
                     if (d.date < start || d.date >= end) return false;
 
-                    // Проверка Доход > Бюджет
+                    // Проверка Доход < Бюджет
                     if (
                       d.incomeValue &&
                       d.budget !== undefined &&
-                      d.incomeValue[1] > d.budget
+                      d.incomeValue[1] < d.budget
                     ) {
                       return true;
                     }
@@ -420,6 +429,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
               })}
 
               <Bar
+                xAxisId={0}
                 dataKey="incomeValue"
                 fill="#10B981"
                 shape={<CenteredBar />}
@@ -429,6 +439,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
               />
 
               <Bar
+                xAxisId={1}
                 dataKey="expenseValue"
                 fill="#EF4444"
                 shape={<CenteredBar />}

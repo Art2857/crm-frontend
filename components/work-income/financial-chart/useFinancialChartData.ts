@@ -200,6 +200,9 @@ export const useFinancialChartData = (
       (a, b) => a - b
     );
 
+    // Отслеживание текущего месяца для сброса накопления
+    let currentMonthKey = '';
+
     let currentIncomeAcc = 0;
     let currentExpenseAcc = 0;
 
@@ -217,6 +220,16 @@ export const useFinancialChartData = (
         let incomeItems: any[] = [];
         let expenseItems: any[] = [];
         let isoDate = eventData?.isoDate || new Date(t).toISOString();
+
+        const dateObj = new Date(t);
+        const monthKey = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
+
+        // Сброс аккумуляторов при смене месяца
+        if (monthKey !== currentMonthKey) {
+          currentMonthKey = monthKey;
+          currentIncomeAcc = 0;
+          currentExpenseAcc = 0;
+        }
 
         if (eventData) {
           // Обработка доходов

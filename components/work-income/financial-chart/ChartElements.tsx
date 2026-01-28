@@ -26,7 +26,7 @@ export const CenteredBar = (props: any) => {
   const { x, y, width, height, fill, ...rest } = props;
   return (
     <rect
-      x={x - 7.5}
+      x={x - 6.5}
       y={y}
       width={15}
       height={height}
