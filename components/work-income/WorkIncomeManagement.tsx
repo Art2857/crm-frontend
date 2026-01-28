@@ -281,7 +281,7 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
               <FinancialHistoryChart
                 incomes={incomes}
                 payments={payments}
-                workCurrency={'RUB'} // По дефолту или TODO: Получить из workData
+                workCurrency={workData?.currency || 'RUB'}
                 workReleaseDate={stats?.releaseDate}
                 totalWorkBudget={workData?.salary ? Number(workData.salary) : 0}
                 distributions={distributions}
