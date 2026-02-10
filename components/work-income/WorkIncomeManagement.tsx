@@ -10,7 +10,17 @@ import {
   DeleteWorkIncomeModal,
   WorkIncomeStats,
 } from './index';
-import { WorkIncome, CreateWorkIncomeRequest, UpdateWorkIncomeRequest } from '../../types/work-income';
+import {
+  WorkIncome,
+  CreateWorkIncomeRequest,
+  UpdateWorkIncomeRequest,
+} from '../../types/work-income';
+import FinancialHistoryChart from './financial-chart';
+import { fetchPaymentHistory } from '../../services/payment';
+import { Payment } from '../../types/payment';
+import { useWorkDetail } from '../../hooks/works/useWorkDetail';
+import { useWorkDuties } from '../../hooks/useWorkDuties';
+import { useAppSelector } from '../../store';
 
 interface WorkIncomeManagementProps {
   workId: string;
@@ -21,6 +31,14 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
   workId,
   canEdit = true,
 }) => {
+  const { user } = useAppSelector((state) => state.auth);
+  // Используем хуки для получения данных о работе и обязанностях
+  const { workData } = useWorkDetail(workId);
+  const { distributions } = useWorkDuties({
+    workId,
+    role: user?.role as any,
+  });
+
   const {
     incomes,
     stats,
@@ -42,6 +60,30 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
     autoLoad: true,
     autoLoadStats: true,
   });
+
+  const [viewMode, setViewMode] = useState<'analysis' | 'chart'>('analysis');
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(false);
+
+  // Загрузка платежей для графика всегда при входе в режим чарта
+  useEffect(() => {
+    if (viewMode === 'chart') {
+      const loadPayments = async () => {
+        setIsLoadingPayments(true);
+        try {
+          // Бэкенд имеет ограничение limit=100. Если нужно больше, потребуется пагинация.
+          // Пока ставим 100.
+          const history = await fetchPaymentHistory({ workId, limit: 100 });
+          setPayments(history.payments);
+        } catch (e) {
+          console.error('Failed to load payments for chart', e);
+        } finally {
+          setIsLoadingPayments(false);
+        }
+      };
+      loadPayments();
+    }
+  }, [viewMode, workId]);
 
   // Состояние модальных окон
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -121,19 +163,20 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
     }
   };
 
-
-
   return (
     <div className="space-y-6">
       {/* Уведомления - показываем только если нет открытых модальных окон */}
-      {(error || successMessage) && !isCreateModalOpen && !isEditModalOpen && !isDeleteModalOpen && (
-        <Notification
-          successMessage={successMessage || ''}
-          errorMessage={error || ''}
-          onClearSuccess={clearMessages}
-          onClearError={clearMessages}
-        />
-      )}
+      {(error || successMessage) &&
+        !isCreateModalOpen &&
+        !isEditModalOpen &&
+        !isDeleteModalOpen && (
+          <Notification
+            successMessage={successMessage || ''}
+            errorMessage={error || ''}
+            onClearSuccess={clearMessages}
+            onClearError={clearMessages}
+          />
+        )}
 
       {/* Заголовок и действия */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -146,8 +189,45 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
           </p>
         </div>
 
-        <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-          {canEdit && (
+        <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 items-start sm:items-center gap-2">
+          {/* Переключатель Вида */}
+          <div className="bg-gray-100 p-1 rounded-lg flex items-center">
+            <button
+              onClick={() => setViewMode('analysis')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                viewMode === 'analysis'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Анализ
+            </button>
+            <button
+              onClick={() => setViewMode('chart')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center ${
+                viewMode === 'chart'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <svg
+                className="w-4 h-4 mr-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                />
+              </svg>
+              График
+            </button>
+          </div>
+
+          {canEdit && viewMode === 'analysis' && (
             <>
               <Button
                 onClick={handleCreateClick}
@@ -175,17 +255,49 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
         </div>
       </div>
 
-      {/* Статистика */}
-      <WorkIncomeStats stats={stats} isLoading={isLoading} />
+      {viewMode === 'analysis' ? (
+        <>
+          {/* Статистика */}
+          <WorkIncomeStats stats={stats} isLoading={isLoading} />
 
-      {/* Список доходов */}
-      <WorkIncomeList
-        incomes={incomes}
-        isLoading={isLoading}
-        onEdit={canEdit ? handleEditClick : undefined}
-        onDelete={canEdit ? handleDeleteClick : undefined}
-        showActions={canEdit}
-      />
+          {/* Список доходов */}
+          <WorkIncomeList
+            incomes={incomes}
+            isLoading={isLoading}
+            onEdit={canEdit ? handleEditClick : undefined}
+            onDelete={canEdit ? handleDeleteClick : undefined}
+            showActions={canEdit}
+          />
+        </>
+      ) : (
+        /* График */
+        <div className="animate-fade-in">
+          {isLoadingPayments ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <FinancialHistoryChart
+                incomes={incomes}
+                payments={payments}
+                workCurrency={workData?.currency || 'RUB'}
+                workReleaseDate={stats?.releaseDate}
+                totalWorkBudget={workData?.salary ? Number(workData.salary) : 0}
+                distributions={distributions}
+              />
+              {/* Список доходов под графиком */}
+              <WorkIncomeList
+                incomes={incomes}
+                isLoading={isLoading}
+                onEdit={canEdit ? handleEditClick : undefined}
+                onDelete={canEdit ? handleDeleteClick : undefined}
+                showActions={canEdit}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Модальные окна */}
       <WorkIncomeModal
