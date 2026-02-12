@@ -363,8 +363,6 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 dot={false}
                 activeDot={{ r: 4, fill: 'rgba(5, 150, 105, 0.7)' }}
                 strokeWidth={1}
-                onMouseEnter={() => setHoveredType('budget')}
-                onMouseLeave={() => setHoveredType(null)}
               />
 
               <ReferenceLine
@@ -436,8 +434,6 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 activeDot={{
                   r: 4,
                 }}
-                onMouseEnter={() => setHoveredType('planned')}
-                onMouseLeave={() => setHoveredType(null)}
               />
 
               {monthSeparators.map((ts) => {
