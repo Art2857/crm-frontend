@@ -42,6 +42,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
   const [hoveredType, setHoveredType] = useState<
     'income' | 'expense' | 'planned' | 'budget' | null
   >(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { chartData, totalIncome } = useFinancialChartData(
     incomes,
@@ -153,6 +154,9 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
 
     return () => {
       container.removeEventListener('wheel', handleWheel);
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -271,9 +275,18 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                   (a, b) => a - b
                 );
 
+                const currentDate = new Date();
+                currentDate.setHours(12, 0, 0, 0);
+                const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                currentMonthStart.setHours(12, 0, 0, 0);
+                const currentMonthTs = currentMonthStart.getTime();
+
                 for (let i = 0; i < sortedSeparators.length - 1; i++) {
                   const start = sortedSeparators[i];
                   const end = sortedSeparators[i + 1];
+
+                  // Проверка, является ли это текущим или будущим месяцем
+                  const isCurrentOrFutureMonth = start >= currentMonthTs;
 
                   // Проверка, нарушает ли какая-либо точка данных в этом диапазоне лимиты
                   const hasViolation = chartData.some((d) => {
@@ -302,7 +315,12 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                     return false;
                   });
 
-                  if (hasViolation) {
+                  // Проверка на отсутствие поступлений в месяце (кроме текущего и будущих)
+                  const hasNoIncome = !isCurrentOrFutureMonth && !chartData.some((d) => {
+                    return d.date >= start && d.date < end && d.incomeValue && d.incomeValue[1] > d.incomeValue[0];
+                  });
+
+                  if (hasViolation || hasNoIncome) {
                     zones.push(
                       <ReferenceArea
                         key={`alert-${start}`}
@@ -316,6 +334,27 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 return zones;
               })()}
 
+              {/* Невидимая линия бюджета для увеличенной области ховера */}
+              <Line
+                type="monotone"
+                dataKey="budget"
+                stroke="transparent"
+                dot={false}
+                strokeWidth={6}
+                onMouseEnter={() => {
+                  if (hoverTimeoutRef.current) {
+                    clearTimeout(hoverTimeoutRef.current);
+                  }
+                  setHoveredType('budget');
+                }}
+                onMouseLeave={() => {
+                  hoverTimeoutRef.current = setTimeout(() => {
+                    setHoveredType(null);
+                  }, 100);
+                }}
+              />
+              
+              {/* Видимая линия бюджета */}
               <Line
                 type="monotone"
                 dataKey="budget"
@@ -324,8 +363,6 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 dot={false}
                 activeDot={{ r: 4, fill: 'rgba(5, 150, 105, 0.7)' }}
                 strokeWidth={1}
-                onMouseEnter={() => setHoveredType('budget')}
-                onMouseLeave={() => setHoveredType(null)}
               />
 
               <ReferenceLine
@@ -345,6 +382,9 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                   (d) => d.plannedExpense !== null
                 );
                 if (firstPlannedPoint) {
+                  // Проверяем, является ли первая точка нулевой
+                  const isFirstPointZero = firstPlannedPoint.plannedExpense === 0;
+                  
                   return (
                     <ReferenceDot
                       x={firstPlannedPoint.date}
@@ -352,9 +392,10 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                       r={0}
                       label={{
                         value: 'Выплаты',
-                        position: 'left',
+                        position: isFirstPointZero ? 'bottom' : 'left',
                         fill: '#FCA5A5',
                         fontSize: 12,
+                        dy: isFirstPointZero ? 15 : 0,
                       }}
                     />
                   );
@@ -362,6 +403,27 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 return null;
               })()}
 
+              {/* Невидимая линия планируемых выплат для увеличенной области ховера */}
+              <Line
+                type="stepAfter"
+                dataKey="plannedExpense"
+                stroke="transparent"
+                dot={false}
+                strokeWidth={6}
+                onMouseEnter={() => {
+                  if (hoverTimeoutRef.current) {
+                    clearTimeout(hoverTimeoutRef.current);
+                  }
+                  setHoveredType('planned');
+                }}
+                onMouseLeave={() => {
+                  hoverTimeoutRef.current = setTimeout(() => {
+                    setHoveredType(null);
+                  }, 100);
+                }}
+              />
+              
+              {/* Видимая линия планируемых выплат */}
               <Line
                 type="stepAfter"
                 dataKey="plannedExpense"
@@ -372,8 +434,6 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 activeDot={{
                   r: 4,
                 }}
-                onMouseEnter={() => setHoveredType('planned')}
-                onMouseLeave={() => setHoveredType(null)}
               />
 
               {monthSeparators.map((ts) => {
@@ -434,8 +494,17 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 fill="#10B981"
                 shape={<CenteredBar />}
                 isAnimationActive={false}
-                onMouseEnter={() => setHoveredType('income')}
-                onMouseLeave={() => setHoveredType(null)}
+                onMouseEnter={() => {
+                  if (hoverTimeoutRef.current) {
+                    clearTimeout(hoverTimeoutRef.current);
+                  }
+                  setHoveredType('income');
+                }}
+                onMouseLeave={() => {
+                  hoverTimeoutRef.current = setTimeout(() => {
+                    setHoveredType(null);
+                  }, 100);
+                }}
               />
 
               <Bar
@@ -444,8 +513,17 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 fill="#EF4444"
                 shape={<CenteredBar />}
                 isAnimationActive={false}
-                onMouseEnter={() => setHoveredType('expense')}
-                onMouseLeave={() => setHoveredType(null)}
+                onMouseEnter={() => {
+                  if (hoverTimeoutRef.current) {
+                    clearTimeout(hoverTimeoutRef.current);
+                  }
+                  setHoveredType('expense');
+                }}
+                onMouseLeave={() => {
+                  hoverTimeoutRef.current = setTimeout(() => {
+                    setHoveredType(null);
+                  }, 100);
+                }}
               />
 
             </ComposedChart>
