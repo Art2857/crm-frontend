@@ -9,6 +9,10 @@ import UsersFiltersBar from '../../../components/users/UsersFiltersBar';
 import Link from 'next/link';
 import { User, Role } from '../../../types/user';
 import { fetchAllUsers } from '../../../store/slices/users';
+import { useConfirmation } from '../../../hooks/useConfirmation';
+import { privateApi } from '../../../services/ApiClient';
+import { useNotification } from '../../../contexts/NotificationContext';
+import { ArchiveRestore } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -41,6 +45,71 @@ export default function AdminUsersPage() {
   );
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const notification = useNotification();
+
+  const buildFetchParams = () =>
+    ({
+      role: user.role,
+      archivingStatus: showArchived ? 'archived' : 'actual',
+      search: search || undefined,
+      roleFilter: roleFilter || undefined,
+      orderBy: sort.startsWith('salaryDay')
+        ? 'salaryDay'
+        : sort.startsWith('createdAt')
+          ? 'createdAt'
+          : 'name',
+      orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
+    } as any);
+
+  const extractErrorMessage = async (error: any): Promise<string> => {
+    const errorPayload = error instanceof Promise ? await error : error;
+    if (errorPayload?.originalData?.message) {
+      return errorPayload.originalData.message;
+    }
+    if (errorPayload?.response?.data?.message) {
+      return errorPayload.response.data.message;
+    }
+    if (errorPayload?.message) {
+      return errorPayload.message;
+    }
+    return '';
+  };
+
+  const archiveConfirm = useConfirmation<string>(async (id: string) => {
+    try {
+      await privateApi.patch(`/users/${id}/archive`);
+      notification.showSuccess('Пользователь успешно архивирован');
+      if (user) {
+        await dispatch(fetchAllUsers(buildFetchParams()));
+      }
+    } catch (error: any) {
+      const errorMessage = await extractErrorMessage(error);
+      if (errorMessage) notification.showError(errorMessage, 10000);
+      else
+        notification.showError(
+          'Произошла ошибка при архивировании пользователя',
+          10000
+        );
+    }
+  });
+
+  const restoreConfirm = useConfirmation<string>(async (id: string) => {
+    try {
+      await privateApi.patch(`/users/${id}/restore`);
+      notification.showSuccess('Пользователь восстановлен из архива');
+      if (user) {
+        await dispatch(fetchAllUsers(buildFetchParams()));
+      }
+    } catch (error: any) {
+      const errorMessage = await extractErrorMessage(error);
+      if (errorMessage) notification.showError(errorMessage, 10000);
+      else
+        notification.showError(
+          'Не удалось восстановить пользователя',
+          10000
+        );
+    }
+  });
 
   useEffect(() => {
     // Проверка аутентификации и прав администратора
@@ -55,40 +124,14 @@ export default function AdminUsersPage() {
     }
 
     // Загрузка данных о пользователях с фильтрами по умолчанию
-    dispatch(
-      fetchAllUsers({
-        role: user.role,
-        archivingStatus: showArchived ? 'archived' : 'actual',
-        search: search || undefined,
-        roleFilter: roleFilter || undefined,
-        orderBy: sort.startsWith('salaryDay')
-          ? 'salaryDay'
-          : sort.startsWith('createdAt')
-            ? 'createdAt'
-            : 'name',
-        orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
-      } as any)
-    );
+    dispatch(fetchAllUsers(buildFetchParams()));
   }, [isAuthenticated, router, user, dispatch]);
 
   // Запрашиваем при изменении фильтров (с дебаунсом для поля поиска)
   useEffect(() => {
     if (!user || !isAuthenticated) return;
     const timer = setTimeout(() => {
-      dispatch(
-        fetchAllUsers({
-          role: user.role,
-          archivingStatus: showArchived ? 'archived' : 'actual',
-          search: search || undefined,
-          roleFilter: roleFilter || undefined,
-          orderBy: sort.startsWith('salaryDay')
-            ? 'salaryDay'
-            : sort.startsWith('createdAt')
-              ? 'createdAt'
-              : 'name',
-          orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
-        } as any)
-      );
+      dispatch(fetchAllUsers(buildFetchParams()));
     }, 300);
     return () => clearTimeout(timer);
   }, [showArchived, search, roleFilter, sort, user, isAuthenticated, dispatch]);
@@ -297,6 +340,56 @@ export default function AdminUsersPage() {
                                   />
                                 </svg>
                               </Link>
+                              {userItem?.isArchived ? (
+                                <button
+                                  type="button"
+                                  className="text-green-600 hover:text-green-800 p-1.5 rounded-full hover:bg-green-50 transition-colors"
+                                  title="Восстановить"
+                                  onClick={() =>
+                                    restoreConfirm.confirmAndExecute(
+                                      userItem.id,
+                                      'Восстановить пользователя из архива?',
+                                      {
+                                        confirmText: 'Восстановить',
+                                        variant: 'primary',
+                                      }
+                                    )
+                                  }
+                                >
+                                  <ArchiveRestore className="w-5 h-5" />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="text-red-600 hover:text-red-800 p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                                  title="Архивировать"
+                                  onClick={() =>
+                                    archiveConfirm.confirmAndExecute(
+                                      userItem.id,
+                                      'Архивировать пользователя? Он будет скрыт из активных списков. Продолжить?',
+                                      {
+                                        confirmText: 'Архивировать',
+                                        variant: 'danger',
+                                      }
+                                    )
+                                  }
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={1.5}
+                                    stroke="currentColor"
+                                    className="w-5 h-5"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M12 10.5v6m0 0L8.25 12.75M12 16.5l3.75-3.75M4.5 6.75h15a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-15A2.25 2.25 0 0 1 2.25 18V9A2.25 2.25 0 0 1 4.5 6.75ZM6 6.75V4.5A2.25 2.25 0 0 1 8.25 2.25h7.5A2.25 2.25 0 0 1 18 4.5v2.25"
+                                    />
+                                  </svg>
+                                </button>
+                              )}
                             </div>
                           )}
                         </td>
