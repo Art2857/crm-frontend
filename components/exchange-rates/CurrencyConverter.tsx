@@ -225,7 +225,7 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
                     let date: Date;
 
                     // Если дата в формате DD.MM.YYYY - конвертируем
-                    if (dateStr.includes('.')) {
+                    if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
                       const [day, month, year] = dateStr.split('.');
                       date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                     } else {
