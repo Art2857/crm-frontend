@@ -17,7 +17,8 @@ import { authService } from '../../services/auth';
 import accountNavigation from '../../utils/accountNavigation';
 
 type RegisterFormData = {
-  email: string;
+  login: string;
+  email?: string;
   password: string;
   firstName: string;
   lastName: string;
@@ -166,14 +167,38 @@ export default function RegisterPage() {
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <Input
+              id="login"
+              label="Логин"
+              type="text"
+              fullWidth
+              autoComplete="username"
+              error={errors.login?.message}
+              {...register('login', {
+                required: 'Логин обязателен',
+                minLength: {
+                  value: 3,
+                  message: 'Логин должен содержать минимум 3 символа',
+                },
+                maxLength: {
+                  value: 50,
+                  message: 'Логин не должен превышать 50 символов',
+                },
+                pattern: {
+                  value: /^[a-zA-Z0-9_.-]+$/,
+                  message:
+                    'Логин может содержать только латинские буквы, цифры и символы _.-',
+                },
+              })}
+            />
+
+            <Input
               id="email"
-              label="Email"
+              label="Email (необязательно)"
               type="email"
               fullWidth
               autoComplete="email"
               error={errors.email?.message}
               {...register('email', {
-                required: 'Email обязателен',
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: 'Некорректный email',

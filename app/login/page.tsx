@@ -13,7 +13,7 @@ import { authService } from '../../services/auth';
 import accountNavigation from '../../utils/accountNavigation';
 
 type LoginFormData = {
-  email: string;
+  login: string;
   password: string;
 };
 
@@ -152,17 +152,22 @@ export default function LoginPage() {
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <Input
-              id="email"
-              label="Email"
-              type="email"
+              id="login"
+              label="Логин"
+              type="text"
               fullWidth
-              autoComplete="email"
-              error={errors.email?.message}
-              {...register('email', {
-                required: 'Email обязателен',
+              autoComplete="username"
+              error={errors.login?.message}
+              {...register('login', {
+                required: 'Логин обязателен',
+                minLength: {
+                  value: 3,
+                  message: 'Логин должен содержать минимум 3 символа',
+                },
                 pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Некорректный email',
+                  value: /^[a-zA-Z0-9_.-]+$/,
+                  message:
+                    'Логин может содержать только латинские буквы, цифры и символы _.-',
                 },
               })}
             />

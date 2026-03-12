@@ -50,6 +50,7 @@ type UpdateProfileFormData = {
 };
 
 type UpdateSensitiveFormData = {
+  login?: string;
   email?: string;
   role?: string;
   salaryDay?: string;
@@ -174,16 +175,25 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     validateForm: validateSensitiveForm,
   } = useForm<UpdateSensitiveFormData>(
     {
+      login: '',
       email: '',
       role: '',
       salaryDay: '',
       characteristics: '',
     },
     {
-      email: {
+      login: {
         required: true,
+        pattern: /^[a-zA-Z0-9_.-]+$/,
+        validate: (value) =>
+          /^[a-zA-Z0-9_.-]+$/.test(value) ||
+          'Логин может содержать только латинские буквы, цифры и символы _.-',
+      },
+      email: {
+        required: false,
         pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
         validate: (value) =>
+          !value ||
           /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) ||
           'Введите корректный email',
       },
@@ -288,6 +298,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       );
 
       // Заполнение формы чувствительных данных
+      setSensitiveValue('login', currentUser.login);
       setSensitiveValue('email', currentUser.email);
       setSensitiveValue('role', currentUser.role);
       setSensitiveValue(
@@ -333,6 +344,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         }
       } else {
         // Перезаполняем форму конфиденциальных данных исходными данными
+        setSensitiveValue('login', currentUser.login);
         setSensitiveValue('email', currentUser.email);
         setSensitiveValue('role', currentUser.role);
         setSensitiveValue(
@@ -419,6 +431,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
         // После успешного обновления базовой информации сбрасываем форму конфиденциальных данных
         if (currentUser) {
+          setSensitiveValue('login', currentUser.login);
           setSensitiveValue('email', currentUser.email);
           setSensitiveValue('role', currentUser.role);
           setSensitiveValue(
@@ -753,6 +766,17 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
               onSubmit={handleSubmitSensitive(onSensitiveSubmit)}
               className="space-y-6"
             >
+              <Input
+                id="login"
+                name="login"
+                label="Логин"
+                type="text"
+                fullWidth
+                value={sensitiveValues.login}
+                onChange={handleSensitiveChange}
+                error={sensitiveErrors.login}
+              />
+
               <Input
                 id="email"
                 name="email"

@@ -157,7 +157,7 @@ export default function AccountsPage() {
                       <p className="font-medium">
                         {account.user.firstName || account.user.lastName
                           ? `${account.user.firstName || ''} ${account.user.lastName || ''}`.trim()
-                          : account.user.email.split('@')[0]}
+                          : account.user.login}
                         {account.id === user.id && (
                           <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             Текущий
@@ -165,7 +165,7 @@ export default function AccountsPage() {
                         )}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {account.user.email}
+                        {account.user.email || 'Email не указан'}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
                         Последний вход:{' '}

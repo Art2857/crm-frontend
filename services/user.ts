@@ -13,7 +13,8 @@ import { logger } from '../utils/logger';
 
 // Интерфейс для создания пользователя
 interface CreateUserDto {
-  email: string;
+  login: string;
+  email?: string;
   password: string;
   firstName?: string;
   lastName?: string;
