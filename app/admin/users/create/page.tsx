@@ -8,6 +8,7 @@ import Card from '../../../../components/ui/Card';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
 import Select from '../../../../components/ui/Select';
+import Tooltip from '../../../../components/ui/Tooltip';
 import { Role } from '../../../../types/user';
 import { createUser } from '../../../../store/slices/users';
 
@@ -330,8 +331,8 @@ export default function CreateUserPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      <div className="px-4 py-6 sm:px-0">
+    <div className="max-w-7xl mx-auto pt-2 pb-6 sm:px-6 lg:px-8">
+      <div className="px-4 pt-0 pb-6 sm:px-0">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">
             Создание пользователя
@@ -346,9 +347,15 @@ export default function CreateUserPage() {
         </div>
 
         <Card>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2" autoComplete="off">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
+          <form onSubmit={handleSubmit(onSubmit)} className="pt-2 pb-4 px-4 md:pt-3 md:pb-6 md:px-6 space-y-4" autoComplete="off">
+            {/* Раздел 1: Данные аккаунта */}
+            <div className="space-y-3">
+              <h2 className="text-base font-bold text-gray-900 pb-1 border-b border-gray-200 flex items-center">
+                <span className="w-1 h-3.5 bg-primary-600 mr-2 rounded-full"></span>
+                Данные аккаунта
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Input
                   id="login"
                   name="login"
@@ -362,6 +369,7 @@ export default function CreateUserPage() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   error={errors.login}
+                  className="mb-0"
                 />
 
                 <Input
@@ -370,41 +378,95 @@ export default function CreateUserPage() {
                   label="Email"
                   type="email"
                   fullWidth
-				  placeholder="email@example.com"
+                  placeholder="email@example.com"
                   value={values.email}
                   onChange={handleChange}
                   error={errors.email}
+                  className="mb-0"
                 />
 
-                <div className="mb-4">
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                <Select
+                  id="role"
+                  name="role"
+                  label="Роль"
+                  required
+                  options={roleOptions}
+                  fullWidth
+                  value={values.role}
+                  onChange={handleChange}
+                  error={errors.role as string}
+                  className="mb-0"
+                />
+
+                <Select
+                  id="salaryDay"
+                  name="salaryDay"
+                  label="День выплаты зарплаты"
+                  required
+                  options={salaryDayOptions}
+                  fullWidth
+                  value={values.salaryDay}
+                  onChange={handleChange}
+                  error={errors.salaryDay}
+                  className="mb-0"
+                />
+              </div>
+
+              <div className="text-sm">
+                <div className="flex items-center mb-1">
+                  <Tooltip
+                    delay={1000}
+                    className="bg-gray-700 !max-w-md w-max"
+                    content={
+                      <div className="p-1.5 space-y-1">
+                        <p className="font-bold border-b border-gray-600 pb-1 mb-1 text-[11px]">Требования к паролю:</p>
+                        <ul className="list-disc list-inside text-[10px] space-y-0.5 text-gray-200">
+                          <li>Минимум 8 символов</li>
+                          <li>Заглавные буквы (A-Z)</li>
+                          <li>Строчные буквы (a-z)</li>
+                          <li>Цифры (0-9)</li>
+                          <li>Спец. символы (@$!%*?&)</li>
+                        </ul>
+                      </div>
+                    }
                   >
-                    Пароль
-                    <span aria-hidden="true" className="text-red-500 ml-1">*</span>
-                  </label>
-                  <div className="flex space-x-2 items-start">
-                    <div className="relative flex-grow">
-                      <Input
-                        id="password"
-                        name="password"
-                        required
-                        type={isPasswordVisible ? 'text' : 'password'}
-                        fullWidth
-                        autoComplete="new-password"
-						placeholder="password_example"
-                        value={values.password}
-                        onChange={handleChange}
-                        error={errors.password}
-                      />
+                    <div className="flex items-center cursor-help">
+                      <label
+                        htmlFor="password"
+                        className="font-medium text-gray-700"
+                      >
+                        Пароль
+                        <span aria-hidden="true" className="text-red-500 ml-1">*</span>
+                      </label>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
                     </div>
+                  </Tooltip>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 items-start">
+                  <div className="relative flex-grow w-full">
+                    <Input
+                      id="password"
+                      name="password"
+                      required
+                      type={isPasswordVisible ? 'text' : 'password'}
+                      fullWidth
+                      autoComplete="new-password"
+                      placeholder="Минимум 8 знаков"
+                      value={values.password}
+                      onChange={handleChange}
+                      error={errors.password}
+                      className="mb-0"
+                    />
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       type="button"
                       variant="secondary"
                       size="sm"
                       onClick={togglePasswordVisibility}
-                      className="h-[46px]"
+                      className="whitespace-nowrap h-[38px] px-3 text-xs"
                     >
                       {isPasswordVisible ? 'Скрыть' : 'Показать'}
                     </Button>
@@ -413,160 +475,104 @@ export default function CreateUserPage() {
                       variant="secondary"
                       size="sm"
                       onClick={generateRandomPassword}
-                      className="h-[46px]"
+                      className="whitespace-nowrap h-[38px] px-3 text-xs"
                     >
-                      Сгенерировать
+                      Генерация
                     </Button>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    <p>Пароль должен содержать минимум 8 символов, включая:</p>
-                    <ul className="list-disc pl-5 mt-1">
-                      <li>Заглавные буквы (A-Z)</li>
-                      <li>Строчные буквы (a-z)</li>
-                      <li>Цифры (0-9)</li>
-                      <li>Специальные символы (@$!%*?&)</li>
-                    </ul>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div>
+            {/* Раздел 2: Персональные данные */}
+            <div className="space-y-3">
+              <h2 className="text-base font-bold text-gray-900 pb-1 border-b border-gray-200 flex items-center">
+                <span className="w-1 h-3.5 bg-blue-500 mr-2 rounded-full"></span>
+                Персональные данные
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  label="Фамилия"
+                  required
+                  fullWidth
+                  placeholder="Иванов"
+                  value={values.lastName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.lastName}
+                  className="mb-0"
+                />
+
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  label="Имя"
+                  required
+                  fullWidth
+                  placeholder="Иван"
+                  value={values.firstName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.firstName}
+                  className="mb-0"
+                />
+
                 <Input
                   id="middleName"
                   name="middleName"
                   label="Отчество"
                   fullWidth
-				  placeholder="Иванович"
+                  placeholder="Иванович"
                   value={values.middleName}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   error={errors.middleName}
+                  className="mb-0"
                 />
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Input
                   id="birthday"
                   name="birthday"
-                  label="Дата рождения (необязательно)"
+                  label="Дата рождения"
                   type="date"
                   fullWidth
                   value={values.birthday}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   error={errors.birthday}
-                />
-
-                <Select
-                  id="role"
-                  name="role"
-                  label="Роль пользователя"
-                  options={roleOptions}
-                  fullWidth
-                  value={values.role}
-                  onChange={handleChange}
-                  error={errors.role as string}
+                  className="mb-0"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                id="firstName"
-                name="firstName"
-                label="Имя"
-                required
-                fullWidth
-				placeholder="Иван"
-                value={values.firstName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={errors.firstName}
-              />
-
-              <Input
-                id="lastName"
-                name="lastName"
-                label="Фамилия"
-                required
-                fullWidth
-				placeholder="Иванов"
-                value={values.lastName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={errors.lastName}
-              />
-            </div>
-
-            <div>
-              <Select
-                id="salaryDay"
-                name="salaryDay"
-                label="День выплаты зарплаты"
-                required
-                options={salaryDayOptions}
-                fullWidth
-                value={values.salaryDay}
-                onChange={handleChange}
-                error={errors.salaryDay}
-              />
-            </div>
-
-            {serverError && (
-              <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-red-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm leading-5 font-medium text-red-800">
-                      Ошибка при создании пользователя
-                    </h3>
-                    <div className="mt-1 text-sm leading-5 text-red-700">
-                      {serverError}
-                    </div>
-                  </div>
+            {/* Блок ошибок и успеха */}
+            <div className="pt-0 space-y-1">
+              {serverError && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-2 rounded-r">
+                  <p className="text-xs text-red-800">{serverError}</p>
                 </div>
-              </div>
-            )}
+              )}
 
-            {success && (
-              <div className="bg-green-50 border-l-4 border-green-400 p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-green-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-sm leading-5 text-green-700">
-                      {success}
-                    </div>
-                  </div>
+              {success && (
+                <div className="bg-green-50 border-l-4 border-green-500 p-2 rounded-r">
+                  <p className="text-xs text-green-800">{success}</p>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="flex justify-end mt-6">
-              <Button type="submit" isLoading={isLoading}>
-                Создать пользователя
-              </Button>
+              <div className="flex justify-end">
+                <Button 
+                  type="submit" 
+                  isLoading={isLoading}
+                  className="px-6 py-2 text-sm shadow-sm"
+                >
+                  Создать пользователя
+                </Button>
+              </div>
             </div>
           </form>
         </Card>
