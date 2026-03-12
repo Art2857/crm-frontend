@@ -9,7 +9,7 @@ import { setCredentials } from '../store/slices/auth';
 import { User } from '../types/user';
 
 interface ReAuthContextValue {
-  showReAuthPopup: (email: string, accountId: string) => Promise<boolean>;
+  showReAuthPopup: (login: string, accountId: string) => Promise<boolean>;
   closeReAuthPopup: () => void;
 }
 
@@ -25,7 +25,7 @@ export const useReAuth = () => {
 
 interface ReAuthState {
   isOpen: boolean;
-  email: string;
+  login: string;
   accountId: string;
   resolve?: (success: boolean) => void;
 }
@@ -34,15 +34,15 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const dispatch = useAppDispatch();
   const [reAuthState, setReAuthState] = useState<ReAuthState>({
     isOpen: false,
-    email: '',
+    login: '',
     accountId: '',
   });
 
   // Listen for refreshTokenExpired events
   useEffect(() => {
     const handleRefreshTokenExpired = (event: CustomEvent) => {
-      const { email, accountId } = event.detail;
-      showReAuthPopup(email, accountId);
+      const { login, accountId } = event.detail;
+      showReAuthPopup(login, accountId);
     };
 
     if (typeof window !== 'undefined') {
@@ -54,11 +54,11 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, []);
 
-  const showReAuthPopup = useCallback((email: string, accountId: string): Promise<boolean> => {
+  const showReAuthPopup = useCallback((login: string, accountId: string): Promise<boolean> => {
     return new Promise((resolve) => {
       setReAuthState({
         isOpen: true,
-        email,
+        login,
         accountId,
         resolve,
       });
@@ -71,7 +71,7 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     setReAuthState({
       isOpen: false,
-      email: '',
+      login: '',
       accountId: '',
     });
   }, [reAuthState.resolve]);
@@ -114,7 +114,7 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       setReAuthState({
         isOpen: false,
-        email: '',
+        login: '',
         accountId: '',
       });
     },
@@ -131,7 +131,7 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       {children}
       <ReAuthPopup
         isOpen={reAuthState.isOpen}
-        email={reAuthState.email}
+        login={reAuthState.login}
         accountId={reAuthState.accountId}
         onSuccess={handleSuccess}
         onCancel={closeReAuthPopup}

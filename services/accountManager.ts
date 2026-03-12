@@ -36,12 +36,16 @@ export const accountManagerService = {
       return accounts.map((account: SavedAccount) => {
         if (!account || !account.user) return null;
 
-        if (!account.refreshToken || !account.accessTokenExpiresAt || !account.refreshTokenExpiresAt) {
+        if (!account.refreshToken || !account.accessTokenExpiresAt || !account.refreshTokenExpiresAt || !account.user.login) {
           return {
             ...account,
+            user: {
+              ...account.user,
+              login: account.user.login || account.user.email || account.id,
+            },
             refreshToken: account.refreshToken || '',
-            accessTokenExpiresAt: new Date(0).toISOString(),
-            refreshTokenExpiresAt: new Date(0).toISOString(),
+            accessTokenExpiresAt: account.accessTokenExpiresAt || new Date(0).toISOString(),
+            refreshTokenExpiresAt: account.refreshTokenExpiresAt || new Date(0).toISOString(),
           };
         }
         return account;
@@ -68,9 +72,9 @@ export const accountManagerService = {
 
     const accounts = this.getSavedAccounts();
 
-    // Проверяем, существует ли уже аккаунт с таким email
+    // Проверяем, существует ли уже аккаунт с таким login
     const existingAccountIndex = accounts.findIndex(
-      (acc: SavedAccount) => acc?.user?.email === user.email
+      (acc: SavedAccount) => acc?.user?.login === user.login
     );
 
     const account: SavedAccount = {
@@ -173,7 +177,7 @@ export const accountManagerService = {
         if (typeof window !== 'undefined') {
           const event = new CustomEvent('refreshTokenExpired', {
             detail: {
-              email: account.user.email,
+              login: account.user.login,
               accountId: account.id
             },
           });
@@ -214,7 +218,7 @@ export const accountManagerService = {
           if (typeof window !== 'undefined') {
             const event = new CustomEvent('refreshTokenExpired', {
               detail: {
-                email: account.user.email,
+                login: account.user.login,
                 accountId: account.id
               },
             });

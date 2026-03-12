@@ -218,7 +218,7 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
                 onKeyDown={(e) => handleKeyDown(e, account.id)}
                 tabIndex={0}
                 role="button"
-                aria-label={`Переключиться на аккаунт ${account.user.firstName} ${account.user.lastName}`}
+                aria-label={`Переключиться на аккаунт ${account.user.firstName || ''} ${account.user.lastName || ''} (${account.user.login})`.trim()}
                 className={`flex items-center justify-between px-4 py-2 hover:bg-gray-50 cursor-pointer ${
                   account.id === currentUserId ? 'bg-primary-50' : ''
                 }`}
@@ -227,10 +227,10 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
                   <span className="text-sm font-medium text-gray-800">
                     {account.user.firstName || account.user.lastName
                       ? `${account.user.firstName || ''} ${account.user.lastName || ''}`.trim()
-                      : account.user.email.split('@')[0]}
+                      : account.user.login}
                   </span>
                   <span className="text-xs text-gray-500">
-                    {account.user.email}
+                    {account.user.email || 'Email не указан'}
                   </span>
                 </div>
                 {account.id !== currentUserId && (

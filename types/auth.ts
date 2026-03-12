@@ -1,12 +1,13 @@
 import { User } from './user';
 
 export interface LoginDto {
-  email: string;
+  login: string;
   password: string;
 }
 
 export interface RegisterDto {
-  email: string;
+  login: string;
+  email?: string;
   password: string;
   firstName?: string;
   lastName?: string;

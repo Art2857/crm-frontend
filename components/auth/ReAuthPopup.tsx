@@ -7,23 +7,35 @@ import { User } from '../../types/user';
 
 interface ReAuthPopupProps {
   isOpen: boolean;
-  email: string;
+  login: string;
   accountId: string;
-  onSuccess: (user: User, accessToken: string, refreshToken: string, accessTokenExpiresAt: string, refreshTokenExpiresAt: string) => void;
+  onSuccess: (
+    user: User,
+    accessToken: string,
+    refreshToken: string,
+    accessTokenExpiresAt: string,
+    refreshTokenExpiresAt: string
+  ) => void;
   onCancel: () => void;
 }
 
 export const ReAuthPopup: React.FC<ReAuthPopupProps> = ({
   isOpen,
-  email,
+  login,
   accountId,
   onSuccess,
   onCancel,
 }) => {
+  const [localLogin, setLocalLogin] = useState(login);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync with prop when it changes
+  useEffect(() => {
+    setLocalLogin(login);
+  }, [login]);
 
   // Focus password input when modal opens
   useEffect(() => {
@@ -47,6 +59,11 @@ export const ReAuthPopup: React.FC<ReAuthPopupProps> = ({
     e.preventDefault();
     setError('');
 
+    if (!localLogin) {
+      setError('Требуется логин');
+      return;
+    }
+
     if (!password) {
       setError('Требуется пароль');
       return;
@@ -56,13 +73,16 @@ export const ReAuthPopup: React.FC<ReAuthPopupProps> = ({
 
     try {
       // Call the login API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ login: localLogin, password }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -84,7 +104,11 @@ export const ReAuthPopup: React.FC<ReAuthPopupProps> = ({
       setPassword('');
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка аутентификации. Попробуйте еще раз.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Ошибка аутентификации. Попробуйте еще раз.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -116,12 +140,14 @@ export const ReAuthPopup: React.FC<ReAuthPopupProps> = ({
 
         <form onSubmit={handleSubmit}>
           <Input
-            label="Email"
-            type="email"
-            value={email}
-            disabled
+            label="Логин"
+            type="text"
+            value={localLogin}
+            onChange={(e) => setLocalLogin(e.target.value)}
+            disabled={isLoading}
             fullWidth
-            className="bg-gray-100 cursor-not-allowed"
+            placeholder="Введите ваш логин"
+            required
           />
 
           <Input

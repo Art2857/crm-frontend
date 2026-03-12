@@ -258,12 +258,12 @@ export const authService = {
 
 // Используем authApi для запросов авторизации вместо publicApi или privateApi
 export const loginUser = async (
-  email: string,
+  login: string,
   password: string
 ): Promise<AuthResponse> => {
   try {
     const response = await authApi.post<AuthResponse>(AUTH_ENDPOINTS.login, {
-      email,
+      login,
       password,
     });
     return response.data;

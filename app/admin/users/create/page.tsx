@@ -28,7 +28,8 @@ const roleOptions = [
 ];
 
 type CreateUserFormData = {
-  email: string;
+  login: string;
+  email?: string;
   password: string;
   firstName?: string;
   lastName?: string;
@@ -59,6 +60,7 @@ export default function CreateUserPage() {
     validateForm,
   } = useForm<CreateUserFormData>(
     {
+      login: '',
       email: '',
       password: '',
       firstName: '',
@@ -69,10 +71,18 @@ export default function CreateUserPage() {
       role: Role.WORKER,
     },
     {
-      email: {
+      login: {
         required: true,
+        pattern: /^[a-zA-Z0-9_.-]+$/,
+        validate: (value) =>
+          /^[a-zA-Z0-9_.-]+$/.test(value) ||
+          'Логин может содержать только латинские буквы, цифры и символы _.-',
+      },
+      email: {
+        required: false,
         pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
         validate: (value) =>
+          !value ||
           /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) ||
           'Введите корректный email',
       },
@@ -336,16 +346,31 @@ export default function CreateUserPage() {
         </div>
 
         <Card>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2" autoComplete="off">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
+                <Input
+                  id="login"
+                  name="login"
+                  label="Логин"
+                  required
+                  type="text"
+                  fullWidth
+                  placeholder="login_example"
+                  autoComplete="off"
+                  value={values.login}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.login}
+                />
+
                 <Input
                   id="email"
                   name="email"
                   label="Email"
-                  required
                   type="email"
                   fullWidth
+				  placeholder="email@example.com"
                   value={values.email}
                   onChange={handleChange}
                   error={errors.email}
@@ -367,6 +392,8 @@ export default function CreateUserPage() {
                         required
                         type={isPasswordVisible ? 'text' : 'password'}
                         fullWidth
+                        autoComplete="new-password"
+						placeholder="password_example"
                         value={values.password}
                         onChange={handleChange}
                         error={errors.password}
@@ -409,6 +436,7 @@ export default function CreateUserPage() {
                   name="middleName"
                   label="Отчество"
                   fullWidth
+				  placeholder="Иванович"
                   value={values.middleName}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -447,6 +475,7 @@ export default function CreateUserPage() {
                 label="Имя"
                 required
                 fullWidth
+				placeholder="Иван"
                 value={values.firstName}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -459,6 +488,7 @@ export default function CreateUserPage() {
                 label="Фамилия"
                 required
                 fullWidth
+				placeholder="Иванов"
                 value={values.lastName}
                 onChange={handleChange}
                 onBlur={handleBlur}
