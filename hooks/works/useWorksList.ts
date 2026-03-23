@@ -2,12 +2,17 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUsersMap } from '../shared/useUsersMap';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { fetchAllWorks, fetchUserWorks } from '../../store/slices/works';
+import {
+  fetchAllWorks,
+  fetchUserWorks,
+  fetchArchivedWorks,
+  archiveWork,
+  restoreWork,
+} from '../../store/slices/works';
 import { fetchAllUsers } from '../../store/slices/users';
 import { getCurrentUser } from '../../store/slices/auth';
 import { logger } from '../../utils/logger';
 import { Work } from '../../types/work';
-import { workService } from '../../services/work';
 import { useNotification } from '../../contexts/NotificationContext';
 
 export function useWorksList() {
@@ -19,7 +24,7 @@ export function useWorksList() {
     user,
     isLoading: authLoading,
   } = useAppSelector((state) => state.auth);
-  const { works, userWorks, isLoading, error } = useAppSelector(
+  const { works, userWorks, archivedWorks, isLoading, error } = useAppSelector(
     (state) => state.works
   );
   const { users } = useAppSelector((state) => state.users);
@@ -28,7 +33,6 @@ export function useWorksList() {
   const [viewType, setViewType] = useState<'all' | 'user'>('all');
   const [dataLoaded, setDataLoaded] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
-  const [archivedWorks, setArchivedWorks] = useState<Work[]>([]);
   const notification = useNotification();
 
   const usersMap = useUsersMap(users);
@@ -123,41 +127,27 @@ export function useWorksList() {
     const next = !showArchived;
     setShowArchived(next);
     if (next && archivedWorks.length === 0) {
-      try {
-        const list = await workService.getArchived();
-        setArchivedWorks(list);
-      } catch (e) {
-        notification.showError('Не удалось загрузить архивные работы');
-      }
+      dispatch(fetchArchivedWorks());
     }
-  }, [showArchived, archivedWorks.length, notification]);
+  }, [showArchived, archivedWorks.length, dispatch]);
 
   const handleArchive = useCallback(
     async (id: string) => {
       try {
-        await workService.archive(id);
+        await dispatch(archiveWork(id)).unwrap();
         notification.showSuccess('Работа отправлена в архив');
-        if (showArchived) {
-          const list = await workService.getArchived();
-          setArchivedWorks(list);
-        } else {
-          dispatch(fetchAllWorks());
-        }
       } catch (e) {
         notification.showError('Ошибка при архивировании работы');
       }
     },
-    [dispatch, showArchived, notification]
+    [dispatch, notification]
   );
 
   const handleRestore = useCallback(
     async (id: string) => {
       try {
-        await workService.restore(id);
+        await dispatch(restoreWork(id)).unwrap();
         notification.showSuccess('Работа восстановлена из архива');
-        const list = await workService.getArchived();
-        setArchivedWorks(list);
-        dispatch(fetchAllWorks());
       } catch (e) {
         notification.showError('Ошибка при восстановлении работы');
       }

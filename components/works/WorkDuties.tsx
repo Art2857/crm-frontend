@@ -32,12 +32,10 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   const usersMap = useUsersMap(users);
 
   // Получаем последнее распределение (самое актуальное)
+  // Всегда берём первое (самое свежее) - даже если оно пустое (обнулено при архивации)
   const latestDistribution = useMemo<DistributionWithDetails | undefined>(() => {
     if (!distributions || distributions.length === 0) return undefined;
-    const firstWithDetails = distributions.find(
-      (d) => Array.isArray(d.details) && d.details.length > 0
-    );
-    return firstWithDetails || distributions[0];
+    return distributions[0];
   }, [distributions]);
 
   // Фильтруем детали распределения по текущему пользователю, если нужно
@@ -91,8 +89,8 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
     );
   }
 
-  // Если показываем только для текущего пользователя и нет обязанностей для него
-  if (showOnlyCurrentUser && filteredDetails.length === 0) {
+  // Если нет обязанностей (пустое распределение или фильтр по пользователю)
+  if (filteredDetails.length === 0) {
     return (
       <Card>
         <div className="py-4">
@@ -125,7 +123,9 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
             )}
           </div>
           <p className="text-gray-500 italic">
-            У вас нет назначенных обязанностей по этой работе
+            {showOnlyCurrentUser
+              ? 'У вас нет назначенных обязанностей по этой работе'
+              : 'Нет назначенных обязанностей'}
           </p>
         </div>
       </Card>
