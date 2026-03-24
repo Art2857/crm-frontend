@@ -7,8 +7,6 @@ import { fetchAllDuties } from '../../store/slices/duties';
 import { useDataLoader } from '../useDataLoader';
 import { useWorkData } from '../useWorkData';
 import { useWorkDuties } from '../useWorkDuties';
-import { useBreadcrumbs } from '../useBreadcrumbs';
-import { Breadcrumb } from '../../types/breadcrumb';
 import { useNotification } from '../../contexts/NotificationContext';
 import { WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
@@ -91,40 +89,6 @@ export function useWorkDetail(id: string) {
     };
   }, [workData]);
 
-  const breadcrumbs = useMemo<Breadcrumb[]>(
-    () => [
-      {
-        id: 'dashboard',
-        title: 'Главная',
-        path: '/dashboard',
-        isActive: false,
-        isClickable: true,
-        icon: '🏠',
-      },
-      {
-        id: 'works',
-        title: 'Работы',
-        path: '/works',
-        isActive: false,
-        isClickable: true,
-        icon: '📋',
-      },
-      ...(workData
-        ? [
-            {
-              id: `work-${id}`,
-              title: workData.name || `Работа №${id}`,
-              path: `/works/${id}`,
-              isActive: true,
-              isClickable: false,
-              icon: '📄',
-            },
-          ]
-        : []),
-    ],
-    [workData, id]
-  );
-
   const workManagementHook = useWorkData({
     id,
     initialData: initialWorkData,
@@ -137,8 +101,6 @@ export function useWorkDetail(id: string) {
     workSalary: workData?.salary.toString(),
     role: user?.role as any, // Добавляем role parameter
   });
-
-  useBreadcrumbs(breadcrumbs);
 
   const handleArchiveWork = useCallback(async () => {
     try {

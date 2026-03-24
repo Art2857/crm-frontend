@@ -12,7 +12,7 @@ import { setCredentials, logout } from '../../store/slices/auth';
 import accountNavigation from '../../utils/accountNavigation';
 import { useModal } from '../../contexts/ModalContext';
 import { useNotification } from '../../contexts/NotificationContext';
-import { useBreadcrumbs } from '../../hooks/useBreadcrumbs';
+
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<SavedAccount[]>([]);
@@ -22,9 +22,6 @@ export default function AccountsPage() {
   const router = useRouter();
   const { confirm, alert } = useModal();
   const { showSuccess, showError, showInfo } = useNotification();
-
-  // Инициализируем хук хлебных крошек
-  useBreadcrumbs();
 
   useEffect(() => {
     if (!isAuthenticated) {
