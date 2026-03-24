@@ -24,8 +24,6 @@ export default function AdminUsersPage() {
   const [sort, setSort] = useState<
     | 'name_asc'
     | 'name_desc'
-    | 'salaryDay_asc'
-    | 'salaryDay_desc'
     | 'createdAt_asc'
     | 'createdAt_desc'
   >('name_asc');
@@ -53,9 +51,7 @@ export default function AdminUsersPage() {
       archivingStatus: showArchived ? 'archived' : 'actual',
       search: search || undefined,
       roleFilter: roleFilter || undefined,
-      orderBy: sort.startsWith('salaryDay')
-        ? 'salaryDay'
-        : sort.startsWith('createdAt')
+      orderBy: sort.startsWith('createdAt')
           ? 'createdAt'
           : 'name',
       orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
@@ -171,9 +167,9 @@ export default function AdminUsersPage() {
   };
 
   // Форматирование дня зарплаты
-  const formatSalaryDay = (salaryDay: number | null | undefined): string => {
-    if (salaryDay === null || salaryDay === undefined) return 'Не указан';
-    return `${salaryDay} число`;
+  const formatSalaryDays = (salaryDays: number[] | undefined): string => {
+    if (!salaryDays || salaryDays.length === 0) return 'Не указан';
+    return salaryDays.map((d) => `${d} число`).join(', ');
   };
 
   return (
@@ -243,7 +239,7 @@ export default function AdminUsersPage() {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6"
                   >
-                    День зарплаты
+                    Дни зарплаты
                   </th>
                   <th
                     scope="col"
@@ -295,7 +291,7 @@ export default function AdminUsersPage() {
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatSalaryDay(userItem?.salaryDay)}
+                          {formatSalaryDays(userItem?.salaryDays)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                           {userItem?.id && (

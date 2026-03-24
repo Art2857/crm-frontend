@@ -91,7 +91,7 @@ export default function UserCard({
                 <div className="flex items-center space-x-4 mt-2">
                   <div className="flex items-center space-x-1 text-sm text-gray-500">
                     <CalendarIcon className="h-4 w-4" />
-                    <span>Зарплата: {user.salaryDay} число</span>
+                    <span>Зарплата: {user.salaryDays.length > 0 ? user.salaryDays.map((d) => `${d}`).join(', ') + ' число' : 'Не указан'}</span>
                   </div>
                   <div className="flex items-center space-x-1 text-sm text-gray-500">
                     <BuildingOfficeIcon className="h-4 w-4" />

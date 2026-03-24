@@ -21,9 +21,9 @@ import { useConfirmation } from '../../../../hooks/useConfirmation';
 import { privateApi } from '../../../../services/ApiClient';
 import { useNotification } from '../../../../contexts/NotificationContext';
 
-// Опции для выбора дня зарплаты (1..28)
+// Опции для выбора дней зарплаты (1..28)
 const salaryDayOptions = [
-  { value: '', label: 'Выберите день зарплаты' },
+  { value: '', label: 'Не указано' },
   ...Array.from({ length: 28 }, (_, i) => ({
     value: String(i + 1),
     label: `${i + 1} число`,
@@ -53,7 +53,8 @@ type UpdateSensitiveFormData = {
   login?: string;
   email?: string;
   role?: string;
-  salaryDay?: string;
+  salaryDay1?: string;
+  salaryDay2?: string;
   characteristics?: string;
 };
 
@@ -178,7 +179,8 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       login: '',
       email: '',
       role: '',
-      salaryDay: '',
+      salaryDay1: '',
+      salaryDay2: '',
       characteristics: '',
     },
     {
@@ -200,10 +202,19 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       role: {
         required: true,
       },
-      salaryDay: {
+      salaryDay1: {
         pattern: /^([1-9]|1[0-9]|2[0-8])$/,
         validate: (value) =>
           value === '' ||
+          (/^([1-9]|1[0-9]|2[0-8])$/.test(value) &&
+            parseInt(value) >= 1 &&
+            parseInt(value) <= 28) ||
+          'День зарплаты должен быть числом от 1 до 28',
+      },
+      salaryDay2: {
+        required: false,
+        validate: (value) =>
+          !value ||
           (/^([1-9]|1[0-9]|2[0-8])$/.test(value) &&
             parseInt(value) >= 1 &&
             parseInt(value) <= 28) ||
@@ -302,8 +313,12 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       setSensitiveValue('email', currentUser.email);
       setSensitiveValue('role', currentUser.role);
       setSensitiveValue(
-        'salaryDay',
-        currentUser.salaryDay !== null ? String(currentUser.salaryDay) : ''
+        'salaryDay1',
+        currentUser.salaryDays?.[0] !== undefined ? String(currentUser.salaryDays[0]) : ''
+      );
+      setSensitiveValue(
+        'salaryDay2',
+        currentUser.salaryDays?.[1] !== undefined ? String(currentUser.salaryDays[1]) : ''
       );
       setSensitiveValue('characteristics', currentUser.characteristics || '');
     }
@@ -348,8 +363,12 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         setSensitiveValue('email', currentUser.email);
         setSensitiveValue('role', currentUser.role);
         setSensitiveValue(
-          'salaryDay',
-          currentUser.salaryDay !== null ? String(currentUser.salaryDay) : ''
+          'salaryDay1',
+          currentUser.salaryDays?.[0] !== undefined ? String(currentUser.salaryDays[0]) : ''
+        );
+        setSensitiveValue(
+          'salaryDay2',
+          currentUser.salaryDays?.[1] !== undefined ? String(currentUser.salaryDays[1]) : ''
         );
         setSensitiveValue('characteristics', currentUser.characteristics || '');
       }
@@ -435,8 +454,12 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           setSensitiveValue('email', currentUser.email);
           setSensitiveValue('role', currentUser.role);
           setSensitiveValue(
-            'salaryDay',
-            currentUser.salaryDay !== null ? String(currentUser.salaryDay) : ''
+            'salaryDay1',
+            currentUser.salaryDays?.[0] !== undefined ? String(currentUser.salaryDays[0]) : ''
+          );
+          setSensitiveValue(
+            'salaryDay2',
+            currentUser.salaryDays?.[1] !== undefined ? String(currentUser.salaryDays[1]) : ''
           );
           setSensitiveValue(
             'characteristics',
@@ -474,15 +497,17 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       // Создаем объект с обновленными данными
       const updatedData = { ...data } as any;
 
-      // Преобразуем salaryDay из строки в число, если оно указано
-      if (
-        updatedData.salaryDay !== undefined &&
-        updatedData.salaryDay.trim() !== ''
-      ) {
-        updatedData.salaryDay = parseInt(updatedData.salaryDay, 10);
-      } else {
-        updatedData.salaryDay = null;
+      // Собираем salaryDays из двух полей
+      const salaryDays: number[] = [];
+      if (updatedData.salaryDay1 && updatedData.salaryDay1.trim() !== '') {
+        salaryDays.push(parseInt(updatedData.salaryDay1, 10));
       }
+      if (updatedData.salaryDay2 && updatedData.salaryDay2.trim() !== '') {
+        salaryDays.push(parseInt(updatedData.salaryDay2, 10));
+      }
+      delete updatedData.salaryDay1;
+      delete updatedData.salaryDay2;
+      updatedData.salaryDays = salaryDays.length > 0 ? salaryDays : [];
 
       // Отправляем запрос на обновление чувствительных данных
       const resultAction = await dispatch(
@@ -808,16 +833,28 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 </select>
               </div>
 
-              <Select
-                id="salaryDay"
-                name="salaryDay"
-                label="День выплаты зарплаты"
-                options={salaryDayOptions}
-                fullWidth
-                value={sensitiveValues.salaryDay}
-                onChange={handleSensitiveChange}
-                error={sensitiveErrors.salaryDay}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Select
+                  id="salaryDay1"
+                  name="salaryDay1"
+                  label="День выплаты зарплаты (1-й)"
+                  options={salaryDayOptions}
+                  fullWidth
+                  value={sensitiveValues.salaryDay1}
+                  onChange={handleSensitiveChange}
+                  error={sensitiveErrors.salaryDay1}
+                />
+                <Select
+                  id="salaryDay2"
+                  name="salaryDay2"
+                  label="День выплаты зарплаты (2-й, необязательно)"
+                  options={salaryDayOptions}
+                  fullWidth
+                  value={sensitiveValues.salaryDay2}
+                  onChange={handleSensitiveChange}
+                  error={sensitiveErrors.salaryDay2}
+                />
+              </div>
 
               {(user?.role === Role.ADMIN || user?.role === Role.MANAGER) && (
                 <div className="mb-4">
