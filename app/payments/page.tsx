@@ -239,14 +239,14 @@ export default function PaymentsPage() {
           userId,
           closureDate: calculationDate,
         });
+        setCalculationModalOpen(false);
+        setSelectedCalculation(null);
+        notification.showSuccess('Период успешно закрыт');
         await updateWorksData({
           endDate: calculationDate,
           targetWorkId: workId,
           targetUserId: userId,
         });
-        if (calculationModalOpen) {
-          await handleShowCalculation(userId, workId);
-        }
       } catch (err) {
         logger.error('Не удалось закрыть период', err);
         notification.showError('Не удалось закрыть период');

@@ -165,6 +165,17 @@ export class ApiClient {
       },
       withCredentials: this.options.withCredentials,
       proxy: false, // Отключаем прокси для прямого соединения
+      paramsSerializer: (params) => {
+        const searchParams = new URLSearchParams();
+        for (const [key, value] of Object.entries(params as Record<string, unknown>)) {
+          if (Array.isArray(value)) {
+            value.forEach((v) => searchParams.append(key, String(v)));
+          } else if (value !== undefined && value !== null) {
+            searchParams.append(key, String(value));
+          }
+        }
+        return searchParams.toString();
+      },
     };
     if (ignoreSSL) {
       createAxiosDefaults.httpsAgent = new https.Agent({

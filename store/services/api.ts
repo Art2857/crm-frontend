@@ -73,7 +73,7 @@ export const api = createApi({
             CreatePaymentAndCloseDto
         >({
             query: (body) => ({
-                url: '/payments/create-and-close',
+                url: '/payments/create-payment-and-close',
                 method: 'POST',
                 body,
             }),
