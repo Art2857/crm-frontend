@@ -6,8 +6,6 @@ import Link from 'next/link';
 import { Role } from '../../types/user';
 import { logout } from '../../store/slices/auth';
 import { useRouter, usePathname } from 'next/navigation';
-import Breadcrumbs from '../ui/Breadcrumbs';
-import { useBreadcrumbs } from '../../hooks/useBreadcrumbs';
 import { useModal } from '../../contexts/ModalContext';
 
 interface LayoutProps {
@@ -20,7 +18,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { confirm } = useModal();
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { breadcrumbs } = useBreadcrumbs();
   const pathname = usePathname();
 
   const isAdmin = user?.role === Role.ADMIN;
@@ -256,11 +253,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Хлебные крошки */}
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <Breadcrumbs items={breadcrumbs} className="mb-4" />
-          )}
-
           {children}
         </div>
       </div>
