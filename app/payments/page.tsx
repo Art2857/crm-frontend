@@ -575,8 +575,15 @@ export default function PaymentsPage() {
           };
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       logger.error('Ошибка создания выплаты', e);
+      const serverErrors = e?.data?.errors;
+      if (Array.isArray(serverErrors) && serverErrors.length > 0) {
+        const messages = serverErrors.flatMap((err: any) => err.messages ?? []);
+        notification.showError(messages.join('; ') || 'Не удалось создать выплату');
+      } else {
+        notification.showError(e?.data?.message || 'Не удалось создать выплату');
+      }
     } finally {
       setPaymentModalOpen(false);
       setSelectedPayment(null);

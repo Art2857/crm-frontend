@@ -50,25 +50,37 @@ export function usePaymentsData() {
     async (data: LoadParams = {}) => {
       const mappedUsers = await getWorksData(data);
       setUsersData((prev) => {
-        const updatedUsers = prev.map((user) => {
+        const updatedUsers = prev.map((existingUser) => {
           const updatedUserInNewResult = mappedUsers.find(
-            (mu) => mu.userId === user.userId
+            (mu) => mu.userId === existingUser.userId
           );
-          if (updatedUserInNewResult) {
-            // Используем агрегаты, которые пришли уже посчитанными с бэка
-            return {
-              ...user,
-              works: updatedUserInNewResult.works,
-              totalAccrued: updatedUserInNewResult.totalAccrued,
-              totalPaid: updatedUserInNewResult.totalPaid,
-              totalDebt: updatedUserInNewResult.totalDebt,
-              remainingDebt: updatedUserInNewResult.remainingDebt,
-              overpaidAmount: updatedUserInNewResult.overpaidAmount,
-              isPaymentDue: updatedUserInNewResult.isPaymentDue,
-              requiresAttention: updatedUserInNewResult.requiresAttention,
-            } as ResponsibleUser;
-          }
-          return user;
+          if (!updatedUserInNewResult) return existingUser;
+
+          // Мержим работы: обновляем только те, что пришли из API, остальные оставляем
+          const mergedWorks = existingUser.works.map((existingWork) => {
+            const updatedWork = updatedUserInNewResult.works.find(
+              (w) => w.workId === existingWork.workId
+            );
+            return updatedWork ?? existingWork;
+          });
+
+          // Пересчитываем агрегаты на основе смерженных работ
+          const totalAccrued = mergedWorks.reduce((s, w) => s + (w.totalAccrued || 0), 0);
+          const totalPaid = mergedWorks.reduce((s, w) => s + (w.paidAmount || 0), 0);
+          const totalDebt = mergedWorks.reduce((s, w) => s + (w.totalDebt || 0), 0);
+          const overpaidAmount = mergedWorks.reduce((s, w) => s + (w.overpaidAmount || 0), 0);
+
+          return {
+            ...existingUser,
+            works: mergedWorks,
+            totalAccrued,
+            totalPaid,
+            totalDebt,
+            remainingDebt: Math.max(totalDebt, 0),
+            overpaidAmount,
+            isPaymentDue: totalDebt > 0,
+            requiresAttention: mergedWorks.some((w) => w.requiresAttention),
+          } as ResponsibleUser;
         });
         return updatedUsers;
       });
