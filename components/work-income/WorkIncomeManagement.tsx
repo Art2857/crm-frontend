@@ -18,26 +18,23 @@ import {
 import FinancialHistoryChart from './financial-chart';
 import { fetchPaymentHistory } from '../../services/payment';
 import { Payment } from '../../types/payment';
-import { useWorkDetail } from '../../hooks/works/useWorkDetail';
-import { useWorkDuties } from '../../hooks/useWorkDuties';
-import { useAppSelector } from '../../store';
+import { DistributionWithDetails } from '../../types/duty';
 
 interface WorkIncomeManagementProps {
   workId: string;
   canEdit?: boolean;
+  workCurrency?: 'RUB' | 'USD';
+  workSalary?: number;
+  distributions?: DistributionWithDetails[];
 }
 
 const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
   workId,
   canEdit = true,
+  workCurrency = 'RUB',
+  workSalary = 0,
+  distributions = [],
 }) => {
-  const { user } = useAppSelector((state) => state.auth);
-  // Используем хуки для получения данных о работе и обязанностях
-  const { workData } = useWorkDetail(workId);
-  const { distributions } = useWorkDuties({
-    workId,
-    role: user?.role as any,
-  });
 
   const {
     incomes,
@@ -281,9 +278,9 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
               <FinancialHistoryChart
                 incomes={incomes}
                 payments={payments}
-                workCurrency={workData?.currency || 'RUB'}
+                workCurrency={workCurrency}
                 workReleaseDate={stats?.releaseDate}
-                totalWorkBudget={workData?.salary ? Number(workData.salary) : 0}
+                totalWorkBudget={workSalary}
                 distributions={distributions}
               />
               {/* Список доходов под графиком */}

@@ -20,8 +20,6 @@ import { logger } from '../../utils/logger';
 import { User } from '../../types/user';
 import { toDateObject, formatDateToISO } from '../../utils/date';
 
-type DutiesTabType = 'current' | 'history';
-
 export function useWorkDetail(id: string) {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -32,7 +30,6 @@ export function useWorkDetail(id: string) {
   const { users } = useAppSelector((state) => state.users);
   const { duties } = useAppSelector((state) => state.duties);
 
-  const [dutiesTab, setDutiesTab] = useState<DutiesTabType>('current');
   const [workHistory, setWorkHistory] = useState<WorkHistory[] | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const [responsibleUserData, setResponsibleUserData] = useState<User | null>(
@@ -266,24 +263,20 @@ export function useWorkDetail(id: string) {
     );
   }, [user, workData, isResponsible]);
 
-  const loadDutiesHistory = useCallback(async () => {
+  const loadDutiesHistory = useCallback(async (reload = false) => {
     setIsLoadingHistory(true);
     try {
       const historyData = await workService.getHistory(id);
       setWorkHistory(historyData);
-      dutiesManagementHook.forceReload();
+      if (reload) {
+        await dutiesManagementHook.forceReload();
+      }
     } catch (error) {
       notification.showError('Ошибка при загрузке истории обязанностей');
     } finally {
       setIsLoadingHistory(false);
     }
   }, [id, notification, dutiesManagementHook.forceReload]);
-
-  useEffect(() => {
-    if (dutiesTab === 'history' && !workHistory && !isLoadingHistory) {
-      loadDutiesHistory();
-    }
-  }, [dutiesTab, workHistory, isLoadingHistory, loadDutiesHistory]);
 
   const responsibleName = useMemo(() => {
     if (responsibleUser) {
@@ -338,9 +331,6 @@ export function useWorkDetail(id: string) {
     showOnlyCurrentUserDuties,
     // view helpers
     responsibleName,
-    // ui
-    dutiesTab,
-    setDutiesTab,
     // actions
     handleArchiveWork,
     handleRestoreWork,

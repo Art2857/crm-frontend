@@ -127,20 +127,13 @@ export const useWorkDuties = ({
   ]);
 
   // Загружаем новые данные при выходе из режима редактирования
+  const wasEditingRef = useRef(false);
   useEffect(() => {
-    // Только если уже была начальная загрузка и мы вышли из режима редактирования
-    if (
-      workId &&
-      !isEditingDuties &&
-      isInitiallyLoaded &&
-      !isLoadingRef.current
-    ) {
-      // Проверяем, произошло ли действительное изменение режима (был в режиме редактирования, теперь вышли)
-      const isEditModeChanged = !isEditingDuties && !isLoadingRef.current;
-      if (isEditModeChanged) {
-        loadDistributions();
-      }
+    // Перезагружаем только если действительно вышли из режима редактирования (было true, стало false)
+    if (wasEditingRef.current && !isEditingDuties && workId && isInitiallyLoaded && !isLoadingRef.current) {
+      loadDistributions();
     }
+    wasEditingRef.current = isEditingDuties;
   }, [workId, isEditingDuties, isInitiallyLoaded, loadDistributions]);
 
   // Получаем последнее (текущее) распределение

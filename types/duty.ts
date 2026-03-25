@@ -18,6 +18,7 @@ export interface Distribution {
     name: string;
     responsibleUserId: string;
     salary: string;
+    currency?: 'RUB' | 'USD';
     date: string;
     effectiveDate?: string; // Date as ISO string
   };
