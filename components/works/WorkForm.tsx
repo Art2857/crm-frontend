@@ -266,7 +266,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     type="number"
                     min="0"
                     step="1"
-                    value={formData.salary || ''}
+                    value={formData.salary ?? ''}
                     onChange={onChange}
                     required
                     className="w-full pl-8 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
