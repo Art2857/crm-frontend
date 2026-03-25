@@ -31,7 +31,7 @@ interface GetAllUsersParams {
   role?: string;
   limit?: number;
   offset?: number;
-  orderBy?: 'createdAt' | 'salaryDay' | 'name';
+  orderBy?: 'createdAt' | 'name';
   orderDirection?: 'asc' | 'desc';
 }
 

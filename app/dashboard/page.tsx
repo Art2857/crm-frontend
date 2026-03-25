@@ -72,7 +72,7 @@ export default function DashboardPage() {
             fullName={fullName}
             email={user.email}
             salary={data.salary}
-            salaryDayText={formatSalaryDay(user.salaryDay)}
+            salaryDayText={formatSalaryDay(user.salaryDays)}
             birthdayText={formatDateToISO(user.birthday) || undefined}
             ageText={age ? `${age} лет` : undefined}
           />

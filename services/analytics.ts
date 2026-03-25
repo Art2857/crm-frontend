@@ -182,7 +182,7 @@ export const analyticsService = {
         firstName: string | null;
         lastName: string | null;
         email: string;
-        salaryDay?: number | null;
+        salaryDays?: number[];
         totals: {
           totalAccrued: number;
           totalPaid: number;
@@ -262,7 +262,7 @@ export const analyticsService = {
         firstName: u.firstName || '',
         lastName: u.lastName || '',
         email: u.email,
-        salaryDay: u.salaryDay ?? 15,
+        salaryDays: u.salaryDays ?? [15],
         works,
         totalDebt: u.totals.totalDebt,
         totalAccrued: u.totals.totalAccrued,

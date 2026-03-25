@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { fetchWorkById } from '../../store/slices/works';
+import {
+  fetchWorkById,
+  archiveWork,
+  restoreWork,
+} from '../../store/slices/works';
 import { fetchAllUsers } from '../../store/slices/users';
 import { fetchAllDuties } from '../../store/slices/duties';
 import { useDataLoader } from '../useDataLoader';
 import { useWorkData } from '../useWorkData';
 import { useWorkDuties } from '../useWorkDuties';
-import { useBreadcrumbs } from '../useBreadcrumbs';
-import { Breadcrumb } from '../../types/breadcrumb';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useModal } from '../../contexts/ModalContext';
 import { WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
 import { privateApi } from '../../services/ApiClient';
+import { logger } from '../../utils/logger';
 import { User } from '../../types/user';
 import { toDateObject, formatDateToISO } from '../../utils/date';
 
@@ -20,6 +24,7 @@ export function useWorkDetail(id: string) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const notification = useNotification();
+  const { confirm } = useModal();
 
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { users } = useAppSelector((state) => state.users);
@@ -88,40 +93,6 @@ export function useWorkDetail(id: string) {
     };
   }, [workData]);
 
-  const breadcrumbs = useMemo<Breadcrumb[]>(
-    () => [
-      {
-        id: 'dashboard',
-        title: 'Главная',
-        path: '/dashboard',
-        isActive: false,
-        isClickable: true,
-        icon: '🏠',
-      },
-      {
-        id: 'works',
-        title: 'Работы',
-        path: '/works',
-        isActive: false,
-        isClickable: true,
-        icon: '📋',
-      },
-      ...(workData
-        ? [
-            {
-              id: `work-${id}`,
-              title: workData.name || `Работа №${id}`,
-              path: `/works/${id}`,
-              isActive: true,
-              isClickable: false,
-              icon: '📄',
-            },
-          ]
-        : []),
-    ],
-    [workData, id]
-  );
-
   const workManagementHook = useWorkData({
     id,
     initialData: initialWorkData,
@@ -135,40 +106,48 @@ export function useWorkDetail(id: string) {
     role: user?.role as any, // Добавляем role parameter
   });
 
-  useBreadcrumbs(breadcrumbs);
-
   const handleArchiveWork = useCallback(async () => {
     try {
-      const confirmArchive = window.confirm(
-        'Вы уверены, что хотите архивировать эту работу?'
-      );
-      if (!confirmArchive) return;
+      const confirmed = await confirm({
+        title: 'Архивация работы',
+        message:
+          'Все пользователи будут сняты с обязанностей, и начисления по ним прекратятся. Работу можно восстановить, но распределение обязанностей потребуется настроить заново.',
+        confirmText: 'Архивировать',
+        cancelText: 'Отмена',
+        variant: 'danger',
+      });
+      if (!confirmed) return;
 
-      await workService.archive(id);
+      await dispatch(archiveWork(id)).unwrap();
       notification.showSuccess('Работа успешно архивирована');
-      router.push('/works'); // Перенаправляем на список работ
+      await reloadWorkData();
+      await dutiesManagementHook.forceReload();
     } catch (error) {
-      console.error('Error archiving work:', error);
+      logger.error('Error archiving work:', error);
       notification.showError('Не удалось архивировать работу');
     }
-  }, [id, notification, router]);
+  }, [id, dispatch, notification, confirm, reloadWorkData, dutiesManagementHook.forceReload]);
 
   const handleRestoreWork = useCallback(async () => {
     try {
-      const confirmRestore = window.confirm(
-        'Вы уверены, что хотите восстановить эту работу?'
-      );
-      if (!confirmRestore) return;
+      const confirmed = await confirm({
+        title: 'Восстановление работы',
+        message: 'Вы уверены, что хотите восстановить работу из архива?',
+        confirmText: 'Восстановить',
+        cancelText: 'Отмена',
+        variant: 'primary',
+      });
+      if (!confirmed) return;
 
-      await workService.restore(id);
+      await dispatch(restoreWork(id)).unwrap();
       notification.showSuccess('Работа успешно восстановлена');
-      // Обновляем данные работы
       await reloadWorkData();
+      await dutiesManagementHook.forceReload();
     } catch (error) {
-      console.error('Error restoring work:', error);
+      logger.error('Error restoring work:', error);
       notification.showError('Не удалось восстановить работу');
     }
-  }, [id, notification, reloadWorkData]);
+  }, [id, dispatch, notification, confirm, reloadWorkData, dutiesManagementHook.forceReload]);
 
   const loadWorkHistory = useCallback(async () => {
     try {

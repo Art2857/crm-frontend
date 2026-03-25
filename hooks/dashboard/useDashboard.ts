@@ -54,9 +54,9 @@ export function useDashboard() {
     return age;
   };
 
-  const formatSalaryDay = (salaryDay: number | null | undefined): string => {
-    if (salaryDay === null || salaryDay === undefined) return 'Не указан';
-    return `${salaryDay} число`;
+  const formatSalaryDay = (salaryDays: number[] | undefined): string => {
+    if (!salaryDays || salaryDays.length === 0) return 'Не указан';
+    return salaryDays.map((d) => `${d} число`).join(', ');
   };
 
   const formatReleaseDate = (

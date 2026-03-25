@@ -84,7 +84,7 @@ export default function PaymentManagementTab({
                     {
                       ...user,
                       works: [],
-                      salaryDay: 15,
+                      salaryDays: [15],
                       totalDebt: user.totalDebt,
                       totalAccrued: user.totalDebt,
                       totalPaid: 0,

@@ -7,8 +7,6 @@ import Select from '../ui/Select';
 type SortValue =
   | 'name_asc'
   | 'name_desc'
-  | 'salaryDay_asc'
-  | 'salaryDay_desc'
   | 'createdAt_asc'
   | 'createdAt_desc';
 
@@ -30,8 +28,6 @@ const ROLE_OPTIONS = [
 ] as const;
 
 const SORT_OPTIONS: { value: SortValue; label: string }[] = [
-  { value: 'salaryDay_asc', label: 'День зарплаты: возрастанию' },
-  { value: 'salaryDay_desc', label: 'День зарплаты: убыванию' },
   { value: 'name_asc', label: 'По имени: A-Я' },
   { value: 'name_desc', label: 'По имени: Я-А' },
   { value: 'createdAt_asc', label: 'Дата создания: старые первыми' },

@@ -18,6 +18,7 @@ import { Role } from '../../types/user';
 interface WorksState {
   works: Work[];
   userWorks: Work[];
+  archivedWorks: Work[];
   currentWork: WorkWithHistory | null;
   isLoading: boolean;
   error: string | null;
@@ -27,6 +28,7 @@ interface WorksState {
 const initialState: WorksState = {
   works: [],
   userWorks: [],
+  archivedWorks: [],
   currentWork: null,
   isLoading: false,
   error: null,
@@ -102,20 +104,43 @@ export const fetchUserWorks = createAsyncThunk(
   }
 );
 
-export const fetchUserWorksWithDuties = createAsyncThunk(
-  'works/fetchUserWorksWithDuties',
-  async (
-    { role, userId }: { role: Role; userId: string },
-    { rejectWithValue }
-  ) => {
+export const fetchArchivedWorks = createAsyncThunk(
+  'works/fetchArchived',
+  async (_: void, { rejectWithValue }) => {
     try {
-      return await workService.getByUserDuties(userId);
+      return await workService.getArchived();
+    } catch (error) {
+      if (error instanceof Error && error.message === 'REQUEST_CANCELLED') {
+        return [];
+      }
+      return rejectWithValue(
+        handleThunkError(error, 'Не удалось загрузить архивные работы')
+      );
+    }
+  }
+);
+
+export const archiveWork = createAsyncThunk(
+  'works/archive',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      return await workService.archive(id);
     } catch (error) {
       return rejectWithValue(
-        handleThunkError(
-          error,
-          'Не удалось загрузить работы с обязанностями пользователя'
-        )
+        handleThunkError(error, 'Не удалось архивировать работу')
+      );
+    }
+  }
+);
+
+export const restoreWork = createAsyncThunk(
+  'works/restore',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      return await workService.restore(id);
+    } catch (error) {
+      return rejectWithValue(
+        handleThunkError(error, 'Не удалось восстановить работу')
       );
     }
   }
@@ -212,14 +237,51 @@ const worksSlice = createSlice({
       }
     );
 
-    // Обработчики для загрузки работ пользователя с обязанностями
+    // Обработчики для загрузки архивных работ
     addLoadingStateHandlers<Work[]>(
       builder,
-      fetchUserWorksWithDuties,
+      fetchArchivedWorks,
       (state, action) => {
-        state.userWorks = action.payload;
+        state.archivedWorks = action.payload;
       }
     );
+
+    // Обработчики для архивации работы
+    addLoadingStateHandlers<Work>(builder, archiveWork, (state, action) => {
+      const archivedWork = action.payload;
+      // Убираем из активных списков
+      state.works = state.works.filter((w) => w.id !== archivedWork.id);
+      state.userWorks = state.userWorks.filter(
+        (w) => w.id !== archivedWork.id
+      );
+      // Добавляем в архивные
+      state.archivedWorks = [
+        { ...archivedWork, isArchived: true },
+        ...state.archivedWorks,
+      ];
+      // Обновляем currentWork если открыта эта работа
+      if (state.currentWork?.id === archivedWork.id) {
+        state.currentWork = { ...state.currentWork, isArchived: true };
+      }
+    });
+
+    // Обработчики для восстановления работы
+    addLoadingStateHandlers<Work>(builder, restoreWork, (state, action) => {
+      const restoredWork = action.payload;
+      // Убираем из архивных
+      state.archivedWorks = state.archivedWorks.filter(
+        (w) => w.id !== restoredWork.id
+      );
+      // Добавляем в активные
+      state.works = [
+        { ...restoredWork, isArchived: false },
+        ...state.works,
+      ];
+      // Обновляем currentWork если открыта эта работа
+      if (state.currentWork?.id === restoredWork.id) {
+        state.currentWork = { ...state.currentWork, isArchived: false };
+      }
+    });
 
     // Обработчики для загрузки работы по ID
     addLoadingStateHandlers<WorkWithHistory>(

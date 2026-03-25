@@ -4,7 +4,7 @@ import authReducer from './slices/auth';
 import worksReducer from './slices/works';
 import dutiesReducer from './slices/duties';
 import usersReducer from './slices/users';
-import breadcrumbsReducer from './slices/breadcrumbs';
+
 import dashboardReducer from './slices/dashboard';
 import exchangeRatesReducer from './slices/exchangeRates';
 import { api } from './services/api';
@@ -16,7 +16,7 @@ export const store = configureStore({
     works: worksReducer,
     duties: dutiesReducer,
     users: usersReducer,
-    breadcrumbs: breadcrumbsReducer,
+
     dashboard: dashboardReducer,
     exchangeRates: exchangeRatesReducer,
   },
