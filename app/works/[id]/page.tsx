@@ -696,7 +696,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                           workSalary={workData.salary}
                           currentUserId={user?.id}
                           showOnlyCurrentUser={showOnlyCurrentUserDuties}
-                          canEdit={canDistributeDuties && !isEditingDuties}
+                          canEdit={canDistributeDuties && !isEditingDuties && !workData.isArchived}
                           onEditDuties={() => setIsEditingDuties(true)}
                         />
                       )}
@@ -721,7 +721,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                           currentUserId={user?.id}
                           showOnlyCurrentUser={showOnlyCurrentUserDuties}
                           onUpdate={loadDutiesHistory}
-                          canEdit={canDistributeDuties}
+                          canEdit={canDistributeDuties && !workData.isArchived}
                         />
                       )}
                     </div>
@@ -730,7 +730,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
               ) : activeTab === 'income' ? (
                 <WorkIncomeManagement
                   workId={id}
-                  canEdit={canEdit}
+                  canEdit={canEdit && !workData.isArchived}
                 />
               ) : null}
             </div>
