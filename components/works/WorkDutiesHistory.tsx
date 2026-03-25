@@ -75,7 +75,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
       : null;
 
     const dutyCurrency: 'RUB' | 'USD' =
-      (detail.duty?.currency as any) || (workCurrency || 'RUB');
+      detail.currency || (detail.duty?.currency as 'RUB' | 'USD') || workCurrency || 'RUB';
 
     const pricePart = numericPrice ?? null; // assumed already in duty currency
     let percentPartInDuty: number | null = null;
@@ -436,7 +436,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             <div className="text-right">
               <div className="text-sm text-gray-500">Зарплата</div>
               <div className="text-lg font-semibold text-gray-900">
-                {Number(workHistoryItem.salary || 0).toLocaleString()} тыс. ₽
+                {formatAmountWithCurrency(Number(workHistoryItem.salary || 0), (workHistoryItem.currency as 'RUB' | 'USD') || workCurrency || 'RUB')}
               </div>
             </div>
           </div>
@@ -610,8 +610,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             <div className="text-right">
               <div className="text-sm text-gray-500">Зарплата</div>
               <div className="text-lg font-semibold text-gray-900">
-                {Number(distribution.workHistory.salary || 0).toLocaleString()}{' '}
-                тыс. ₽
+                {formatAmountWithCurrency(Number(distribution.workHistory.salary || 0), (distribution.workHistory.currency as 'RUB' | 'USD') || workCurrency || 'RUB')}
               </div>
             </div>
           </div>

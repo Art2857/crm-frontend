@@ -45,8 +45,6 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     isResponsible,
     showOnlyCurrentUserDuties,
     responsibleName,
-    dutiesTab,
-    setDutiesTab,
     users,
     handleArchiveWork,
     handleRestoreWork,
@@ -77,8 +75,24 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
   const salaryCurrency: 'RUB' | 'USD' = (workData?.currency === 'USD' ? 'USD' : 'RUB');
   const displaySalary = Number(workData?.salary || 0);
 
-  // Состояние для табов (включая новый таб доходов)
-  const [activeTab, setActiveTab] = React.useState<'duties' | 'income'>('duties');
+  // Состояние для табов
+  const [activeTab, setActiveTab] = React.useState<'duties' | 'dutiesHistory' | 'income'>('duties');
+
+  // Отслеживаем, какие табы уже были посещены (для ленивой инициализации)
+  const [visitedTabs, setVisitedTabs] = React.useState<Set<string>>(() => new Set(['duties']));
+  React.useEffect(() => {
+    setVisitedTabs((prev) => {
+      if (prev.has(activeTab)) return prev;
+      return new Set(prev).add(activeTab);
+    });
+  }, [activeTab]);
+
+  // Загрузка истории обязанностей при первом переключении на таб
+  React.useEffect(() => {
+    if (activeTab === 'dutiesHistory' && !workHistory && !isLoadingHistory) {
+      loadDutiesHistory();
+    }
+  }, [activeTab, workHistory, isLoadingHistory, loadDutiesHistory]);
 
   // Если данные еще не загружены, показываем индикатор загрузки
   if (isLoading || !workData) {
@@ -508,7 +522,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            {/* Главные табы */}
+            {/* Табы */}
             <div className="border-b border-gray-200">
               <div className="flex">
                 <button
@@ -533,6 +547,30 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                       />
                     </svg>
                     Обязанности команды
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('dutiesHistory')}
+                  className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${activeTab === 'dutiesHistory'
+                      ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    История обязанностей
                   </div>
                 </button>
                 <button
@@ -561,62 +599,6 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 </button>
               </div>
             </div>
-
-            {/* Вложенные табы для раздела обязанностей */}
-            {activeTab === 'duties' && (
-              <div className="border-b border-gray-200 bg-gray-25">
-                <div className="flex">
-                  <button
-                    onClick={() => setDutiesTab('current')}
-                    className={`flex-1 py-3 px-6 text-center font-medium text-xs transition-all duration-200 ${dutiesTab === 'current'
-                        ? 'border-b-2 border-primary-500 text-primary-600 bg-white'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg
-                        className="w-3 h-3 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      Текущие обязанности
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setDutiesTab('history')}
-                    className={`flex-1 py-3 px-6 text-center font-medium text-xs transition-all duration-200 ${dutiesTab === 'history'
-                        ? 'border-b-2 border-primary-500 text-primary-600 bg-white'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg
-                        className="w-3 h-3 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      История изменений
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* Отображаем уведомления для обязанностей */}
             {(dutiesSuccessMessage || dutiesErrorMessage) && (
@@ -647,92 +629,93 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
 
             {/* Контент табов */}
             <div className="p-6">
-              {activeTab === 'duties' ? (
-                <div>
-                  {dutiesTab === 'current' ? (
-                    <div>
-                      {isEditingDuties ? (
-                        <div>
-                          <div className="mb-6 pb-4 border-b border-gray-200">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-                              <svg
-                                className="w-5 h-5 mr-2 text-green-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                />
-                              </svg>
-                              Распределение обязанностей
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              Назначьте участников проекта и определите их роли
-                            </p>
-                          </div>
-                          <WorkDutiesForm
-                            workId={id}
-                            duties={duties}
-                            users={users}
-                            onSubmit={handleDutiesSubmit}
-                            onCancel={() => setIsEditingDuties(false)}
-                            workSalary={workData.salary}
-                            workCurrency={salaryCurrency}
-                            releaseDate={workData.releaseDate}
-                            currentDistribution={
-                              distributions.length > 0 ? distributions[0] : null
-                            }
-                            isLoading={false}
+              <div style={{ display: activeTab === 'duties' ? 'block' : 'none' }}>
+                {isEditingDuties ? (
+                  <div>
+                    <div className="mb-6 pb-4 border-b border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                        <svg
+                          className="w-5 h-5 mr-2 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                           />
-                        </div>
-                      ) : (
-                        <WorkDuties
-                          distributions={distributions}
-                          users={users}
-                          workSalary={workData.salary}
-                          currentUserId={user?.id}
-                          showOnlyCurrentUser={showOnlyCurrentUserDuties}
-                          canEdit={canDistributeDuties && !isEditingDuties}
-                          onEditDuties={() => setIsEditingDuties(true)}
-                        />
-                      )}
+                        </svg>
+                        Распределение обязанностей
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Назначьте участников проекта и определите их роли
+                      </p>
                     </div>
-                  ) : (
-                    <div>
-                      {isLoadingHistory ? (
-                        <div className="flex flex-col items-center justify-center py-12">
-                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mb-4"></div>
-                          <p className="text-gray-500 text-sm">
-                            Загрузка истории изменений...
-                          </p>
-                        </div>
-                      ) : (
-                        <WorkDutiesHistory
-                          distributions={distributions}
-                          workHistory={workHistory}
-                          users={users}
-                          workSalary={workData.salary}
-                          workCurrency={salaryCurrency}
-                          releaseDate={workData.releaseDate}
-                          currentUserId={user?.id}
-                          showOnlyCurrentUser={showOnlyCurrentUserDuties}
-                          onUpdate={loadDutiesHistory}
-                          canEdit={canDistributeDuties}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : activeTab === 'income' ? (
-                <WorkIncomeManagement
-                  workId={id}
-                  canEdit={canEdit}
-                />
-              ) : null}
+                    <WorkDutiesForm
+                      workId={id}
+                      duties={duties}
+                      users={users}
+                      onSubmit={handleDutiesSubmit}
+                      onCancel={() => setIsEditingDuties(false)}
+                      workSalary={workData.salary}
+                      workCurrency={salaryCurrency}
+                      releaseDate={workData.releaseDate}
+                      currentDistribution={
+                        distributions.length > 0 ? distributions[0] : null
+                      }
+                      isLoading={false}
+                    />
+                  </div>
+                ) : (
+                  <WorkDuties
+                    distributions={distributions}
+                    users={users}
+                    workSalary={workData.salary}
+                    currentUserId={user?.id}
+                    showOnlyCurrentUser={showOnlyCurrentUserDuties}
+                    canEdit={canDistributeDuties && !isEditingDuties}
+                    onEditDuties={() => setIsEditingDuties(true)}
+                  />
+                )}
+              </div>
+
+              <div style={{ display: activeTab === 'dutiesHistory' ? 'block' : 'none' }}>
+                {!visitedTabs.has('dutiesHistory') ? null : isLoadingHistory ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mb-4"></div>
+                    <p className="text-gray-500 text-sm">
+                      Загрузка истории обязанностей...
+                    </p>
+                  </div>
+                ) : (
+                  <WorkDutiesHistory
+                    distributions={distributions}
+                    workHistory={workHistory}
+                    users={users}
+                    workSalary={workData.salary}
+                    workCurrency={salaryCurrency}
+                    releaseDate={workData.releaseDate}
+                    currentUserId={user?.id}
+                    showOnlyCurrentUser={showOnlyCurrentUserDuties}
+                    onUpdate={() => loadDutiesHistory(true)}
+                    canEdit={canDistributeDuties}
+                  />
+                )}
+              </div>
+
+              <div style={{ display: activeTab === 'income' ? 'block' : 'none' }}>
+                {!visitedTabs.has('income') ? null : (
+                  <WorkIncomeManagement
+                    workId={id}
+                    canEdit={canEdit}
+                    workCurrency={salaryCurrency}
+                    workSalary={displaySalary}
+                    distributions={distributions}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
