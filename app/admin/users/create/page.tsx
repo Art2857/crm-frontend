@@ -12,12 +12,12 @@ import Tooltip from '../../../../components/ui/Tooltip';
 import { Role } from '../../../../types/user';
 import { createUser } from '../../../../store/slices/users';
 
-// Опции для выбора дня зарплаты (1..28 — чтобы одинаково работать для всех месяцев)
+// Опции для выбора дней зарплаты (1..28 — чтобы одинаково работать для всех месяцев)
 const salaryDayOptions = [
   { value: '', label: 'Не указано' },
   ...Array.from({ length: 28 }, (_, i) => ({
     value: String(i + 1),
-    label: String(i + 1),
+    label: `${i + 1} число`,
   })),
 ];
 
@@ -36,7 +36,8 @@ type CreateUserFormData = {
   lastName?: string;
   middleName?: string;
   birthday?: string;
-  salaryDay?: string;
+  salaryDay1?: string;
+  salaryDay2?: string;
   role?: string;
 };
 
@@ -68,7 +69,8 @@ export default function CreateUserPage() {
       lastName: '',
       middleName: '',
       birthday: '',
-      salaryDay: '',
+      salaryDay1: '',
+      salaryDay2: '',
       role: Role.WORKER,
     },
     {
@@ -113,10 +115,19 @@ export default function CreateUserPage() {
         required: false,
         isDate: true,
       },
-      salaryDay: {
+      salaryDay1: {
         required: true,
         pattern: /^([1-9]|1[0-9]|2[0-8])$/,
         validate: (value) =>
+          (/^([1-9]|1[0-9]|2[0-8])$/.test(value) &&
+            parseInt(value) >= 1 &&
+            parseInt(value) <= 28) ||
+          'День зарплаты должен быть числом от 1 до 28',
+      },
+      salaryDay2: {
+        required: false,
+        validate: (value) =>
+          !value ||
           (/^([1-9]|1[0-9]|2[0-8])$/.test(value) &&
             parseInt(value) >= 1 &&
             parseInt(value) <= 28) ||
@@ -226,15 +237,17 @@ export default function CreateUserPage() {
         userData.birthday = null;
       }
 
-      // Преобразуем salaryDay из строки в число, если он указан
-      if (
-        userData.salaryDay !== undefined &&
-        userData.salaryDay.trim() !== ''
-      ) {
-        userData.salaryDay = parseInt(userData.salaryDay, 10);
-      } else {
-        userData.salaryDay = null;
+      // Собираем salaryDays из двух полей
+      const salaryDays: number[] = [];
+      if (userData.salaryDay1 && userData.salaryDay1.trim() !== '') {
+        salaryDays.push(parseInt(userData.salaryDay1, 10));
       }
+      if (userData.salaryDay2 && userData.salaryDay2.trim() !== '') {
+        salaryDays.push(parseInt(userData.salaryDay2, 10));
+      }
+      delete userData.salaryDay1;
+      delete userData.salaryDay2;
+      userData.salaryDays = salaryDays.length > 0 ? salaryDays : undefined;
 
       // Отправляем запрос на создание пользователя
       const resultAction = await dispatch(createUser(userData));
@@ -398,16 +411,31 @@ export default function CreateUserPage() {
                   className="mb-0"
                 />
 
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <Select
-                  id="salaryDay"
-                  name="salaryDay"
-                  label="День выплаты зарплаты"
+                  id="salaryDay1"
+                  name="salaryDay1"
+                  label="День выплаты зарплаты (1-й)"
                   required
                   options={salaryDayOptions}
                   fullWidth
-                  value={values.salaryDay}
+                  value={values.salaryDay1}
                   onChange={handleChange}
-                  error={errors.salaryDay}
+                  error={errors.salaryDay1}
+                  className="mb-0"
+                />
+
+                <Select
+                  id="salaryDay2"
+                  name="salaryDay2"
+                  label="День выплаты зарплаты (2-й, необязательно)"
+                  options={salaryDayOptions}
+                  fullWidth
+                  value={values.salaryDay2}
+                  onChange={handleChange}
+                  error={errors.salaryDay2}
                   className="mb-0"
                 />
               </div>

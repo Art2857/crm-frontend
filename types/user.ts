@@ -19,7 +19,7 @@ export interface User {
   lastName: string | null;
   middleName: string | null;
   birthday: string | null;
-  salaryDay: number | null;
+  salaryDays: number[];
   role: Role;
   email?: string | null;
   timezone?: string | null;
@@ -43,7 +43,7 @@ export interface UserHistory {
   lastName: string | null;
   middleName: string | null;
   birthday: string | null;
-  salaryDay: number | null;
+  salaryDays: number[];
   role: Role;
   updatedAt: string;
 }
@@ -64,7 +64,7 @@ export interface UpdateSensitiveDataDto {
   login?: string;
   email?: string;
   role?: Role;
-  salaryDay?: number | null;
+  salaryDays?: number[] | null;
   characteristics?: string;
 }
 

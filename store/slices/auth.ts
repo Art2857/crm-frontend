@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authService } from '../../services/auth';
 import { AuthState, LoginDto, RegisterDto } from '../../types/auth';
 import { User } from '../../types/user';
-import { updateUserProfile } from './users';
+import { updateUserProfile, updateUserSensitiveData } from './users';
 
 // Начальное состояние
 const initialState: AuthState = {
@@ -145,6 +145,13 @@ const authSlice = createSlice({
     builder.addCase(updateUserProfile.fulfilled, (state, action) => {
       // Если обновился текущий пользователь, обновляем его в auth state
       if (state.user && state.user.id === action.payload.id) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    });
+
+    // Обработка обновления конфиденциальных данных (salaryDays, role, etc.)
+    builder.addCase(updateUserSensitiveData.fulfilled, (state, action) => {
+      if (state.user && action.payload && state.user.id === action.payload.id) {
         state.user = { ...state.user, ...action.payload };
       }
     });

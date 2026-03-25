@@ -209,9 +209,9 @@ export default function UserHistoryPage({
   };
 
   // Форматирование отображения дня зарплаты
-  const formatSalaryDay = (salaryDay: number | null | undefined): string => {
-    if (salaryDay === null || salaryDay === undefined) return '-';
-    return `${salaryDay} число`;
+  const formatSalaryDays = (salaryDays: number[] | undefined): string => {
+    if (!salaryDays || salaryDays.length === 0) return '-';
+    return salaryDays.map((d) => `${d} число`).join(', ');
   };
 
   return (
@@ -280,7 +280,7 @@ export default function UserHistoryPage({
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      День зарплаты
+                      Дни зарплаты
                     </th>
                     <th
                       scope="col"
@@ -349,7 +349,7 @@ export default function UserHistoryPage({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {formatSalaryDay(historyItem.salaryDay)}
+                          {formatSalaryDays(historyItem.salaryDays)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

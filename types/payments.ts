@@ -29,7 +29,7 @@ export interface WorkDetail {
   overpaidAmount?: number; // сверхурочные (переплата)
   isPaymentDue: boolean;
   lastClosureDate: string | null;
-  requiresAttention?: boolean; // индикатор «требует внимания» по правилам ЗП
+  requiresAttention?: boolean; // индикатор «требует внимания» по правилам зарплаты
   users?: UserWorkDebt[];
   salary: number;
 }
@@ -39,7 +39,7 @@ export interface ResponsibleUser {
   firstName: string;
   lastName: string;
   email: string;
-  salaryDay: number;
+  salaryDays: number[];
   works: WorkDetail[];
   totalDebt: number;
   totalAccrued: number;
