@@ -239,14 +239,14 @@ export default function PaymentsPage() {
           userId,
           closureDate: calculationDate,
         });
+        setCalculationModalOpen(false);
+        setSelectedCalculation(null);
+        notification.showSuccess('Период успешно закрыт');
         await updateWorksData({
           endDate: calculationDate,
           targetWorkId: workId,
           targetUserId: userId,
         });
-        if (calculationModalOpen) {
-          await handleShowCalculation(userId, workId);
-        }
       } catch (err) {
         logger.error('Не удалось закрыть период', err);
         notification.showError('Не удалось закрыть период');
@@ -575,8 +575,15 @@ export default function PaymentsPage() {
           };
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       logger.error('Ошибка создания выплаты', e);
+      const serverErrors = e?.data?.errors;
+      if (Array.isArray(serverErrors) && serverErrors.length > 0) {
+        const messages = serverErrors.flatMap((err: any) => err.messages ?? []);
+        notification.showError(messages.join('; ') || 'Не удалось создать выплату');
+      } else {
+        notification.showError(e?.data?.message || 'Не удалось создать выплату');
+      }
     } finally {
       setPaymentModalOpen(false);
       setSelectedPayment(null);
