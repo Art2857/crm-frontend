@@ -25,9 +25,8 @@ export interface WorkData {
   createdAt: string;
   releaseDate?: string; // Date as ISO string
   isResponsible: boolean;
-  // Опциональные поля, доступные только для ответственного
-  salary?: number;
-  salaryCurrency?: string;
+  userSalaryRub: number;
+  userSalaryUsd: number;
   duties: DutyData[];
   // Информация об ответственном пользователе
   responsibleUser: ResponsibleUser | null;

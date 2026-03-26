@@ -16,8 +16,8 @@ interface WorkCardProps {
   responsibleName: string;
   releaseDateText: string;
   isResponsible: boolean;
-  salary?: number | null;
-  salaryCurrency?: string;
+  userSalaryRub: number;
+  userSalaryUsd: number;
   duties: DutyRow[];
 }
 
@@ -30,8 +30,8 @@ export default function WorkDutiesTable({
   responsibleName,
   releaseDateText,
   isResponsible,
-  salary,
-  salaryCurrency,
+  userSalaryRub,
+  userSalaryUsd,
   duties,
 }: WorkCardProps) {
   return (
@@ -48,19 +48,6 @@ export default function WorkDutiesTable({
           </div>
         </div>
       </div>
-
-      {isResponsible && salary ? (
-        <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-primary-50">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700 font-medium">
-              Зарплата по работе
-            </span>
-            <span className="text-2xl font-bold text-primary-600">
-              {formatAmountWithCurrency(salary, (salaryCurrency === 'USD' ? 'USD' : 'RUB') as 'RUB' | 'USD')}
-            </span>
-          </div>
-        </div>
-      ) : null}
 
       <div className="p-6">
         <div className="mb-4 flex items-center">
@@ -153,6 +140,24 @@ export default function WorkDutiesTable({
             <p className="text-gray-500 italic">
               У вас нет обязанностей по этой работе
             </p>
+          </div>
+        )}
+
+        {duties.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex justify-between items-center px-2">
+              <span className="text-gray-700 font-medium">Ваша зарплата по работе</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-primary-600">
+                  {formatAmountWithCurrency(userSalaryRub, 'RUB')}
+                </span>
+                {duties.some((d) => d.currency === 'USD') && (
+                  <span className="text-sm text-gray-400">
+                    ({formatAmountWithCurrency(userSalaryUsd, 'USD')})
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
