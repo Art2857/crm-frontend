@@ -6,6 +6,7 @@ export interface DutyData {
   name: string;
   calculatedValue: number;
   assignedAt: string;
+  currency?: string;
   // Опциональные поля, доступные только для ответственного
   price?: string | null;
   percentage?: string | null;
@@ -24,8 +25,9 @@ export interface WorkData {
   createdAt: string;
   releaseDate?: string; // Date as ISO string
   isResponsible: boolean;
-  // Опциональное поле, доступное только для ответственного
+  // Опциональные поля, доступные только для ответственного
   salary?: number;
+  salaryCurrency?: string;
   duties: DutyData[];
   // Информация об ответственном пользователе
   responsibleUser: ResponsibleUser | null;

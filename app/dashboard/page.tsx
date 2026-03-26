@@ -97,6 +97,7 @@ export default function DashboardPage() {
                 releaseDateText={formatReleaseDate(workData.releaseDate)}
                 isResponsible={workData.isResponsible}
                 salary={workData.salary}
+                salaryCurrency={workData.salaryCurrency}
                 duties={workData.duties}
               />
             ))}

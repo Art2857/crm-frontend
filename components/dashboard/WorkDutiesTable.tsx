@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatCurrency } from '../../utils/currency';
+import { formatAmountWithCurrency } from '../../utils/currency';
 import { formatDateToISO } from '../../utils/date';
 
 interface DutyRow {
@@ -8,6 +8,7 @@ interface DutyRow {
   percentage?: number | string | null;
   calculatedValue: number;
   assignedAt?: string | null;
+  currency?: string;
 }
 
 interface WorkCardProps {
@@ -16,7 +17,12 @@ interface WorkCardProps {
   releaseDateText: string;
   isResponsible: boolean;
   salary?: number | null;
+  salaryCurrency?: string;
   duties: DutyRow[];
+}
+
+function getCurrency(duty: DutyRow): 'RUB' | 'USD' {
+  return duty.currency === 'USD' ? 'USD' : 'RUB';
 }
 
 export default function WorkDutiesTable({
@@ -25,6 +31,7 @@ export default function WorkDutiesTable({
   releaseDateText,
   isResponsible,
   salary,
+  salaryCurrency,
   duties,
 }: WorkCardProps) {
   return (
@@ -49,7 +56,7 @@ export default function WorkDutiesTable({
               Зарплата по работе
             </span>
             <span className="text-2xl font-bold text-primary-600">
-              {formatCurrency(salary)}
+              {formatAmountWithCurrency(salary, (salaryCurrency === 'USD' ? 'USD' : 'RUB') as 'RUB' | 'USD')}
             </span>
           </div>
         </div>
@@ -83,58 +90,61 @@ export default function WorkDutiesTable({
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {duties.map((duty, idx) => (
-                  <tr
-                    key={`duty-${idx}`}
-                    className="hover:bg-gray-50 transition-colors duration-150"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">
-                        {duty.name}
-                      </div>
-                    </td>
-                    {isResponsible &&
-                      (duty.price !== undefined ||
-                        duty.percentage !== undefined) && (
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-2">
-                            {duty.price !== undefined &&
-                              duty.price !== null && (
-                                <span className="text-gray-700 font-medium">
-                                  {formatCurrency(Number(duty.price), true)}
-                                </span>
-                              )}
-                            {duty.price !== undefined &&
-                              duty.price !== null &&
-                              duty.percentage !== undefined &&
-                              duty.percentage !== null && (
-                                <span className="text-gray-500">+</span>
-                              )}
-                            {duty.percentage !== undefined &&
-                              duty.percentage !== null && (
-                                <span className="text-gray-700 font-medium">
-                                  {duty.percentage}% от суммы работы
-                                </span>
-                              )}
-                            {(duty.price !== undefined &&
-                              duty.price !== null) ||
-                            (duty.percentage !== undefined &&
-                              duty.percentage !== null) ? (
-                              <span className="text-gray-500">=</span>
-                            ) : null}
-                          </div>
-                        </td>
-                      )}
-                    <td className="px-6 py-4">
-                      <span className="text-lg font-bold text-primary-600 bg-primary-50 px-3 py-1 rounded-md">
-                        {formatCurrency(duty.calculatedValue, true)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {formatDateToISO(duty.assignedAt)}
-                    </td>
-                  </tr>
-                ))}
+                {duties.map((duty, idx) => {
+                  const cur = getCurrency(duty);
+                  return (
+                    <tr
+                      key={`duty-${idx}`}
+                      className="hover:bg-gray-50 transition-colors duration-150"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">
+                          {duty.name}
+                        </div>
+                      </td>
+                      {isResponsible &&
+                        (duty.price !== undefined ||
+                          duty.percentage !== undefined) && (
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-2">
+                              {duty.price !== undefined &&
+                                duty.price !== null && (
+                                  <span className="text-gray-700 font-medium">
+                                    {formatAmountWithCurrency(Number(duty.price), cur)}
+                                  </span>
+                                )}
+                              {duty.price !== undefined &&
+                                duty.price !== null &&
+                                duty.percentage !== undefined &&
+                                duty.percentage !== null && (
+                                  <span className="text-gray-500">+</span>
+                                )}
+                              {duty.percentage !== undefined &&
+                                duty.percentage !== null && (
+                                  <span className="text-gray-700 font-medium">
+                                    {duty.percentage}% от суммы работы
+                                  </span>
+                                )}
+                              {(duty.price !== undefined &&
+                                duty.price !== null) ||
+                              (duty.percentage !== undefined &&
+                                duty.percentage !== null) ? (
+                                <span className="text-gray-500">=</span>
+                              ) : null}
+                            </div>
+                          </td>
+                        )}
+                      <td className="px-6 py-4">
+                        <span className="text-lg font-bold text-primary-600 bg-primary-50 px-3 py-1 rounded-md">
+                          {formatAmountWithCurrency(duty.calculatedValue, cur)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {formatDateToISO(duty.assignedAt)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
