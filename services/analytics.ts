@@ -285,6 +285,7 @@ export const analyticsService = {
     userId: string;
     workId: string;
     endDate: string;
+    dutyId?: string;
   }): Promise<DetailedCalculation> {
     // Убираем role из query параметров - роль должна браться из JWT!
     const { role, ...queryParams } = params;

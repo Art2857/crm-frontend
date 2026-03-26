@@ -64,7 +64,7 @@ export default function MyDebtsTab({
                 <div
                   className={`w-4 h-4 rounded-full ${debt.isPaymentDue
                     ? 'bg-red-400 animate-pulse'
-                    : 'bg-yellow-400'
+                    : 'bg-green-400'
                     }`}
                 />
                 <div>

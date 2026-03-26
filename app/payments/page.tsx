@@ -156,43 +156,10 @@ export default function PaymentsPage() {
           userId,
           workId,
           endDate,
+          dutyId,
         });
 
-        // Если запрошен расчёт по конкретной обязанности — фильтруем периоды локально
-        const filtered = dutyId
-          ? (() => {
-            const filteredPeriods = calc.periods.map((p) => {
-              const duties = p.duties.filter((d) => d.dutyId === dutyId);
-              const totalAmount = duties.reduce(
-                (s, d) => s + d.calculatedAmount,
-                0
-              );
-              return { ...p, duties, totalAmount };
-            });
-            const dutyAccrued = filteredPeriods
-              .flatMap((p) => p.duties)
-              .reduce((s, d) => s + d.calculatedAmount, 0);
-
-            // Pull duty-level debt from already loaded management data
-            const userEntry = usersData.find((u) => u.userId === userId);
-            const workEntry = userEntry?.works.find((w) => w.workId === workId);
-            const dutyEntry = workEntry?.users
-              ?.find((u) => u.userId === userId)
-              ?.duties.find((d) => d.dutyId === dutyId);
-            const dutyDebt = Math.max(dutyEntry?.debt ?? 0, 0);
-            const dutyPaid = Math.max(dutyAccrued - dutyDebt, 0);
-
-            return {
-              ...calc,
-              periods: filteredPeriods,
-              totalAccrued: dutyAccrued,
-              totalPaid: dutyPaid,
-              remainingDebt: dutyDebt,
-            } as DetailedCalculation;
-          })()
-          : calc;
-
-        setSelectedCalculation(filtered);
+        setSelectedCalculation(calc);
         setIsUserCalculation(false);
         setCalculationType('work');
         setIsDutyCalculation(!!dutyId);
@@ -796,7 +763,7 @@ export default function PaymentsPage() {
           isDebtsView={
             myDebts.some(
               (debt) => debt.workId === selectedCalculation?.workId
-            ) && !isDutyCalculation
+            )
           }
           calculationDate={
             selectedCalculation
