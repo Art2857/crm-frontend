@@ -586,12 +586,14 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
             >
               Назад к списку
             </Button>
+            {user?.role === Role.ADMIN && (
             <Button
               variant="secondary"
               onClick={() => router.push(`/admin/users/${userId}/history`)}
             >
               История изменений
             </Button>
+            )}
           </div>
         </div>
 

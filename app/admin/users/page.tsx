@@ -316,6 +316,7 @@ export default function AdminUsersPage() {
                                   />
                                 </svg>
                               </Link>
+                              {user?.role === Role.ADMIN && (
                               <Link
                                 href={`/admin/users/${userItem.id}/history`}
                                 className="text-secondary-600 hover:text-secondary-900 p-1.5 rounded-full hover:bg-secondary-50 transition-colors"
@@ -336,6 +337,7 @@ export default function AdminUsersPage() {
                                   />
                                 </svg>
                               </Link>
+                              )}
                               {userItem?.isArchived ? (
                                 <button
                                   type="button"
