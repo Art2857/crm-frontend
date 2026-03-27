@@ -55,7 +55,7 @@ export default function UserHistoryPage({
       return;
     }
 
-    if (![Role.ADMIN, Role.MANAGER].includes(user?.role as Role)) {
+    if (user?.role !== Role.ADMIN) {
       router.push('/dashboard');
       return;
     }
