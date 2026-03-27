@@ -46,7 +46,7 @@ class ExchangeRatesService {
 
     const response = await this.api.get<ChartDataPoint[]>(
       `/exchange-rates/chart/${currencyCode}`,
-      { params }
+      { params, timeout: 120000 }
     );
 
     // Обрабатываем данные для графика

@@ -154,34 +154,51 @@ export const updateFromAPI = createAsyncThunk(
   }
 );
 
-// Получение данных для графика (с кешированием)
+// Получение данных для графика (всегда с API для актуальности)
 export const loadChartData = createAsyncThunk(
   'exchangeRates/loadChartData',
-  async (params: { 
-    currencyCode: string; 
-    fromDate: Date; 
+  async (params: {
+    currencyCode: string;
+    fromDate: Date;
     toDate: Date;
-  }, { getState }) => {
+  }) => {
     const { currencyCode, fromDate, toDate } = params;
-    const state = getState() as { exchangeRates: ExchangeRatesState };
-    
+
     const chartKey = createChartKey(
-      currencyCode, 
-      fromDate.toISOString().split('T')[0], 
+      currencyCode,
+      fromDate.toISOString().split('T')[0],
       toDate.toISOString().split('T')[0]
     );
 
-    // Проверяем кеш в Redux
-    if (state.exchangeRates.chartData[chartKey]) {
-      return {
-        data: state.exchangeRates.chartData[chartKey],
-        fromCache: true,
-        chartKey,
-      };
-    }
-
     try {
-      // Пытаемся загрузить из IndexedDB
+      // Всегда загружаем с API — бэкенд обеспечит подгрузку недостающих дат
+      const response = await exchangeRatesService.getChartData(
+        currencyCode,
+        fromDate,
+        toDate
+      );
+
+      if (response && response.length > 0) {
+        // Сохраняем в IndexedDB для оффлайн-доступа
+        const now = new Date().toISOString();
+        const cachedRates: CachedExchangeRate[] = response.map(point => ({
+          currencyCode,
+          rate: point.rate,
+          nominal: point.nominal,
+          date: point.date,
+          createdAt: now,
+          updatedAt: now,
+        }));
+        await indexedDBManager.saveRates(cachedRates);
+
+        return {
+          data: response,
+          fromCache: false,
+          chartKey,
+        };
+      }
+
+      // Если API вернул пустой ответ, пробуем IndexedDB как fallback
       const cachedRates = await indexedDBManager.getRatesInRange(
         currencyCode,
         fromDate.toISOString().split('T')[0],
@@ -203,15 +220,8 @@ export const loadChartData = createAsyncThunk(
         };
       }
 
-      // Если в кеше нет данных, загружаем с API
-      const response = await exchangeRatesService.getChartData(
-        currencyCode,
-        fromDate,
-        toDate
-      );
-
       return {
-        data: response,
+        data: [],
         fromCache: false,
         chartKey,
       };
