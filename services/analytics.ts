@@ -168,11 +168,9 @@ export const analyticsService = {
     worksIds?: string[],
     targetUserId?: string
   ): Promise<ResponsibleUser[]> {
-    // дата по умолчанию — вчера
+    // дата по умолчанию — сегодня
     if (!endDate) {
-      const date = new Date();
-      date.setDate(date.getDate() - 1);
-      endDate = date.toISOString().split('T')[0];
+      endDate = new Date().toISOString().split('T')[0];
     }
 
     const { data } = await privateApi.get<{
