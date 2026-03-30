@@ -1,7 +1,6 @@
 import {
   AuthResponse,
   LoginDto,
-  RefreshTokenDto,
   RegisterDto,
 } from '../types/auth';
 import { privateApi, authApi, ApiClient } from './ApiClient';
@@ -9,6 +8,7 @@ import { AUTH_ENDPOINTS, USERS_ENDPOINTS } from './endpoints';
 import { accountManagerService, SavedAccount } from './accountManager';
 import { User } from '../types/user';
 import { tokenStorage } from './tokenStorage';
+import { sharedRefreshAccessToken } from './tokenRefresh';
 
 export const authService = {
   login: async (data: LoginDto): Promise<AuthResponse> => {
@@ -143,51 +143,13 @@ export const authService = {
     tokenStorage.clearAll();
   },
 
-  // Метод для обновления токенов
-  refreshTokens: async (): Promise<AuthResponse> => {
-    const refreshToken = tokenStorage.getRefreshToken();
-
-    if (!refreshToken) {
-      throw new Error('Токен обновления отсутствует');
+  // Метод для обновления токенов (использует shared singleton refresh)
+  refreshTokens: async (): Promise<string | null> => {
+    const newToken = await sharedRefreshAccessToken();
+    if (!newToken) {
+      throw new Error('Не удалось обновить токен');
     }
-
-    const data: RefreshTokenDto = { refreshToken };
-    const response = await authApi.post<AuthResponse>(
-      AUTH_ENDPOINTS.refresh,
-      data
-    );
-
-    tokenStorage.setAccessToken(response.data.access_token);
-    if (response.data.refresh_token) {
-      tokenStorage.setRefreshToken(response.data.refresh_token);
-    }
-    if (response.data.access_token_expires_at) {
-      tokenStorage.setAccessTokenExpiresAt(response.data.access_token_expires_at);
-    }
-    if (response.data.refresh_token_expires_at) {
-      tokenStorage.setRefreshTokenExpiresAt(response.data.refresh_token_expires_at);
-    }
-    // Обновляем данные в менеджере аккаунтов
-    if (typeof window !== 'undefined') {
-      const userId = accountManagerService.getCurrentAccountId();
-      if (userId) {
-        const accounts = accountManagerService.getSavedAccounts();
-        const currentAccount = accounts.find(
-          (account: SavedAccount) => account.id === userId
-        );
-        if (currentAccount && response.data.user) {
-          accountManagerService.saveAccount(
-            response.data.user,
-            response.data.access_token,
-            response.data.refresh_token,
-            response.data.access_token_expires_at,
-            response.data.refresh_token_expires_at
-          );
-        }
-      }
-    }
-
-    return response.data;
+    return newToken;
   },
 
   // Метод для выхода со всех устройств (через сервер)

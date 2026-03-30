@@ -8,8 +8,9 @@ import axios, {
 } from 'axios';
 import https from 'https';
 import { env, isDevelopment } from '../config/env';
-import { isJwtExpired, decodeJWT } from '../utils/jwt';
+import { isJwtExpired } from '../utils/jwt';
 import { tokenStorage } from './tokenStorage';
+import { sharedRefreshAccessToken } from './tokenRefresh';
 import { logger } from '../utils/logger';
 
 // Централизованный baseURL
@@ -247,8 +248,12 @@ export class ApiClient {
             }
           } else {
             logger.warn(
-              '⚠️ Токен не найден для авторизованного запроса:',
+              '⚠️ Токен не найден для авторизованного запроса, блокируем:',
               config.url
+            );
+            this.handleUnauthorized();
+            return Promise.reject(
+              new axios.Cancel('No auth token available')
             );
           }
         }
@@ -353,80 +358,15 @@ export class ApiClient {
   }
 
   /**
-   * Пытается обновить токен доступа через refresh_token
-   * Возвращает новый access_token или null
+   * Пытается обновить токен доступа через shared singleton refresh.
+   * Все параллельные вызовы ждут один и тот же запрос.
    */
   private async tryRefreshTokens(): Promise<string | null> {
-    if (typeof window === 'undefined') return null;
-    const refreshToken = tokenStorage.getRefreshToken();
-    if (!refreshToken) return null;
-
-    try {
-      const previousAccessToken = tokenStorage.getAccessToken();
-      const prevClaims: any = previousAccessToken
-        ? decodeJWT(previousAccessToken)
-        : null;
-
-      const response = await axios.post<{
-        access_token: string;
-        refresh_token?: string;
-      }>(
-        `${API_URL}/auth/refresh`,
-        { refreshToken },
-        { withCredentials: true }
-      );
-      const { access_token, refresh_token } =
-        response.data || (response as any).data || {};
-      if (access_token) tokenStorage.setAccessToken(access_token);
-      if (refresh_token) tokenStorage.setRefreshToken(refresh_token);
-
-      // Проверяем, не изменились ли критичные клеймы
-      if (access_token) {
-        const newClaims: any = decodeJWT(access_token);
-        try {
-          if (prevClaims && newClaims) {
-            const prevUserId = prevClaims.sub || prevClaims.userId;
-            const newUserId = newClaims.sub || newClaims.userId;
-            const prevRole = prevClaims.role || prevClaims.roles?.[0];
-            const newRole = newClaims.role || newClaims.roles?.[0];
-
-            if (prevUserId && newUserId && prevUserId !== newUserId) {
-              logger.warn('⚠️ Обнаружена смена пользователя после refresh', {
-                prevUserId,
-                newUserId,
-              });
-            }
-            if (prevRole && newRole && prevRole !== newRole) {
-              logger.warn('⚠️ Обнаружена смена роли после refresh', {
-                prevRole,
-                newRole,
-              });
-              // Сообщаем приложению о смене роли
-              if (typeof window !== 'undefined') {
-                const evt = new CustomEvent('authRoleChanged', {
-                  detail: { prevRole, newRole },
-                });
-                window.dispatchEvent(evt);
-                // Если потеряли права администратора, покинем админку
-                const path = window.location.pathname || '';
-                if (path.startsWith('/admin') && newRole !== 'ADMIN') {
-                  window.location.replace('/dashboard');
-                }
-              }
-            }
-          }
-        } catch {}
-      }
-      return access_token || null;
-    } catch (e) {
-      // На неуспех — очищаем локальные токены и выполняем централизованный выход
-      try {
-        tokenStorage.clearAll();
-      } catch {}
-      // Немедленный редирект на /login
+    const newToken = await sharedRefreshAccessToken();
+    if (!newToken) {
       this.handleUnauthorized();
-      return null;
     }
+    return newToken;
   }
 
   /**
