@@ -206,7 +206,8 @@ export default function CustomPaymentModal({
                       label: work.name,
                     })),
                   ]}
-                  className="pl-4 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  className="pl-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  fullWidth
                   required
                 />
               </div>
@@ -230,7 +231,8 @@ export default function CustomPaymentModal({
                         label: `${user.firstName || ''} ${user.lastName || ''} (${user.login})`,
                       })),
                     ]}
-                    className="pl-4 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
+                    className="pl-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
+                    fullWidth
                     required
                   />
                 </div>
