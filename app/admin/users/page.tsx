@@ -224,9 +224,9 @@ export default function AdminUsersPage() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6"
                   >
-                    Email
+                    Логин
                   </th>
                   <th
                     scope="col"
@@ -269,7 +269,7 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {userItem?.email || 'Email не указан'}
+                            {userItem?.login || 'Логин не указан'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

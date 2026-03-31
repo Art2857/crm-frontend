@@ -390,7 +390,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm">Роль:</span>
-                    <span className="bg-primary-800/40 px-3 py-1 rounded-full text-sm font-medium">
+                    <span className="bg-primary-800/40 px-3 py-1 rounded-full text-sm">
                       {user.role}
                     </span>
                   </div>
