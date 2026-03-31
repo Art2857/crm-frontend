@@ -21,8 +21,8 @@ const salaryDayOptions = [
   })),
 ];
 
-// Опции для выбора роли пользователя
-const roleOptions = [
+// Все доступные роли
+const allRoleOptions = [
   { value: Role.WORKER, label: 'Работник' },
   { value: Role.ADMIN, label: 'Администратор' },
   { value: Role.MANAGER, label: 'Менеджер' },
@@ -49,6 +49,12 @@ export default function CreateUserPage() {
   const [serverError, setServerError] = useState<string | ReactNode>('');
   const [success, setSuccess] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  // Менеджер может создавать только работников
+  const roleOptions =
+    user?.role === Role.ADMIN
+      ? allRoleOptions
+      : allRoleOptions.filter((o) => o.value === Role.WORKER);
 
   // Используем наш кастомный хук с улучшенной валидацией
   const {
