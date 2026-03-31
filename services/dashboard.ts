@@ -21,6 +21,7 @@ export interface ResponsibleUser {
 }
 
 export interface WorkData {
+  workId: string;
   name: string;
   createdAt: string;
   releaseDate?: string; // Date as ISO string

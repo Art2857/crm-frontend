@@ -74,6 +74,8 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
 
   const salaryCurrency: 'RUB' | 'USD' = (workData?.currency === 'USD' ? 'USD' : 'RUB');
   const displaySalary = Number(workData?.salary || 0);
+  const isSalaryConfidential = (workData as any)?.isConfidential === true;
+  const isWorkerNotResponsible = user?.role === 'WORKER' && !isResponsible;
 
   // Состояние для табов
   const [activeTab, setActiveTab] = React.useState<'duties' | 'dutiesHistory' | 'income'>('duties');
@@ -435,11 +437,11 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     </div>
                     <div className="flex items-center justify-center gap-3 mb-1">
                       <span className="text-4xl font-bold">
-                        {formatAmountWithCurrency(displaySalary, salaryCurrency)}
+                        {formatAmountWithCurrency(displaySalary, salaryCurrency, isSalaryConfidential)}
                       </span>
                     </div>
                     <div className="text-xs text-primary-200">
-                      {salaryCurrency === 'RUB' ? 'Российские рубли' : 'Доллары США'}
+                      {isSalaryConfidential ? 'Информация скрыта' : salaryCurrency === 'RUB' ? 'Российские рубли' : 'Доллары США'}
                     </div>
                   </div>
                 </div>
@@ -549,6 +551,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     Обязанности команды
                   </div>
                 </button>
+                {!isWorkerNotResponsible && (
                 <button
                   onClick={() => setActiveTab('dutiesHistory')}
                   className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${activeTab === 'dutiesHistory'
@@ -573,6 +576,8 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     История обязанностей
                   </div>
                 </button>
+                )}
+                {!isWorkerNotResponsible && (
                 <button
                   onClick={() => setActiveTab('income')}
                   className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${activeTab === 'income'
@@ -597,6 +602,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     История поступлений
                   </div>
                 </button>
+                )}
               </div>
             </div>
 
@@ -701,6 +707,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     showOnlyCurrentUser={showOnlyCurrentUserDuties}
                     onUpdate={() => loadDutiesHistory(true)}
                     canEdit={canDistributeDuties}
+                    isConfidential={isSalaryConfidential}
                   />
                 )}
               </div>
