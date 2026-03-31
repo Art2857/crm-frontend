@@ -50,6 +50,9 @@ export default function ResponsibleWorkGroup({
 
   // No per-work currency switchers; totalsCurrency controls all conversions
 
+  // Если все работы в группе скрыты — totals тоже скрыты
+  const allConfidential = group.works.every((w) => w.isConfidential === true);
+
   // Сортируем работы внутри группы по доходу
   const sortedWorks = [...group.works].sort((a, b) => b.income - a.income);
 
@@ -118,7 +121,7 @@ export default function ResponsibleWorkGroup({
                       <div className={`text-lg sm:text-xl font-bold ${
                         group.totals.totalIncome >= 0 ? 'text-emerald-800' : 'text-red-800'
                       } truncate`}>
-                        {formatAmountWithCurrency(totalsDisplay.totalIncome, totalsCurrency)}
+                        {formatAmountWithCurrency(totalsDisplay.totalIncome, totalsCurrency, allConfidential)}
                       </div>
                     </div>
                   </div>
@@ -142,7 +145,7 @@ export default function ResponsibleWorkGroup({
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-rose-700 truncate">Расходы</div>
                       <div className="text-lg sm:text-xl font-bold text-rose-800 truncate">
-                        {formatAmountWithCurrency(totalsDisplay.totalExpenses, totalsCurrency)}
+                        {formatAmountWithCurrency(totalsDisplay.totalExpenses, totalsCurrency, allConfidential)}
                       </div>
                     </div>
                   </div>
@@ -162,7 +165,7 @@ export default function ResponsibleWorkGroup({
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-blue-700 truncate">Бюджет</div>
                       <div className="text-lg sm:text-xl font-bold text-blue-800 truncate">
-                        {formatAmountWithCurrency(totalsDisplay.totalSalary, totalsCurrency)}
+                        {formatAmountWithCurrency(totalsDisplay.totalSalary, totalsCurrency, allConfidential)}
                       </div>
                     </div>
                   </div>
@@ -239,13 +242,15 @@ export default function ResponsibleWorkGroup({
                   <div className="grid grid-cols-1 gap-2">
                     {/* Доход */}
                     <div className={`flex items-center justify-between ${
-                      work.income >= 0 
-                        ? 'bg-emerald-50 border-emerald-200' 
-                        : 'bg-red-50 border-red-200'
+                      work.isConfidential
+                        ? 'bg-gray-50 border-gray-200'
+                        : work.income >= 0
+                          ? 'bg-emerald-50 border-emerald-200'
+                          : 'bg-red-50 border-red-200'
                     } border rounded-lg p-3`}>
                       <div className="flex items-center space-x-2">
                         <div className={`w-6 h-6 ${
-                          work.income >= 0 ? 'bg-emerald-500' : 'bg-red-500'
+                          work.isConfidential ? 'bg-gray-400' : work.income >= 0 ? 'bg-emerald-500' : 'bg-red-500'
                         } rounded-md flex items-center justify-center`}>
                           {work.income >= 0 ? (
                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -258,15 +263,16 @@ export default function ResponsibleWorkGroup({
                           )}
                         </div>
                         <span className={`text-sm font-medium ${
-                          work.income >= 0 ? 'text-emerald-700' : 'text-red-700'
+                          work.isConfidential ? 'text-gray-500' : work.income >= 0 ? 'text-emerald-700' : 'text-red-700'
                         }`}>Доход</span>
                       </div>
                       <div className={`font-semibold ${
-                        work.income >= 0 ? 'text-emerald-800' : 'text-red-800'
+                        work.isConfidential ? 'text-gray-500' : work.income >= 0 ? 'text-emerald-800' : 'text-red-800'
                       }`}>
                         {formatAmountWithCurrency(
                           (work.originalIncome ?? Number(work.income || 0)),
-                          (work.currency === 'USD' ? 'USD' : 'RUB')
+                          (work.currency === 'USD' ? 'USD' : 'RUB'),
+                          work.isConfidential
                         )}
                       </div>
                     </div>
@@ -284,7 +290,8 @@ export default function ResponsibleWorkGroup({
                       <div className="font-semibold text-rose-800">
                         {formatAmountWithCurrency(
                           (work.originalExpenses ?? Number(work.expenses || 0)),
-                          (work.currency === 'USD' ? 'USD' : 'RUB')
+                          (work.currency === 'USD' ? 'USD' : 'RUB'),
+                          work.isConfidential
                         )}
                       </div>
                     </div>
@@ -303,7 +310,8 @@ export default function ResponsibleWorkGroup({
                       <span>
                         {formatAmountWithCurrency(
                           (work.originalSalary ?? Number(work.salary || 0)),
-                          (work.currency === 'USD' ? 'USD' : 'RUB')
+                          (work.currency === 'USD' ? 'USD' : 'RUB'),
+                          work.isConfidential
                         )}
                       </span>
                     </div>
@@ -346,26 +354,29 @@ export default function ResponsibleWorkGroup({
                         {work.name}
                       </div>
                     </td>
-                    <td 
-                      className={`py-3 px-4 text-right font-medium ${work.income >= 0 ? 'text-emerald-600' : 'text-red-900'}`}
+                    <td
+                      className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : work.income >= 0 ? 'text-emerald-600' : 'text-red-900'}`}
                     >
                       {formatAmountWithCurrency(
                         (work.originalIncome ?? Number(work.income || 0)),
-                        (work.currency === 'USD' ? 'USD' : 'RUB')
+                        (work.currency === 'USD' ? 'USD' : 'RUB'),
+                        work.isConfidential
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right text-red-900 font-medium">
+                    <td className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : 'text-red-900'}`}>
                       {formatAmountWithCurrency(
                         (work.originalExpenses ?? Number(work.expenses || 0)),
-                        (work.currency === 'USD' ? 'USD' : 'RUB')
+                        (work.currency === 'USD' ? 'USD' : 'RUB'),
+                        work.isConfidential
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right font-medium text-blue-700">
+                    <td className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : 'text-blue-700'}`}>
                       <div className="inline-flex items-center gap-3 justify-end">
                         <span>
                           {formatAmountWithCurrency(
                             (work.originalSalary ?? Number(work.salary || 0)),
-                            (work.currency === 'USD' ? 'USD' : 'RUB')
+                            (work.currency === 'USD' ? 'USD' : 'RUB'),
+                            work.isConfidential
                           )}
                         </span>
                       </div>

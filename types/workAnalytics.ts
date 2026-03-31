@@ -25,6 +25,7 @@ export interface WorkAnalytics {
   originalSalary?: number;
   originalExpenses?: number;
   originalIncome?: number;
+  isConfidential?: boolean;
 }
 
 /**

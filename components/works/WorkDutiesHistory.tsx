@@ -22,6 +22,7 @@ interface WorkDutiesHistoryProps {
   showOnlyCurrentUser?: boolean; // Флаг для отображения только обязанностей текущего пользователя
   onUpdate?: () => void; // Callback для обновления данных после изменений
   canEdit?: boolean; // Возможность редактирования (для админов)
+  isConfidential?: boolean; // Финансовые данные скрыты для текущего пользователя
 }
 
 interface GroupedHistoryItem {
@@ -58,6 +59,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   showOnlyCurrentUser = false,
   onUpdate,
   canEdit = false,
+  isConfidential = false,
 }) => {
   const { user } = useAppSelector((state) => state.auth);
 
@@ -89,7 +91,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
       percentPartInDuty = converted ?? percentAmountWork;
     }
 
-    if (pricePart === null && percentPartInDuty === null) return '��� ������';
+    if (pricePart === null && percentPartInDuty === null) return 'Нет данных';
 
     const parts: string[] = [];
     if (pricePart !== null)
@@ -436,7 +438,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             <div className="text-right">
               <div className="text-sm text-gray-500">Зарплата</div>
               <div className="text-lg font-semibold text-gray-900">
-                {formatAmountWithCurrency(Number(workHistoryItem.salary || 0), (workHistoryItem.currency as 'RUB' | 'USD') || workCurrency || 'RUB')}
+                {formatAmountWithCurrency(Number(workHistoryItem.salary || 0), (workHistoryItem.currency as 'RUB' | 'USD') || workCurrency || 'RUB', isConfidential)}
               </div>
             </div>
           </div>
@@ -579,9 +581,9 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     const prevDistribution = getNextDistributionItem();
     const differences = getDifferences(distribution, prevDistribution);
 
-    // Фильтруем детали, если нужно показывать только для текущего пользователя
+    // Фильтруем детали: для WORKER (isConfidential) показываем только его обязанности
     const filteredDetails =
-      showOnlyCurrentUser && currentUserId
+      (showOnlyCurrentUser || isConfidential) && currentUserId
         ? distribution.details.filter(
             (detail) => detail.user && detail.user.id === currentUserId
           )
@@ -610,7 +612,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             <div className="text-right">
               <div className="text-sm text-gray-500">Зарплата</div>
               <div className="text-lg font-semibold text-gray-900">
-                {formatAmountWithCurrency(Number(distribution.workHistory.salary || 0), (distribution.workHistory.currency as 'RUB' | 'USD') || workCurrency || 'RUB')}
+                {formatAmountWithCurrency(Number(distribution.workHistory.salary || 0), (distribution.workHistory.currency as 'RUB' | 'USD') || workCurrency || 'RUB', isConfidential)}
               </div>
             </div>
           </div>
