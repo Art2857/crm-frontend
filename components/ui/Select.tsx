@@ -91,7 +91,8 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     selectProps.onKeyDown = handleKeyDown;
 
     // Добавляем appearance-none для скрытия дефолтной стрелки и pr-10 для отступа под иконку
-    const selectClasses = `${baseClasses} appearance-none pr-10 ${errorClasses} ${widthClass} ${className}`;
+    const userClassesWithoutPr = className.replace(/\bpr-\d+\b/g, '');
+    const selectClasses = `${baseClasses} appearance-none ${errorClasses} ${widthClass} ${userClassesWithoutPr} pr-10`;
 
     return (
       <div className={`${fullWidth ? 'w-full' : ''} mb-4`}>
@@ -106,7 +107,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             )}
           </label>
         )}
-        <div className="relative">
+        <div className={`relative ${fullWidth ? 'w-full' : 'inline-block'}`}>
           <select ref={ref} className={selectClasses} {...selectProps}>
             {options
               ? // Если переданы опции в виде массива, рендерим их
