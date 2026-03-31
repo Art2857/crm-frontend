@@ -509,6 +509,11 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       delete updatedData.salaryDay2;
       updatedData.salaryDays = salaryDays.length > 0 ? salaryDays : [];
 
+      // Менеджер не может менять роли; Админ не может менять свою роль
+      if (user?.role !== Role.ADMIN || user?.id === userId) {
+        delete updatedData.role;
+      }
+
       // Отправляем запрос на обновление чувствительных данных
       const resultAction = await dispatch(
         updateUserSensitiveData({ userId, role: user.role, data: updatedData })
@@ -815,25 +820,30 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 error={sensitiveErrors.email}
               />
 
-              <div className="mb-4">
-                <label
-                  htmlFor="role"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Роль
-                </label>
-                <select
-                  id="role"
-                  name="role"
-                  className="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  value={sensitiveValues.role}
-                  onChange={handleSensitiveChange}
-                >
-                  <option value={Role.WORKER}>Работник</option>
-                  <option value={Role.ADMIN}>Администратор</option>
-                  <option value={Role.MANAGER}>Менеджер</option>
-                </select>
-              </div>
+              {(user?.role === Role.ADMIN || user?.role === Role.MANAGER) && (
+                <div className="mb-4">
+                  <Select
+                    id="role"
+                    name="role"
+                    label="Роль"
+                    options={[
+                      { value: Role.WORKER, label: 'Работник' },
+                      { value: Role.ADMIN, label: 'Администратор' },
+                      { value: Role.MANAGER, label: 'Менеджер' },
+                    ]}
+                    fullWidth
+                    value={sensitiveValues.role}
+                    onChange={handleSensitiveChange}
+                    disabled={user?.role !== Role.ADMIN || user?.id === userId}
+                    className="mb-0"
+                  />
+                  {user?.role === Role.ADMIN && user?.id === userId && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Нельзя изменить свою собственную роль
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
