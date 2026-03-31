@@ -36,6 +36,7 @@ export interface WorkDetail {
 
 export interface ResponsibleUser {
   userId: string;
+  login: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -171,6 +172,7 @@ export interface CustomPaymentFormData {
 
 export interface UserWorkDebt {
   userId: string;
+  login: string;
   firstName: string;
   lastName: string;
   email: string;

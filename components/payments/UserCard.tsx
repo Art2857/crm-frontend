@@ -11,6 +11,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   EyeIcon,
+  IdentificationIcon,
 } from '@heroicons/react/24/outline';
 import { ResponsibleUser } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
@@ -87,7 +88,10 @@ export default function UserCard({
                     </div>
                   )}
                 </div>
-                <p className="text-gray-600 font-medium">{user.email}</p>
+                <div className="inline-flex items-center gap-1.5 text-gray-600 font-medium">
+                  <IdentificationIcon className="h-5 w-5 shrink-0 text-gray-600" />
+                  <span className="leading-none">{user.login}</span>
+                </div>
                 <div className="flex items-center space-x-4 mt-2">
                   <div className="flex items-center space-x-1 text-sm text-gray-500">
                     <CalendarIcon className="h-4 w-4" />

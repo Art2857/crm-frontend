@@ -177,6 +177,7 @@ export const analyticsService = {
       endDate: string; // Российский формат DD.MM.YYYY
       users: Array<{
         userId: string;
+        login: string;
         firstName: string | null;
         lastName: string | null;
         email: string;
@@ -237,6 +238,7 @@ export const analyticsService = {
           users: [
             {
               userId: u.userId,
+              login: u.login,
               firstName: u.firstName || '',
               lastName: u.lastName || '',
               email: u.email,
@@ -257,6 +259,7 @@ export const analyticsService = {
           : works.some((w) => w.requiresAttention);
       return {
         userId: u.userId,
+        login: u.login,
         firstName: u.firstName || '',
         lastName: u.lastName || '',
         email: u.email,

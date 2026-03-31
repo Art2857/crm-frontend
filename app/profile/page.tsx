@@ -49,6 +49,8 @@ export default function ProfilePage() {
     validateForm,
   } = useForm<UpdateProfileDto>(
     {
+      login: '',
+      email: '',
       firstName: '',
       lastName: '',
       middleName: '',
@@ -58,6 +60,16 @@ export default function ProfilePage() {
       workEnd: '',
     },
     {
+      login: {
+        required: true,
+        minLength: 3,
+        maxLength: 50,
+        pattern: /^[a-zA-Z0-9_.-]+$/,
+      },
+      email: {
+        required: false,
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      },
       firstName: {
         required: true,
         minLength: 2,
@@ -91,6 +103,8 @@ export default function ProfilePage() {
     }
 
     if (user) {
+      setValue('login', user.login || '');
+      setValue('email', user.email || '');
       setValue('firstName', user.firstName || '');
       setValue('lastName', user.lastName || '');
       setValue('middleName', user.middleName || '');
@@ -283,6 +297,8 @@ export default function ProfilePage() {
     });
     // Сбрасываем форму к исходным значениям
     if (user) {
+      setValue('login', user.login || '');
+      setValue('email', user.email || '');
       setValue('firstName', user.firstName || '');
       setValue('lastName', user.lastName || '');
       setValue('middleName', user.middleName || '');
@@ -329,9 +345,9 @@ export default function ProfilePage() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto pb-8 pt-2 px-4 sm:px-6 lg:px-8">
         {/* Заголовок и кнопка редактирования */}
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Мой профиль</h1>
             <p className="text-gray-600 mt-2">Ваши личные данные и настройки</p>
@@ -366,12 +382,18 @@ export default function ProfilePage() {
               <div className="text-white flex-1">
                 <h2 className="text-2xl font-bold mb-2">{fullName}</h2>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <span className="bg-primary-800/40 px-3 py-1 rounded-full text-sm">
-                    {user.email}
-                  </span>
-                  <span className="bg-primary-800/40 px-3 py-1 rounded-full text-sm font-medium">
-                    {user.role}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">Логин:</span>
+                    <span className="bg-primary-800/40 px-3 py-1 rounded-full text-sm">
+                      {user.login}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">Роль:</span>
+                    <span className="bg-primary-800/40 px-3 py-1 rounded-full text-sm">
+                      {user.role}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm">Статус:</span>
                     {isEditing ? (
@@ -407,6 +429,48 @@ export default function ProfilePage() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   {/* Компактная форма редактирования */}
                   <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    {/* Логин и Email */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Логин *
+                        </label>
+                        <input
+                          type="text"
+                          value={values.login}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          name="login"
+                          className="w-full px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 transition-all duration-200 placeholder-gray-400"
+                          placeholder="Введите логин"
+                        />
+                        {errors.login && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.login}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          value={values.email}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          name="email"
+                          className="w-full px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 transition-all duration-200 placeholder-gray-400"
+                          placeholder="Введите email"
+                        />
+                        {errors.email && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.email}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
                     {/* ФИО в одной строке */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div>
@@ -479,10 +543,7 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Часовой пояс
-                        </label>
-                        <TimezoneSelector />
+                        <TimezoneSelector label="Часовой пояс" />
                       </div>
                     </div>
 
@@ -604,6 +665,22 @@ export default function ProfilePage() {
               <div className="space-y-8 animate-fadeIn">
                 {/* Просмотр данных */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                  <div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">
+                      Логин
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {user.login}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">
+                      Email
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {user.email || 'Не указан'}
+                    </div>
+                  </div>
                   <div>
                     <div className="text-sm font-medium text-gray-500 mb-2">
                       Имя

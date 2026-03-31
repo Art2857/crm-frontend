@@ -49,6 +49,8 @@ export interface UserHistory {
 }
 
 export interface UpdateProfileDto {
+  login?: string;
+  email?: string;
   firstName?: string;
   lastName?: string;
   middleName?: string;

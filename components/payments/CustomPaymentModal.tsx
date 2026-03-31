@@ -227,7 +227,7 @@ export default function CustomPaymentModal({
                       { value: '', label: 'Выберите получателя...' },
                       ...executers.map((user) => ({
                         value: user.id,
-                        label: `${user.firstName || ''} ${user.lastName || ''} (${user.email})`,
+                        label: `${user.firstName || ''} ${user.lastName || ''} (${user.login})`,
                       })),
                     ]}
                     className="pl-4 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
