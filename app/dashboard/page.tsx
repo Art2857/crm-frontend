@@ -70,7 +70,7 @@ export default function DashboardPage() {
         <div className="mb-10">
           <UserSummaryCard
             fullName={fullName}
-            email={user.email}
+            login={user.login}
             salary={data.salary}
             salaryDayText={formatSalaryDay(user.salaryDays)}
             birthdayText={formatDateToISO(user.birthday) || undefined}

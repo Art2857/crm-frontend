@@ -176,7 +176,7 @@ export default function AdminUsersPage() {
     <div className="max-w-7xl mx-auto pb-8 sm:px-6 lg:px-8">
       <div className="px-0 pb-6 pt-0 sm:px-0">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900">
             Управление пользователями
           </h1>
 

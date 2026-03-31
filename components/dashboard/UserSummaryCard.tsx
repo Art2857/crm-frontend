@@ -3,7 +3,7 @@ import { formatCurrency } from '../../utils/currency';
 
 interface Props {
   fullName: string;
-  email: string;
+  login: string;
   salary: number;
   salaryDayText: string;
   birthdayText?: string;
@@ -12,7 +12,7 @@ interface Props {
 
 export default function UserSummaryCard({
   fullName,
-  email,
+  login,
   salary,
   salaryDayText,
   birthdayText,
@@ -29,7 +29,7 @@ export default function UserSummaryCard({
             <div className="flex flex-col md:flex-row md:items-center">
               <h3 className="text-2xl font-bold">{fullName}</h3>
               <span className="md:ml-3 text-primary-200 bg-primary-800 bg-opacity-40 rounded-full px-3 py-1 text-sm">
-                {email}
+                {login}
               </span>
             </div>
             {(birthdayText || ageText) && (

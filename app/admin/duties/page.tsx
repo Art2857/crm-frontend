@@ -54,7 +54,7 @@ export default function AdminDutiesPage() {
     <div className="max-w-7xl mx-auto pb-6 sm:px-6 lg:px-8">
       <div className="px-0 pb-6 pt-0 sm:px-0">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900">
             Управление обязанностями
           </h1>
 
