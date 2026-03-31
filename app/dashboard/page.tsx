@@ -88,6 +88,7 @@ export default function DashboardPage() {
             {data.works.map((workData, idx) => (
               <WorkDutiesTable
                 key={`work-${idx}`}
+                workId={workData.workId}
                 name={workData.name}
                 responsibleName={
                   workData.responsibleUser

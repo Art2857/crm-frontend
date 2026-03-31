@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { formatAmountWithCurrency } from '../../utils/currency';
 import { formatDateToISO } from '../../utils/date';
 
@@ -12,6 +13,7 @@ interface DutyRow {
 }
 
 interface WorkCardProps {
+  workId: string;
   name: string;
   responsibleName: string;
   releaseDateText: string;
@@ -26,6 +28,7 @@ function getCurrency(duty: DutyRow): 'RUB' | 'USD' {
 }
 
 export default function WorkDutiesTable({
+  workId,
   name,
   responsibleName,
   releaseDateText,
@@ -38,7 +41,9 @@ export default function WorkDutiesTable({
     <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
       <div className="border-b border-gray-100">
         <div className="px-6 py-5 flex flex-wrap justify-between items-center">
-          <h3 className="text-xl font-bold text-gray-900">{name}</h3>
+          <Link href={`/works/${workId}`} className="text-xl font-bold text-gray-900 hover:text-primary-600 transition-colors duration-150">
+            {name}
+          </Link>
           <div className="flex items-center space-x-2 text-sm">
             <span className="text-gray-500">Ответственный:</span>
             <span className="font-medium">{responsibleName}</span>
