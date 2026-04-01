@@ -1,5 +1,26 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function RegisterPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/login');
+  }, [router]);
+
+  return (
+    <div className="min-h-screen flex flex-col justify-center items-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+    </div>
+  );
+}
+
+/*
+ * Регистрация отключена.
+ * Ниже — оригинальный код страницы регистрации.
+ *
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -36,10 +57,8 @@ export default function RegisterPage() {
   const [serverError, setServerError] = useState('');
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Проверяем, нужно ли показать кнопку "Вернуться назад"
   const [showBackButton, setShowBackButton] = useState(false);
 
-  // Загружаем состояние флага возврата при монтировании компонента
   useEffect(() => {
     setShowBackButton(accountNavigation.shouldShowBackButton() || isAddMode);
   }, [isAddMode]);
@@ -50,12 +69,8 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterFormData>();
 
-  // Проверяем, авторизован ли пользователь при загрузке страницы
   useEffect(() => {
-    // Добавляем небольшую задержку, чтобы AuthChecker успел обработать токен
     const timer = setTimeout(() => {
-      // Если пользователь уже авторизован и не в режиме добавления аккаунта,
-      // перенаправляем на дашборд
       if (isAuthenticated && !showBackButton && !isAddMode) {
         router.push('/dashboard');
       } else {
@@ -66,20 +81,15 @@ export default function RegisterPage() {
     return () => clearTimeout(timer);
   }, [router, isAuthenticated, showBackButton, isAddMode]);
 
-  // Очищаем флаг возврата при успешной регистрации
   useEffect(() => {
     return () => {
-      // При размонтировании компонента, если пользователь авторизован,
-      // снимаем флаг возврата к аккаунтам
       if (isAuthenticated) {
         accountNavigation.setReturnToAccounts(false);
       }
     };
   }, [isAuthenticated]);
 
-  // Обработчик возврата на страницу аккаунтов
   const handleBackToAccounts = () => {
-    // Используем функцию из accountNavigation для принудительного перехода
     accountNavigation.returnToAccounts();
   };
 
@@ -87,13 +97,10 @@ export default function RegisterPage() {
     try {
       setServerError('');
 
-      // Если мы в режиме добавления аккаунта, используем специальный метод
       if (isAddMode) {
         try {
-          // Используем метод addAccountRegister, который не изменяет текущий токен
           const response = await authService.addAccountRegister(data);
 
-          // Обновляем Redux store с данными нового аккаунта
           dispatch(
             setCredentials({
               user: response.user,
@@ -101,10 +108,8 @@ export default function RegisterPage() {
             })
           );
 
-          // Загружаем полные данные пользователя
           await dispatch(getCurrentUser());
 
-          // После успешной регистрации перенаправляем на страницу аккаунтов
           router.push('/accounts');
         } catch (error: any) {
           setServerError(
@@ -112,11 +117,9 @@ export default function RegisterPage() {
           );
         }
       } else {
-        // Стандартный процесс регистрации через Redux
         const resultAction = await dispatch(registerUser(data));
 
         if (registerUser.fulfilled.match(resultAction)) {
-          // Второй шаг - получить полные данные пользователя
           await dispatch(getCurrentUser());
           router.push('/profile');
         } else if (
@@ -131,7 +134,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Показываем загрузку, пока проверяем авторизацию
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center">
@@ -283,7 +285,6 @@ export default function RegisterPage() {
                 href={isAddMode ? '/login?mode=add' : '/login'}
                 className="font-medium text-primary-600 hover:text-primary-500"
                 onClick={() => {
-                  // Если включен режим возврата к аккаунтам, сохраняем его при переходе на логин
                   if (showBackButton) {
                     accountNavigation.setReturnToAccounts(true);
                   }
@@ -298,3 +299,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+*/

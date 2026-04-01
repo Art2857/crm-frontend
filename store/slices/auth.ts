@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authService } from '../../services/auth';
-import { AuthState, LoginDto, RegisterDto } from '../../types/auth';
+import { AuthState, LoginDto } from '../../types/auth';
 import { User } from '../../types/user';
 import { updateUserProfile, updateUserSensitiveData } from './users';
 
@@ -26,6 +26,7 @@ export const login = createAsyncThunk(
   }
 );
 
+/* Регистрация отключена
 export const register = createAsyncThunk(
   'auth/register',
   async (data: RegisterDto, { rejectWithValue }) => {
@@ -37,6 +38,7 @@ export const register = createAsyncThunk(
     }
   }
 );
+*/
 
 export const getCurrentUser = createAsyncThunk(
   'auth/getCurrentUser',
@@ -103,7 +105,7 @@ const authSlice = createSlice({
       state.token = null;
     });
 
-    // Регистрация
+    /* Регистрация отключена
     builder.addCase(register.pending, (state) => {
       state.isLoading = true;
       state.error = null;
@@ -121,6 +123,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
     });
+    */
 
     // Получение текущего пользователя
     builder.addCase(getCurrentUser.pending, (state) => {

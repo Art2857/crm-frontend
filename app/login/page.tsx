@@ -8,7 +8,7 @@ import { login, getCurrentUser, setCredentials } from '../../store/slices/auth';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import Link from 'next/link';
+// import Link from 'next/link'; // Регистрация отключена
 import { authService } from '../../services/auth';
 import accountNavigation from '../../utils/accountNavigation';
 
@@ -195,13 +195,13 @@ export default function LoginPage() {
             </div>
           </form>
 
+          {/* Регистрация отключена
           <div className="mt-6">
             <div className="text-sm text-center">
               <Link
                 href={isAddMode ? '/register?mode=add' : '/register'}
                 className="font-medium text-primary-600 hover:text-primary-500"
                 onClick={() => {
-                  // Если включен режим возврата к аккаунтам, сохраняем его при переходе на регистрацию
                   if (showBackButton) {
                     accountNavigation.setReturnToAccounts(true);
                   }
@@ -211,6 +211,7 @@ export default function LoginPage() {
               </Link>
             </div>
           </div>
+          */}
         </Card>
       </div>
     </div>

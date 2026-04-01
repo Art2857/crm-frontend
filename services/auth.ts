@@ -1,7 +1,7 @@
 import {
   AuthResponse,
   LoginDto,
-  RegisterDto,
+  // RegisterDto, // Регистрация отключена
 } from '../types/auth';
 import { privateApi, authApi, ApiClient } from './ApiClient';
 import { AUTH_ENDPOINTS, USERS_ENDPOINTS } from './endpoints';
@@ -74,6 +74,7 @@ export const authService = {
     return response.data;
   },
 
+  /* Регистрация отключена
   register: async (data: RegisterDto): Promise<AuthResponse> => {
     const token = tokenStorage.getAccessToken();
     const client = token ? privateApi : authApi;
@@ -102,7 +103,6 @@ export const authService = {
     return response.data;
   },
 
-  // Метод для добавления нового аккаунта через регистрацию без замены текущего
   addAccountRegister: async (data: RegisterDto): Promise<AuthResponse> => {
     const token = tokenStorage.getAccessToken();
     const client = token ? privateApi : authApi;
@@ -131,6 +131,7 @@ export const authService = {
 
     return response.data;
   },
+  */
 
   logout: (): void => {
     // Удаляем текущий аккаунт из менеджера аккаунтов
@@ -235,6 +236,7 @@ export const loginUser = async (
   }
 };
 
+/* Регистрация отключена
 export const registerUser = async (
   userData: RegisterDto
 ): Promise<AuthResponse> => {
@@ -248,6 +250,7 @@ export const registerUser = async (
     throw error;
   }
 };
+*/
 
 export const refreshToken = async (
   refreshToken: string
