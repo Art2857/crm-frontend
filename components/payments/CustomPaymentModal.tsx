@@ -55,6 +55,7 @@ export default function CustomPaymentModal({
   const [paymentDate, setPaymentDate] = useState(() =>
     format(new Date(), 'yyyy-MM-dd')
   );
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Текущий пользователь
   const { user } = useAppSelector((state) => state.auth);
@@ -111,7 +112,18 @@ export default function CustomPaymentModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedUserId || !selectedWorkId || !amount) return;
+
+    const newErrors: Record<string, string> = {};
+    if (!selectedWorkId) newErrors.work = 'Выберите работу';
+    if (!selectedUserId) newErrors.user = 'Выберите получателя';
+    if (!amount || parseFloat(amount) <= 0) newErrors.amount = 'Укажите сумму выплаты';
+    if (!paymentDate) newErrors.paymentDate = 'Укажите дату выплаты';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
 
     const userName = selectedUser
       ? `${selectedUser.firstName || ''} ${selectedUser.lastName || ''}`.trim()
@@ -198,7 +210,9 @@ export default function CustomPaymentModal({
                   onChange={(e) => {
                     setSelectedWorkId(e.target.value);
                     setSelectedUserId('');
+                    setErrors((prev) => { const { work, ...rest } = prev; return rest; });
                   }}
+                  error={errors.work}
                   options={[
                     { value: '', label: 'Выберите работу...' },
                     ...works.map((work) => ({
@@ -223,7 +237,11 @@ export default function CustomPaymentModal({
                 <div className="relative">
                   <Select
                     value={selectedUserId}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedUserId(e.target.value);
+                      setErrors((prev) => { const { user, ...rest } = prev; return rest; });
+                    }}
+                    error={errors.user}
                     options={[
                       { value: '', label: 'Выберите получателя...' },
                       ...executers.map((user) => ({
@@ -257,7 +275,11 @@ export default function CustomPaymentModal({
                     id="customAmount"
                     type="number"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                      setAmount(e.target.value);
+                      setErrors((prev) => { const { amount, ...rest } = prev; return rest; });
+                    }}
+                    error={errors.amount}
                     placeholder="0"
                     className="pl-8 pr-4 py-3 text-lg rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all w-full"
                     required
@@ -363,10 +385,26 @@ export default function CustomPaymentModal({
                   id="paymentDate"
                   type="date"
                   value={paymentDate}
-                  onChange={(e) => setPaymentDate(e.target.value)}
+                  onChange={(e) => {
+                    setPaymentDate(e.target.value);
+                    setErrors((prev) => { const { paymentDate, ...rest } = prev; return rest; });
+                  }}
+                  error={errors.paymentDate}
                   className="pl-4 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all w-full"
                   required
                 />
+              </div>
+            )}
+
+            {/* Ошибки валидации */}
+            {Object.keys(errors).length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+                <p className="font-medium mb-1">Заполните обязательные поля:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {Object.values(errors).map((msg, i) => (
+                    <li key={i}>{msg}</li>
+                  ))}
+                </ul>
               </div>
             )}
 
@@ -382,7 +420,6 @@ export default function CustomPaymentModal({
               <Button
                 type="submit"
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-                disabled={!selectedUserId || !selectedWorkId || !amount}
               >
                 <BanknotesIcon className="h-5 w-5 mr-2" />
                 Создать выплату
