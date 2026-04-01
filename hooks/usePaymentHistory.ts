@@ -3,6 +3,10 @@ import { useCallback, useState } from 'react';
 import { PaymentHistory, PaymentHistoryDto } from '../types/payment';
 import { useGetPaymentHistoryQuery } from '../store/services/api';
 
+interface UsePaymentHistoryOptions {
+  recipientId?: string;
+}
+
 interface UsePaymentHistoryResult {
   payments: PaymentHistory['payments'];
   total: number;
@@ -17,12 +21,12 @@ interface UsePaymentHistoryResult {
   refetch: () => void;
 }
 
-export function usePaymentHistory(userId?: string): UsePaymentHistoryResult {
-  const [filters, setFiltersState] = useState<PaymentHistoryDto>({
+export function usePaymentHistory(options?: UsePaymentHistoryOptions): UsePaymentHistoryResult {
+  const [filters, setFiltersState] = useState<PaymentHistoryDto>(() => ({
     page: 1,
     limit: 20,
-    viewerId: userId,
-  });
+    ...(options?.recipientId !== undefined && { recipientId: options.recipientId }),
+  }));
 
   const {
     data,
@@ -38,7 +42,7 @@ export function usePaymentHistory(userId?: string): UsePaymentHistoryResult {
     setFiltersState((prev) => ({
       ...prev,
       ...newFilters,
-      // При изменении фильтров сбрасываем страницу на первую, кроме случая когда явно указана страница
+      recipientId: prev.recipientId,
       page: newFilters.page !== undefined ? newFilters.page : 1,
     }));
   }, []);

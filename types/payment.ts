@@ -164,12 +164,12 @@ export interface MakePaymentDto {
 export interface PaymentHistoryDto {
   workId?: string;
   userId?: string;
+  recipientId?: string;
   paymentType?: PaymentType;
   startDate?: string;
   endDate?: string;
   page?: number;
   limit?: number;
-  viewerId?: string;
 }
 
 // create-payment-and-close

@@ -37,6 +37,7 @@ export const api = createApi({
                 if (params) {
                     if (params.workId) searchParams.append('workId', params.workId);
                     if (params.userId) searchParams.append('userId', params.userId);
+                    if (params.recipientId) searchParams.append('recipientId', params.recipientId);
                     if (params.paymentType)
                         searchParams.append('paymentType', params.paymentType);
                     if (params.startDate)

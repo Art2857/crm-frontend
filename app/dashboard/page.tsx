@@ -119,9 +119,9 @@ export default function DashboardPage() {
           <>
             {data.works.length > 0 ? (
               <div className="grid grid-cols-1 gap-8">
-                {data.works.map((workData, idx) => (
+                {data.works.map((workData) => (
                   <WorkDutiesTable
-                    key={`work-${idx}`}
+                    key={workData.workId}
                     workId={workData.workId}
                     name={workData.name}
                     responsibleName={
@@ -163,6 +163,7 @@ export default function DashboardPage() {
         {activeTab === 'history' && (
           <PaymentHistoryTab
             currentUserId={user.id}
+            recipientId={user.id}
             title="История поступлений"
           />
         )}

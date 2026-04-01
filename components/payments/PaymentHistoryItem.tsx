@@ -73,7 +73,9 @@ export default function PaymentHistoryItem({
 
           <p className="font-medium text-gray-900 mb-1">
             {payment.description ||
-              `${getPaymentTypeLabel(payment.paymentType)} по работе "${payment.work.name}"`}
+              (payment.work?.name
+                ? `${getPaymentTypeLabel(payment.paymentType)} по работе "${payment.work.name}"`
+                : getPaymentTypeLabel(payment.paymentType))}
           </p>
 
           <div className="text-sm text-gray-600">
@@ -87,8 +89,12 @@ export default function PaymentHistoryItem({
                   ? `${payment.toUser.firstName} ${payment.toUser.lastName}`
                   : `${payment.fromUser.firstName} ${payment.fromUser.lastName} → ${payment.toUser.firstName} ${payment.toUser.lastName}`}
             </span>
-            <span className="mx-2">•</span>
-            <span className="text-blue-600">{payment.work.name}</span>
+            {payment.work?.name && (
+              <>
+                <span className="mx-2">•</span>
+                <span className="text-blue-600">{payment.work.name}</span>
+              </>
+            )}
             {payment.duty && (
               <>
                 <span className="mx-2">•</span>

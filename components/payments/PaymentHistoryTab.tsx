@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Pagination from '../ui/Pagination';
@@ -10,20 +10,19 @@ import PaymentHistoryFilters from './PaymentHistoryFilters';
 import PaymentHistoryItem from './PaymentHistoryItem';
 import { PaymentHistoryDto } from '../../types/payment';
 import { deletePayment } from '../../services/payment';
-import { useState } from 'react';
-import { useAppSelector } from '../../store';
 import { formatCurrency } from '../../utils/payments';
 
 interface PaymentHistoryTabProps {
   currentUserId?: string;
+  recipientId?: string;
   title?: string;
 }
 
 export default function PaymentHistoryTab({
   currentUserId,
+  recipientId,
   title = 'История выплат',
 }: PaymentHistoryTabProps) {
-  const { user } = useAppSelector((state) => state.auth);
   const {
     payments,
     total,
@@ -36,7 +35,7 @@ export default function PaymentHistoryTab({
     filters,
     setFilters,
     refetch,
-  } = usePaymentHistory(currentUserId);
+  } = usePaymentHistory({ recipientId });
 
   const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(
     null
@@ -68,7 +67,7 @@ export default function PaymentHistoryTab({
       try {
         setDeletingPaymentId(paymentId);
         await deletePayment(paymentId);
-        await refetch(); // Перезагружаем данные после удаления
+        await refetch();
       } catch (error) {
         console.error('Error deleting payment:', error);
         alert(
@@ -79,13 +78,6 @@ export default function PaymentHistoryTab({
       }
     }
   };
-
-  // Force refetch on mount to ensure data is fresh, especially after mutations
-  // that might have occurred while this tab was inactive/unmounted
-  React.useEffect(() => {
-    refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Показываем ошибку только если она действительно есть и не связана с загрузкой
   if (error && !loading) {
