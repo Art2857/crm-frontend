@@ -16,10 +16,12 @@ import { formatCurrency } from '../../utils/payments';
 
 interface PaymentHistoryTabProps {
   currentUserId?: string;
+  title?: string;
 }
 
 export default function PaymentHistoryTab({
   currentUserId,
+  title = 'История выплат',
 }: PaymentHistoryTabProps) {
   const { user } = useAppSelector((state) => state.auth);
   const {
@@ -133,7 +135,7 @@ export default function PaymentHistoryTab({
           <div className="flex items-center justify-between mb-6">
             <div className="flex">
               <h2 className="text-xl font-semibold text-gray-900">
-                История выплат
+                {title}
               </h2>
               {totalAmountRub > 0 && (
                 <div className="flex items-center space-x-2 text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200 ml-6">
