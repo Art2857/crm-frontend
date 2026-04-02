@@ -671,6 +671,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                       currentDistribution={
                         distributions.length > 0 ? distributions[0] : null
                       }
+                      distributions={distributions}
                       isLoading={false}
                     />
                   </div>

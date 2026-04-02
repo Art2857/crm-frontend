@@ -5,7 +5,7 @@ import Tooltip from '../ui/Tooltip';
 import { Duty, DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
 import { formatAmountWithCurrency } from '../../utils/currency';
-import { getCurrentDateISO } from '../../utils/date';
+import { getCurrentDateISO, formatDateForDisplay } from '../../utils/date';
 import CurrencySwitch from '../ui/CurrencySwitch';
 import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
 
@@ -53,6 +53,7 @@ interface WorkDutiesFormProps {
   duties: Duty[];
   users: User[];
   currentDistribution: DistributionWithDetails | null;
+  distributions?: DistributionWithDetails[];
   onSubmit: (
     duties: Array<{
       dutyId: string;
@@ -91,6 +92,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
   duties,
   users,
   currentDistribution,
+  distributions = [],
   onSubmit,
   onCancel,
   isLoading = false,
@@ -103,9 +105,43 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
   const [showSalaryPreview, setShowSalaryPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRemoving, setIsRemoving] = useState<number | null>(null);
-  const [effectiveDate, setEffectiveDate] =
-    useState<string>(getCurrentDateISO());
   const [convertingIndex, setConvertingIndex] = useState<number | null>(null);
+
+  // Минимально допустимая дата вступления в силу:
+  // max(releaseDate, max effectiveDate вступивших в силу распределений)
+  const minEffectiveDate = useMemo(() => {
+    const today = getCurrentDateISO();
+    let minDate: string | undefined;
+
+    // Ограничение 1: дата выхода на проект
+    if (releaseDate) {
+      minDate = releaseDate;
+    }
+
+    // Ограничение 2: max effectiveDate среди распределений, уже вступивших в силу
+    if (distributions.length > 0) {
+      const activeEffectiveDates = distributions
+        .map((d) => d.workHistory.effectiveDate)
+        .filter((d): d is string => !!d && d <= today);
+
+      if (activeEffectiveDates.length > 0) {
+        const maxActiveDate = activeEffectiveDates.sort().pop()!;
+        if (!minDate || maxActiveDate > minDate) {
+          minDate = maxActiveDate;
+        }
+      }
+    }
+
+    return minDate;
+  }, [releaseDate, distributions]);
+
+  const [effectiveDate, setEffectiveDate] = useState<string>(() => {
+    const today = getCurrentDateISO();
+    if (minEffectiveDate && today < minEffectiveDate) {
+      return minEffectiveDate;
+    }
+    return today;
+  });
   
   const { convert, convertSync, rate: exchangeRate, isLoading: isLoadingRate } = useCurrencyConversion({
     date: releaseDate,
@@ -581,6 +617,15 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
 
   // Проверка валидности формы
   const validateForm = () => {
+    // Проверка даты вступления в силу
+    if (minEffectiveDate && effectiveDate && effectiveDate < minEffectiveDate) {
+      const displayDate = formatDateForDisplay(minEffectiveDate);
+      setValidationError(
+        `Дата вступления в силу не может быть раньше ${displayDate}`
+      );
+      return false;
+    }
+
     // Разрешаем сохранять пустое распределение (обнуление обязанностей)
     if (dutyItems.length === 0) {
       setValidationError(null);
@@ -1218,12 +1263,19 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                 className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 value={effectiveDate}
                 onChange={(e) => setEffectiveDate(e.target.value)}
+                min={minEffectiveDate || undefined}
                 disabled={isLoading || isSubmitting}
                 tabIndex={0}
               />
-              <p className="mt-1 text-sm text-gray-500">
-                Если не указана, будет использована текущая дата
-              </p>
+              {minEffectiveDate ? (
+                <p className="mt-1 text-sm text-amber-600">
+                  Минимальная дата: {formatDateForDisplay(minEffectiveDate)}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-gray-500">
+                  Если не указана, будет использована текущая дата
+                </p>
+              )}
             </div>
           </div>
 
