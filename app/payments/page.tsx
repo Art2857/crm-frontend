@@ -688,6 +688,13 @@ export default function PaymentsPage() {
                       userId={user.userId}
                       selectedDate={getUserPeriodDate(user.userId)}
                       onDateSet={handleUserPeriodDateChange}
+                      minDate={
+                        user.works
+                          ?.map((w) => w.lastClosureDate)
+                          .filter(Boolean)
+                          .sort()
+                          .pop() || undefined
+                      }
                     />
 
                     {user.works?.map((work) => (

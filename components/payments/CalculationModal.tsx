@@ -11,6 +11,7 @@ import {
   CurrencyDollarIcon,
   BanknotesIcon,
   DocumentTextIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { DetailedCalculation } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
@@ -190,6 +191,13 @@ export default function CalculationModal({
     setConfirmAction(() => action);
     setConfirmModalOpen(true);
   }, []);
+
+  const isDateBeforeClosure = useMemo(() => {
+    if (!calculation || !calculationDate) return false;
+    const closure = calculation.lastClosureDate;
+    if (!closure) return false;
+    return calculationDate <= closure.split('T')[0];
+  }, [calculation, calculationDate]);
 
   if (!calculation) return null;
 
@@ -737,9 +745,18 @@ export default function CalculationModal({
 
             {/* Кнопки создания выплаты */}
             {!isDebtsView && !isUserCalculation && (
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-3">
+                {isDateBeforeClosure && (
+                  <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
+                    <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
+                    <span>
+                      Выбранная дата расчёта ({formatRussian(calculationDate)}) не превышает текущую дату закрытия ({formatRussian(calculation.lastClosureDate)}). Выберите более позднюю дату.
+                    </span>
+                  </div>
+                )}
                 {displayValues.remainingDebt > 0 ? (
                   <Button
+                    disabled={isDateBeforeClosure}
                     onClick={() => {
                       onCreatePayment(
                         calculation.userId,
@@ -750,7 +767,7 @@ export default function CalculationModal({
                         calculationDate
                       );
                     }}
-                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white"
+                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <BanknotesIcon className="h-5 w-5 mr-2" />
                     Выплатить зарплату (
@@ -758,6 +775,7 @@ export default function CalculationModal({
                   </Button>
                 ) : (
                   <Button
+                    disabled={isDateBeforeClosure}
                     onClick={() => {
                       openConfirmModal(() => {
                         const ev = new CustomEvent('close-period', {
@@ -770,7 +788,7 @@ export default function CalculationModal({
                         window.dispatchEvent(ev);
                       });
                     }}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Закрыть период
                   </Button>
@@ -787,10 +805,19 @@ export default function CalculationModal({
                     выполнить мульти-выплату/закрытие периодов одним действием.
                   </p>
                 </div>
+                {isDateBeforeClosure && (
+                  <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 w-full">
+                    <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
+                    <span>
+                      Выбранная дата расчёта ({formatRussian(calculationDate)}) не превышает текущую дату закрытия ({formatRussian(calculation.lastClosureDate)}). Выберите более позднюю дату.
+                    </span>
+                  </div>
+                )}
                 {onBulkPayAllWorks && (
                   <Button
+                    disabled={isDateBeforeClosure}
                     onClick={() => openConfirmModal(onBulkPayAllWorks)}
-                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white"
+                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <BanknotesIcon className="h-5 w-5 mr-2" /> Выплатить/закрыть
                     по всем работам
