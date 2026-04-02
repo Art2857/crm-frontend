@@ -13,8 +13,10 @@ import {
   UserIcon,
   BuildingOfficeIcon,
   CheckCircleIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { PaymentFormData, PaymentModalData } from '../../types/payments';
+import { useDateManager } from '../../hooks/useDateManager';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -22,6 +24,8 @@ interface PaymentModalProps {
   payment: PaymentFormData | null;
   paymentDate: string | null;
   onSubmit: (data: PaymentModalData) => void;
+  periods?: Array<{ startDate: string; endDate: string }>;
+  closureDate?: string;
 }
 
 export default function PaymentModal({
@@ -30,8 +34,11 @@ export default function PaymentModal({
   payment,
   paymentDate,
   onSubmit,
+  periods,
+  closureDate,
 }: PaymentModalProps) {
   const [description, setDescription] = useState('');
+  const { formatRussian } = useDateManager();
 
   useEffect(() => {
     if (payment) {
@@ -163,6 +170,35 @@ export default function PaymentModal({
                 className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all resize-none"
               />
             </div>
+
+            {/* Пояснение о действии */}
+            {(periods?.length || closureDate) && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="flex gap-2">
+                  <InformationCircleIcon className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-gray-700 leading-relaxed">
+                    <span>Будет выплачено </span>
+                    <span className="font-semibold text-green-700">{formatCurrency(payment.amount)}</span>
+                    {periods && periods.length > 0 && (
+                      <>
+                        <span> за периоды </span>
+                        <span className="font-medium">
+                          {periods.map((p) => `${formatRussian(p.startDate)} — ${formatRussian(p.endDate)}`).join(', ')}
+                        </span>
+                      </>
+                    )}
+                    <span> по работе </span>
+                    <span className="font-semibold">{payment.workName}</span>
+                    {closureDate && (
+                      <>
+                        <span> с закрытием периодов до </span>
+                        <span className="font-semibold text-blue-700">{formatRussian(closureDate)}</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Сводка */}
             <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3 border border-green-200">

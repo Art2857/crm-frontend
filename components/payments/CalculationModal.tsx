@@ -16,6 +16,7 @@ import { DetailedCalculation } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
 import CurrencySwitch from '../ui/CurrencySwitch';
 import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
+import PaymentConfirmModal from './PaymentConfirmModal';
 
 interface CalculationModalProps {
   isOpen: boolean;
@@ -52,6 +53,8 @@ export default function CalculationModal({
   // Hooks must be called unconditionally
   const { formatRussian } = useDateManager();
   const [displayCurrency, setDisplayCurrency] = useState<CurrencyType>('RUB');
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
 
   // Sync initial currency when provided/opened
   useEffect(() => {
@@ -152,6 +155,41 @@ export default function CalculationModal({
       actualTotalPaid: Math.round(totalPaidConverted),
     };
   }, [calculation, displayCurrency, convert, isDebtsView]);
+
+  const confirmModalWorkNames = useMemo(() => {
+    if (!calculation) return [];
+    if (!isUserCalculation && calculation.workName) {
+      return [calculation.workName];
+    }
+    const names = new Set<string>();
+    for (const period of calculation.periods || []) {
+      if (period.workGroups) {
+        for (const wg of period.workGroups) {
+          if (wg.workName) names.add(wg.workName);
+        }
+      }
+      for (const duty of period.duties || []) {
+        if (duty.workName) names.add(duty.workName);
+      }
+    }
+    if (names.size === 0 && calculation.workName) {
+      names.add(calculation.workName);
+    }
+    return Array.from(names);
+  }, [calculation, isUserCalculation]);
+
+  const confirmModalPeriods = useMemo(() => {
+    if (!calculation) return [];
+    return calculation.periods.map((p) => ({
+      startDate: p.startDate,
+      endDate: p.endDate,
+    }));
+  }, [calculation]);
+
+  const openConfirmModal = useCallback((action: () => void) => {
+    setConfirmAction(() => action);
+    setConfirmModalOpen(true);
+  }, []);
 
   if (!calculation) return null;
 
@@ -721,14 +759,16 @@ export default function CalculationModal({
                 ) : (
                   <Button
                     onClick={() => {
-                      const ev = new CustomEvent('close-period', {
-                        detail: {
-                          userId: calculation.userId,
-                          workId: calculation.workId,
-                          calculationDate,
-                        },
+                      openConfirmModal(() => {
+                        const ev = new CustomEvent('close-period', {
+                          detail: {
+                            userId: calculation.userId,
+                            workId: calculation.workId,
+                            calculationDate,
+                          },
+                        });
+                        window.dispatchEvent(ev);
                       });
-                      window.dispatchEvent(ev);
                     }}
                     className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white"
                   >
@@ -749,7 +789,7 @@ export default function CalculationModal({
                 </div>
                 {onBulkPayAllWorks && (
                   <Button
-                    onClick={onBulkPayAllWorks}
+                    onClick={() => openConfirmModal(onBulkPayAllWorks)}
                     className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white"
                   >
                     <BanknotesIcon className="h-5 w-5 mr-2" /> Выплатить/закрыть
@@ -770,6 +810,24 @@ export default function CalculationModal({
           </>
         )}
       </div>
+
+      <PaymentConfirmModal
+        isOpen={confirmModalOpen}
+        onClose={() => {
+          setConfirmModalOpen(false);
+          setConfirmAction(null);
+        }}
+        onConfirm={() => {
+          if (confirmAction) confirmAction();
+          setConfirmAction(null);
+        }}
+        amount={displayValues.remainingDebt}
+        currency={displayCurrency}
+        periods={confirmModalPeriods}
+        workNames={confirmModalWorkNames}
+        closureDate={calculationDate}
+        isBulk={isUserCalculation}
+      />
     </Modal>
   );
 }

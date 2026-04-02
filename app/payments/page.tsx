@@ -789,6 +789,17 @@ export default function PaymentsPage() {
               : null
           }
           onSubmit={handlePaymentSubmit}
+          periods={
+            selectedCalculation?.periods?.map((p) => ({
+              startDate: p.startDate,
+              endDate: p.endDate,
+            }))
+          }
+          closureDate={
+            selectedCalculation
+              ? getWorkPeriodDate(selectedCalculation.workId)
+              : undefined
+          }
         />
 
         <CustomPaymentModal
