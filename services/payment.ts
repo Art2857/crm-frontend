@@ -170,6 +170,24 @@ export const createPaymentAndClose = async (
   }
 };
 
+/**
+ * Получает дату закрытия периода для пары работа+пользователь
+ */
+export const getClosureDate = async (
+  workId: string,
+  userId: string
+): Promise<string | null> => {
+  try {
+    const response = await privateApi.get<{ closureDate: string | null }>(
+      `${PAYMENTS_ENDPOINTS.closureDate}?workId=${workId}&userId=${userId}`
+    );
+    return response.data.closureDate;
+  } catch (error) {
+    logger.error('Error fetching closure date:', error);
+    return null;
+  }
+};
+
 export const closePeriod = async (
   params: {
     workId: string;

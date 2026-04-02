@@ -62,6 +62,7 @@ export const PAYMENTS_ENDPOINTS = {
   base: '/payments',
   byId: (id: string) => `/payments/${id}`,
   history: '/payments/history',
+  closureDate: '/payments/closure-date',
   createAndClose: '/payments/create-payment-and-close',
   bulkCreateAndClose: '/payments/bulk-create-and-close',
   closePeriod: '/payments/close-period',

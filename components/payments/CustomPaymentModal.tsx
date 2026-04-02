@@ -19,6 +19,7 @@ import { Work } from '../../types/work';
 import { User } from '../../types/user';
 import { workService } from '../../services/work';
 import { workExecuterService } from '../../services/workExecuter';
+import { getClosureDate } from '../../services/payment';
 import { useAppSelector } from '../../store';
 import { format } from 'date-fns';
 
@@ -56,6 +57,7 @@ export default function CustomPaymentModal({
     format(new Date(), 'yyyy-MM-dd')
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [minPaymentDate, setMinPaymentDate] = useState<string | null>(null);
 
   // Текущий пользователь
   const { user } = useAppSelector((state) => state.auth);
@@ -97,6 +99,21 @@ export default function CustomPaymentModal({
     }
   }, [selectedWorkId]);
 
+  // Загрузка даты закрытия при выборе работы и получателя
+  useEffect(() => {
+    if (selectedWorkId && selectedUserId) {
+      (async () => {
+        const closureDate = await getClosureDate(selectedWorkId, selectedUserId);
+        setMinPaymentDate(closureDate);
+        if (closureDate && paymentDate < closureDate) {
+          setPaymentDate(closureDate);
+        }
+      })();
+    } else {
+      setMinPaymentDate(null);
+    }
+  }, [selectedWorkId, selectedUserId]);
+
   // При открытии модалки заполняем поля значениями по умолчанию
   useEffect(() => {
     if (isOpen) {
@@ -104,6 +121,7 @@ export default function CustomPaymentModal({
       if (defaultUserId) setSelectedUserId(defaultUserId);
       if (defaultAmount !== undefined) setAmount(String(defaultAmount));
       setPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+      setMinPaymentDate(null);
     }
   }, [isOpen, defaultWorkId, defaultUserId, defaultAmount]);
 
@@ -117,7 +135,12 @@ export default function CustomPaymentModal({
     if (!selectedWorkId) newErrors.work = 'Выберите работу';
     if (!selectedUserId) newErrors.user = 'Выберите получателя';
     if (!amount || parseFloat(amount) <= 0) newErrors.amount = 'Укажите сумму выплаты';
-    if (!paymentDate) newErrors.paymentDate = 'Укажите дату выплаты';
+    if (!paymentDate) {
+      newErrors.paymentDate = 'Укажите дату выплаты';
+    } else if (minPaymentDate && paymentDate < minPaymentDate) {
+      const [y, m, d] = minPaymentDate.split('-');
+      newErrors.paymentDate = `Дата выплаты не может быть раньше ${d}.${m}.${y}`;
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -389,10 +412,16 @@ export default function CustomPaymentModal({
                     setPaymentDate(e.target.value);
                     setErrors((prev) => { const { paymentDate, ...rest } = prev; return rest; });
                   }}
+                  min={minPaymentDate || undefined}
                   error={errors.paymentDate}
                   className="pl-4 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all w-full"
                   required
                 />
+                {minPaymentDate && (
+                  <p className="text-xs text-amber-600 -mt-3">
+                    Минимальная дата: {minPaymentDate.split('-').reverse().join('.')}
+                  </p>
+                )}
               </div>
             )}
 
