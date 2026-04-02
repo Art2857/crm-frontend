@@ -202,6 +202,7 @@ export default function CalculationModal({
   if (!calculation) return null;
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={onClose}>
       <div
         className={`p-6 max-w-full mx-auto max-h-[95vh] overflow-y-auto ${calculation?.periods[0]?.duties.length === 1 && !showPaymentHistory
@@ -838,6 +839,9 @@ export default function CalculationModal({
         )}
       </div>
 
+    </Modal>
+
+    {confirmModalOpen && (
       <PaymentConfirmModal
         isOpen={confirmModalOpen}
         onClose={() => {
@@ -854,7 +858,9 @@ export default function CalculationModal({
         workNames={confirmModalWorkNames}
         closureDate={calculationDate}
         isBulk={isUserCalculation}
+        hasOverpayment={displayValues.actualTotalPaid > displayValues.totalAccrued}
       />
-    </Modal>
+    )}
+    </>
   );
 }

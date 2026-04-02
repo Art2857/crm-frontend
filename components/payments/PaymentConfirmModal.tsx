@@ -21,6 +21,7 @@ interface PaymentConfirmModalProps {
   workNames: string[];
   closureDate?: string;
   isBulk?: boolean;
+  hasOverpayment?: boolean;
 }
 
 export default function PaymentConfirmModal({
@@ -33,6 +34,7 @@ export default function PaymentConfirmModal({
   workNames,
   closureDate,
   isBulk = false,
+  hasOverpayment = false,
 }: PaymentConfirmModalProps) {
   const { formatRussian } = useDateManager();
 
@@ -102,6 +104,12 @@ export default function PaymentConfirmModal({
                     )}
                     <span> по {isMultipleWorks ? 'работам' : 'работе'} </span>
                     <span className="font-semibold">{formattedWorks}</span>
+                    <span>, без выплат — </span>
+                    {hasOverpayment ? (
+                      <span className="text-amber-700">есть переплата</span>
+                    ) : (
+                      <span>всё выплачено</span>
+                    )}
                   </>
                 )}
               </div>
