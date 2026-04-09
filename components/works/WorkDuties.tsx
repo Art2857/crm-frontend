@@ -33,7 +33,9 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
 
   // Получаем последнее распределение (самое актуальное)
   // Всегда берём первое (самое свежее) - даже если оно пустое (обнулено при архивации)
-  const latestDistribution = useMemo<DistributionWithDetails | undefined>(() => {
+  const latestDistribution = useMemo<
+    DistributionWithDetails | undefined
+  >(() => {
     if (!distributions || distributions.length === 0) return undefined;
     return distributions[0];
   }, [distributions]);
@@ -56,10 +58,8 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
       <Card>
         <div className="py-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              Обязанности
-            </h3>
-            
+            <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
+
             {/* Кнопка создания обязанностей */}
             {canEdit && onEditDuties && (
               <button
@@ -95,10 +95,8 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
       <Card>
         <div className="py-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              Обязанности
-            </h3>
-            
+            <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
+
             {/* Кнопка создания обязанностей (только если есть права) */}
             {canEdit && onEditDuties && (
               <button
@@ -147,7 +145,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
                 )}
               </p>
             </div>
-            
+
             {/* Кнопка редактирования обязанностей */}
             {canEdit && onEditDuties && (
               <button
@@ -216,9 +214,10 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
                   const numericCalculatedValue = detail.calculatedValue
                     ? parseFloat(detail.calculatedValue)
                     : null;
-                  // Валюта берётся из detail (сохранённая валюта распределения), 
+                  // Валюта берётся из detail (сохранённая валюта распределения),
                   // если не указана — fallback на валюту обязанности
-                  const detailCurrency = detail.currency || detail.duty.currency;
+                  const detailCurrency =
+                    detail.currency || detail.duty.currency;
 
                   return (
                     <tr key={detail.id}>

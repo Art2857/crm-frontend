@@ -34,17 +34,16 @@ export function ExchangeRateChart({
   height = 400,
   onStatsCalculated,
 }: ExchangeRateChartProps) {
-
   // Подготовка данных для графика
   const chartData = useMemo(() => {
     return data
       .map((point) => {
         const parsedDate = parseDate(point.date);
         const validDate = parsedDate || new Date(0);
-        
+
         return {
           ...point,
-          date: parsedDate 
+          date: parsedDate
             ? parsedDate.toLocaleDateString('ru-RU', {
                 day: '2-digit',
                 month: '2-digit',
@@ -55,7 +54,7 @@ export function ExchangeRateChart({
           displayRate: point.displayRate || point.rate / point.nominal,
         };
       })
-      .filter(point => point.fullDate.getTime() > 0) // убираем невалидные даты
+      .filter((point) => point.fullDate.getTime() > 0) // убираем невалидные даты
       .sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime());
   }, [data]);
 
@@ -65,11 +64,11 @@ export function ExchangeRateChart({
       return { min: 0, max: 0, avg: 0, change: 0, changePercent: 0 };
     }
 
-    const rates = chartData.map(d => d.displayRate);
+    const rates = chartData.map((d) => d.displayRate);
     const min = Math.min(...rates);
     const max = Math.max(...rates);
     const avg = rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
-    
+
     const firstRate = rates[0];
     const lastRate = rates[rates.length - 1];
     const change = lastRate - firstRate;
@@ -113,11 +112,9 @@ export function ExchangeRateChart({
     return null;
   };
 
-
-
   if (chartData.length === 0) {
     return (
-      <div 
+      <div
         className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg"
         style={{ height }}
       >
@@ -134,41 +131,41 @@ export function ExchangeRateChart({
 
   return (
     <div style={{ height }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData}>
-            <defs>
-              <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-            <XAxis 
-              dataKey="date" 
-              stroke="#6B7280"
-              fontSize={12}
-              tick={{ fontSize: 12 }}
-              interval="preserveStartEnd"
-            />
-            <YAxis 
-              stroke="#6B7280"
-              fontSize={12}
-              tick={{ fontSize: 12 }}
-              domain={['dataMin - 0.5', 'dataMax + 0.5']}
-              tickFormatter={formatValue}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="displayRate"
-              stroke="#3B82F6"
-              strokeWidth={2}
-              fill="url(#colorRate)"
-              dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData}>
+          <defs>
+            <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+          <XAxis
+            dataKey="date"
+            stroke="#6B7280"
+            fontSize={12}
+            tick={{ fontSize: 12 }}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            stroke="#6B7280"
+            fontSize={12}
+            tick={{ fontSize: 12 }}
+            domain={['dataMin - 0.5', 'dataMax + 0.5']}
+            tickFormatter={formatValue}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Area
+            type="monotone"
+            dataKey="displayRate"
+            stroke="#3B82F6"
+            strokeWidth={2}
+            fill="url(#colorRate)"
+            dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }

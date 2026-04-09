@@ -9,7 +9,10 @@ import { formatCurrency, formatAmountWithCurrency } from '../../utils/currency';
 import { exchangeRateFacade } from '../../services/exchangeRateFacade';
 import { exchangeRateCacheService } from '../../services/exchangeRateCache';
 import DocumentsManager from '../documents/DocumentsManager';
-import { DocumentsStagingContext, DocumentsDeferredHandlers } from '../../contexts/DocumentsStagingContext';
+import {
+  DocumentsStagingContext,
+  DocumentsDeferredHandlers,
+} from '../../contexts/DocumentsStagingContext';
 
 interface WorkFormProps {
   // Регистрация обработчиков коммита/отмены для документов (отложенный режим)
@@ -56,8 +59,6 @@ const WorkForm: React.FC<WorkFormProps> = ({
     };
   });
 
-
-
   // Проверяем валидность данных формы
   const isFormValid =
     formData.name &&
@@ -73,8 +74,12 @@ const WorkForm: React.FC<WorkFormProps> = ({
       ? parseFloat(formData.salary) || 0
       : formData.salary || 0;
 
-  const [selectedCurrency, setSelectedCurrency] = useState<string>(() => (formData.currency || 'RUB'));
-  const [convertedBudget, setConvertedBudget] = useState<number>(salaryValue || 0);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(
+    () => formData.currency || 'RUB'
+  );
+  const [convertedBudget, setConvertedBudget] = useState<number>(
+    salaryValue || 0
+  );
   const [isConverting, setIsConverting] = useState<boolean>(false);
   const [convertError, setConvertError] = useState<string | null>(null);
 
@@ -84,11 +89,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
   // Currency formatting is centralized in utils/currency
   useEffect(() => {
-    setIsConverting(false)
-    setConvertError(null)
-    const value = !salaryValue || isNaN(salaryValue) ? 0 : salaryValue
-    setConvertedBudget(value)
-  }, [salaryValue, selectedCurrency])
+    setIsConverting(false);
+    setConvertError(null);
+    const value = !salaryValue || isNaN(salaryValue) ? 0 : salaryValue;
+    setConvertedBudget(value);
+  }, [salaryValue, selectedCurrency]);
 
   return (
     <div className="space-y-6">
@@ -239,7 +244,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                   Финансы проекта
                 </span>
                 <CurrencySwitch
-                  value={(selectedCurrency as 'RUB' | 'USD')}
+                  value={selectedCurrency as 'RUB' | 'USD'}
                   onChange={(val) => {
                     setSelectedCurrency(val);
                     // Пробрасываем изменение валюты в форму
@@ -273,7 +278,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     placeholder="0"
                   />
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-primary-500 text-sm">{selectedCurrency === 'USD' ? '$' : '₽'}</span>
+                    <span className="text-primary-500 text-sm">
+                      {selectedCurrency === 'USD' ? '$' : '₽'}
+                    </span>
                   </div>
                 </div>
                 <p className="mt-1 text-xs text-primary-600">
@@ -287,13 +294,22 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     </div>
                     <div className="text-xs text-primary-600 mb-1 flex items-center justify-between">
                       <span>({selectedCurrency})</span>
-                      {isConverting && <span className="text-[11px] text-primary-500">Конвертация</span>}
+                      {isConverting && (
+                        <span className="text-[11px] text-primary-500">
+                          Конвертация
+                        </span>
+                      )}
                     </div>
                     <div className="text-lg font-semibold text-primary-800">
-                      {formatAmountWithCurrency(convertedBudget, selectedCurrency as 'RUB' | 'USD')}
+                      {formatAmountWithCurrency(
+                        convertedBudget,
+                        selectedCurrency as 'RUB' | 'USD'
+                      )}
                     </div>
                     {convertError && (
-                      <div className="mt-2 text-[11px] text-red-600">{convertError}</div>
+                      <div className="mt-2 text-[11px] text-red-600">
+                        {convertError}
+                      </div>
                     )}
                   </div>
                 )}
@@ -330,7 +346,14 @@ const WorkForm: React.FC<WorkFormProps> = ({
         </div>
 
         {/* Документы */}
-        <DocumentsStagingContext.Provider value={{ isDeferred: true, mode: 'work', entityId: workId, registerHandlers: onRegisterDocsHandlers }}>
+        <DocumentsStagingContext.Provider
+          value={{
+            isDeferred: true,
+            mode: 'work',
+            entityId: workId,
+            registerHandlers: onRegisterDocsHandlers,
+          }}
+        >
           <DocumentsManager mode="work" entityId={workId} />
         </DocumentsStagingContext.Provider>
 
@@ -386,6 +409,3 @@ const WorkForm: React.FC<WorkFormProps> = ({
 };
 
 export default WorkForm;
-
-
-

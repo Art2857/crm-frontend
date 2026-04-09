@@ -28,10 +28,12 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
   }, [incomes]);
   const formatAmount = (amount: number, currency: 'RUB' | 'USD') => {
     const symbol = currency === 'RUB' ? '₽' : '$';
-    return new Intl.NumberFormat('ru-RU', {
-      minimumFractionDigits: currency === 'RUB' ? 0 : 2,
-      maximumFractionDigits: currency === 'RUB' ? 0 : 2,
-    }).format(amount) + ` ${symbol}`;
+    return (
+      new Intl.NumberFormat('ru-RU', {
+        minimumFractionDigits: currency === 'RUB' ? 0 : 2,
+        maximumFractionDigits: currency === 'RUB' ? 0 : 2,
+      }).format(amount) + ` ${symbol}`
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -48,7 +50,10 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
   };
 
   const getCurrencyLabel = (currency: 'RUB' | 'USD') => {
-    return CURRENCY_OPTIONS.find(option => option.value === currency)?.label || currency;
+    return (
+      CURRENCY_OPTIONS.find((option) => option.value === currency)?.label ||
+      currency
+    );
   };
 
   // Цветовые схемы для валют
@@ -58,14 +63,14 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
         badge: 'bg-green-100 text-green-800 border-green-200',
         amount: 'text-green-700 font-semibold',
         converted: 'text-green-600',
-        icon: 'text-green-600'
+        icon: 'text-green-600',
       };
     } else {
       return {
         badge: 'bg-blue-100 text-blue-800 border-blue-200',
         amount: 'text-blue-700 font-semibold',
         converted: 'text-blue-600',
-        icon: 'text-blue-600'
+        icon: 'text-blue-600',
       };
     }
   };
@@ -152,29 +157,42 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {sortedIncomes.map((income) => (
-              <tr key={income.id} className="hover:bg-gray-50 transition-colors">
+              <tr
+                key={income.id}
+                className="hover:bg-gray-50 transition-colors"
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {formatDate(income.receivedDate)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className={`text-sm ${getCurrencyStyles(income.currency as 'RUB' | 'USD').amount}`}>
+                  <div
+                    className={`text-sm ${getCurrencyStyles(income.currency as 'RUB' | 'USD').amount}`}
+                  >
                     {formatAmount(income.amount, income.currency)}
                   </div>
-                  <div className={`text-xs px-2 py-0.5 rounded-full inline-block border ${getCurrencyStyles(income.currency as 'RUB' | 'USD').badge}`}>
+                  <div
+                    className={`text-xs px-2 py-0.5 rounded-full inline-block border ${getCurrencyStyles(income.currency as 'RUB' | 'USD').badge}`}
+                  >
                     {getCurrencyLabel(income.currency)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {income.convertedAmount && income.convertedCurrency ? (
                     <div>
-                      <div className={`text-sm font-medium ${getCurrencyStyles(income.convertedCurrency as 'RUB' | 'USD').converted}`}>
-                        {formatAmount(income.convertedAmount, income.convertedCurrency)}
+                      <div
+                        className={`text-sm font-medium ${getCurrencyStyles(income.convertedCurrency as 'RUB' | 'USD').converted}`}
+                      >
+                        {formatAmount(
+                          income.convertedAmount,
+                          income.convertedCurrency
+                        )}
                       </div>
                       {income.exchangeRate && (
                         <div className="text-xs text-gray-500">
-                          Курс: {new Intl.NumberFormat('ru-RU', {
+                          Курс:{' '}
+                          {new Intl.NumberFormat('ru-RU', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 4,
                           }).format(income.exchangeRate)}

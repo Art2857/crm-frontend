@@ -35,7 +35,6 @@ export default function UserHistoryPage({
     try {
       setRefreshing(true);
       await dispatch(fetchUserHistory({ role: user.role, userId }));
-
     } catch (error) {
       console.error('Ошибка при обновлении истории:', error);
       setError(
@@ -90,7 +89,6 @@ export default function UserHistoryPage({
   // Добавляем логирование истории для отладки
   useEffect(() => {
     if (currentUser?.history) {
-
     }
   }, [currentUser]);
 
@@ -192,14 +190,6 @@ export default function UserHistoryPage({
       ) {
         age--;
       }
-
-      // Отладочный вывод
-      console.log(
-        'Calculated age:',
-        age,
-        'from birthday:',
-        birthday.toISOString()
-      );
 
       return age;
     } catch (error) {
@@ -354,10 +344,11 @@ export default function UserHistoryPage({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${historyItem.role === Role.ADMIN
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-blue-100 text-blue-800'
-                            }`}
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            historyItem.role === Role.ADMIN
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}
                         >
                           {historyItem.role === Role.ADMIN
                             ? 'Администратор'

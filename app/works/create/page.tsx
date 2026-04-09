@@ -32,8 +32,12 @@ export default function CreateWorkPage() {
 
   // Загружаем список пользователей при монтировании компонента
   useEffect(() => {
+    if (!user?.role) {
+      return;
+    }
+
     dispatch(fetchAllUsers({ role: user.role }));
-  }, [dispatch]);
+  }, [dispatch, user?.role]);
 
   // Обработчик изменения полей формы
   const handleChange = (
@@ -180,7 +184,9 @@ export default function CreateWorkPage() {
                   </label>
                   <CurrencySwitch
                     value={formData.currency as 'RUB' | 'USD'}
-                    onChange={(val) => setFormData((p) => ({ ...p, currency: val }))}
+                    onChange={(val) =>
+                      setFormData((p) => ({ ...p, currency: val }))
+                    }
                     size="sm"
                   />
                 </div>

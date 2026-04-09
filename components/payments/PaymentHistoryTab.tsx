@@ -126,9 +126,7 @@ export default function PaymentHistoryTab({
         <div className="p-6 pb-0">
           <div className="flex items-center justify-between mb-6">
             <div className="flex">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {title}
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
               {totalAmountRub > 0 && (
                 <div className="flex items-center space-x-2 text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200 ml-6">
                   <span className="font-medium">Всего получено:</span>

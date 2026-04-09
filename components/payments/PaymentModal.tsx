@@ -178,12 +178,19 @@ export default function PaymentModal({
                   <InformationCircleIcon className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-gray-700 leading-relaxed">
                     <span>Будет выплачено </span>
-                    <span className="font-semibold text-green-700">{formatCurrency(payment.amount)}</span>
+                    <span className="font-semibold text-green-700">
+                      {formatCurrency(payment.amount)}
+                    </span>
                     {periods && periods.length > 0 && (
                       <>
                         <span> за периоды </span>
                         <span className="font-medium">
-                          {periods.map((p) => `${formatRussian(p.startDate)} — ${formatRussian(p.endDate)}`).join(', ')}
+                          {periods
+                            .map(
+                              (p) =>
+                                `${formatRussian(p.startDate)} — ${formatRussian(p.endDate)}`
+                            )
+                            .join(', ')}
                         </span>
                       </>
                     )}
@@ -192,7 +199,9 @@ export default function PaymentModal({
                     {closureDate && (
                       <>
                         <span> с закрытием периодов до </span>
-                        <span className="font-semibold text-blue-700">{formatRussian(closureDate)}</span>
+                        <span className="font-semibold text-blue-700">
+                          {formatRussian(closureDate)}
+                        </span>
                       </>
                     )}
                   </p>

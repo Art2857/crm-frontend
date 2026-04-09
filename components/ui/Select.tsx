@@ -32,8 +32,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     ref
   ) => {
     const isDisabled = props.disabled === true;
-    const baseClasses =
-      `px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 transition-all duration-200${isDisabled ? ' bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`;
+    const baseClasses = `px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 transition-all duration-200${isDisabled ? ' bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`;
     const errorClasses = error
       ? 'bg-red-50 focus:bg-red-50 focus:ring-red-500 text-red-900'
       : '';
@@ -103,7 +102,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           >
             {label}
             {props.required && (
-              <span aria-hidden="true" className="text-red-500 ml-1">*</span>
+              <span aria-hidden="true" className="text-red-500 ml-1">
+                *
+              </span>
             )}
           </label>
         )}
@@ -111,19 +112,20 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <select ref={ref} className={selectClasses} {...selectProps}>
             {options
               ? // Если переданы опции в виде массива, рендерим их
-              options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))
+                options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))
               : // Иначе используем дочерние элементы
-              children}
+                children}
           </select>
           {!isDisabled && (
             <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
               <ChevronDown
-                className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
-                  }`}
+                className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                  isOpen ? 'transform rotate-180' : ''
+                }`}
               />
             </div>
           )}

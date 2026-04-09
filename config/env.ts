@@ -26,7 +26,7 @@ const getBoolean = (value: string | undefined, fallback: boolean): boolean => {
 export const env: AppEnv = {
   apiBaseUrl: getString(
     process.env.NEXT_PUBLIC_API_URL,
-    'http://localhost:3001'
+    'http://localhost:3001/api'
   ),
   ignoreSsl: getBoolean(process.env.NEXT_PUBLIC_IGNORE_SSL, false),
   nodeEnv: process.env.NODE_ENV,

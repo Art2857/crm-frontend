@@ -44,8 +44,6 @@ export default function PaymentHistorySection({
         <div className="space-y-3">
           <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3">
             {paymentHistory.map((payment) => {
-
-
               return (
                 <div
                   key={payment.id}
@@ -116,7 +114,11 @@ export default function PaymentHistorySection({
 
                   <div className="text-right">
                     <p className="text-lg font-bold text-green-600">
-                      +{formatCurrency(payment.amount, payment.currency ?? 'RUB')}
+                      +
+                      {formatCurrency(
+                        payment.amount,
+                        payment.currency ?? 'RUB'
+                      )}
                     </p>
                   </div>
                 </div>

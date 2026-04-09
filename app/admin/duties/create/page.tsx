@@ -26,8 +26,6 @@ export default function CreateDutyPage() {
     }
   }, [isAuthenticated, router, user]);
 
-
-
   const handleSubmit = async (formData: DutyFormData) => {
     const dutyData = {
       name: formData.name,

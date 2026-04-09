@@ -366,7 +366,11 @@ export default function CreateUserPage() {
         </div>
 
         <Card>
-          <form onSubmit={handleSubmit(onSubmit)} className="pt-2 pb-4 px-4 md:pt-3 md:pb-6 md:px-6 space-y-4" autoComplete="off">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="pt-2 pb-4 px-4 md:pt-3 md:pb-6 md:px-6 space-y-4"
+            autoComplete="off"
+          >
             {/* Раздел 1: Данные аккаунта */}
             <div className="space-y-3">
               <h2 className="text-base font-bold text-gray-900 pb-1 border-b border-gray-200 flex items-center">
@@ -416,7 +420,6 @@ export default function CreateUserPage() {
                   error={errors.role as string}
                   className="mb-0"
                 />
-
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -453,7 +456,9 @@ export default function CreateUserPage() {
                     className="bg-gray-700 !max-w-md w-max"
                     content={
                       <div className="p-1.5 space-y-1">
-                        <p className="font-bold border-b border-gray-600 pb-1 mb-1 text-[11px]">Требования к паролю:</p>
+                        <p className="font-bold border-b border-gray-600 pb-1 mb-1 text-[11px]">
+                          Требования к паролю:
+                        </p>
                         <ul className="list-disc list-inside text-[10px] space-y-0.5 text-gray-200">
                           <li>Минимум 8 символов</li>
                           <li>Заглавные буквы (A-Z)</li>
@@ -470,10 +475,23 @@ export default function CreateUserPage() {
                         className="font-medium text-gray-700"
                       >
                         Пароль
-                        <span aria-hidden="true" className="text-red-500 ml-1">*</span>
+                        <span aria-hidden="true" className="text-red-500 ml-1">
+                          *
+                        </span>
                       </label>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3.5 w-3.5 ml-1.5 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
                     </div>
                   </Tooltip>
@@ -599,8 +617,8 @@ export default function CreateUserPage() {
               )}
 
               <div className="flex justify-end">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   isLoading={isLoading}
                   className="px-6 py-2 text-sm shadow-sm"
                 >

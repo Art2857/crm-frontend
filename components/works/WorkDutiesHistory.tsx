@@ -77,7 +77,10 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
       : null;
 
     const dutyCurrency: 'RUB' | 'USD' =
-      detail.currency || (detail.duty?.currency as 'RUB' | 'USD') || workCurrency || 'RUB';
+      detail.currency ||
+      (detail.duty?.currency as 'RUB' | 'USD') ||
+      workCurrency ||
+      'RUB';
 
     const pricePart = numericPrice ?? null; // assumed already in duty currency
     let percentPartInDuty: number | null = null;
@@ -86,8 +89,13 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
       !Number.isNaN(Number(numericPercentage)) &&
       numericSalaryValue
     ) {
-      const percentAmountWork = (Number(numericPercentage) / 100) * numericSalaryValue;
-      const converted = convertSync(percentAmountWork, workCurrency || 'RUB', dutyCurrency);
+      const percentAmountWork =
+        (Number(numericPercentage) / 100) * numericSalaryValue;
+      const converted = convertSync(
+        percentAmountWork,
+        workCurrency || 'RUB',
+        dutyCurrency
+      );
       percentPartInDuty = converted ?? percentAmountWork;
     }
 
@@ -96,12 +104,14 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     const parts: string[] = [];
     if (pricePart !== null)
       parts.push(formatAmountWithCurrency(pricePart, dutyCurrency));
-    if (numericPercentage !== null)
-      parts.push(`${Number(numericPercentage)}%`);
+    if (numericPercentage !== null) parts.push(`${Number(numericPercentage)}%`);
 
     let text = parts.join(' + ');
     const total = (pricePart ?? 0) + (percentPartInDuty ?? 0);
-    if (!Number.isNaN(total) && (pricePart !== null || percentPartInDuty !== null)) {
+    if (
+      !Number.isNaN(total) &&
+      (pricePart !== null || percentPartInDuty !== null)
+    ) {
       text += ` = ${formatAmountWithCurrency(total, dutyCurrency)}`;
     }
     return text;
@@ -438,7 +448,13 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             <div className="text-right">
               <div className="text-sm text-gray-500">Зарплата</div>
               <div className="text-lg font-semibold text-gray-900">
-                {formatAmountWithCurrency(Number(workHistoryItem.salary || 0), (workHistoryItem.currency as 'RUB' | 'USD') || workCurrency || 'RUB', isConfidential)}
+                {formatAmountWithCurrency(
+                  Number(workHistoryItem.salary || 0),
+                  (workHistoryItem.currency as 'RUB' | 'USD') ||
+                    workCurrency ||
+                    'RUB',
+                  isConfidential
+                )}
               </div>
             </div>
           </div>
@@ -612,7 +628,13 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             <div className="text-right">
               <div className="text-sm text-gray-500">Зарплата</div>
               <div className="text-lg font-semibold text-gray-900">
-                {formatAmountWithCurrency(Number(distribution.workHistory.salary || 0), (distribution.workHistory.currency as 'RUB' | 'USD') || workCurrency || 'RUB', isConfidential)}
+                {formatAmountWithCurrency(
+                  Number(distribution.workHistory.salary || 0),
+                  (distribution.workHistory.currency as 'RUB' | 'USD') ||
+                    workCurrency ||
+                    'RUB',
+                  isConfidential
+                )}
               </div>
             </div>
           </div>
@@ -751,7 +773,6 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                     ? parseFloat(workSalary)
                     : workSalary;
 
-
                 return (
                   <tr
                     key={detail.id}
@@ -773,7 +794,12 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                       {userName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {renderPayment(detail, typeof numericSalaryValue === 'number' ? numericSalaryValue : Number(numericSalaryValue || 0))}
+                      {renderPayment(
+                        detail,
+                        typeof numericSalaryValue === 'number'
+                          ? numericSalaryValue
+                          : Number(numericSalaryValue || 0)
+                      )}
                     </td>
                   </tr>
                 );

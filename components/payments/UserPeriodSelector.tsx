@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CalendarIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import {
+  CalendarIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/24/outline';
 import Button from '../ui/Button';
 import { formatDateToISO } from '../../utils/date';
 
@@ -52,7 +56,9 @@ export default function UserPeriodSelector({
       {isDateTooEarly && (
         <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5">
           <ExclamationTriangleIcon className="h-4 w-4 flex-shrink-0" />
-          <span>Дата не может быть меньше или равна текущей дате закрытия периода</span>
+          <span>
+            Дата не может быть меньше или равна текущей дате закрытия периода
+          </span>
         </div>
       )}
     </div>

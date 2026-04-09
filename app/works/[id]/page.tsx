@@ -72,16 +72,21 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     }
   }, [isEditing]);
 
-  const salaryCurrency: 'RUB' | 'USD' = (workData?.currency === 'USD' ? 'USD' : 'RUB');
+  const salaryCurrency: 'RUB' | 'USD' =
+    workData?.currency === 'USD' ? 'USD' : 'RUB';
   const displaySalary = Number(workData?.salary || 0);
   const isSalaryConfidential = (workData as any)?.isConfidential === true;
   const isWorkerNotResponsible = user?.role === 'WORKER' && !isResponsible;
 
   // Состояние для табов
-  const [activeTab, setActiveTab] = React.useState<'duties' | 'dutiesHistory' | 'income'>('duties');
+  const [activeTab, setActiveTab] = React.useState<
+    'duties' | 'dutiesHistory' | 'income'
+  >('duties');
 
   // Отслеживаем, какие табы уже были посещены (для ленивой инициализации)
-  const [visitedTabs, setVisitedTabs] = React.useState<Set<string>>(() => new Set(['duties']));
+  const [visitedTabs, setVisitedTabs] = React.useState<Set<string>>(
+    () => new Set(['duties'])
+  );
   React.useEffect(() => {
     setVisitedTabs((prev) => {
       if (prev.has(activeTab)) return prev;
@@ -225,10 +230,11 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   <Button
                     variant={isEditing ? 'secondary' : 'primary'}
                     onClick={() => setIsEditing(!isEditing)}
-                    className={`px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 ${isEditing
+                    className={`px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 ${
+                      isEditing
                         ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
                         : 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 shadow-lg hover:shadow-xl'
-                      }`}
+                    }`}
                   >
                     <svg
                       className="w-4 h-4 mr-2"
@@ -437,11 +443,19 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     </div>
                     <div className="flex items-center justify-center gap-3 mb-1">
                       <span className="text-4xl font-bold">
-                        {formatAmountWithCurrency(displaySalary, salaryCurrency, isSalaryConfidential)}
+                        {formatAmountWithCurrency(
+                          displaySalary,
+                          salaryCurrency,
+                          isSalaryConfidential
+                        )}
                       </span>
                     </div>
                     <div className="text-xs text-primary-200">
-                      {isSalaryConfidential ? 'Информация скрыта' : salaryCurrency === 'RUB' ? 'Российские рубли' : 'Доллары США'}
+                      {isSalaryConfidential
+                        ? 'Информация скрыта'
+                        : salaryCurrency === 'RUB'
+                          ? 'Российские рубли'
+                          : 'Доллары США'}
                     </div>
                   </div>
                 </div>
@@ -471,12 +485,19 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     Измените основные параметры работы
                   </p>
                 </div>
-                <WorkForm onRegisterDocsHandlers={(h) => (docsHandlersRef.current = h)} workId={id}
+                <WorkForm
+                  onRegisterDocsHandlers={(h) => (docsHandlersRef.current = h)}
+                  workId={id}
                   formData={formData}
                   users={users}
                   onChange={handleChange}
                   onSubmit={handleWorkFormSubmit}
-                  onCancel={() => { try { docsHandlersRef.current?.discard?.(); } catch(e) {} setIsEditing(false); }}
+                  onCancel={() => {
+                    try {
+                      docsHandlersRef.current?.discard?.();
+                    } catch (e) {}
+                    setIsEditing(false);
+                  }}
                   isLoading={isLoading}
                 />
               </div>
@@ -519,8 +540,6 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     </p>
                   </div>
                 </div>
-
-
               </div>
             </div>
 
@@ -529,7 +548,8 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
               <div className="flex">
                 <button
                   onClick={() => setActiveTab('duties')}
-                  className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${activeTab === 'duties'
+                  className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
+                    activeTab === 'duties'
                       ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                   }`}
@@ -552,56 +572,58 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   </div>
                 </button>
                 {!isWorkerNotResponsible && (
-                <button
-                  onClick={() => setActiveTab('dutiesHistory')}
-                  className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${activeTab === 'dutiesHistory'
-                      ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    История обязанностей
-                  </div>
-                </button>
+                  <button
+                    onClick={() => setActiveTab('dutiesHistory')}
+                    className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
+                      activeTab === 'dutiesHistory'
+                        ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      История обязанностей
+                    </div>
+                  </button>
                 )}
                 {!isWorkerNotResponsible && (
-                <button
-                  onClick={() => setActiveTab('income')}
-                  className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${activeTab === 'income'
-                      ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  <button
+                    onClick={() => setActiveTab('income')}
+                    className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
+                      activeTab === 'income'
+                        ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
-                >
-                  <div className="flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                      />
-                    </svg>
-                    История поступлений
-                  </div>
-                </button>
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                        />
+                      </svg>
+                      История поступлений
+                    </div>
+                  </button>
                 )}
               </div>
             </div>
@@ -624,7 +646,11 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   <div className="mb-4">
                     <Notification
                       successMessage=""
-                      errorMessage={typeof dutiesErrorMessage === 'string' ? dutiesErrorMessage : String(dutiesErrorMessage)}
+                      errorMessage={
+                        typeof dutiesErrorMessage === 'string'
+                          ? dutiesErrorMessage
+                          : String(dutiesErrorMessage)
+                      }
                       onClearSuccess={() => {}}
                       onClearError={clearDutiesMessages}
                     />
@@ -635,7 +661,9 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
 
             {/* Контент табов */}
             <div className="p-6">
-              <div style={{ display: activeTab === 'duties' ? 'block' : 'none' }}>
+              <div
+                style={{ display: activeTab === 'duties' ? 'block' : 'none' }}
+              >
                 {isEditingDuties ? (
                   <div>
                     <div className="mb-6 pb-4 border-b border-gray-200">
@@ -688,7 +716,11 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 )}
               </div>
 
-              <div style={{ display: activeTab === 'dutiesHistory' ? 'block' : 'none' }}>
+              <div
+                style={{
+                  display: activeTab === 'dutiesHistory' ? 'block' : 'none',
+                }}
+              >
                 {!visitedTabs.has('dutiesHistory') ? null : isLoadingHistory ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mb-4"></div>
@@ -713,7 +745,9 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 )}
               </div>
 
-              <div style={{ display: activeTab === 'income' ? 'block' : 'none' }}>
+              <div
+                style={{ display: activeTab === 'income' ? 'block' : 'none' }}
+              >
                 {!visitedTabs.has('income') ? null : (
                   <WorkIncomeManagement
                     workId={id}

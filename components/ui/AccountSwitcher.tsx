@@ -139,7 +139,10 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
     } catch (error) {
       console.error('Ошибка при переключении аккаунта:', error);
 
-      if (error instanceof Error && error.message.includes('Re-authentication required')) {
+      if (
+        error instanceof Error &&
+        error.message.includes('Re-authentication required')
+      ) {
         onClose();
       }
     } finally {

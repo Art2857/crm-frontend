@@ -41,7 +41,10 @@ export default function WorkDutiesTable({
     <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
       <div className="border-b border-gray-100">
         <div className="px-6 py-5 flex flex-wrap justify-between items-center">
-          <Link href={`/works/${workId}`} className="text-xl font-bold text-gray-900 hover:text-primary-600 transition-colors duration-150">
+          <Link
+            href={`/works/${workId}`}
+            className="text-xl font-bold text-gray-900 hover:text-primary-600 transition-colors duration-150"
+          >
             {name}
           </Link>
           <div className="flex items-center space-x-2 text-sm">
@@ -102,7 +105,10 @@ export default function WorkDutiesTable({
                               {duty.price !== undefined &&
                                 duty.price !== null && (
                                   <span className="text-gray-700 font-medium">
-                                    {formatAmountWithCurrency(Number(duty.price), cur)}
+                                    {formatAmountWithCurrency(
+                                      Number(duty.price),
+                                      cur
+                                    )}
                                   </span>
                                 )}
                               {duty.price !== undefined &&
@@ -151,7 +157,9 @@ export default function WorkDutiesTable({
         {duties.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex justify-between items-center px-2">
-              <span className="text-gray-700 font-medium">Ваша зарплата по работе</span>
+              <span className="text-gray-700 font-medium">
+                Ваша зарплата по работе
+              </span>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-primary-600">
                   {formatAmountWithCurrency(userSalaryRub, 'RUB')}

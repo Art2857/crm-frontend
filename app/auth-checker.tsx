@@ -116,13 +116,15 @@ export default function AuthChecker({
 
       // Skip verification if account switching is in progress
       if (accountManagerService.isSwitching()) {
-        logger.info('AuthChecker: пропуск проверки, выполняется переключение аккаунта');
+        logger.info(
+          'AuthChecker: пропуск проверки, выполняется переключение аккаунта'
+        );
         return;
       }
 
       const token = tokenStorage.getAccessToken();
       if (!token) return;
-      
+
       if (isJwtExpired(token)) {
         try {
           logger.info(
@@ -142,13 +144,15 @@ export default function AuthChecker({
       }
     };
 
-    const onAccountSwitched = async (event: CustomEvent<{ accountId: string }>) => {
+    const onAccountSwitched = async (
+      event: CustomEvent<{ accountId: string }>
+    ) => {
       logger.info(
         `🔄 AuthChecker: переключение аккаунта на ${event.detail.accountId}`
       );
       // Wait for a small delay to ensure local storage is fully synced
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
       try {
         await dispatch(getCurrentUser()).unwrap();
         logger.info('✅ AuthChecker: данные нового аккаунта загружены');

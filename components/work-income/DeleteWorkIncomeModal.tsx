@@ -23,10 +23,12 @@ const DeleteWorkIncomeModal: React.FC<DeleteWorkIncomeModalProps> = ({
 
   const formatAmount = (amount: number, currency: 'RUB' | 'USD') => {
     const symbol = currency === 'RUB' ? '₽' : '$';
-    return new Intl.NumberFormat('ru-RU', {
-      minimumFractionDigits: currency === 'RUB' ? 0 : 2,
-      maximumFractionDigits: currency === 'RUB' ? 0 : 2,
-    }).format(amount) + ` ${symbol}`;
+    return (
+      new Intl.NumberFormat('ru-RU', {
+        minimumFractionDigits: currency === 'RUB' ? 0 : 2,
+        maximumFractionDigits: currency === 'RUB' ? 0 : 2,
+      }).format(amount) + ` ${symbol}`
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -43,7 +45,10 @@ const DeleteWorkIncomeModal: React.FC<DeleteWorkIncomeModalProps> = ({
   };
 
   const getCurrencyLabel = (currency: 'RUB' | 'USD') => {
-    return CURRENCY_OPTIONS.find(option => option.value === currency)?.label || currency;
+    return (
+      CURRENCY_OPTIONS.find((option) => option.value === currency)?.label ||
+      currency
+    );
   };
 
   return (
@@ -96,19 +101,27 @@ const DeleteWorkIncomeModal: React.FC<DeleteWorkIncomeModalProps> = ({
               {/* Информация о записи */}
               <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Дата поступления:</span>
-                  <span className="text-sm text-gray-900">{formatDate(income.receivedDate)}</span>
+                  <span className="text-sm font-medium text-gray-600">
+                    Дата поступления:
+                  </span>
+                  <span className="text-sm text-gray-900">
+                    {formatDate(income.receivedDate)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Сумма:</span>
+                  <span className="text-sm font-medium text-gray-600">
+                    Сумма:
+                  </span>
                   <span className="text-sm font-semibold text-gray-900">
                     {formatAmount(income.amount, income.currency)}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Валюта:</span>
+                  <span className="text-sm font-medium text-gray-600">
+                    Валюта:
+                  </span>
                   <span className="text-sm text-gray-900">
                     {getCurrencyLabel(income.currency)}
                   </span>
@@ -116,17 +129,26 @@ const DeleteWorkIncomeModal: React.FC<DeleteWorkIncomeModalProps> = ({
 
                 {income.convertedAmount && income.convertedCurrency && (
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Конвертировано:</span>
+                    <span className="text-sm font-medium text-gray-600">
+                      Конвертировано:
+                    </span>
                     <span className="text-sm text-gray-900">
-                      {formatAmount(income.convertedAmount, income.convertedCurrency)}
+                      {formatAmount(
+                        income.convertedAmount,
+                        income.convertedCurrency
+                      )}
                     </span>
                   </div>
                 )}
 
                 {income.description && (
                   <div>
-                    <span className="text-sm font-medium text-gray-600 block mb-1">Описание:</span>
-                    <span className="text-sm text-gray-900">{income.description}</span>
+                    <span className="text-sm font-medium text-gray-600 block mb-1">
+                      Описание:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {income.description}
+                    </span>
                   </div>
                 )}
               </div>

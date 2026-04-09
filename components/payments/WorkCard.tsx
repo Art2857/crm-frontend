@@ -33,7 +33,10 @@ export default function WorkCard({
   currency = 'RUB',
 }: WorkCardProps) {
   const { formatRussian } = useDateManager();
-  const accrued = typeof accruedOverride === 'number' ? accruedOverride : (work.totalAccrued ?? 0);
+  const accrued =
+    typeof accruedOverride === 'number'
+      ? accruedOverride
+      : (work.totalAccrued ?? 0);
   const paidForDisplay = work.paidAmount || 0;
   return (
     <div className="group">
@@ -45,8 +48,9 @@ export default function WorkCard({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div
-                className={`w-3 h-3 rounded-full ${work.requiresAttention ? 'bg-red-400' : 'bg-green-400'
-                  }`}
+                className={`w-3 h-3 rounded-full ${
+                  work.requiresAttention ? 'bg-red-400' : 'bg-green-400'
+                }`}
               />
               <div>
                 <h4 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">

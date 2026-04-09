@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '../../../store';
 import Card from '../../../components/ui/Card';
@@ -22,10 +22,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [sort, setSort] = useState<
-    | 'name_asc'
-    | 'name_desc'
-    | 'createdAt_asc'
-    | 'createdAt_desc'
+    'name_asc' | 'name_desc' | 'createdAt_asc' | 'createdAt_desc'
   >('name_asc');
 
   const clearFilters = () => {
@@ -45,17 +42,18 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const notification = useNotification();
 
-  const buildFetchParams = () =>
-    ({
-      role: user.role,
-      archivingStatus: showArchived ? 'archived' : 'actual',
-      search: search || undefined,
-      roleFilter: roleFilter || undefined,
-      orderBy: sort.startsWith('createdAt')
-          ? 'createdAt'
-          : 'name',
-      orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
-    } as any);
+  const buildFetchParams = useCallback(
+    () =>
+      ({
+        role: user?.role,
+        archivingStatus: showArchived ? 'archived' : 'actual',
+        search: search || undefined,
+        roleFilter: roleFilter || undefined,
+        orderBy: sort.startsWith('createdAt') ? 'createdAt' : 'name',
+        orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
+      }) as any,
+    [roleFilter, search, showArchived, sort, user?.role]
+  );
 
   const extractErrorMessage = async (error: any): Promise<string> => {
     const errorPayload = error instanceof Promise ? await error : error;
@@ -100,10 +98,7 @@ export default function AdminUsersPage() {
       const errorMessage = await extractErrorMessage(error);
       if (errorMessage) notification.showError(errorMessage, 10000);
       else
-        notification.showError(
-          'Не удалось восстановить пользователя',
-          10000
-        );
+        notification.showError('Не удалось восстановить пользователя', 10000);
     }
   });
 
@@ -121,7 +116,7 @@ export default function AdminUsersPage() {
 
     // Загрузка данных о пользователях с фильтрами по умолчанию
     dispatch(fetchAllUsers(buildFetchParams()));
-  }, [isAuthenticated, router, user, dispatch]);
+  }, [buildFetchParams, dispatch, isAuthenticated, router, user]);
 
   // Запрашиваем при изменении фильтров (с дебаунсом для поля поиска)
   useEffect(() => {
@@ -130,7 +125,16 @@ export default function AdminUsersPage() {
       dispatch(fetchAllUsers(buildFetchParams()));
     }, 300);
     return () => clearTimeout(timer);
-  }, [showArchived, search, roleFilter, sort, user, isAuthenticated, dispatch]);
+  }, [
+    buildFetchParams,
+    dispatch,
+    isAuthenticated,
+    roleFilter,
+    search,
+    showArchived,
+    sort,
+    user,
+  ]);
 
   if (!user || ![Role.ADMIN, Role.MANAGER].includes(user.role)) {
     return (
@@ -317,26 +321,26 @@ export default function AdminUsersPage() {
                                 </svg>
                               </Link>
                               {user?.role === Role.ADMIN && (
-                              <Link
-                                href={`/admin/users/${userItem.id}/history`}
-                                className="text-secondary-600 hover:text-secondary-900 p-1.5 rounded-full hover:bg-secondary-50 transition-colors"
-                                title="История"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth={1.5}
-                                  stroke="currentColor"
-                                  className="w-5 h-5"
+                                <Link
+                                  href={`/admin/users/${userItem.id}/history`}
+                                  className="text-secondary-600 hover:text-secondary-900 p-1.5 rounded-full hover:bg-secondary-50 transition-colors"
+                                  title="История"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                                  />
-                                </svg>
-                              </Link>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={1.5}
+                                    stroke="currentColor"
+                                    className="w-5 h-5"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                    />
+                                  </svg>
+                                </Link>
                               )}
                               {userItem?.isArchived ? (
                                 <button

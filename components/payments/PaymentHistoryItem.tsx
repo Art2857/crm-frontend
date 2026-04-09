@@ -149,6 +149,6 @@ export default function PaymentHistoryItem({
           </Button>
         )}
       </div>
-    </div >
+    </div>
   );
 }

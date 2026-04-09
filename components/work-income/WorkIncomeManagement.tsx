@@ -35,7 +35,6 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
   workSalary = 0,
   distributions = [],
 }) => {
-
   const {
     incomes,
     stats,

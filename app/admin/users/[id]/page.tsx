@@ -314,11 +314,15 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       setSensitiveValue('role', currentUser.role);
       setSensitiveValue(
         'salaryDay1',
-        currentUser.salaryDays?.[0] !== undefined ? String(currentUser.salaryDays[0]) : ''
+        currentUser.salaryDays?.[0] !== undefined
+          ? String(currentUser.salaryDays[0])
+          : ''
       );
       setSensitiveValue(
         'salaryDay2',
-        currentUser.salaryDays?.[1] !== undefined ? String(currentUser.salaryDays[1]) : ''
+        currentUser.salaryDays?.[1] !== undefined
+          ? String(currentUser.salaryDays[1])
+          : ''
       );
       setSensitiveValue('characteristics', currentUser.characteristics || '');
     }
@@ -364,11 +368,15 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         setSensitiveValue('role', currentUser.role);
         setSensitiveValue(
           'salaryDay1',
-          currentUser.salaryDays?.[0] !== undefined ? String(currentUser.salaryDays[0]) : ''
+          currentUser.salaryDays?.[0] !== undefined
+            ? String(currentUser.salaryDays[0])
+            : ''
         );
         setSensitiveValue(
           'salaryDay2',
-          currentUser.salaryDays?.[1] !== undefined ? String(currentUser.salaryDays[1]) : ''
+          currentUser.salaryDays?.[1] !== undefined
+            ? String(currentUser.salaryDays[1])
+            : ''
         );
         setSensitiveValue('characteristics', currentUser.characteristics || '');
       }
@@ -455,11 +463,15 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           setSensitiveValue('role', currentUser.role);
           setSensitiveValue(
             'salaryDay1',
-            currentUser.salaryDays?.[0] !== undefined ? String(currentUser.salaryDays[0]) : ''
+            currentUser.salaryDays?.[0] !== undefined
+              ? String(currentUser.salaryDays[0])
+              : ''
           );
           setSensitiveValue(
             'salaryDay2',
-            currentUser.salaryDays?.[1] !== undefined ? String(currentUser.salaryDays[1]) : ''
+            currentUser.salaryDays?.[1] !== undefined
+              ? String(currentUser.salaryDays[1])
+              : ''
           );
           setSensitiveValue(
             'characteristics',
@@ -592,12 +604,12 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
               Назад к списку
             </Button>
             {user?.role === Role.ADMIN && (
-            <Button
-              variant="secondary"
-              onClick={() => router.push(`/admin/users/${userId}/history`)}
-            >
-              История изменений
-            </Button>
+              <Button
+                variant="secondary"
+                onClick={() => router.push(`/admin/users/${userId}/history`)}
+              >
+                История изменений
+              </Button>
             )}
           </div>
         </div>
@@ -736,7 +748,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 transition-all duration-300 ease-in-out bg-gray-100 resize-none"
                   style={{
                     height: isPreferencesFocused ? '120px' : '42px',
-                    minHeight: '42px'
+                    minHeight: '42px',
                   }}
                   rows={1}
                   value={profileValues.preferences || ''}

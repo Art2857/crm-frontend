@@ -21,7 +21,9 @@ export default function ResponsibleWorkGroup({
   onViewWork,
   showArchived = false,
 }: ResponsibleWorkGroupProps) {
-  const [totalsCurrency, setTotalsCurrency] = React.useState<'RUB' | 'USD'>('RUB');
+  const [totalsCurrency, setTotalsCurrency] = React.useState<'RUB' | 'USD'>(
+    'RUB'
+  );
 
   // Сохраняем выбор валюты в localStorage
   React.useEffect(() => {
@@ -92,45 +94,85 @@ export default function ResponsibleWorkGroup({
             {/* Финансовые карточки */}
             <div className="flex flex-col sm:flex-row gap-3 flex-1">
               {/* Прибыль */}
-              <div className={`group relative overflow-hidden ${
-                group.totals.totalIncome >= 0 
-                  ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200' 
-                  : 'bg-gradient-to-br from-red-50 to-red-100 border-red-200'
-              } border rounded-xl p-4 transition-all duration-300 hover:shadow-md hover:scale-105 min-w-0 flex-1`}>
+              <div
+                className={`group relative overflow-hidden ${
+                  group.totals.totalIncome >= 0
+                    ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200'
+                    : 'bg-gradient-to-br from-red-50 to-red-100 border-red-200'
+                } border rounded-xl p-4 transition-all duration-300 hover:shadow-md hover:scale-105 min-w-0 flex-1`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 ${
-                      group.totals.totalIncome >= 0 
-                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' 
-                        : 'bg-gradient-to-br from-red-500 to-red-600'
-                    } rounded-lg flex items-center justify-center shadow-sm`}>
+                    <div
+                      className={`w-10 h-10 ${
+                        group.totals.totalIncome >= 0
+                          ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
+                          : 'bg-gradient-to-br from-red-500 to-red-600'
+                      } rounded-lg flex items-center justify-center shadow-sm`}
+                    >
                       {group.totals.totalIncome >= 0 ? (
-                        <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                          />
                         </svg>
                       ) : (
-                        <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+                          />
                         </svg>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className={`text-sm font-medium ${
-                        group.totals.totalIncome >= 0 ? 'text-emerald-700' : 'text-red-700'
-                      } truncate`}>Прибыль</div>
-                      <div className={`text-lg sm:text-xl font-bold ${
-                        group.totals.totalIncome >= 0 ? 'text-emerald-800' : 'text-red-800'
-                      } truncate`}>
-                        {formatAmountWithCurrency(totalsDisplay.totalIncome, totalsCurrency, allConfidential)}
+                      <div
+                        className={`text-sm font-medium ${
+                          group.totals.totalIncome >= 0
+                            ? 'text-emerald-700'
+                            : 'text-red-700'
+                        } truncate`}
+                      >
+                        Прибыль
+                      </div>
+                      <div
+                        className={`text-lg sm:text-xl font-bold ${
+                          group.totals.totalIncome >= 0
+                            ? 'text-emerald-800'
+                            : 'text-red-800'
+                        } truncate`}
+                      >
+                        {formatAmountWithCurrency(
+                          totalsDisplay.totalIncome,
+                          totalsCurrency,
+                          allConfidential
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className={`absolute inset-0 bg-gradient-to-r ${
-                  group.totals.totalIncome >= 0 
-                    ? 'from-emerald-500/0 to-emerald-500/5' 
-                    : 'from-red-500/0 to-red-500/5'
-                } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                <div
+                  className={`absolute inset-0 bg-gradient-to-r ${
+                    group.totals.totalIncome >= 0
+                      ? 'from-emerald-500/0 to-emerald-500/5'
+                      : 'from-red-500/0 to-red-500/5'
+                  } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                ></div>
               </div>
 
               {/* Расходы */}
@@ -138,14 +180,30 @@ export default function ResponsibleWorkGroup({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-rose-600 rounded-lg flex items-center justify-center shadow-sm">
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+                        />
                       </svg>
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-rose-700 truncate">Расходы</div>
+                      <div className="text-sm font-medium text-rose-700 truncate">
+                        Расходы
+                      </div>
                       <div className="text-lg sm:text-xl font-bold text-rose-800 truncate">
-                        {formatAmountWithCurrency(totalsDisplay.totalExpenses, totalsCurrency, allConfidential)}
+                        {formatAmountWithCurrency(
+                          totalsDisplay.totalExpenses,
+                          totalsCurrency,
+                          allConfidential
+                        )}
                       </div>
                     </div>
                   </div>
@@ -158,14 +216,30 @@ export default function ResponsibleWorkGroup({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                        />
                       </svg>
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-blue-700 truncate">Бюджет</div>
+                      <div className="text-sm font-medium text-blue-700 truncate">
+                        Бюджет
+                      </div>
                       <div className="text-lg sm:text-xl font-bold text-blue-800 truncate">
-                        {formatAmountWithCurrency(totalsDisplay.totalSalary, totalsCurrency, allConfidential)}
+                        {formatAmountWithCurrency(
+                          totalsDisplay.totalSalary,
+                          totalsCurrency,
+                          allConfidential
+                        )}
                       </div>
                     </div>
                   </div>
@@ -175,9 +249,7 @@ export default function ResponsibleWorkGroup({
             </div>
 
             <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0">
-              <div
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div onClick={(e) => e.stopPropagation()}>
                 <CurrencySwitch
                   value={totalsCurrency}
                   onChange={setTotalsCurrency}
@@ -225,15 +297,23 @@ export default function ResponsibleWorkGroup({
                 className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="font-medium text-gray-900">
-                    {work.name}
-                  </div>
+                  <div className="font-medium text-gray-900">{work.name}</div>
                   <button
                     onClick={() => onViewWork(work.id)}
                     className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-all duration-200 ml-2 flex-shrink-0"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -241,37 +321,79 @@ export default function ResponsibleWorkGroup({
                   {/* Финансовые карточки для мобильного */}
                   <div className="grid grid-cols-1 gap-2">
                     {/* Доход */}
-                    <div className={`flex items-center justify-between ${
-                      work.isConfidential
-                        ? 'bg-gray-50 border-gray-200'
-                        : work.income >= 0
-                          ? 'bg-emerald-50 border-emerald-200'
-                          : 'bg-red-50 border-red-200'
-                    } border rounded-lg p-3`}>
+                    <div
+                      className={`flex items-center justify-between ${
+                        work.isConfidential
+                          ? 'bg-gray-50 border-gray-200'
+                          : work.income >= 0
+                            ? 'bg-emerald-50 border-emerald-200'
+                            : 'bg-red-50 border-red-200'
+                      } border rounded-lg p-3`}
+                    >
                       <div className="flex items-center space-x-2">
-                        <div className={`w-6 h-6 ${
-                          work.isConfidential ? 'bg-gray-400' : work.income >= 0 ? 'bg-emerald-500' : 'bg-red-500'
-                        } rounded-md flex items-center justify-center`}>
+                        <div
+                          className={`w-6 h-6 ${
+                            work.isConfidential
+                              ? 'bg-gray-400'
+                              : work.income >= 0
+                                ? 'bg-emerald-500'
+                                : 'bg-red-500'
+                          } rounded-md flex items-center justify-center`}
+                        >
                           {work.income >= 0 ? (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                              />
                             </svg>
                           ) : (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+                              />
                             </svg>
                           )}
                         </div>
-                        <span className={`text-sm font-medium ${
-                          work.isConfidential ? 'text-gray-500' : work.income >= 0 ? 'text-emerald-700' : 'text-red-700'
-                        }`}>Доход</span>
+                        <span
+                          className={`text-sm font-medium ${
+                            work.isConfidential
+                              ? 'text-gray-500'
+                              : work.income >= 0
+                                ? 'text-emerald-700'
+                                : 'text-red-700'
+                          }`}
+                        >
+                          Доход
+                        </span>
                       </div>
-                      <div className={`font-semibold ${
-                        work.isConfidential ? 'text-gray-500' : work.income >= 0 ? 'text-emerald-800' : 'text-red-800'
-                      }`}>
+                      <div
+                        className={`font-semibold ${
+                          work.isConfidential
+                            ? 'text-gray-500'
+                            : work.income >= 0
+                              ? 'text-emerald-800'
+                              : 'text-red-800'
+                        }`}
+                      >
                         {formatAmountWithCurrency(
-                          (work.originalIncome ?? Number(work.income || 0)),
-                          (work.currency === 'USD' ? 'USD' : 'RUB'),
+                          work.originalIncome ?? Number(work.income || 0),
+                          work.currency === 'USD' ? 'USD' : 'RUB',
                           work.isConfidential
                         )}
                       </div>
@@ -281,16 +403,28 @@ export default function ResponsibleWorkGroup({
                     <div className="flex items-center justify-between bg-rose-50 border border-rose-200 rounded-lg p-3">
                       <div className="flex items-center space-x-2">
                         <div className="w-6 h-6 bg-rose-500 rounded-md flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                          <svg
+                            className="w-3 h-3 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+                            />
                           </svg>
                         </div>
-                        <span className="text-sm font-medium text-rose-700">Расходы</span>
+                        <span className="text-sm font-medium text-rose-700">
+                          Расходы
+                        </span>
                       </div>
                       <div className="font-semibold text-rose-800">
                         {formatAmountWithCurrency(
-                          (work.originalExpenses ?? Number(work.expenses || 0)),
-                          (work.currency === 'USD' ? 'USD' : 'RUB'),
+                          work.originalExpenses ?? Number(work.expenses || 0),
+                          work.currency === 'USD' ? 'USD' : 'RUB',
                           work.isConfidential
                         )}
                       </div>
@@ -300,21 +434,33 @@ export default function ResponsibleWorkGroup({
                     <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <div className="flex items-center space-x-2">
                         <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                          <svg
+                            className="w-3 h-3 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                            />
                           </svg>
                         </div>
-                        <span className="text-sm font-medium text-blue-700">Зарплата</span>
+                        <span className="text-sm font-medium text-blue-700">
+                          Зарплата
+                        </span>
                       </div>
-                    <div className="flex items-center gap-2 font-semibold text-blue-800">
-                      <span>
-                        {formatAmountWithCurrency(
-                          (work.originalSalary ?? Number(work.salary || 0)),
-                          (work.currency === 'USD' ? 'USD' : 'RUB'),
-                          work.isConfidential
-                        )}
-                      </span>
-                    </div>
+                      <div className="flex items-center gap-2 font-semibold text-blue-800">
+                        <span>
+                          {formatAmountWithCurrency(
+                            work.originalSalary ?? Number(work.salary || 0),
+                            work.currency === 'USD' ? 'USD' : 'RUB',
+                            work.isConfidential
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -339,8 +485,7 @@ export default function ResponsibleWorkGroup({
                   <th className="text-right py-3 px-4 font-medium text-gray-700">
                     Зарплата
                   </th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-700 w-12">
-                  </th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-700 w-12"></th>
                 </tr>
               </thead>
               <tbody>
@@ -358,24 +503,28 @@ export default function ResponsibleWorkGroup({
                       className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : work.income >= 0 ? 'text-emerald-600' : 'text-red-900'}`}
                     >
                       {formatAmountWithCurrency(
-                        (work.originalIncome ?? Number(work.income || 0)),
-                        (work.currency === 'USD' ? 'USD' : 'RUB'),
+                        work.originalIncome ?? Number(work.income || 0),
+                        work.currency === 'USD' ? 'USD' : 'RUB',
                         work.isConfidential
                       )}
                     </td>
-                    <td className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : 'text-red-900'}`}>
+                    <td
+                      className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : 'text-red-900'}`}
+                    >
                       {formatAmountWithCurrency(
-                        (work.originalExpenses ?? Number(work.expenses || 0)),
-                        (work.currency === 'USD' ? 'USD' : 'RUB'),
+                        work.originalExpenses ?? Number(work.expenses || 0),
+                        work.currency === 'USD' ? 'USD' : 'RUB',
                         work.isConfidential
                       )}
                     </td>
-                    <td className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : 'text-blue-700'}`}>
+                    <td
+                      className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : 'text-blue-700'}`}
+                    >
                       <div className="inline-flex items-center gap-3 justify-end">
                         <span>
                           {formatAmountWithCurrency(
-                            (work.originalSalary ?? Number(work.salary || 0)),
-                            (work.currency === 'USD' ? 'USD' : 'RUB'),
+                            work.originalSalary ?? Number(work.salary || 0),
+                            work.currency === 'USD' ? 'USD' : 'RUB',
                             work.isConfidential
                           )}
                         </span>
@@ -386,8 +535,18 @@ export default function ResponsibleWorkGroup({
                         onClick={() => onViewWork(work.id)}
                         className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-all duration-200"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
                         </svg>
                       </button>
                     </td>
@@ -401,5 +560,3 @@ export default function ResponsibleWorkGroup({
     </Card>
   );
 }
-
-

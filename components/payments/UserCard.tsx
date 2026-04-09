@@ -95,7 +95,13 @@ export default function UserCard({
                 <div className="flex items-center space-x-4 mt-2">
                   <div className="flex items-center space-x-1 text-sm text-gray-500">
                     <CalendarIcon className="h-4 w-4" />
-                    <span>Зарплата: {user.salaryDays.length > 0 ? user.salaryDays.map((d) => `${d}`).join(', ') + ' число' : 'Не указан'}</span>
+                    <span>
+                      Зарплата:{' '}
+                      {user.salaryDays.length > 0
+                        ? user.salaryDays.map((d) => `${d}`).join(', ') +
+                          ' число'
+                        : 'Не указан'}
+                    </span>
                   </div>
                   <div className="flex items-center space-x-1 text-sm text-gray-500">
                     <BuildingOfficeIcon className="h-4 w-4" />
@@ -108,7 +114,11 @@ export default function UserCard({
             {/* Финансовая информация и управление */}
             <div className="flex items-center space-x-4">
               <FinancialSummary
-                totalAccrued={typeof accruedOverride === 'number' ? accruedOverride : user.totalAccrued}
+                totalAccrued={
+                  typeof accruedOverride === 'number'
+                    ? accruedOverride
+                    : user.totalAccrued
+                }
                 totalPaid={user.totalPaid}
                 remainingDebt={user.remainingDebt}
                 overpaidAmount={user.overpaidAmount}

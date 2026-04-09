@@ -19,7 +19,7 @@ const getLastWorkingDay = (date: Date): Date => {
     }
     current.setDate(current.getDate() - 1);
   }
-  
+
   // Fallback на саму указанную дату
   return date;
 };
@@ -66,51 +66,52 @@ export default function ExchangeRatesPage() {
     const today = new Date();
     let to = new Date(today);
     let from = new Date(today);
-    
+
     // Используем последний рабочий день от сегодня
     to = getLastWorkingDay(new Date());
-    
+
     switch (period) {
       case 7: // 7 дней назад
         from = new Date(to);
         from.setDate(from.getDate() - 6); // 7 дней включая текущий
         break;
-        
+
       case 30: // 1 месяц назад
         from = new Date(to);
         from.setMonth(from.getMonth() - 1); // Ровно 1 месяц
         break;
-        
+
       case 90: // 3 месяца назад
         from = new Date(to);
         from.setMonth(from.getMonth() - 3); // Ровно 3 месяца
         break;
-        
+
       case 365: // 1 год назад
         from = new Date(to);
         from.setFullYear(from.getFullYear() - 1); // Ровно 1 год
         break;
-        
+
       default:
         // Fallback: используем дни
         from = new Date(to.getTime() - period * 24 * 60 * 60 * 1000);
     }
-    
+
     setDateRange({ from, to });
   };
 
-
-
   // Функция для обработки статистики графика
-  const handleStatsCalculated = useCallback((stats: {
-    min: number;
-    max: number;
-    avg: number;
-    change: number;
-    changePercent: number;
-  }) => {
-    setChartStats(stats);
-  }, []);
+  const handleStatsCalculated = useCallback(
+    (stats: {
+      min: number;
+      max: number;
+      avg: number;
+      change: number;
+      changePercent: number;
+    }) => {
+      setChartStats(stats);
+    },
+    []
+  );
 
   // Форматирование значений для отображения
   const formatValue = useCallback((value: number) => {
@@ -160,31 +161,42 @@ export default function ExchangeRatesPage() {
                 {dateRange.to.toLocaleDateString('ru-RU')}
               </div>
             </div>
-            
+
             {/* Статистика по центру */}
             {chartStats && (
               <div className="flex flex-wrap justify-center gap-4 text-sm">
                 <div className="text-center">
                   <div className="text-gray-500">Мин.</div>
-                  <div className="font-medium">{formatValue(chartStats.min)}</div>
+                  <div className="font-medium">
+                    {formatValue(chartStats.min)}
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-gray-500">Макс.</div>
-                  <div className="font-medium">{formatValue(chartStats.max)}</div>
+                  <div className="font-medium">
+                    {formatValue(chartStats.max)}
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-gray-500">Среднее</div>
-                  <div className="font-medium">{formatValue(chartStats.avg)}</div>
+                  <div className="font-medium">
+                    {formatValue(chartStats.avg)}
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-gray-500">Изменение</div>
-                  <div className={`font-medium ${chartStats.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {chartStats.change >= 0 ? '+' : ''}{formatValue(chartStats.change)} ({chartStats.changePercent >= 0 ? '+' : ''}{chartStats.changePercent.toFixed(2)}%)
+                  <div
+                    className={`font-medium ${chartStats.change >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {chartStats.change >= 0 ? '+' : ''}
+                    {formatValue(chartStats.change)} (
+                    {chartStats.changePercent >= 0 ? '+' : ''}
+                    {chartStats.changePercent.toFixed(2)}%)
                   </div>
                 </div>
               </div>
             )}
-            
+
             <div className="flex items-center gap-2 flex-shrink-0">
               <Button
                 variant="outline"
@@ -231,7 +243,6 @@ export default function ExchangeRatesPage() {
           )}
         </div>
       </Card>
-
     </div>
   );
 }

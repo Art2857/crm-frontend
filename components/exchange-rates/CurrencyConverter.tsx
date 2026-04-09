@@ -8,6 +8,7 @@ import { CurrencyConversion } from '../../types/exchange-rates';
 import { exchangeRatesService } from '../../services/exchangeRates';
 import { exchangeRateCacheService } from '../../services/exchangeRateCache';
 import { indexedDBManager } from '../../utils/indexedDB';
+import { logger } from '../../utils/logger';
 import { useAppSelector } from '../../store';
 import { selectLatestRate } from '../../store/slices/exchangeRates';
 
@@ -18,12 +19,12 @@ interface CurrencyConverterProps {
 // Утилиты для работы с рабочими днями ЦБР (вынесены наружу для стабильности)
 const isWorkingDay = (date: Date): boolean => {
   const dayOfWeek = date.getDay(); // 0 = воскресенье, 1 = понедельник
-  
+
   // Исключаем выходные ЦБ РФ (воскресенье и понедельник)
   if (dayOfWeek === 0 || dayOfWeek === 1) {
     return false;
   }
-  
+
   // TODO: Здесь можно добавить исключение российских праздников
   // Для простоты пока проверяем только выходные
   return true;
@@ -31,21 +32,24 @@ const isWorkingDay = (date: Date): boolean => {
 
 const getLastWorkingDay = (): Date => {
   const today = new Date();
-  
+
   // Ищем последний рабочий день от сегодня назад
   let current = new Date(today);
-  for (let i = 0; i < 30; i++) { // Расширяем поиск до 30 дней
+  for (let i = 0; i < 30; i++) {
+    // Расширяем поиск до 30 дней
     if (isWorkingDay(current)) {
       return current;
     }
     current.setDate(current.getDate() - 1);
   }
-  
+
   // Fallback на сегодня если ничего не нашли
   return today;
 };
 
-const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currencies }: CurrencyConverterProps) {
+const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({
+  currencies,
+}: CurrencyConverterProps) {
   const [fromCurrency, setFromCurrency] = useState<string>('USD');
   const [toCurrency, setToCurrency] = useState<string>('RUB');
   const [amount, setAmount] = useState<string>('100');
@@ -54,7 +58,7 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
     return getLastWorkingDay().toISOString().split('T')[0];
   });
   const [result, setResult] = useState<number | null>(null);
-  
+
   // Курс USD/RUB из IndexedDB
   const [usdToRubRate, setUsdToRubRate] = useState<any>(null);
   const [rate, setRate] = useState<number | null>(null);
@@ -68,48 +72,50 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
     }).format(value);
   }, []);
 
-  const handleConvert = useCallback(async (inputAmount: string) => {
-    const numAmount = parseFloat(inputAmount);
-    
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setResult(null);
-      setRate(null);
+  const handleConvert = useCallback(
+    async (inputAmount: string) => {
+      const numAmount = parseFloat(inputAmount);
+
+      if (isNaN(numAmount) || numAmount <= 0) {
+        setResult(null);
+        setRate(null);
+        setError(null);
+        return;
+      }
+
+      setIsLoading(true);
       setError(null);
-      return;
-    }
 
-    setIsLoading(true);
-    setError(null);
+      try {
+        // Используем быструю конвертацию из кеша с учетом выбранной даты
+        const conversion = await exchangeRateCacheService.convertCurrencyFast(
+          numAmount,
+          fromCurrency,
+          toCurrency,
+          selectedDate
+        );
 
-    try {
-      // Используем быструю конвертацию из кеша с учетом выбранной даты
-      const conversion = await exchangeRateCacheService.convertCurrencyFast(
-        numAmount,
-        fromCurrency,
-        toCurrency,
-        selectedDate
-      );
+        setResult(conversion.result);
+        setRate(conversion.rate);
+      } catch (error: any) {
+        // Игнорируем отмененные запросы - это нормально при быстром переключении
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+          return; // Просто выходим, не показываем ошибку
+        }
 
-      setResult(conversion.result);
-      setRate(conversion.rate);
-      
-    } catch (error: any) {
-      // Игнорируем отмененные запросы - это нормально при быстром переключении
-      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
-        return; // Просто выходим, не показываем ошибку
+        logger.error('Error converting currency', error);
+        // Более мягкая обработка - не показываем ошибку если это начальная загрузка без пользовательского ввода
+        if (numAmount > 0) {
+          setError('Не удалось получить курс для выбранной даты');
+        }
+        setResult(null);
+        setRate(null);
+      } finally {
+        setIsLoading(false);
       }
-      
-      console.error('Error converting currency:', error);
-      // Более мягкая обработка - не показываем ошибку если это начальная загрузка без пользовательского ввода
-      if (amount && parseFloat(amount) > 0) {
-        setError('Не удалось получить курс для выбранной даты');
-      }
-      setResult(null);
-      setRate(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fromCurrency, toCurrency, selectedDate]);
+    },
+    [fromCurrency, selectedDate, toCurrency]
+  );
 
   const handleSwapCurrencies = () => {
     const temp = fromCurrency;
@@ -125,24 +131,24 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
     const loadLatestUsdRate = async () => {
       try {
         const rate = await indexedDBManager.getLatestRate('USD');
-        console.log('🏆 Получили последний курс USD из IndexedDB:', rate);
+        logger.debug('Получили последний курс USD из IndexedDB', rate);
         if (rate) {
           setUsdToRubRate(rate);
         }
       } catch (error) {
-        console.error('❌ Ошибка загрузки курса USD:', error);
+        logger.error('Ошибка загрузки курса USD', error);
       }
     };
-    
+
     loadLatestUsdRate();
   }, []);
 
   // Подписываемся на обновление курса в Redux (если он придет позже или обновится)
-  const latestRate = useAppSelector(state => selectLatestRate(state, 'USD'));
+  const latestRate = useAppSelector((state) => selectLatestRate(state, 'USD'));
 
   useEffect(() => {
     if (latestRate) {
-      console.log('🔄 Redux обновил курс USD:', latestRate);
+      logger.debug('Redux обновил курс USD', latestRate);
       setUsdToRubRate(latestRate);
     }
   }, [latestRate]);
@@ -177,25 +183,28 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
   }, []);
 
   // Мемоизируем обработчики для предотвращения пере-рендеров
-  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Разрешаем только числа и точку
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setAmount(value);
-    }
-  }, []);
+  const handleAmountChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      // Разрешаем только числа и точку
+      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+        setAmount(value);
+      }
+    },
+    []
+  );
 
-  const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDate(e.target.value);
-  }, []);
-
-
+  const handleDateChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSelectedDate(e.target.value);
+    },
+    []
+  );
 
   return (
     <div className="bg-gradient-to-br from-blue-50 via-white to-green-50 border border-gray-200 rounded-xl shadow-lg">
       <div className="p-8">
         <div className="flex flex-col lg:flex-row gap-8 items-center">
-          
           {/* Левая часть - информация о курсе */}
           <div className="flex-1 text-center lg:text-left">
             <h1 className="text-3xl font-bold text-gray-900 mb-3">
@@ -208,50 +217,62 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
                   <span className="text-gray-400 hidden sm:inline">•</span>
                   <div className="flex items-center gap-2">
                     <span className="text-4xl font-bold text-green-600">
-                      {formatCurrencyValue(usdToRubRate.rate / usdToRubRate.nominal)}
+                      {formatCurrencyValue(
+                        usdToRubRate.rate / usdToRubRate.nominal
+                      )}
                     </span>
-                    <span className="text-xl text-green-600 font-medium">₽</span>
+                    <span className="text-xl text-green-600 font-medium">
+                      ₽
+                    </span>
                   </div>
                 </>
               )}
             </div>
             <p className="text-sm text-gray-500">
-              Официальный курс Центрального банка России<br />
-              {usdToRubRate?.date ? (
-                (() => {
-                  try {
-                    // Парсинг даты в формате DD.MM.YYYY
-                    const dateStr = usdToRubRate.date;
-                    let date: Date;
+              Официальный курс Центрального банка России
+              <br />
+              {
+                usdToRubRate?.date
+                  ? (() => {
+                      try {
+                        // Парсинг даты в формате DD.MM.YYYY
+                        const dateStr = usdToRubRate.date;
+                        let date: Date;
 
-                    // Если дата в формате DD.MM.YYYY - конвертируем
-                    if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
-                      const [day, month, year] = dateStr.split('.');
-                      date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                    } else {
-                      // Иначе пробуем обычный парсинг
-                      date = new Date(dateStr);
-                    }
+                        // Если дата в формате DD.MM.YYYY - конвертируем
+                        if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
+                          const [day, month, year] = dateStr.split('.');
+                          date = new Date(
+                            parseInt(year),
+                            parseInt(month) - 1,
+                            parseInt(day)
+                          );
+                        } else {
+                          // Иначе пробуем обычный парсинг
+                          date = new Date(dateStr);
+                        }
 
-                    // Проверяем валидность даты
-                    if (isNaN(date.getTime())) {
-                      console.warn('Invalid date in usdToRubRate:', dateStr);
-                      return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`;
-                    }
+                        // Проверяем валидность даты
+                        if (isNaN(date.getTime())) {
+                          console.warn(
+                            'Invalid date in usdToRubRate:',
+                            dateStr
+                          );
+                          return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`;
+                        }
 
-                    return `Курс за ${date.toLocaleDateString('ru-RU', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit'
-                    })}`;
-                  } catch (error) {
-                    console.error('Error parsing date:', error);
-                    return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`; // Fallback
-                  }
-                })()
-              ) : (
-                `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}` // Fallback если нет данных
-              )}
+                        return `Курс за ${date.toLocaleDateString('ru-RU', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                        })}`;
+                      } catch (error) {
+                        console.error('Error parsing date:', error);
+                        return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`; // Fallback
+                      }
+                    })()
+                  : `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}` // Fallback если нет данных
+              }
             </p>
           </div>
 
@@ -264,7 +285,6 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
 
               {/* Основная линия конвертации */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-4">
-                
                 {/* Блок ввода */}
                 <div className="flex items-center gap-3">
                   <Input
@@ -291,7 +311,7 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
                   >
                     <span className="text-lg">⇄</span>
                   </Button>
-                  
+
                   {/* Выбор даты - минимально */}
                   <div className="flex items-center gap-2">
                     <input
@@ -307,7 +327,9 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
                         const input = e.target as HTMLInputElement;
                         const inputDate = new Date(input.value);
                         if (!isWorkingDay(inputDate)) {
-                          input.setCustomValidity('Выберите рабочий день (вторник-суббота)');
+                          input.setCustomValidity(
+                            'Выберите рабочий день (вторник-суббота)'
+                          );
                         } else {
                           input.setCustomValidity('');
                         }
@@ -348,9 +370,14 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({ currenci
                 <div className="text-center text-sm text-gray-600">
                   Курс на {selectedDate}
                   {!isWorkingDay(new Date(selectedDate)) && (
-                    <span className="text-orange-500 ml-1">(выходной, показан ближайший)</span>
+                    <span className="text-orange-500 ml-1">
+                      (выходной, показан ближайший)
+                    </span>
                   )}
-                  : <span className="font-medium">1 {fromCurrency} = {formatCurrency(rate)} {toCurrency}</span>
+                  :{' '}
+                  <span className="font-medium">
+                    1 {fromCurrency} = {formatCurrency(rate)} {toCurrency}
+                  </span>
                 </div>
               )}
 

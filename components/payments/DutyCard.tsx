@@ -20,8 +20,10 @@ export default function DutyCard({
   onShowCalculation,
   userCurrencyByDuty,
 }: DutyCardProps) {
-  const currency = (userCurrencyByDuty?.[duty.dutyId] as CurrencyType) ||
-    ((duty.currency as CurrencyType) || 'RUB');
+  const currency =
+    (userCurrencyByDuty?.[duty.dutyId] as CurrencyType) ||
+    (duty.currency as CurrencyType) ||
+    'RUB';
 
   return (
     <div

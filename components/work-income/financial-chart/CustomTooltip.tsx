@@ -17,7 +17,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
 }) => {
   if (active && payload && payload.length && hoveredType) {
     const data = payload[0].payload;
-    
+
     // Поступления
     if (
       hoveredType === 'income' &&
@@ -40,7 +40,8 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
               >
                 <div className="text-gray-800 font-bold">
                   +{formatAmountWithCurrency(item.amount, item.currency)}
-                  {item.currency !== (item.convertedCurrency || workCurrency) && (
+                  {item.currency !==
+                    (item.convertedCurrency || workCurrency) && (
                     <span className="text-gray-400 font-normal ml-1 text-xs">
                       (
                       {formatAmountWithCurrency(

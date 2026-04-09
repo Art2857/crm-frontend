@@ -140,7 +140,7 @@ export default function ProfilePage() {
     }
 
     initializedRef.current = true;
-  }, [user, isAuthenticated, router, setValue]);
+  }, [dateManager, formatISO, isAuthenticated, router, setValue, user]);
 
   const onSubmit = async (data: UpdateProfileDto) => {
     setIsSaving(true);

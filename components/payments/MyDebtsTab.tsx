@@ -62,14 +62,18 @@ export default function MyDebtsTab({
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-4">
                 <div
-                  className={`w-4 h-4 rounded-full ${debt.isPaymentDue
-                    ? 'bg-red-400 animate-pulse'
-                    : 'bg-green-400'
-                    }`}
+                  className={`w-4 h-4 rounded-full ${
+                    debt.isPaymentDue
+                      ? 'bg-red-400 animate-pulse'
+                      : 'bg-green-400'
+                  }`}
                 />
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">
-                    <Link href={`/works/${debt.workId}`} className="hover:underline">
+                    <Link
+                      href={`/works/${debt.workId}`}
+                      className="hover:underline"
+                    >
                       {debt.workName}
                     </Link>
                   </h3>
@@ -111,8 +115,9 @@ export default function MyDebtsTab({
                 return (
                   <div
                     key={duty.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                      }`}
+                    className={`flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    }`}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-blue-400 rounded-full" />
@@ -133,7 +138,9 @@ export default function MyDebtsTab({
                       </div>
 
                       <Button
-                        onClick={() => handleShowCalculation(debt.workId, duty.id)}
+                        onClick={() =>
+                          handleShowCalculation(debt.workId, duty.id)
+                        }
                         size="sm"
                         className="bg-green-100 text-green-600 hover:bg-green-200 border border-green-200"
                       >
@@ -163,8 +170,9 @@ export default function MyDebtsTab({
 
               <div className="text-right">
                 <p
-                  className={`text-2xl font-bold ${debt.isPaymentDue ? 'text-red-600' : 'text-green-600'
-                    }`}
+                  className={`text-2xl font-bold ${
+                    debt.isPaymentDue ? 'text-red-600' : 'text-green-600'
+                  }`}
                 >
                   {formatCurrency(debt.totalDebt)}
                 </p>

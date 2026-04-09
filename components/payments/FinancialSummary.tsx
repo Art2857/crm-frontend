@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useMemo } from "react";
-import { formatCurrency } from "../../utils/payments";
-import { useCurrencyConversion } from "../../hooks/useCurrencyConversion";
+import React, { useMemo } from 'react';
+import { formatCurrency } from '../../utils/payments';
+import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
 
 interface FinancialSummaryProps {
   totalAccrued: number;
@@ -11,7 +11,7 @@ interface FinancialSummaryProps {
   overpaidAmount?: number; // base amounts are RUB
   isPaymentDue?: boolean;
   className?: string;
-  currency?: "RUB" | "USD"; // display currency
+  currency?: 'RUB' | 'USD'; // display currency
 }
 
 export default function FinancialSummary({
@@ -20,8 +20,8 @@ export default function FinancialSummary({
   remainingDebt,
   overpaidAmount = 0,
   isPaymentDue = false,
-  className = "",
-  currency = "RUB",
+  className = '',
+  currency = 'RUB',
 }: FinancialSummaryProps) {
   const { convert } = useCurrencyConversion();
 
@@ -29,12 +29,19 @@ export default function FinancialSummary({
   const display = useMemo(() => {
     const to = currency;
     return {
-      accrued: convert(totalAccrued, "RUB", to),
-      paid: convert(totalPaid, "RUB", to),
-      overpaid: convert(overpaidAmount, "RUB", to),
-      remaining: convert(remainingDebt, "RUB", to),
+      accrued: convert(totalAccrued, 'RUB', to),
+      paid: convert(totalPaid, 'RUB', to),
+      overpaid: convert(overpaidAmount, 'RUB', to),
+      remaining: convert(remainingDebt, 'RUB', to),
     };
-  }, [convert, totalAccrued, totalPaid, overpaidAmount, remainingDebt, currency]);
+  }, [
+    convert,
+    totalAccrued,
+    totalPaid,
+    overpaidAmount,
+    remainingDebt,
+    currency,
+  ]);
 
   return (
     <div className={`grid grid-cols-4 gap-3 text-center ${className}`}>
@@ -57,18 +64,21 @@ export default function FinancialSummary({
         </p>
       </div>
       <div
-        className={`rounded-lg p-2 ${remainingDebt > 0 ? "bg-red-50" : "bg-orange-50"
-          }`}
+        className={`rounded-lg p-2 ${
+          remainingDebt > 0 ? 'bg-red-50' : 'bg-orange-50'
+        }`}
       >
         <p
-          className={`text-xs font-medium ${remainingDebt > 0 ? "text-red-600" : "text-orange-600"
-            }`}
+          className={`text-xs font-medium ${
+            remainingDebt > 0 ? 'text-red-600' : 'text-orange-600'
+          }`}
         >
           Остаток
         </p>
         <p
-          className={`text-sm font-bold ${remainingDebt > 0 ? "text-red-800" : "text-orange-800"
-            }`}
+          className={`text-sm font-bold ${
+            remainingDebt > 0 ? 'text-red-800' : 'text-orange-800'
+          }`}
         >
           {formatCurrency(display.remaining, currency)}
         </p>
@@ -76,4 +86,3 @@ export default function FinancialSummary({
     </div>
   );
 }
-

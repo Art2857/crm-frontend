@@ -1,22 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   reactStrictMode: true,
-  eslint: {
-    // Отключаем ESLint во время сборки
-    ignoreDuringBuilds: true,
-    dirs: []
-  },
   typescript: {
-    // Разрешаем сборку с ошибками TypeScript в продакшене
     ignoreBuildErrors: false,
   },
   images: {
     domains: ['localhost'],
-    unoptimized: true
+    unoptimized: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: []
-  }
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

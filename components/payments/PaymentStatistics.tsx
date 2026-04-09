@@ -25,11 +25,8 @@ export default function PaymentStatistics({
   myDebts,
   displayCurrency,
 }: PaymentStatisticsProps) {
-  const { totalResponsibleDebt, totalMyDebt, overdueCount, isLoadingRate } = usePaymentStats(
-    responsibleUsers,
-    myDebts,
-    displayCurrency
-  );
+  const { totalResponsibleDebt, totalMyDebt, overdueCount, isLoadingRate } =
+    usePaymentStats(responsibleUsers, myDebts, displayCurrency);
 
   return (
     <div className="mb-8">

@@ -18,6 +18,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
   const { currentDuty, isLoading, error, distributions } = useAppSelector(
     (state) => state.duties
   );
+  const distributionsCount = distributions?.length ?? 0;
   const dispatch = useAppDispatch();
   const router = useRouter();
   const dutyId = params.id;
@@ -44,14 +45,20 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       loadedDutyRef.current = true;
     }
     // Загружаем распределения один раз (избегаем дубликатов в strict mode)
-    if (
-      !loadedDistributionsRef.current &&
-      (!distributions || distributions.length === 0)
-    ) {
+    if (!loadedDistributionsRef.current && distributionsCount === 0) {
       dispatch(fetchAllDistributions({ role: user.role }));
       loadedDistributionsRef.current = true;
     }
-  }, [isAuthenticated, router, user, dutyId, isLoading, currentDuty?.id, distributions?.length]);
+  }, [
+    dispatch,
+    isAuthenticated,
+    router,
+    user,
+    dutyId,
+    isLoading,
+    currentDuty?.id,
+    distributionsCount,
+  ]);
 
   // Промежуточное состояние для формы
   const [initialData, setInitialData] = useState<DutyFormData | null>(null);

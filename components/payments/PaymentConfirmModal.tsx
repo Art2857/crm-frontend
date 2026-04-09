@@ -56,7 +56,9 @@ export default function PaymentConfirmModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-0 max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className={`p-4 text-white ${hasPayment ? 'bg-gradient-to-r from-green-600 to-blue-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600'}`}>
+        <div
+          className={`p-4 text-white ${hasPayment ? 'bg-gradient-to-r from-green-600 to-blue-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600'}`}
+        >
           <div className="flex items-center space-x-3">
             <div className="bg-white/20 p-2 rounded-lg">
               {hasPayment ? (
@@ -77,7 +79,9 @@ export default function PaymentConfirmModal({
                 {hasPayment ? (
                   <>
                     <span>Будет выплачено </span>
-                    <span className="font-semibold text-green-700">{formatCurrency(amount, currency)}</span>
+                    <span className="font-semibold text-green-700">
+                      {formatCurrency(amount, currency)}
+                    </span>
                     {formattedPeriods && (
                       <>
                         <span> за периоды </span>
@@ -89,7 +93,9 @@ export default function PaymentConfirmModal({
                     {formattedClosureDate && (
                       <>
                         <span> с закрытием периодов до </span>
-                        <span className="font-semibold text-blue-700">{formattedClosureDate}</span>
+                        <span className="font-semibold text-blue-700">
+                          {formattedClosureDate}
+                        </span>
                       </>
                     )}
                   </>
@@ -99,7 +105,9 @@ export default function PaymentConfirmModal({
                     {formattedClosureDate && (
                       <>
                         <span> до </span>
-                        <span className="font-semibold text-blue-700">{formattedClosureDate}</span>
+                        <span className="font-semibold text-blue-700">
+                          {formattedClosureDate}
+                        </span>
                       </>
                     )}
                     <span> по {isMultipleWorks ? 'работам' : 'работе'} </span>
@@ -134,7 +142,9 @@ export default function PaymentConfirmModal({
               {hasPayment ? (
                 <>
                   <BanknotesIcon className="h-4 w-4 mr-2" />
-                  {isBulk ? 'Выплатить/закрыть по всем работам' : 'Выплатить и закрыть'}
+                  {isBulk
+                    ? 'Выплатить/закрыть по всем работам'
+                    : 'Выплатить и закрыть'}
                 </>
               ) : (
                 <>

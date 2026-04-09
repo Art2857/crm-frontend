@@ -250,7 +250,7 @@ export const useFinancialChartData = (
             expenseItems = eventData.expenseItems;
           }
         }
-        
+
         // Расчет накопленного баланса (нетто)
         const acc = currentIncomeAcc + currentExpenseAcc;
 
@@ -260,7 +260,8 @@ export const useFinancialChartData = (
           type: eventData ? 'event' : 'checkpoint',
           incomeValue: incVal,
           expenseValue: expVal,
-          plannedExpense: planned > 0 ? -planned : (sortedDistributions.length > 0 ? 0 : null),
+          plannedExpense:
+            planned > 0 ? -planned : sortedDistributions.length > 0 ? 0 : null,
           incomeItems: incomeItems.length ? incomeItems : null,
           expenseItems: expenseItems.length ? expenseItems : null,
           accAfter: acc,

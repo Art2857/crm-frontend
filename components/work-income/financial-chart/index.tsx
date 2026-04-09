@@ -277,7 +277,11 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
 
                 const currentDate = new Date();
                 currentDate.setHours(12, 0, 0, 0);
-                const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                const currentMonthStart = new Date(
+                  currentDate.getFullYear(),
+                  currentDate.getMonth(),
+                  1
+                );
                 currentMonthStart.setHours(12, 0, 0, 0);
                 const currentMonthTs = currentMonthStart.getTime();
 
@@ -316,9 +320,16 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                   });
 
                   // Проверка на отсутствие поступлений в месяце (кроме текущего и будущих)
-                  const hasNoIncome = !isCurrentOrFutureMonth && !chartData.some((d) => {
-                    return d.date >= start && d.date < end && d.incomeValue && d.incomeValue[1] > d.incomeValue[0];
-                  });
+                  const hasNoIncome =
+                    !isCurrentOrFutureMonth &&
+                    !chartData.some((d) => {
+                      return (
+                        d.date >= start &&
+                        d.date < end &&
+                        d.incomeValue &&
+                        d.incomeValue[1] > d.incomeValue[0]
+                      );
+                    });
 
                   if (hasViolation || hasNoIncome) {
                     zones.push(
@@ -383,7 +394,8 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 );
                 if (firstPlannedPoint) {
                   // Проверяем, является ли первая точка нулевой
-                  const isFirstPointZero = firstPlannedPoint.plannedExpense === 0;
+                  const isFirstPointZero =
+                    firstPlannedPoint.plannedExpense === 0;
 
                   return (
                     <ReferenceDot
@@ -525,7 +537,6 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                   }, 100);
                 }}
               />
-
             </ComposedChart>
           </ResponsiveContainer>
         </div>

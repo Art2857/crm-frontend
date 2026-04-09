@@ -13,7 +13,6 @@ import accountNavigation from '../../utils/accountNavigation';
 import { useModal } from '../../contexts/ModalContext';
 import { useNotification } from '../../contexts/NotificationContext';
 
-
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<SavedAccount[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,7 +66,10 @@ export default function AccountsPage() {
     } catch (error) {
       console.error('Error switching account:', error);
 
-      if (error instanceof Error && error.message.includes('Re-authentication required')) {
+      if (
+        error instanceof Error &&
+        error.message.includes('Re-authentication required')
+      ) {
         showInfo('Переключение аккаунта отменено');
       } else {
         showError('Не удалось переключить аккаунт. Попробуйте еще раз.');

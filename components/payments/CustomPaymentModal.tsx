@@ -85,9 +85,7 @@ export default function CustomPaymentModal({
     if (selectedWorkId) {
       (async () => {
         try {
-          const users = await workExecuterService.getByWorkId(
-            selectedWorkId
-          );
+          const users = await workExecuterService.getByWorkId(selectedWorkId);
           setExecuters(users);
         } catch (e) {
           console.error('Не удалось загрузить исполнителей', e);
@@ -103,11 +101,16 @@ export default function CustomPaymentModal({
   useEffect(() => {
     if (selectedWorkId && selectedUserId) {
       (async () => {
-        const closureDate = await getClosureDate(selectedWorkId, selectedUserId);
+        const closureDate = await getClosureDate(
+          selectedWorkId,
+          selectedUserId
+        );
         setMinPaymentDate(closureDate);
-        if (closureDate && paymentDate < closureDate) {
-          setPaymentDate(closureDate);
-        }
+        setPaymentDate((currentPaymentDate) =>
+          closureDate && currentPaymentDate < closureDate
+            ? closureDate
+            : currentPaymentDate
+        );
       })();
     } else {
       setMinPaymentDate(null);
@@ -134,7 +137,8 @@ export default function CustomPaymentModal({
     const newErrors: Record<string, string> = {};
     if (!selectedWorkId) newErrors.work = 'Выберите работу';
     if (!selectedUserId) newErrors.user = 'Выберите получателя';
-    if (!amount || parseFloat(amount) <= 0) newErrors.amount = 'Укажите сумму выплаты';
+    if (!amount || parseFloat(amount) <= 0)
+      newErrors.amount = 'Укажите сумму выплаты';
     if (!paymentDate) {
       newErrors.paymentDate = 'Укажите дату выплаты';
     } else if (minPaymentDate && paymentDate < minPaymentDate) {
@@ -233,7 +237,10 @@ export default function CustomPaymentModal({
                   onChange={(e) => {
                     setSelectedWorkId(e.target.value);
                     setSelectedUserId('');
-                    setErrors((prev) => { const { work, ...rest } = prev; return rest; });
+                    setErrors((prev) => {
+                      const { work, ...rest } = prev;
+                      return rest;
+                    });
                   }}
                   error={errors.work}
                   options={[
@@ -262,7 +269,10 @@ export default function CustomPaymentModal({
                     value={selectedUserId}
                     onChange={(e) => {
                       setSelectedUserId(e.target.value);
-                      setErrors((prev) => { const { user, ...rest } = prev; return rest; });
+                      setErrors((prev) => {
+                        const { user, ...rest } = prev;
+                        return rest;
+                      });
                     }}
                     error={errors.user}
                     options={[
@@ -292,7 +302,9 @@ export default function CustomPaymentModal({
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-lg">{currency === 'USD' ? '$' : '₽'}</span>
+                    <span className="text-gray-500 text-lg">
+                      {currency === 'USD' ? '$' : '₽'}
+                    </span>
                   </div>
                   <Input
                     id="customAmount"
@@ -300,7 +312,10 @@ export default function CustomPaymentModal({
                     value={amount}
                     onChange={(e) => {
                       setAmount(e.target.value);
-                      setErrors((prev) => { const { amount, ...rest } = prev; return rest; });
+                      setErrors((prev) => {
+                        const { amount, ...rest } = prev;
+                        return rest;
+                      });
                     }}
                     error={errors.amount}
                     placeholder="0"
@@ -308,7 +323,11 @@ export default function CustomPaymentModal({
                     required
                   />
                   <div className="absolute inset-y-0 right-2 flex items-center">
-                    <CurrencySwitch value={currency} onChange={setCurrency} size="sm" />
+                    <CurrencySwitch
+                      value={currency}
+                      onChange={setCurrency}
+                      size="sm"
+                    />
                   </div>
                 </div>
                 {/* TODO: показать долг, когда будет API */}
@@ -410,7 +429,10 @@ export default function CustomPaymentModal({
                   value={paymentDate}
                   onChange={(e) => {
                     setPaymentDate(e.target.value);
-                    setErrors((prev) => { const { paymentDate, ...rest } = prev; return rest; });
+                    setErrors((prev) => {
+                      const { paymentDate, ...rest } = prev;
+                      return rest;
+                    });
                   }}
                   min={minPaymentDate || undefined}
                   error={errors.paymentDate}
@@ -419,7 +441,8 @@ export default function CustomPaymentModal({
                 />
                 {minPaymentDate && (
                   <p className="text-xs text-amber-600 -mt-3">
-                    Минимальная дата: {minPaymentDate.split('-').reverse().join('.')}
+                    Минимальная дата:{' '}
+                    {minPaymentDate.split('-').reverse().join('.')}
                   </p>
                 )}
               </div>
@@ -460,5 +483,3 @@ export default function CustomPaymentModal({
     </Modal>
   );
 }
-
-

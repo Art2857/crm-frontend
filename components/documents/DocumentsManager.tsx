@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Modal from '../ui/Modal';
@@ -39,7 +45,11 @@ const ACCEPT_TYPES = [
 
 const ACCEPT_ATTR = ACCEPT_TYPES.join(',');
 
-export default function DocumentsManager({ mode, entityId, label = 'Документы' }: Props) {
+export default function DocumentsManager({
+  mode,
+  entityId,
+  label = 'Документы',
+}: Props) {
   const notification = useNotification();
   const staging = useDocumentsStaging();
   const [documents, setDocuments] = useState<UserDocument[]>([]);
@@ -52,7 +62,9 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
   // Состояние отложенного режима (локальное накопление изменений)
-  const [pendingAdds, setPendingAdds] = useState<Array<{ tempId: string; name: string; file: File }>>([]);
+  const [pendingAdds, setPendingAdds] = useState<
+    Array<{ tempId: string; name: string; file: File }>
+  >([]);
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
   const committingRef = useRef(false);
 
@@ -65,12 +77,15 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to delete document', err);
-      const msg = err?.originalData?.message || err?.message || 'Не удалось удалить документ';
+      const msg =
+        err?.originalData?.message ||
+        err?.message ||
+        'Не удалось удалить документ';
       notification.showError(msg, 8000);
     }
   });
 
-  const fetchDocs = async () => {
+  const fetchDocs = useCallback(async () => {
     try {
       setLoading(true);
       const list =
@@ -81,17 +96,19 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to load documents', err);
-      const msg = err?.originalData?.message || err?.message || 'Не удалось загрузить документы';
+      const msg =
+        err?.originalData?.message ||
+        err?.message ||
+        'Не удалось загрузить документы';
       notification.showError(msg, 8000);
     } finally {
       setLoading(false);
     }
-  };
+  }, [entityId, mode, notification]);
 
   useEffect(() => {
-    fetchDocs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, entityId]);
+    void fetchDocs();
+  }, [fetchDocs]);
 
   const onOpenAdd = () => {
     setAddName('');
@@ -115,20 +132,35 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
 
     try {
       setSaving(true);
-      const isDeferred = staging.isDeferred && staging.mode === mode && staging.entityId === entityId;
+      const isDeferred =
+        staging.isDeferred &&
+        staging.mode === mode &&
+        staging.entityId === entityId;
       if (isDeferred) {
         setPendingAdds((prev) => [
           ...prev,
-          { tempId: `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, name: addName.trim(), file: addFile },
+          {
+            tempId: `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            name: addName.trim(),
+            file: addFile,
+          },
         ]);
         setIsAddOpen(false);
         notification.showSuccess('Документ добавлен в черновик изменений');
         return;
       }
       if (mode === 'user') {
-        await documentsService.uploadForUser({ userId: entityId, name: addName.trim(), file: addFile });
+        await documentsService.uploadForUser({
+          userId: entityId,
+          name: addName.trim(),
+          file: addFile,
+        });
       } else {
-        await documentsService.uploadForWork({ workId: entityId, name: addName.trim(), file: addFile });
+        await documentsService.uploadForWork({
+          workId: entityId,
+          name: addName.trim(),
+          file: addFile,
+        });
       }
       setIsAddOpen(false);
       notification.showSuccess('Документ успешно загружен');
@@ -136,7 +168,10 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to upload document', err);
-      const msg = err?.originalData?.message || err?.message || 'Не удалось загрузить документ';
+      const msg =
+        err?.originalData?.message ||
+        err?.message ||
+        'Не удалось загрузить документ';
       notification.showError(msg, 8000);
     } finally {
       setSaving(false);
@@ -164,7 +199,9 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
         setIsDownloadOpen(false);
         return;
       }
-      const { url, filename } = await documentsService.getDownloadUrl(selectedDoc.id);
+      const { url, filename } = await documentsService.getDownloadUrl(
+        selectedDoc.id
+      );
       const a = document.createElement('a');
       a.href = url;
       a.download = filename || selectedDoc.originalName;
@@ -175,7 +212,10 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to get download URL', err);
-      const msg = err?.originalData?.message || err?.message || 'Не удалось получить ссылку на файл';
+      const msg =
+        err?.originalData?.message ||
+        err?.message ||
+        'Не удалось получить ссылку на файл';
       notification.showError(msg, 8000);
     }
   };
@@ -197,7 +237,10 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to get preview URL', err);
-      const msg = err?.originalData?.message || err?.message || 'Не удалось получить ссылку на предпросмотр';
+      const msg =
+        err?.originalData?.message ||
+        err?.message ||
+        'Не удалось получить ссылку на предпросмотр';
       notification.showError(msg, 8000);
     }
   };
@@ -219,7 +262,10 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to download all documents (zip)', err);
-      const msg = err?.originalData?.message || err?.message || 'Не удалось скачать архив документов';
+      const msg =
+        err?.originalData?.message ||
+        err?.message ||
+        'Не удалось скачать архив документов';
       notification.showError(msg, 8000);
     }
   };
@@ -239,14 +285,39 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isDeferred = staging.isDeferred && staging.mode === mode && staging.entityId === entityId;
-  const stagedKept = useMemo(() => (isDeferred ? documents.filter((d) => !pendingDeletes.has(d.id)) : documents), [documents, pendingDeletes, isDeferred]);
-  const stagedPending = useMemo(() => (isDeferred ? pendingAdds.map((p) => ({ ...p, __pending: true as const })) : []), [pendingAdds, isDeferred]);
-  const displayDocs = useMemo<any[]>(() => (isDeferred ? [...stagedKept, ...stagedPending] : documents as any), [isDeferred, stagedKept, stagedPending, documents]);
+  const isDeferred =
+    staging.isDeferred &&
+    staging.mode === mode &&
+    staging.entityId === entityId;
+  const stagedKept = useMemo(
+    () =>
+      isDeferred
+        ? documents.filter((d) => !pendingDeletes.has(d.id))
+        : documents,
+    [documents, pendingDeletes, isDeferred]
+  );
+  const stagedPending = useMemo(
+    () =>
+      isDeferred
+        ? pendingAdds.map((p) => ({ ...p, __pending: true as const }))
+        : [],
+    [pendingAdds, isDeferred]
+  );
+  const displayDocs = useMemo<any[]>(
+    () => (isDeferred ? [...stagedKept, ...stagedPending] : (documents as any)),
+    [isDeferred, stagedKept, stagedPending, documents]
+  );
   const hasDocuments = !loading && displayDocs.length > 0;
   // Регистрируем в родителе обработчики коммита/отмены отложенных изменений через контекст
   useEffect(() => {
-    if (!(staging.isDeferred && staging.mode === mode && staging.entityId === entityId)) return;
+    if (
+      !(
+        staging.isDeferred &&
+        staging.mode === mode &&
+        staging.entityId === entityId
+      )
+    )
+      return;
     if (!staging.registerHandlers) return;
     const commit = async () => {
       if (committingRef.current) return;
@@ -254,9 +325,17 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
       try {
         for (const p of pendingAdds) {
           if (mode === 'user') {
-            await documentsService.uploadForUser({ userId: entityId, name: p.name, file: p.file });
+            await documentsService.uploadForUser({
+              userId: entityId,
+              name: p.name,
+              file: p.file,
+            });
           } else {
-            await documentsService.uploadForWork({ workId: entityId, name: p.name, file: p.file });
+            await documentsService.uploadForWork({
+              workId: entityId,
+              name: p.name,
+              file: p.file,
+            });
           }
         }
         for (const id of Array.from(pendingDeletes)) {
@@ -276,12 +355,24 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     };
     const hasPending = () => pendingAdds.length > 0 || pendingDeletes.size > 0;
     staging.registerHandlers({ commit, discard, hasPending });
-  }, [staging.isDeferred, staging.mode, staging.entityId, mode, entityId, pendingAdds, pendingDeletes]);
+  }, [
+    fetchDocs,
+    staging,
+    staging.isDeferred,
+    staging.mode,
+    staging.entityId,
+    mode,
+    entityId,
+    pendingAdds,
+    pendingDeletes,
+  ]);
 
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
         <div className="flex items-center gap-2">
           {hasDocuments && (
             <Button
@@ -338,7 +429,9 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
               onChange={(e: any) => setAddName(e.target.value)}
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Файл</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Файл
+              </label>
               <input
                 type="file"
                 accept={ACCEPT_ATTR}
@@ -352,7 +445,11 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
           </div>
 
           <div className="flex justify-end gap-2 mt-6">
-            <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsAddOpen(false)}
+            >
               Отмена
             </Button>
             <Button type="button" onClick={onSaveAdd} isLoading={saving}>
@@ -384,7 +481,9 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
             {selectedDoc?.originalName && (
               <div className="mt-2">
                 <div className="text-gray-500">Оригинальное имя</div>
-                <div className="text-gray-700 break-all">{selectedDoc.originalName}</div>
+                <div className="text-gray-700 break-all">
+                  {selectedDoc.originalName}
+                </div>
               </div>
             )}
           </div>
@@ -396,13 +495,26 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
               onClick={() => {
                 if (!selectedDoc) return;
                 if ((selectedDoc as any).__pending) {
-                  setPendingAdds((prev) => prev.filter((p) => p.tempId !== (selectedDoc as any).tempId));
+                  setPendingAdds((prev) =>
+                    prev.filter((p) => p.tempId !== (selectedDoc as any).tempId)
+                  );
                   setIsDownloadOpen(false);
-                } else if (staging.isDeferred && staging.mode === mode && staging.entityId === entityId) {
-                  setPendingDeletes((prev) => new Set([...Array.from(prev), (selectedDoc as any).id]));
+                } else if (
+                  staging.isDeferred &&
+                  staging.mode === mode &&
+                  staging.entityId === entityId
+                ) {
+                  setPendingDeletes(
+                    (prev) =>
+                      new Set([...Array.from(prev), (selectedDoc as any).id])
+                  );
                   setIsDownloadOpen(false);
                 } else {
-                  deleteConfirm.confirmAndExecute((selectedDoc as any).id, 'Удалить этот документ?', { variant: 'danger' });
+                  deleteConfirm.confirmAndExecute(
+                    (selectedDoc as any).id,
+                    'Удалить этот документ?',
+                    { variant: 'danger' }
+                  );
                 }
               }}
               className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-red-50 border !border-red-300 !text-gray-700 hover:!text-white hover:!bg-red-500"
@@ -441,4 +553,3 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     </div>
   );
 }
-

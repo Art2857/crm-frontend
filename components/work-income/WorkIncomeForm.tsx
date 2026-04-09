@@ -2,20 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import Button from '../ui/Button';
-import { 
-  WorkIncome, 
-  CreateWorkIncomeRequest, 
+import {
+  WorkIncome,
+  CreateWorkIncomeRequest,
   UpdateWorkIncomeRequest,
   WorkIncomeFormData,
   CURRENCY_OPTIONS,
-  EMPTY_WORK_INCOME_FORM
+  EMPTY_WORK_INCOME_FORM,
 } from '../../types/work-income';
 
 interface WorkIncomeFormProps {
   workId: string;
   income?: WorkIncome; // Для редактирования
   isSubmitting?: boolean;
-  onSubmit: (data: CreateWorkIncomeRequest | UpdateWorkIncomeRequest) => Promise<void>;
+  onSubmit: (
+    data: CreateWorkIncomeRequest | UpdateWorkIncomeRequest
+  ) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -26,7 +28,9 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const [formData, setFormData] = useState<WorkIncomeFormData>(EMPTY_WORK_INCOME_FORM);
+  const [formData, setFormData] = useState<WorkIncomeFormData>(
+    EMPTY_WORK_INCOME_FORM
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEditing = !!income;
@@ -50,14 +54,14 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
   }, [income]);
 
   const handleChange = (field: keyof WorkIncomeFormData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
 
     // Очищаем ошибку для этого поля
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
         [field]: '',
       }));
@@ -137,7 +141,10 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Сумма */}
       <div>
-        <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor="amount"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Сумма поступления *
         </label>
         <div className="relative">
@@ -165,13 +172,18 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
 
       {/* Валюта */}
       <div>
-        <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor="currency"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Валюта *
         </label>
         <select
           id="currency"
           value={formData.currency}
-          onChange={(e) => handleChange('currency', e.target.value as 'RUB' | 'USD')}
+          onChange={(e) =>
+            handleChange('currency', e.target.value as 'RUB' | 'USD')
+          }
           className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
             errors.currency
               ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
@@ -192,7 +204,10 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
 
       {/* Дата поступления */}
       <div>
-        <label htmlFor="receivedDate" className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor="receivedDate"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Дата поступления *
         </label>
         <input
@@ -215,7 +230,10 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
 
       {/* Описание */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Описание
         </label>
         <textarea

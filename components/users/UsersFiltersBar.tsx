@@ -1,14 +1,10 @@
-"use client";
+'use client';
 
 import React from 'react';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 
-type SortValue =
-  | 'name_asc'
-  | 'name_desc'
-  | 'createdAt_asc'
-  | 'createdAt_desc';
+type SortValue = 'name_asc' | 'name_desc' | 'createdAt_asc' | 'createdAt_desc';
 
 interface UsersFiltersBarProps {
   search: string;

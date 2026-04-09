@@ -118,7 +118,9 @@ export default function PaymentManagementTab({
                           userCurrencyByDuty={Object.fromEntries(
                             (user.duties || []).map((d) => [
                               d.dutyId,
-                              ((d.currency === 'USD' ? 'USD' : 'RUB') as CurrencyType),
+                              (d.currency === 'USD'
+                                ? 'USD'
+                                : 'RUB') as CurrencyType,
                             ])
                           )}
                           onShowCalculation={(dutyId) =>
