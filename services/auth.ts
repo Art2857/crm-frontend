@@ -1,5 +1,6 @@
 import {
   AuthResponse,
+  ChangePasswordDto,
   LoginDto,
   // RegisterDto, // Регистрация отключена
 } from '../types/auth';
@@ -180,6 +181,10 @@ export const authService = {
         headers: ApiClient.getNoCacheHeaders(),
       });
 
+      if (typeof window !== 'undefined') {
+        accountManagerService.updateAccountUser(response.data);
+      }
+
       return response.data;
     } catch (error) {
       console.error('❌ Ошибка при получении текущего пользователя:', error);
@@ -216,6 +221,15 @@ export const authService = {
 
   getCurrentAccountId: () => {
     return accountManagerService.getCurrentAccountId();
+  },
+
+  changePassword: async (data: ChangePasswordDto): Promise<{ success: boolean }> => {
+    const response = await privateApi.post<{ success: boolean }>(
+      AUTH_ENDPOINTS.changePassword,
+      data
+    );
+
+    return response.data;
   },
 };
 

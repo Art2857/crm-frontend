@@ -35,6 +35,7 @@ import {
 import { PaymentType } from '../../types/payment';
 import { useNotification } from '../../contexts/NotificationContext';
 import { logger } from '../../utils/logger';
+import { formatDateToISO } from '../../utils/date';
 import { usePaymentsData } from '../../hooks/payments/usePaymentsData';
 import { usePeriodDates } from '../../hooks/payments/usePeriodDates';
 import { DisplayCurrency } from '../../hooks/useCurrencyConversion';
@@ -42,7 +43,7 @@ import { DisplayCurrency } from '../../hooks/useCurrencyConversion';
 export default function PaymentsPage() {
   // Получаем данные текущего пользователя из Redux store
   const { user } = useAppSelector((state) => state.auth);
-  const notification = useNotification();
+  const { showError, showSuccess } = useNotification();
 
   // Валюта отображения итогов
   const [displayCurrency, setDisplayCurrency] =
@@ -83,6 +84,7 @@ export default function PaymentsPage() {
     'work'
   );
   const [isDutyCalculation, setIsDutyCalculation] = useState(false);
+  const [selectedDutyId, setSelectedDutyId] = useState<string | undefined>();
   const [
     calculationModalShowPaymentHistory,
     setCalculationModalShowPaymentHistory,
@@ -101,8 +103,6 @@ export default function PaymentsPage() {
   } = usePaymentsData();
 
   // summary берём из хука
-
-  // mapAnalysisToUsers вынесен в utils/paymentsMapping.ts
 
   const fetchWorksData = useCallback(
     async (
@@ -163,6 +163,7 @@ export default function PaymentsPage() {
         setIsUserCalculation(false);
         setCalculationType('work');
         setIsDutyCalculation(!!dutyId);
+        setSelectedDutyId(dutyId);
         setCalculationModalOpen(true);
         setCalculationModalShowPaymentHistory(!dutyId);
       } catch (error) {
@@ -179,20 +180,19 @@ export default function PaymentsPage() {
   useEffect(() => {
     // Предотвращаем API вызовы если пользователь не аутентифицирован
     // (например, во время logout или при переходе на страницу входа)
-    if (!user) {
+    if (!user?.id || !user.role) {
       return;
     }
 
     fetchWorksData().catch((err) => {
       logger.error('Ошибка инициализации выплат', err);
-      notification.showError('Не удалось загрузить данные по выплатам');
+      showError('Не удалось загрузить данные по выплатам');
     });
     fetchMyDebtsDataRaw().catch((err) => {
       logger.error('Ошибка загрузки моих задолженностей', err);
-      notification.showError('Не удалось загрузить данные о задолженностях');
+      showError('Не удалось загрузить данные о задолженностях');
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchMyDebtsDataRaw, fetchWorksData, showError, user?.id, user?.role]);
 
   // Слушатель события закрытия периода (подписка/отписка один раз)
   // Слушатель закрытия периода — регистрируем один раз
@@ -208,7 +208,7 @@ export default function PaymentsPage() {
         });
         setCalculationModalOpen(false);
         setSelectedCalculation(null);
-        notification.showSuccess('Период успешно закрыт');
+        showSuccess('Период успешно закрыт');
         await updateWorksData({
           endDate: calculationDate,
           targetWorkId: workId,
@@ -216,7 +216,7 @@ export default function PaymentsPage() {
         });
       } catch (err) {
         logger.error('Не удалось закрыть период', err);
-        notification.showError('Не удалось закрыть период');
+        showError('Не удалось закрыть период');
       }
     };
     window.addEventListener('close-period', onClosePeriod as any);
@@ -234,9 +234,7 @@ export default function PaymentsPage() {
     async (userId: string) => {
       try {
         setLoading(true);
-        const endDate = getWorkPeriodDate(
-          usersData.find((u) => u.userId === userId)?.works[0]?.workId || ''
-        );
+        const endDate = getUserPeriodDate(userId);
         const detailedCalc = await analyticsService.getPaymentsCalculationUser({
           role: user?.role,
           userId,
@@ -245,14 +243,17 @@ export default function PaymentsPage() {
         setSelectedCalculation(detailedCalc);
         setIsUserCalculation(true);
         setCalculationType('user');
+        setIsDutyCalculation(false);
+        setSelectedDutyId(undefined);
         setCalculationModalOpen(true);
+        setCalculationModalShowPaymentHistory(true);
       } catch (error) {
         logger.error('Ошибка при загрузке расчета пользователя:', error);
       } finally {
         setLoading(false);
       }
     },
-    [getWorkPeriodDate, user?.role, usersData]
+    [getUserPeriodDate, user?.role]
   );
 
   // Обработчик создания выплаты
@@ -262,7 +263,7 @@ export default function PaymentsPage() {
     amount: number,
     userName: string,
     workName: string,
-    dutyId?: string
+    calculationDate?: string
   ) => {
     // Устанавливаем данные для PaymentModal
     setSelectedPayment({
@@ -271,7 +272,7 @@ export default function PaymentsPage() {
       amount,
       userName,
       workName,
-      dutyId,
+      calculationDate,
     });
     setPaymentModalOpen(true);
   };
@@ -308,8 +309,6 @@ export default function PaymentsPage() {
   const handleCreateCustomPayment = () => {
     setCustomPaymentModalOpen(true);
   };
-
-  const { showError } = useNotification();
 
   const handleWorkPeriodDateChange = async (
     workId: string,
@@ -355,13 +354,25 @@ export default function PaymentsPage() {
       [userId]: date,
     }));
 
-    const user = usersData.find((userData) => userData.userId === userId);
-    user.works.forEach((work) => {
-      setWorkPeriodDates((prev) => ({
-        ...prev,
-        [work.workId]: date,
-      }));
-    });
+    const currentUser = usersData.find(
+      (userData) => userData.userId === userId
+    );
+    const previousWorkDates = new Map(
+      (currentUser?.works ?? []).map((work) => [
+        work.workId,
+        getWorkPeriodDate(work.workId),
+      ])
+    );
+
+    if (currentUser?.works?.length) {
+      setWorkPeriodDates((prev) => {
+        const next = { ...prev };
+        for (const work of currentUser.works) {
+          next[work.workId] = date;
+        }
+        return next;
+      });
+    }
 
     // Пытаемся получить свежие данные
     try {
@@ -372,6 +383,17 @@ export default function PaymentsPage() {
         ...prev,
         [userId]: previousDate,
       }));
+
+      if (currentUser?.works?.length) {
+        setWorkPeriodDates((prev) => {
+          const next = { ...prev };
+          for (const work of currentUser.works) {
+            next[work.workId] =
+              previousWorkDates.get(work.workId) ?? previousDate;
+          }
+          return next;
+        });
+      }
 
       const message = err?.message || 'Ошибка при получении данных';
       showError(message);
@@ -449,7 +471,11 @@ export default function PaymentsPage() {
             // то нужно найти эту работу и обновить расчет
             const currentUserData = usersData.find((u) => u.userId === userId);
             if (currentUserData && selectedCalculation.workId) {
-              await handleShowCalculation(userId, selectedCalculation.workId);
+              await handleShowCalculation(
+                userId,
+                selectedCalculation.workId,
+                selectedDutyId
+              );
             }
           }
         }
@@ -471,6 +497,7 @@ export default function PaymentsPage() {
       handleShowCalculation,
       handleShowUserCalculation,
       selectedCalculation,
+      selectedDutyId,
       updateWorksData,
       usersData,
     ]
@@ -496,10 +523,10 @@ export default function PaymentsPage() {
       await refreshAfterUserPayment(userId);
       setCalculationModalOpen(false);
       setSelectedCalculation(null);
-      notification.showSuccess('Мультивыплата выполнена');
+      showSuccess('Мультивыплата выполнена');
     } catch (e) {
       logger.error('Мультивыплата не выполнена', e);
-      notification.showError('Не удалось выполнить мультивыплату');
+      showError('Не удалось выполнить мультивыплату');
     } finally {
       setLoading(false);
     }
@@ -507,9 +534,10 @@ export default function PaymentsPage() {
     bulkCreateAndClose,
     getUserPeriodDate,
     isUserCalculation,
-    notification,
     refreshAfterUserPayment,
     selectedCalculation,
+    showError,
+    showSuccess,
     usersData,
   ]);
 
@@ -533,57 +561,26 @@ export default function PaymentsPage() {
         );
       }
 
-      // Оптимистично добавляем новую выплату в открытый расчёт
-      if (calculationModalOpen && selectedCalculation && result) {
-        const newHistItem = {
-          id: result.payment.id,
-          amount: result.payment.amount,
-          type: result.payment.paymentType,
-          description: result.payment.description || '',
-          date: result.payment.paymentDate,
-          createdAt: result.payment.createdAt,
-        };
-
-        setSelectedCalculation((prev) => {
-          if (!prev) return prev;
-          const paymentHistory = [newHistItem, ...prev.paymentHistory];
-          const totalPaid = prev.totalPaid + result.payment.amount;
-          return {
-            ...prev,
-            paymentHistory,
-            totalPaid,
-            remainingDebt: Math.max(
-              prev.remainingDebt - result.payment.amount,
-              0
-            ),
-          };
-        });
-      }
+      setPaymentModalOpen(false);
+      setSelectedPayment(null);
+      showSuccess('Выплата создана, период закрыт');
     } catch (e: any) {
       logger.error('Ошибка создания выплаты', e);
       const serverErrors = e?.data?.errors;
       if (Array.isArray(serverErrors) && serverErrors.length > 0) {
         const messages = serverErrors.flatMap((err: any) => err.messages ?? []);
-        notification.showError(
-          messages.join('; ') || 'Не удалось создать выплату'
-        );
+        showError(messages.join('; ') || 'Не удалось создать выплату');
       } else {
-        notification.showError(
-          e?.data?.message || 'Не удалось создать выплату'
-        );
+        showError(e?.data?.message || 'Не удалось создать выплату');
       }
-    } finally {
       setPaymentModalOpen(false);
       setSelectedPayment(null);
-      // Закрываем модальное окно "Детальный расчет выплаты" после успешного создания выплаты
-      setCalculationModalOpen(false);
-      setSelectedCalculation(null);
     }
   };
 
   const handleCustomPaymentSubmit = async (data: CustomPaymentFormData) => {
     try {
-      const created = await makePayment({
+      await makePayment({
         workId: data.workId,
         userId: data.userId,
         amount: Math.round(data.amount),
@@ -607,30 +604,15 @@ export default function PaymentsPage() {
         await refreshAfterPayment(data.workId, data.userId);
       }
 
-      if (calculationModalOpen && selectedCalculation && created) {
-        if (selectedCalculation.workId === data.workId) {
-          const c: any = created as any;
-          const newHistItem = {
-            id: c.id,
-            amount: c.amount,
-            type: c.paymentType,
-            description: c.description || '',
-            date: c.paymentDate,
-            createdAt: c.createdAt,
-          };
-
-          setSelectedCalculation((prev) => {
-            if (!prev) return prev;
-            const paymentHistory = [newHistItem, ...prev.paymentHistory];
-            const totalPaid = prev.totalPaid + c.amount;
-            const remainingDebt = Math.max(prev.remainingDebt - c.amount, 0);
-            return {
-              ...prev,
-              paymentHistory,
-              totalPaid,
-              remainingDebt,
-            };
-          });
+      if (calculationModalOpen && selectedCalculation) {
+        if (calculationType === 'user') {
+          await handleShowUserCalculation(selectedCalculation.userId);
+        } else {
+          await handleShowCalculation(
+            selectedCalculation.userId,
+            selectedCalculation.workId,
+            selectedDutyId
+          );
         }
       }
     } catch (e) {
@@ -715,6 +697,7 @@ export default function PaymentsPage() {
                         user.works
                           ?.map((w) => w.lastClosureDate)
                           .filter(Boolean)
+                          .map((date) => formatDateToISO(date))
                           .sort()
                           .pop() || undefined
                       }
@@ -788,6 +771,7 @@ export default function PaymentsPage() {
             setCalculationModalOpen(false);
             setSelectedCalculation(null);
             setIsDutyCalculation(false);
+            setSelectedDutyId(undefined);
           }}
           calculation={selectedCalculation}
           onCreatePayment={handleCreatePayment}
@@ -796,7 +780,9 @@ export default function PaymentsPage() {
           )}
           calculationDate={
             selectedCalculation
-              ? getWorkPeriodDate(selectedCalculation.workId)
+              ? isUserCalculation
+                ? getUserPeriodDate(selectedCalculation.userId)
+                : getWorkPeriodDate(selectedCalculation.workId)
               : undefined
           }
           isUserCalculation={isUserCalculation}
@@ -813,19 +799,21 @@ export default function PaymentsPage() {
           }}
           payment={selectedPayment}
           paymentDate={
-            selectedCalculation
+            selectedPayment?.calculationDate ??
+            (selectedCalculation
               ? getWorkPeriodDate(selectedCalculation.workId)
-              : null
+              : null)
           }
           onSubmit={handlePaymentSubmit}
           periods={selectedCalculation?.periods?.map((p) => ({
             startDate: p.startDate,
             endDate: p.endDate,
           }))}
-          closureDate={
-            selectedCalculation
+          calculationDate={
+            selectedPayment?.calculationDate ??
+            (selectedCalculation
               ? getWorkPeriodDate(selectedCalculation.workId)
-              : undefined
+              : undefined)
           }
         />
 

@@ -147,7 +147,7 @@ const authSlice = createSlice({
     // Обработка обновления профиля пользователя в auth slice
     builder.addCase(updateUserProfile.fulfilled, (state, action) => {
       // Если обновился текущий пользователь, обновляем его в auth state
-      if (state.user && state.user.id === action.payload.id) {
+      if (state.user && action.payload && state.user.id === action.payload.id) {
         state.user = { ...state.user, ...action.payload };
       }
     });

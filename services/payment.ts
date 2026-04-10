@@ -171,7 +171,7 @@ export const createPaymentAndClose = async (
 };
 
 /**
- * Получает дату закрытия периода для пары работа+пользователь
+ * Получает последний закрытый день для пары работа+пользователь
  */
 export const getClosureDate = async (
   workId: string,

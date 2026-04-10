@@ -14,6 +14,8 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { getCurrentUser } from '../../store/slices/auth';
 import { useTimezone } from '../../contexts/TimezoneContext';
 import Avatar from '../../components/profile/Avatar';
+import { authService } from '../../services/auth';
+import { getTimezoneDisplayLabel } from '../../utils/timezones';
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -177,9 +179,9 @@ export default function ProfilePage() {
           setIsSaving(false);
           return;
         }
-        if (passwordForm.newPassword.length < 6) {
+        if (passwordForm.newPassword.length < 8) {
           notification.showError(
-            'Новый пароль должен содержать минимум 6 символов'
+            'Новый пароль должен содержать минимум 8 символов'
           );
           setIsSaving(false);
           return;
@@ -233,6 +235,10 @@ export default function ProfilePage() {
         data.birthday = null;
       }
 
+      data.email =
+        typeof data.email === 'string' && data.email.trim().length > 0
+          ? data.email.trim()
+          : null;
       data.status = status;
       // Бэкенд ожидает строку; не отправляем пустые значения
       if (preferencesText && preferencesText.trim().length > 0) {
@@ -250,14 +256,30 @@ export default function ProfilePage() {
       );
 
       if (updateUserProfile.fulfilled.match(resultAction)) {
-        notification.showSuccess('Профиль успешно обновлен');
-
-        // TODO: Добавить вызов API для смены пароля если введен новый пароль
+        let passwordChanged = false;
         if (passwordForm.newPassword) {
-          notification.showInfo(
-            'Смена пароля будет реализована в следующих версиях'
-          );
+          try {
+            await authService.changePassword({
+              currentPassword: passwordForm.currentPassword,
+              newPassword: passwordForm.newPassword,
+            });
+            passwordChanged = true;
+          } catch (passwordError: any) {
+            await dispatch(getCurrentUser());
+            notification.showError(
+              `Профиль сохранен, но пароль не изменен: ${
+                passwordError?.message || 'Не удалось изменить пароль'
+              }`
+            );
+            return;
+          }
         }
+
+        notification.showSuccess(
+          passwordChanged
+            ? 'Профиль и пароль успешно обновлены'
+            : 'Профиль успешно обновлен'
+        );
 
         // Выходим из режима редактирования
         setIsEditing(false);
@@ -267,9 +289,12 @@ export default function ProfilePage() {
           confirmPassword: '',
         });
 
-        setTimeout(() => {
-          dispatch(getCurrentUser());
-        }, 300);
+        await dispatch(getCurrentUser());
+      } else if (
+        updateUserProfile.rejected.match(resultAction) &&
+        resultAction.payload
+      ) {
+        notification.showError(resultAction.payload as string);
       }
     } catch (err) {
       console.error('Ошибка при обновлении профиля:', err);
@@ -728,14 +753,7 @@ export default function ProfilePage() {
                       Часовой пояс
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {user.timezone
-                        ? user.timezone
-                            .replace(/&#x2F;/g, '/')
-                            .replace(/&amp;/g, '&')
-                            .replace(/&lt;/g, '<')
-                            .replace(/&gt;/g, '>')
-                            .replace(/&quot;/g, '"')
-                        : 'Не указан'}
+                      {getTimezoneDisplayLabel(user.timezone)}
                     </div>
                   </div>
                   <div>

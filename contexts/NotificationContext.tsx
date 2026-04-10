@@ -3,6 +3,7 @@ import React, {
   useState,
   useContext,
   useCallback,
+  useMemo,
   ReactNode,
 } from 'react';
 
@@ -40,6 +41,13 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
+  // Удаление уведомления по ID
+  const removeNotification = useCallback((id: string) => {
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.id !== id)
+    );
+  }, []);
+
   // Добавление нового уведомления
   const addNotification = useCallback(
     (notification: Omit<Notification, 'id'>) => {
@@ -56,27 +64,23 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
       return id;
     },
-    []
+    [removeNotification]
   );
-
-  // Удаление уведомления по ID
-  const removeNotification = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
-    );
-  }, []);
 
   // Очистка всех уведомлений
   const clearAll = useCallback(() => {
     setNotifications([]);
   }, []);
 
-  const value = {
-    notifications,
-    addNotification,
-    removeNotification,
-    clearAll,
-  };
+  const value = useMemo(
+    () => ({
+      notifications,
+      addNotification,
+      removeNotification,
+      clearAll,
+    }),
+    [notifications, addNotification, removeNotification, clearAll]
+  );
 
   return (
     <NotificationContext.Provider value={value}>
@@ -94,12 +98,14 @@ export const useNotification = () => {
     );
   }
 
+  const { addNotification } = context;
+
   // Вспомогательные функции для удобства использования
   const showSuccess = useCallback(
     (message: string, duration = 3000) => {
-      return context.addNotification({ type: 'success', message, duration });
+      return addNotification({ type: 'success', message, duration });
     },
-    [context]
+    [addNotification]
   );
 
   const showError = useCallback(
@@ -163,34 +169,37 @@ export const useNotification = () => {
         }
       }
 
-      return context.addNotification({
+      return addNotification({
         type: 'error',
         message: processedMessage,
         duration,
       });
     },
-    [context]
+    [addNotification]
   );
 
   const showInfo = useCallback(
     (message: string, duration = 3000) => {
-      return context.addNotification({ type: 'info', message, duration });
+      return addNotification({ type: 'info', message, duration });
     },
-    [context]
+    [addNotification]
   );
 
   const showWarning = useCallback(
     (message: string, duration = 4000) => {
-      return context.addNotification({ type: 'warning', message, duration });
+      return addNotification({ type: 'warning', message, duration });
     },
-    [context]
+    [addNotification]
   );
 
-  return {
-    ...context,
-    showSuccess,
-    showError,
-    showInfo,
-    showWarning,
-  };
+  return useMemo(
+    () => ({
+      ...context,
+      showSuccess,
+      showError,
+      showInfo,
+      showWarning,
+    }),
+    [context, showSuccess, showError, showInfo, showWarning]
+  );
 };

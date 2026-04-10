@@ -319,7 +319,7 @@ export const useDateManager = () => {
 };
 
 /**
- * Вспомогательные функции для обратной совместимости
+ * Общие экспортируемые функции поверх единого DateManager
  */
 export const formatDateToISO = (date: DateInput): string => {
   return dateManager.formatISO(date);
@@ -346,14 +346,18 @@ export const isValidRussianDateFormat = (dateString: string): boolean => {
   return dateManager.isValidRussianFormat(dateString);
 };
 
-export const russianDateToDate = (dateString: string): Date | null => {
-  return dateManager.parseDate(dateString);
-};
+export const shiftDateISOByDays = (
+  dateInput: DateInput,
+  days: number
+): string => {
+  const date = dateManager.parseDate(dateInput);
+  if (!date) return '';
 
-export const formatedDateToDateObject = (date: string): Date => {
-  const parsed = dateManager.parseDate(date);
-  if (!parsed) {
-    throw new Error(`Failed to parse date: ${date}`);
-  }
-  return parsed;
+  const shifted = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate() + days
+  );
+
+  return dateManager.formatISO(shifted);
 };

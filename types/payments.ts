@@ -132,6 +132,8 @@ export interface DetailedCalculation {
   lastClosureDate: string | null;
   paymentHistory: Array<{
     id: string;
+    workId?: string | null;
+    workName?: string | null;
     amount: number;
     type: 'SALARY' | 'ADVANCE' | 'BONUS' | 'EXTRA';
     description: string;
@@ -148,7 +150,7 @@ export interface PaymentFormData {
   amount: number;
   userName: string;
   workName: string;
-  calculationDate?: string; // Дата расчета (дата закрытия)
+  calculationDate?: string; // Дата расчета "до", по которую выполняется выплата/закрытие
 }
 
 export interface PaymentModalData {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   CalendarIcon,
   ClockIcon,
@@ -23,8 +23,17 @@ export default function UserPeriodSelector({
   minDate,
 }: UserPeriodSelectorProps) {
   const [date, setDate] = useState<string>(selectedDate);
+  const normalizedMinDate = useMemo(
+    () => (minDate ? formatDateToISO(minDate) : ''),
+    [minDate]
+  );
 
-  const isDateTooEarly = minDate && formatDateToISO(date) <= minDate;
+  useEffect(() => {
+    setDate(formatDateToISO(selectedDate));
+  }, [selectedDate]);
+
+  const isDateTooEarly =
+    normalizedMinDate !== '' && formatDateToISO(date) < normalizedMinDate;
 
   return (
     <div className="space-y-2">
@@ -36,7 +45,7 @@ export default function UserPeriodSelector({
         <input
           type="date"
           value={formatDateToISO(date)}
-          min={minDate || undefined}
+          min={normalizedMinDate || undefined}
           onChange={(e) => setDate(formatDateToISO(e.target.value))}
           className="border border-blue-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
           onClick={(e) => e.stopPropagation()}
@@ -56,9 +65,7 @@ export default function UserPeriodSelector({
       {isDateTooEarly && (
         <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5">
           <ExclamationTriangleIcon className="h-4 w-4 flex-shrink-0" />
-          <span>
-            Дата не может быть меньше или равна текущей дате закрытия периода
-          </span>
+          <span>Дата не может быть раньше текущей даты закрытия периода</span>
         </div>
       )}
     </div>

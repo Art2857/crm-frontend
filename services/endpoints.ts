@@ -4,6 +4,7 @@
 export const AUTH_ENDPOINTS = {
   login: '/auth/login',
   register: '/auth/register',
+  changePassword: '/auth/change-password',
   refresh: '/auth/refresh',
   me: '/auth/me',
   logout: '/auth/logout',
@@ -70,7 +71,6 @@ export const PAYMENTS_ENDPOINTS = {
 
 export const ANALYTICS_ENDPOINTS = {
   base: '/analytics',
-  userWorks: '/analytics/user/works',
   myDebts: '/analytics/user/my-debts',
   paymentsManagement: '/analytics/payments/management',
   paymentsCalculation: '/analytics/payments/calculation',

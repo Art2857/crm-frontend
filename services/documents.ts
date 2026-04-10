@@ -75,6 +75,13 @@ export const documentsService = {
     return res.data;
   },
 
+  async getPreviewHtml(documentId: string): Promise<string> {
+    const res = await privateApi.get<string>(`/documents/${documentId}/preview`, {
+      responseType: 'text' as any,
+    });
+    return res.data;
+  },
+
   async downloadUserZip(userId: string): Promise<Blob> {
     const res = await privateApi.get<Blob>(`/users/${userId}/documents-zip`, {
       responseType: 'blob' as any,

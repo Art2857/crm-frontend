@@ -5,6 +5,11 @@ export interface LoginDto {
   password: string;
 }
 
+export interface ChangePasswordDto {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface RegisterDto {
   login: string;
   email?: string;

@@ -17,7 +17,7 @@ export function useExchangeRates() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Создаем Map из Redux данных для обратной совместимости
+  // Храним последние курсы в виде Map для компонентов графика
   const latestRates = useMemo(() => {
     const map = new Map<string, ExchangeRate>();
     if (usdRate) {
@@ -26,23 +26,20 @@ export function useExchangeRates() {
     return map;
   }, [usdRate]);
 
-  // ВРЕМЕННАЯ ИНИЦИАЛИЗАЦИЯ - только из IndexedDB БЕЗ фонового обновления
+  // Инициализируем локальный кеш котировок из IndexedDB
   useEffect(() => {
-
-    const safeInit = async () => {
+    const loadCachedRate = async () => {
       try {
-        // Загружаем ТОЛЬКО из IndexedDB без фонового обновления
         const dispatch = (await import('../../store')).store.dispatch;
         const { loadFromCache } = await import('../../store/slices/exchangeRates');
-        
-        await dispatch(loadFromCache('USD'));
 
+        await dispatch(loadFromCache('USD'));
       } catch (error) {
         console.error('Ошибка безопасной инициализации:', error);
       }
     };
-    
-    safeInit();
+
+    loadCachedRate();
   }, []);
 
 
@@ -105,17 +102,6 @@ export function useExchangeRates() {
       setIsLoading(false);
     }
   }, [usdRate]);
-
-  // Обновление выбранной валюты (устарело, но оставляем для совместимости)
-  const setSelectedCurrency = useCallback((currency: string) => {
-    // USD зафиксирован, игнорируем изменения
-    console.warn('setSelectedCurrency is deprecated, USD is fixed');
-  }, []);
-
-  // Обновление диапазона дат (устарело, управляется на уровне компонентов)
-  const setDateRange = useCallback((dateRange: { from: Date; to: Date }) => {
-    console.warn('setDateRange is deprecated, manage dates at component level');
-  }, []);
 
   // Получение статистики по валюте
   const getCurrencyStats = useCallback((currencyCode: string) => {
@@ -183,9 +169,6 @@ export function useExchangeRates() {
     loadChartData,
     loadLatestRates,
     
-    // Устаревшие методы (для совместимости)
-    setSelectedCurrency,
-    setDateRange,
     refreshAll,
     clearError,
     

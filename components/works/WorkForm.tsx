@@ -25,6 +25,9 @@ interface WorkFormProps {
   ) => void;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
+  onArchiveAction?: () => void;
+  archiveActionLabel?: string;
+  archiveActionVariant?: 'archive' | 'restore';
   isLoading: boolean;
 }
 
@@ -39,6 +42,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
   onChange,
   onSubmit,
   onCancel,
+  onArchiveAction,
+  archiveActionLabel,
+  archiveActionVariant = 'archive',
   isLoading,
 }) => {
   // Для отслеживания первого рендера
@@ -359,6 +365,43 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
         {/* Кнопки управления */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          {onArchiveAction && archiveActionLabel && (
+            <Button
+              type="button"
+              variant={archiveActionVariant === 'restore' ? 'primary' : 'danger'}
+              onClick={onArchiveAction}
+              disabled={isLoading}
+              className={`px-6 py-2 flex items-center ${
+                archiveActionVariant === 'restore'
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl'
+                  : 'bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl'
+              }`}
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {archiveActionVariant === 'restore' ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 8h14l-1 9H6L5 8zm0 0V6a2 2 0 012-2h10a2 2 0 012 2v2M9 12v4m6-4v4"
+                  />
+                )}
+              </svg>
+              {archiveActionLabel}
+            </Button>
+          )}
           <Button
             type="button"
             variant="secondary"

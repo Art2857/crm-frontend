@@ -10,6 +10,7 @@ import { USERS_ENDPOINTS, AUTH_ENDPOINTS } from './endpoints';
 import { AuthResponse } from '../types/auth';
 import { toDateObject } from '../utils/date';
 import { logger } from '../utils/logger';
+import { accountManagerService } from './accountManager';
 
 // Интерфейс для создания пользователя
 interface CreateUserDto {
@@ -93,11 +94,23 @@ export const userService = {
 
       // Копируем только непустые строковые поля
       for (const [key, value] of Object.entries(data)) {
-        if (value === undefined || value === null) continue;
+        if (value === undefined) continue;
+
+        if (value === null) {
+          if (key === 'email') {
+            processedData[key] = null;
+          }
+          continue;
+        }
 
         if (typeof value === 'string') {
           const trimmed = value.trim();
-          if (trimmed.length === 0) continue; // пустые строки не отправляем
+          if (trimmed.length === 0) {
+            if (key === 'email') {
+              processedData[key] = null;
+            }
+            continue;
+          }
           processedData[key] = trimmed;
         } else {
           processedData[key] = value;
@@ -124,6 +137,10 @@ export const userService = {
         }
       );
 
+      if (typeof window !== 'undefined') {
+        accountManagerService.updateAccountUser(response.data);
+      }
+
       return response.data;
     } catch (error) {
       logger.error(`Error updating user profile with ID ${id}:`, error);
@@ -137,13 +154,44 @@ export const userService = {
     data: UpdateSensitiveDataDto
   ): Promise<User> => {
     try {
+      const processedData: Record<string, any> = {};
+
+      for (const [key, value] of Object.entries(data)) {
+        if (value === undefined) continue;
+
+        if (value === null) {
+          if (key === 'email') {
+            processedData[key] = null;
+          }
+          continue;
+        }
+
+        if (typeof value === 'string') {
+          const trimmed = value.trim();
+          if (trimmed.length === 0) {
+            if (key === 'email') {
+              processedData[key] = null;
+            }
+            continue;
+          }
+          processedData[key] = trimmed;
+        } else {
+          processedData[key] = value;
+        }
+      }
+
       const response = await privateApi.patch<User>(
         USERS_ENDPOINTS.sensitive(id),
-        data,
+        processedData,
         {
           headers: ApiClient.getNoCacheHeaders(),
         }
       );
+
+      if (typeof window !== 'undefined') {
+        accountManagerService.updateAccountUser(response.data);
+      }
+
       return response.data;
     } catch (error) {
       logger.error(`Error updating sensitive data for user ID ${id}:`, error);

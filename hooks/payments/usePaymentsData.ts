@@ -11,32 +11,86 @@ interface LoadParams {
   targetUserId?: string;
 }
 
+function mergeWorksById(
+  existingWorks: ResponsibleUser['works'],
+  updatedWorks: ResponsibleUser['works']
+) {
+  const updatedWorksMap = new Map(
+    updatedWorks.map((work) => [work.workId, work] as const)
+  );
+
+  const mergedWorks = existingWorks.map(
+    (existingWork) => updatedWorksMap.get(existingWork.workId) ?? existingWork
+  );
+
+  const newWorks = updatedWorks.filter(
+    (work) => !existingWorks.some((existing) => existing.workId === work.workId)
+  );
+
+  return [...mergedWorks, ...newWorks];
+}
+
+function buildUserTotalsFromWorks(works: ResponsibleUser['works']) {
+  const totalAccrued = works.reduce(
+    (sum, work) => sum + (work.totalAccrued || 0),
+    0
+  );
+  const totalPaid = works.reduce(
+    (sum, work) => sum + (work.paidAmount || 0),
+    0
+  );
+  const totalDebt = works.reduce(
+    (sum, work) => sum + ((work.totalAccrued || 0) - (work.paidAmount || 0)),
+    0
+  );
+  const remainingDebt = works.reduce(
+    (sum, work) =>
+      sum + Math.max((work.totalAccrued || 0) - (work.paidAmount || 0), 0),
+    0
+  );
+  const overpaidAmount = works.reduce(
+    (sum, work) => sum + (work.overpaidAmount || 0),
+    0
+  );
+
+  return {
+    totalAccrued,
+    totalPaid,
+    totalDebt,
+    remainingDebt,
+    overpaidAmount,
+  };
+}
+
 export function usePaymentsData() {
-  const notification = useNotification();
+  const { showError } = useNotification();
   const { user } = useAppSelector((state) => state.auth);
 
   const [usersData, setUsersData] = useState<ResponsibleUser[]>([]);
   const [myDebts, setMyDebts] = useState<MyDebt[]>([]);
 
-  const getWorksData = useCallback(async (data: LoadParams = {}) => {
-    const { endDate, targetWorkId, targetUserId } = data;
+  const getWorksData = useCallback(
+    async (data: LoadParams = {}) => {
+      const { endDate, targetWorkId, targetUserId } = data;
 
-    const mappedUsers = await analyticsService.getPaymentsManagement(
-      user.role,
-      endDate,
-      targetWorkId ? [targetWorkId] : undefined,
-      targetUserId
-    );
+      const mappedUsers = await analyticsService.getPaymentsManagement(
+        user.role,
+        endDate,
+        targetWorkId ? [targetWorkId] : undefined,
+        targetUserId
+      );
 
-    const sortByName = (arr: ResponsibleUser[]) =>
-      arr.slice().sort((a, b) => {
-        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim();
-        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim();
-        return nameA.localeCompare(nameB, 'ru');
-      });
+      const sortByName = (arr: ResponsibleUser[]) =>
+        arr.slice().sort((a, b) => {
+          const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim();
+          const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim();
+          return nameA.localeCompare(nameB, 'ru');
+        });
 
-    return sortByName(mappedUsers);
-  }, []);
+      return sortByName(mappedUsers);
+    },
+    [user.role]
+  );
 
   const fetchWorksData = useCallback(
     async (data: LoadParams = {}) => {
@@ -50,39 +104,43 @@ export function usePaymentsData() {
     async (data: LoadParams = {}) => {
       const mappedUsers = await getWorksData(data);
       setUsersData((prev) => {
-        const updatedUsers = prev.map((existingUser) => {
-          const updatedUserInNewResult = mappedUsers.find(
-            (mu) => mu.userId === existingUser.userId
+        const updatedUsersMap = new Map(
+          mappedUsers.map((userEntry) => [userEntry.userId, userEntry] as const)
+        );
+
+        const nextUsers = prev.map((existingUser) => {
+          const updatedUserInNewResult = updatedUsersMap.get(
+            existingUser.userId
           );
-          if (!updatedUserInNewResult) return existingUser;
+          if (!updatedUserInNewResult) {
+            return existingUser;
+          }
 
-          // Мержим работы: обновляем только те, что пришли из API, остальные оставляем
-          const mergedWorks = existingUser.works.map((existingWork) => {
-            const updatedWork = updatedUserInNewResult.works.find(
-              (w) => w.workId === existingWork.workId
-            );
-            return updatedWork ?? existingWork;
-          });
+          const nextWorks =
+            data.targetWorkId !== undefined
+              ? mergeWorksById(existingUser.works, updatedUserInNewResult.works)
+              : updatedUserInNewResult.works;
 
-          // Пересчитываем агрегаты на основе смерженных работ
-          const totalAccrued = mergedWorks.reduce((s, w) => s + (w.totalAccrued || 0), 0);
-          const totalPaid = mergedWorks.reduce((s, w) => s + (w.paidAmount || 0), 0);
-          const totalDebt = mergedWorks.reduce((s, w) => s + (w.totalDebt || 0), 0);
-          const overpaidAmount = mergedWorks.reduce((s, w) => s + (w.overpaidAmount || 0), 0);
+          const recalculatedTotals = buildUserTotalsFromWorks(nextWorks);
 
           return {
             ...existingUser,
-            works: mergedWorks,
-            totalAccrued,
-            totalPaid,
-            totalDebt,
-            remainingDebt: Math.max(totalDebt, 0),
-            overpaidAmount,
-            isPaymentDue: totalDebt > 0,
-            requiresAttention: mergedWorks.some((w) => w.requiresAttention),
+            ...updatedUserInNewResult,
+            works: nextWorks,
+            ...recalculatedTotals,
+            isPaymentDue: recalculatedTotals.remainingDebt > 0,
+            requiresAttention: nextWorks.some((work) => work.requiresAttention),
           } as ResponsibleUser;
         });
-        return updatedUsers;
+
+        const newUsers = mappedUsers.filter(
+          (mappedUser) =>
+            !prev.some(
+              (existingUser) => existingUser.userId === mappedUser.userId
+            )
+        );
+
+        return [...nextUsers, ...newUsers];
       });
     },
     [getWorksData]
@@ -94,9 +152,9 @@ export function usePaymentsData() {
       setMyDebts(myDebtsData.debts as unknown as MyDebt[]);
     } catch (error) {
       logger.error('Ошибка загрузки моих задолженностей:', error);
-      notification.showError('Не удалось загрузить данные о задолженностях');
+      showError('Не удалось загрузить данные о задолженностях');
     }
-  }, [notification]);
+  }, [showError]);
 
   const responsibleUsersSummary = useMemo(() => usersData, [usersData]);
 

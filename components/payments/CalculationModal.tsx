@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { DetailedCalculation } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
+import { formatDateToISO } from '../../utils/date';
 import CurrencySwitch from '../ui/CurrencySwitch';
 import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
 import PaymentConfirmModal from './PaymentConfirmModal';
@@ -100,88 +101,29 @@ export default function CalculationModal({
         totalAccrued: 0,
         totalPaid: 0,
         remainingDebt: 0,
-        nativeCurrency: 'RUB' as CurrencyType,
         actualTotalPaid: 0,
       };
     }
 
-    const periods = calculation.periods || [];
-    let totalAccruedSum = 0;
-
-    // Суммируем начисления с учётом валюты каждой обязанности
-    for (const p of periods) {
-      const duties = Array.isArray(p.duties) ? p.duties : [];
-      for (const d of duties as Array<{
-        calculatedAmount: number;
-        currency?: string;
-      }>) {
-        const amount = Number(d.calculatedAmount) || 0;
-        if (!amount) continue;
-        const dutyCurrency: CurrencyType = d.currency === 'USD' ? 'USD' : 'RUB';
-        // Конвертируем в целевую валюту отображения
-        totalAccruedSum += convert(amount, dutyCurrency, displayCurrency);
-      }
-    }
-
-    // Determine native currency from the first duty of the first period (if available)
-    // This aligns with WorkCard logic
-    let nativeCurrency: CurrencyType = 'RUB';
-    if (periods.length > 0) {
-      const firstPeriod = periods[0];
-      const duties = Array.isArray(firstPeriod.duties)
-        ? firstPeriod.duties
-        : [];
-      if (duties.length > 0) {
-        const firstDuty = duties[0] as { currency?: string };
-        if (firstDuty.currency === 'USD') {
-          nativeCurrency = 'USD';
-        }
-      }
-    }
-
-    // Если периодов нет, используем totalAccrued (предполагаем RUB)
-    if (periods.length === 0 || totalAccruedSum === 0) {
-      totalAccruedSum = convert(
-        calculation.totalAccrued,
-        'RUB',
-        displayCurrency
-      );
-    }
-
-    // totalPaid в рублях (выплаты в рублях); remaining считаем из конвертированных сумм
-    let totalPaidConverted = 0;
-    if (calculation.paymentHistory && calculation.paymentHistory.length > 0) {
-      for (const payment of calculation.paymentHistory) {
-        const pCurrency = (payment.currency as CurrencyType) || 'RUB';
-        totalPaidConverted += convert(
-          payment.amount,
-          pCurrency,
-          displayCurrency
-        );
-      }
-    } else {
-      totalPaidConverted = convert(
-        calculation.totalPaid,
-        'RUB',
-        displayCurrency
-      );
-    }
-
-    // Compute remaining from same-base values to avoid currency drift
-    const computedRemaining = Math.max(totalAccruedSum - totalPaidConverted, 0);
-    // Align with WorkCard: cap paid by accrued in debts view
-    const paidForDisplay = isDebtsView
-      ? Math.min(totalPaidConverted, totalAccruedSum)
-      : totalPaidConverted;
+    const totalAccrued = convert(
+      calculation.totalAccrued,
+      'RUB',
+      displayCurrency
+    );
+    const totalPaid = convert(calculation.totalPaid, 'RUB', displayCurrency);
+    const remainingDebt = convert(
+      calculation.remainingDebt,
+      'RUB',
+      displayCurrency
+    );
 
     return {
-      totalAccrued: Math.round(totalAccruedSum),
-      totalPaid: Math.round(paidForDisplay),
-      remainingDebt: Math.round(computedRemaining),
-      nativeCurrency,
-      actualTotalPaid: Math.round(totalPaidConverted),
+      totalAccrued: Math.round(totalAccrued),
+      totalPaid: Math.round(totalPaid),
+      remainingDebt: Math.round(remainingDebt),
+      actualTotalPaid: Math.round(totalPaid),
     };
-  }, [calculation, displayCurrency, convert, isDebtsView]);
+  }, [calculation, displayCurrency, convert]);
 
   const confirmModalWorkNames = useMemo(() => {
     if (!calculation) return [];
@@ -222,7 +164,7 @@ export default function CalculationModal({
     if (!calculation || !calculationDate) return false;
     const closure = calculation.lastClosureDate;
     if (!closure) return false;
-    return calculationDate <= closure.split('T')[0];
+    return formatDateToISO(calculationDate) <= formatDateToISO(closure);
   }, [calculation, calculationDate]);
 
   if (!calculation) return null;
@@ -755,7 +697,9 @@ export default function CalculationModal({
                     <h4 className="text-lg font-medium text-gray-900">
                       История выплат:
                     </h4>
-                    <p className="text-sm text-gray-600">(все типы выплат)</p>
+                    <p className="text-sm text-gray-600">
+                      (учитываются для долга: зарплата и аванс)
+                    </p>
                     {calculation.paymentHistory.length > 0 ? (
                       <div className="space-y-3">
                         <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3">
@@ -825,6 +769,15 @@ export default function CalculationModal({
                                     <p className="font-medium text-gray-900">
                                       {payment.description}
                                     </p>
+                                    {payment.workName &&
+                                      (isUserCalculation ||
+                                        !calculation.workName ||
+                                        payment.workName !==
+                                          calculation.workName) && (
+                                        <p className="mt-1 text-sm text-blue-700">
+                                          Работа: {payment.workName}
+                                        </p>
+                                      )}
                                   </div>
                                 </div>
                                 <div className="text-right">
@@ -878,21 +831,21 @@ export default function CalculationModal({
                     <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
                       <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
                       <span>
-                        Выбранная дата расчёта ({formatRussian(calculationDate)}
-                        ) не превышает текущую дату закрытия (
-                        {formatRussian(calculation.lastClosureDate)}). Выберите
+                        На выбранную дату ({formatRussian(calculationDate)})
+                        новых начислений уже нет, потому что период закрыт по{' '}
+                        {formatRussian(calculation.lastClosureDate)}. Выберите
                         более позднюю дату.
                       </span>
                     </div>
                   )}
-                  {displayValues.remainingDebt > 0 ? (
+                  {calculation.remainingDebt > 0 ? (
                     <Button
                       disabled={isDateBeforeClosure}
                       onClick={() => {
                         onCreatePayment(
                           calculation.userId,
                           calculation.workId,
-                          displayValues.remainingDebt,
+                          calculation.remainingDebt,
                           calculation.userName || 'Пользователь',
                           calculation.workName || 'Работа',
                           calculationDate
@@ -901,12 +854,10 @@ export default function CalculationModal({
                       className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <BanknotesIcon className="h-5 w-5 mr-2" />
-                      Выплатить зарплату (
-                      {formatCurrency(
-                        displayValues.remainingDebt,
-                        displayCurrency
-                      )}
-                      )
+                      <>
+                        Выплатить зарплату (
+                        {formatCurrency(calculation.remainingDebt, 'RUB')})
+                      </>
                     </Button>
                   ) : (
                     <Button
@@ -945,9 +896,9 @@ export default function CalculationModal({
                     <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 w-full">
                       <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
                       <span>
-                        Выбранная дата расчёта ({formatRussian(calculationDate)}
-                        ) не превышает текущую дату закрытия (
-                        {formatRussian(calculation.lastClosureDate)}). Выберите
+                        На выбранную дату ({formatRussian(calculationDate)})
+                        новых начислений уже нет, потому что период закрыт по{' '}
+                        {formatRussian(calculation.lastClosureDate)}. Выберите
                         более позднюю дату.
                       </span>
                     </div>
@@ -993,7 +944,7 @@ export default function CalculationModal({
           currency={displayCurrency}
           periods={confirmModalPeriods}
           workNames={confirmModalWorkNames}
-          closureDate={calculationDate}
+          calculationDate={calculationDate}
           isBulk={isUserCalculation}
           hasOverpayment={
             displayValues.actualTotalPaid > displayValues.totalAccrued

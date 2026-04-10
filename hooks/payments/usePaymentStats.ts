@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { MyDebt } from '../../services/analytics';
 import { ResponsibleUser, DutyDetail } from '../../types/payments';
-import { useCurrencyConversion, DisplayCurrency } from '../useCurrencyConversion';
+import {
+  useCurrencyConversion,
+  DisplayCurrency,
+} from '../useCurrencyConversion';
 
 /**
  * Рассчитывает сумму долга по обязанностям с конвертацией в целевую валюту
@@ -13,7 +16,11 @@ function calculateDebtWithConversion(
 ): number {
   return duties.reduce((sum, duty) => {
     const dutyCurrency = (duty.currency as 'RUB' | 'USD') || 'RUB';
-    const debtInTargetCurrency = convert(duty.debt, dutyCurrency, targetCurrency);
+    const debtInTargetCurrency = convert(
+      duty.debt,
+      dutyCurrency,
+      targetCurrency
+    );
     return sum + debtInTargetCurrency;
   }, 0);
 }
@@ -28,29 +35,24 @@ export function usePaymentStats(
   // Сумма к выплате ответственным с учётом валюты обязанностей
   const totalResponsibleDebt = useMemo(() => {
     if (!Array.isArray(responsibleUsers)) return 0;
-    
-    return responsibleUsers.reduce((userSum, user) => {
-      const userDebt = user.works.reduce((workSum, work) => {
-        // Считаем долг по каждой обязанности с конвертацией
-        const workDebt = calculateDebtWithConversion(
-          work.duties,
-          displayCurrency,
-          convert
-        );
-        return workSum + Math.max(workDebt, 0);
-      }, 0);
-      return userSum + userDebt;
+
+    return responsibleUsers.reduce((sum, user) => {
+      return sum + convert(user.remainingDebt || 0, 'RUB', displayCurrency);
     }, 0);
   }, [responsibleUsers, displayCurrency, convert]);
 
   // Сумма моих долгов с учётом валюты
   const totalMyDebt = useMemo(() => {
     if (!Array.isArray(myDebts)) return 0;
-    
+
     return myDebts.reduce((sum, debt) => {
       const debtAmount = debt.duties.reduce((dutySum, duty) => {
         const dutyCurrency = (duty.currency as 'RUB' | 'USD') || 'RUB';
-        const debtInTargetCurrency = convert(duty.totalDebt, dutyCurrency, displayCurrency);
+        const debtInTargetCurrency = convert(
+          duty.totalDebt,
+          dutyCurrency,
+          displayCurrency
+        );
         return dutySum + debtInTargetCurrency;
       }, 0);
       return sum + debtAmount;
@@ -71,9 +73,9 @@ export function usePaymentStats(
     }, 0);
   }, [responsibleUsers]);
 
-  return { 
-    totalResponsibleDebt, 
-    totalMyDebt, 
+  return {
+    totalResponsibleDebt,
+    totalMyDebt,
     overdueCount,
     exchangeRate: rate,
     isLoadingRate: isLoading,

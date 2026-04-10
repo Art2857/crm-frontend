@@ -29,12 +29,6 @@ interface UseDataLoaderParams<T> {
    * Автоматически отображать ошибки через систему уведомлений
    */
   autoDisplayErrors?: boolean;
-
-  /**
-   * Обработчик ошибок (устаревший параметр, используйте handleError из useErrorHandler)
-   * @deprecated Используйте handleError из useErrorHandler
-   */
-  onError?: (error: unknown) => string;
 }
 
 /**
@@ -97,7 +91,6 @@ export const useDataLoader = <T>({
   initialData = null,
   skipInitialLoad = false,
   autoDisplayErrors = false,
-  onError,
 }: UseDataLoaderParams<T>): UseDataLoaderResult<T> => {
   const [data, setData] = useState<T | null>(initialData);
   const [isLoading, setIsLoading] = useState(!skipInitialLoad);
@@ -161,9 +154,7 @@ export const useDataLoader = <T>({
           const structuredError = handleError(err);
           setErrorInfo(structuredError);
 
-          // Для обратной совместимости также устанавливаем строковое сообщение
-          const errorMessage = onError ? onError(err) : structuredError.message;
-          setError(errorMessage);
+          setError(structuredError.message);
 
           setIsLoading(false);
           setData(null);
@@ -171,7 +162,7 @@ export const useDataLoader = <T>({
         return null;
       }
     },
-    [loadData, onError, handleError, clearError]
+    [loadData, handleError, clearError]
   );
 
   /**

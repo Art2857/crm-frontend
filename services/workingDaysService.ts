@@ -264,33 +264,3 @@ export const workingDaysService = new WorkingDaysService(STANDARD_WORKING_DAYS_C
 export const useWorkingDays = (): IWorkingDaysService => {
   return workingDaysService;
 };
-
-/**
- * Вспомогательные функции для обратной совместимости
- */
-
-/**
- * @deprecated Используйте workingDaysService.isWorkingDay()
- * Проверяет рабочий день по логике ЦБ РФ (вт-сб рабочие, вс-пн выходные)
- */
-export function isWorkingDay(date: Date): boolean {
-  return workingDaysService.isWorkingDay(date);
-}
-
-/**
- * @deprecated Используйте workingDaysService.getLastWorkingDay()
- * Получает последний рабочий день по логике ЦБ РФ
- */
-export function getLastWorkingDay(): Date {
-  return workingDaysService.getLastWorkingDay().toDate();
-}
-
-/**
- * @deprecated Используйте workingDaysService.countWorkingDays()
- * Считает рабочие дни по логике ЦБ РФ (вт-сб рабочие)
- */
-export function getWorkingDaysInPeriod(startDate: Date, endDate: Date): number {
-  const start = new ExchangeRateDate(startDate);
-  const end = new ExchangeRateDate(endDate);
-  return workingDaysService.countWorkingDays(start, end);
-}

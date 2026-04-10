@@ -50,7 +50,7 @@ export interface UserHistory {
 
 export interface UpdateProfileDto {
   login?: string;
-  email?: string;
+  email?: string | null;
   firstName?: string;
   lastName?: string;
   middleName?: string;
@@ -64,7 +64,7 @@ export interface UpdateProfileDto {
 
 export interface UpdateSensitiveDataDto {
   login?: string;
-  email?: string;
+  email?: string | null;
   role?: Role;
   salaryDays?: number[] | null;
   characteristics?: string;

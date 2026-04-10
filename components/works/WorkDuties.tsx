@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import Card from '../ui/Card';
 import { DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
 import { formatDateForDisplay } from '../../utils/date';
@@ -55,195 +54,188 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
 
   if (!latestDistribution) {
     return (
-      <Card>
-        <div className="py-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
+      <div className="py-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
 
-            {/* Кнопка создания обязанностей */}
-            {canEdit && onEditDuties && (
-              <button
-                onClick={onEditDuties}
-                className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
+          {/* Кнопка создания обязанностей */}
+          {canEdit && onEditDuties && (
+            <button
+              onClick={onEditDuties}
+              className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                Распределить обязанности
-              </button>
-            )}
-          </div>
-          <p className="text-gray-500 italic">Нет назначенных обязанностей</p>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Распределить обязанности
+            </button>
+          )}
         </div>
-      </Card>
+        <p className="text-gray-500 italic">Нет назначенных обязанностей</p>
+      </div>
     );
   }
 
   // Если нет обязанностей (пустое распределение или фильтр по пользователю)
   if (filteredDetails.length === 0) {
     return (
-      <Card>
-        <div className="py-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
+      <div className="py-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
 
-            {/* Кнопка создания обязанностей (только если есть права) */}
-            {canEdit && onEditDuties && (
-              <button
-                onClick={onEditDuties}
-                className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
+          {/* Кнопка создания обязанностей (только если есть права) */}
+          {canEdit && onEditDuties && (
+            <button
+              onClick={onEditDuties}
+              className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                Распределить обязанности
-              </button>
-            )}
-          </div>
-          <p className="text-gray-500 italic">
-            {showOnlyCurrentUser
-              ? 'У вас нет назначенных обязанностей по этой работе'
-              : 'Нет назначенных обязанностей'}
-          </p>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Распределить обязанности
+            </button>
+          )}
         </div>
-      </Card>
+        <p className="text-gray-500 italic">
+          {showOnlyCurrentUser
+            ? 'У вас нет назначенных обязанностей по этой работе'
+            : 'Нет назначенных обязанностей'}
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <div className="space-y-6">
-        <div className="pb-4">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
-              <p className="text-sm text-gray-500">
-                Обновлено:{' '}
-                {formatDateForDisplay(
-                  latestDistribution.workHistory.effectiveDate ||
-                    latestDistribution.createdAt
-                )}
-              </p>
-            </div>
+    <div className="space-y-6">
+      <div className="pb-4">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">Обязанности</h3>
+            <p className="text-sm text-gray-500">
+              Обновлено:{' '}
+              {formatDateForDisplay(
+                latestDistribution.workHistory.effectiveDate ||
+                  latestDistribution.createdAt
+              )}
+            </p>
+          </div>
 
-            {/* Кнопка редактирования обязанностей */}
-            {canEdit && onEditDuties && (
-              <button
-                onClick={onEditDuties}
-                className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
+          {/* Кнопка редактирования обязанностей */}
+          {canEdit && onEditDuties && (
+            <button
+              onClick={onEditDuties}
+              className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Распределить обязанности
+            </button>
+          )}
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                Распределить обязанности
-              </button>
-            )}
-          </div>
+                  Обязанность
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Ответственный
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Расчет оплаты
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredDetails.map((detail) => {
+                const user = usersMap[detail.user.id];
+                const userName = user
+                  ? `${user.lastName || ''} ${user.firstName || ''}`.trim()
+                  : detail.user.email ||
+                      (detail.user.firstName && detail.user.lastName)
+                    ? `${detail.user.lastName || ''} ${detail.user.firstName || ''}`.trim()
+                    : `ID: ${detail.user.id}`;
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Обязанность
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Ответственный
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Расчет оплаты
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredDetails.map((detail) => {
-                  const user = usersMap[detail.user.id];
-                  const userName = user
-                    ? `${user.lastName || ''} ${user.firstName || ''}`.trim()
-                    : detail.user.email ||
-                        (detail.user.firstName && detail.user.lastName)
-                      ? `${detail.user.lastName || ''} ${detail.user.firstName || ''}`.trim()
-                      : `ID: ${detail.user.id}`;
+                // Преобразуем строковые значения в числа для функции formatPayment
+                const numericPrice = detail.price
+                  ? parseFloat(detail.price)
+                  : null;
+                const numericPercentage = detail.percentage
+                  ? parseFloat(detail.percentage)
+                  : null;
+                const numericCalculatedValue = detail.calculatedValue
+                  ? parseFloat(detail.calculatedValue)
+                  : null;
+                // Валюта берётся из detail (сохранённая валюта распределения),
+                // если не указана — fallback на валюту обязанности
+                const detailCurrency = detail.currency || detail.duty.currency;
 
-                  // Преобразуем строковые значения в числа для функции formatPayment
-                  const numericPrice = detail.price
-                    ? parseFloat(detail.price)
-                    : null;
-                  const numericPercentage = detail.percentage
-                    ? parseFloat(detail.percentage)
-                    : null;
-                  const numericCalculatedValue = detail.calculatedValue
-                    ? parseFloat(detail.calculatedValue)
-                    : null;
-                  // Валюта берётся из detail (сохранённая валюта распределения),
-                  // если не указана — fallback на валюту обязанности
-                  const detailCurrency =
-                    detail.currency || detail.duty.currency;
-
-                  return (
-                    <tr key={detail.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {detail.duty.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {userName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatPaymentWithCurrency(
-                          numericPrice,
-                          numericPercentage,
-                          numericCalculatedValue,
-                          detailCurrency
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                return (
+                  <tr key={detail.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {detail.duty.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {userName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatPaymentWithCurrency(
+                        numericPrice,
+                        numericPercentage,
+                        numericCalculatedValue,
+                        detailCurrency
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
 

@@ -44,6 +44,16 @@ const ACCEPT_TYPES = [
 ];
 
 const ACCEPT_ATTR = ACCEPT_TYPES.join(',');
+const WORD_DOCUMENT_TYPES = new Set([
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+
+function isWordDocument(mimeType?: string | null): boolean {
+  return mimeType !== undefined && mimeType !== null
+    ? WORD_DOCUMENT_TYPES.has(mimeType)
+    : false;
+}
 
 export default function DocumentsManager({
   mode,
@@ -222,6 +232,8 @@ export default function DocumentsManager({
 
   const onPreview = async () => {
     if (!selectedDoc) return;
+    let previewWindow: Window | null = null;
+
     try {
       if ((selectedDoc as any).__pending) {
         const local: any = selectedDoc as any;
@@ -231,10 +243,34 @@ export default function DocumentsManager({
         setIsDownloadOpen(false);
         return;
       }
+      if (isWordDocument(selectedDoc.mimeType)) {
+        previewWindow = window.open('', '_blank');
+        if (!previewWindow) {
+          notification.showError(
+            'Разрешите открытие новой вкладки для предпросмотра документа'
+          );
+          return;
+        }
+
+        previewWindow.document.write(
+          '<div style="font-family: Arial, sans-serif; padding: 16px;">Загрузка документа...</div>'
+        );
+
+        const html = await documentsService.getPreviewHtml(selectedDoc.id);
+        previewWindow.document.open();
+        previewWindow.document.write(html);
+        previewWindow.document.close();
+        setIsDownloadOpen(false);
+        return;
+      }
+
       const { url } = await documentsService.getPreviewUrl(selectedDoc.id);
       window.open(url, '_blank', 'noopener,noreferrer');
       setIsDownloadOpen(false);
     } catch (err: any) {
+      if (previewWindow && !previewWindow.closed) {
+        previewWindow.close();
+      }
       // eslint-disable-next-line no-console
       console.error('Failed to get preview URL', err);
       const msg =

@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { PaymentFormData, PaymentModalData } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
+import { getCurrentDateISO } from '../../utils/date';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ interface PaymentModalProps {
   paymentDate: string | null;
   onSubmit: (data: PaymentModalData) => void;
   periods?: Array<{ startDate: string; endDate: string }>;
-  closureDate?: string;
+  calculationDate?: string;
 }
 
 export default function PaymentModal({
@@ -35,7 +36,7 @@ export default function PaymentModal({
   paymentDate,
   onSubmit,
   periods,
-  closureDate,
+  calculationDate,
 }: PaymentModalProps) {
   const [description, setDescription] = useState('');
   const { formatRussian } = useDateManager();
@@ -53,10 +54,7 @@ export default function PaymentModal({
     const defaultDescription = `Зарплата по работе ${payment.workName}`;
 
     const finalDescription = description.trim() || defaultDescription;
-    // Если дата не задана, используем сегодняшнюю календарную дату (YYYY-MM-DD)
-    const today = new Date();
-    const fallback = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    const date = paymentDate || fallback;
+    const date = paymentDate || getCurrentDateISO();
 
     onSubmit({
       amount: payment.amount,
@@ -172,7 +170,7 @@ export default function PaymentModal({
             </div>
 
             {/* Пояснение о действии */}
-            {(periods?.length || closureDate) && (
+            {(periods?.length || calculationDate) && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <div className="flex gap-2">
                   <InformationCircleIcon className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -196,11 +194,11 @@ export default function PaymentModal({
                     )}
                     <span> по работе </span>
                     <span className="font-semibold">{payment.workName}</span>
-                    {closureDate && (
+                    {calculationDate && (
                       <>
                         <span> с закрытием периодов до </span>
                         <span className="font-semibold text-blue-700">
-                          {formatRussian(closureDate)}
+                          {formatRussian(calculationDate)}
                         </span>
                       </>
                     )}

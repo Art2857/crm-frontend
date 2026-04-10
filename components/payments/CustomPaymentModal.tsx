@@ -21,7 +21,7 @@ import { workService } from '../../services/work';
 import { workExecuterService } from '../../services/workExecuter';
 import { getClosureDate } from '../../services/payment';
 import { useAppSelector } from '../../store';
-import { format } from 'date-fns';
+import { getCurrentDateISO, shiftDateISOByDays } from '../../utils/date';
 
 interface CustomPaymentModalProps {
   isOpen: boolean;
@@ -53,9 +53,7 @@ export default function CustomPaymentModal({
   const [description, setDescription] = useState(
     defaultAmount ? 'Выплата' : ''
   );
-  const [paymentDate, setPaymentDate] = useState(() =>
-    format(new Date(), 'yyyy-MM-dd')
-  );
+  const [paymentDate, setPaymentDate] = useState(() => getCurrentDateISO());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [minPaymentDate, setMinPaymentDate] = useState<string | null>(null);
 
@@ -105,10 +103,13 @@ export default function CustomPaymentModal({
           selectedWorkId,
           selectedUserId
         );
-        setMinPaymentDate(closureDate);
+        const minAllowedPaymentDate = closureDate
+          ? shiftDateISOByDays(closureDate, 1)
+          : null;
+        setMinPaymentDate(minAllowedPaymentDate);
         setPaymentDate((currentPaymentDate) =>
-          closureDate && currentPaymentDate < closureDate
-            ? closureDate
+          minAllowedPaymentDate && currentPaymentDate < minAllowedPaymentDate
+            ? minAllowedPaymentDate
             : currentPaymentDate
         );
       })();
@@ -123,7 +124,7 @@ export default function CustomPaymentModal({
       if (defaultWorkId) setSelectedWorkId(defaultWorkId);
       if (defaultUserId) setSelectedUserId(defaultUserId);
       if (defaultAmount !== undefined) setAmount(String(defaultAmount));
-      setPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+      setPaymentDate(getCurrentDateISO());
       setMinPaymentDate(null);
     }
   }, [isOpen, defaultWorkId, defaultUserId, defaultAmount]);
@@ -143,7 +144,7 @@ export default function CustomPaymentModal({
       newErrors.paymentDate = 'Укажите дату выплаты';
     } else if (minPaymentDate && paymentDate < minPaymentDate) {
       const [y, m, d] = minPaymentDate.split('-');
-      newErrors.paymentDate = `Дата выплаты не может быть раньше ${d}.${m}.${y}`;
+      newErrors.paymentDate = `Дата выплаты должна быть не раньше ${d}.${m}.${y}`;
     }
 
     if (Object.keys(newErrors).length > 0) {

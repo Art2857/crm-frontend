@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
@@ -303,14 +302,12 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
   if (groupedHistory.length === 0) {
     return (
-      <Card>
-        <div className="py-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            История изменений
-          </h3>
-          <p className="text-gray-500 italic">История изменений отсутствует</p>
-        </div>
-      </Card>
+      <div className="py-4">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          История изменений
+        </h3>
+        <p className="text-gray-500 italic">История изменений отсутствует</p>
+      </div>
     );
   }
 
@@ -904,97 +901,95 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   };
 
   return (
-    <Card>
-      <div className="space-y-6">
-        <div className="pb-4">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 text-lg">📋</span>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900">
-                История изменений
-              </h3>
-              <p className="text-sm text-gray-500">
-                Полная история модификаций обязанностей в проекте
-              </p>
+    <div className="space-y-6">
+      <div className="pb-4">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="flex-shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-blue-600 text-lg">📋</span>
             </div>
           </div>
-
-          <div className="space-y-8">
-            {groupedHistory.length > 0 ? (
-              groupedHistory.map((group, groupIndex) => (
-                <div key={group.date} className="relative">
-                  {/* Улучшенный заголовок группы */}
-                  <div className="sticky top-0 z-10 bg-white border border-emerald-200 rounded-lg px-6 py-4 mb-6 shadow-sm">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                          <span className="text-emerald-600 text-sm font-medium">
-                            📅
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="text-lg font-bold text-emerald-800">
-                          Вступили в силу: {group.formattedDate}
-                        </h4>
-                        <p className="text-sm text-emerald-600">
-                          {group.items.length}{' '}
-                          {group.items.length === 1
-                            ? 'изменение'
-                            : group.items.length < 5
-                              ? 'изменения'
-                              : 'изменений'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pl-4">
-                    {/* Отображаем сворачиваемые группы, если они есть */}
-                    {group.collapsibleGroups &&
-                    group.collapsibleGroups.length > 0
-                      ? group.collapsibleGroups.map((collapsibleGroup) =>
-                          renderCollapsibleGroup(collapsibleGroup, groupIndex)
-                        )
-                      : /* Fallback для старой логики, если нет сворачиваемых групп */
-                        group.items.map((item, index) => (
-                          <div
-                            key={`${item.type}-${item.createdAt}`}
-                            className="mb-4"
-                          >
-                            {item.type === 'workHistory'
-                              ? renderWorkHistoryItem(item.data as WorkHistory)
-                              : renderDistributionItem(
-                                  item.data as DistributionWithDetails,
-                                  index,
-                                  groupIndex
-                                )}
-                          </div>
-                        ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-12 bg-gray-50 rounded-lg">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-gray-400 text-2xl">📝</span>
-                </div>
-                <p className="text-gray-500 italic text-lg">
-                  История изменений пуста
-                </p>
-                <p className="text-gray-400 text-sm mt-2">
-                  Изменения будут отображаться здесь после их создания
-                </p>
-              </div>
-            )}
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">
+              История изменений
+            </h3>
+            <p className="text-sm text-gray-500">
+              Полная история модификаций обязанностей в проекте
+            </p>
           </div>
         </div>
+
+        <div className="space-y-8">
+          {groupedHistory.length > 0 ? (
+            groupedHistory.map((group, groupIndex) => (
+              <div key={group.date} className="relative">
+                {/* Улучшенный заголовок группы */}
+                <div className="sticky top-0 z-10 bg-white border border-emerald-200 rounded-lg px-6 py-4 mb-6 shadow-sm">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                        <span className="text-emerald-600 text-sm font-medium">
+                          📅
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold text-emerald-800">
+                        Вступили в силу: {group.formattedDate}
+                      </h4>
+                      <p className="text-sm text-emerald-600">
+                        {group.items.length}{' '}
+                        {group.items.length === 1
+                          ? 'изменение'
+                          : group.items.length < 5
+                            ? 'изменения'
+                            : 'изменений'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pl-4">
+                  {/* Отображаем сворачиваемые группы, если они есть */}
+                  {group.collapsibleGroups &&
+                  group.collapsibleGroups.length > 0
+                    ? group.collapsibleGroups.map((collapsibleGroup) =>
+                        renderCollapsibleGroup(collapsibleGroup, groupIndex)
+                      )
+                    : /* Fallback для старой логики, если нет сворачиваемых групп */
+                      group.items.map((item, index) => (
+                        <div
+                          key={`${item.type}-${item.createdAt}`}
+                          className="mb-4"
+                        >
+                          {item.type === 'workHistory'
+                            ? renderWorkHistoryItem(item.data as WorkHistory)
+                            : renderDistributionItem(
+                                item.data as DistributionWithDetails,
+                                index,
+                                groupIndex
+                              )}
+                        </div>
+                      ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-gray-400 text-2xl">📝</span>
+              </div>
+              <p className="text-gray-500 italic text-lg">
+                История изменений пуста
+              </p>
+              <p className="text-gray-400 text-sm mt-2">
+                Изменения будут отображаться здесь после их создания
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </Card>
+    </div>
   );
 };
 

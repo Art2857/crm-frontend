@@ -130,15 +130,6 @@ export function formatPercentage(
   }
 }
 
-/**
- * Форматирует числовую сумму в указанной валюте.
- * Поддерживает как минимум RUB и USD.
- */
-/** Проверяет, скрыто ли значение (флаг isConfidential от бэкенда) */
-export function isAmountHidden(value: number | null | undefined): boolean {
-  return false; // Deprecated — используй isConfidential из объекта напрямую
-}
-
 export function formatAmountWithCurrency(
   value: number | null | undefined,
   currency: 'RUB' | 'USD',

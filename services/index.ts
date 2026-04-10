@@ -54,7 +54,7 @@ export type {
   IExchangeRateDate
 } from '../utils/exchangeRateDate';
 
-// Компоненты (legacy версия активна)
+// Компоненты
 export { default as CurrencyConverter } from '../components/exchange-rates/CurrencyConverter';
 
 /**

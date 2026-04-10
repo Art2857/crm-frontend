@@ -47,7 +47,7 @@ const getLastWorkingDay = (): Date => {
   return today;
 };
 
-const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({
+const CurrencyConverter = memo(function CurrencyConverter({
   currencies,
 }: CurrencyConverterProps) {
   const [fromCurrency, setFromCurrency] = useState<string>('USD');
@@ -395,5 +395,5 @@ const CurrencyConverterLegacy = memo(function CurrencyConverterLegacy({
   );
 });
 
-export { CurrencyConverterLegacy as CurrencyConverter };
-export default CurrencyConverterLegacy;
+export { CurrencyConverter };
+export default CurrencyConverter;

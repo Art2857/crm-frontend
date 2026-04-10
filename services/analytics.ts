@@ -1,102 +1,9 @@
 import { privateApi } from './ApiClient';
 import { ANALYTICS_ENDPOINTS } from './endpoints';
 import { logger } from '../utils/logger';
-import {
-  ResponsibleUser,
-  WorkDetail,
-  DetailedCalculation,
-} from '../types/payments';
+import { getCurrentDateISO } from '../utils/date';
+import { ResponsibleUser, WorkDetail, DetailedCalculation } from '../types/payments';
 import { Role } from '../types/user';
-
-// ==========================
-// Types returned by backend
-// ==========================
-
-interface DistributionDutyInfo {
-  id: string;
-  name: string;
-  basePrice: number | null;
-  basePercentage: number | null;
-}
-
-interface DistributionDetail {
-  id: string;
-  dutyId: string;
-  userId: string;
-  price: number | null;
-  percentage: number | null;
-  calculatedValuePeriod?: number;
-  duty: DistributionDutyInfo;
-}
-
-interface WorkHistoryPeriod {
-  startDate: string;
-  endDate: string;
-  daysInPeriod: number;
-  distributionDetails: DistributionDetail[];
-}
-
-interface WorkHistoryPeriodsResult {
-  dutiesPeriods: WorkHistoryPeriod[];
-  totalPeriods: number;
-  requestedPeriod: {
-    startDate: string;
-    endDate: string;
-  };
-}
-
-interface PaymentClosureUser {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  middleName?: string | null;
-  email: string;
-}
-
-interface PaymentClosureInfo {
-  id: string;
-  workId: string;
-  userId: string;
-  closureDate: string;
-  createdAt: string;
-  user: PaymentClosureUser;
-}
-
-interface PaymentClosureWithPeriods {
-  closure: PaymentClosureInfo;
-  userPeriods: WorkHistoryPeriodsResult;
-}
-
-interface WorkWithClosuresAndPeriods {
-  workId: string;
-  workName: string;
-  salary: number;
-  createdAt: string;
-  updatedAt: string;
-  releaseDate: string | null;
-  usersClosuresWithPeriods: PaymentClosureWithPeriods[];
-}
-
-// --------------------------
-// Новые типы (пользователь → работы)
-// --------------------------
-
-interface UserWithWorksAndPeriods {
-  userId: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
-  works: WorkWithClosuresAndPeriods[];
-  totalWorks: number;
-  totalClosures: number;
-  totalPeriods: number;
-}
-
-interface UsersWorksClosurePeriodsAnalysisResult {
-  endDate: string;
-  users: UserWithWorksAndPeriods[];
-  totalUsers: number;
-}
 
 // ==========================
 // Types for My Debts
@@ -170,7 +77,7 @@ export const analyticsService = {
   ): Promise<ResponsibleUser[]> {
     // дата по умолчанию — сегодня
     if (!endDate) {
-      endDate = new Date().toISOString().split('T')[0];
+      endDate = getCurrentDateISO();
     }
 
     const { data } = await privateApi.get<{
@@ -188,6 +95,7 @@ export const analyticsService = {
           totalDebt: number;
           remainingDebt: number;
           isPaymentDue: boolean;
+          overpaidAmount?: number;
           requiresAttention?: boolean;
         };
         works: Array<{
@@ -196,6 +104,7 @@ export const analyticsService = {
           salary: number;
           lastClosureDate: string | null;
           totals: { accrued: number; paid: number; debt: number };
+          overpaidAmount?: number;
           requiresAttention?: boolean;
           duties: Array<{
             dutyId: string;
@@ -222,7 +131,8 @@ export const analyticsService = {
         }));
         // Use backend aggregated RUB totals to avoid extra per-work calls
         const totalAccruedRub = w.totals.accrued;
-        const overpaidAmount = Math.max(w.totals.paid - totalAccruedRub, 0);
+        const overpaidAmount =
+          w.overpaidAmount ?? Math.max(w.totals.paid - totalAccruedRub, 0);
         const requiresAttention = w.requiresAttention || false;
         return {
           workId: w.workId,
@@ -268,7 +178,9 @@ export const analyticsService = {
         totalDebt: u.totals.totalDebt,
         totalAccrued: u.totals.totalAccrued,
         totalPaid: u.totals.totalPaid,
-        overpaidAmount: works.reduce((s, w) => s + (w.overpaidAmount || 0), 0),
+        overpaidAmount:
+          u.totals.overpaidAmount ??
+          works.reduce((s, w) => s + (w.overpaidAmount || 0), 0),
         remainingDebt: u.totals.remainingDebt,
         isPaymentDue: u.totals.isPaymentDue,
         requiresAttention: requiresAttentionUser,
@@ -312,48 +224,13 @@ export const analyticsService = {
     return data;
   },
   /**
-   * Получить анализ закрытий и периодов работ, где текущий пользователь является ответственным
-   * @param endDate Дата окончания анализируемого периода YYYY-MM-DD (по умолчанию вчера)
-   * @param worksIds
-   * @param targetUserId ID работника, по которому нужно делать поиск
-   * @param role
-   */
-  // legacy endpoint kept for backward-compat in rare places; prefer paymentsManagement
-  async getUserWorksClosurePeriodsAnalysis(
-    role: Role,
-    endDate?: string,
-    worksIds?: string[],
-    targetUserId?: string
-  ): Promise<UsersWorksClosurePeriodsAnalysisResult> {
-    // Redirect to new endpoint behaviour when possible
-    const users = await this.getPaymentsManagement(
-      role,
-      endDate,
-      worksIds,
-      targetUserId
-    );
-    return {
-      endDate: endDate || new Date().toISOString().split('T')[0],
-      users: users.map((u) => ({
-        userId: u.userId,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        email: u.email,
-        works: [],
-        totalWorks: u.works.length,
-        totalClosures: 0,
-        totalPeriods: 0,
-      })),
-      totalUsers: users.length,
-    } as unknown as UsersWorksClosurePeriodsAnalysisResult;
-  },
-
-  /**
    * Получить задолженности текущего пользователя
    */
   async getMyDebts(): Promise<MyDebtsResponse> {
     try {
-      const response = await privateApi.get<MyDebtsResponse>(ANALYTICS_ENDPOINTS.myDebts);
+      const response = await privateApi.get<MyDebtsResponse>(
+        ANALYTICS_ENDPOINTS.myDebts
+      );
       return response.data;
     } catch (error) {
       logger.error('Error fetching my debts:', error);

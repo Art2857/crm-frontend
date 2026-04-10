@@ -72,9 +72,10 @@ export const accountManagerService = {
 
     const accounts = this.getSavedAccounts();
 
-    // Проверяем, существует ли уже аккаунт с таким login
+    // Обновляем аккаунт по стабильному идентификатору пользователя,
+    // чтобы смена логина/email не создавала дубликаты.
     const existingAccountIndex = accounts.findIndex(
-      (acc: SavedAccount) => acc?.user?.login === user.login
+      (acc: SavedAccount) => acc?.id === user.id
     );
 
     const account: SavedAccount = {
@@ -103,6 +104,29 @@ export const accountManagerService = {
     }
 
     return account;
+  },
+
+  updateAccountUser(user: User): void {
+    if (typeof window === 'undefined') return;
+
+    const accounts = this.getSavedAccounts();
+    const existingAccountIndex = accounts.findIndex(
+      (acc: SavedAccount) => acc?.id === user.id
+    );
+
+    if (existingAccountIndex < 0) {
+      return;
+    }
+
+    accounts[existingAccountIndex] = {
+      ...accounts[existingAccountIndex],
+      user: {
+        ...accounts[existingAccountIndex].user,
+        ...user,
+      },
+    };
+
+    localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
   },
 
   // Удаление аккаунта

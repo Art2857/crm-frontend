@@ -7,11 +7,12 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { buildTimezoneOptions, TimezoneOption } from '../utils/timezones';
 
 export type TimezoneContextValue = {
   timezone: string;
   setTimezone: (tz: string) => void;
-  availableTimezones: string[];
+  availableTimezones: TimezoneOption[];
 };
 
 const STORAGE_KEY = 'app.timezone';
@@ -41,33 +42,6 @@ const setStoredTimezone = (tz: string) => {
   } catch {}
 };
 
-const buildTimezoneList = (): string[] => {
-  try {
-    // В современных браузерах
-    // @ts-ignore
-    if (Intl.supportedValuesOf) {
-      // @ts-ignore
-      const list = Intl.supportedValuesOf('timeZone');
-      if (Array.isArray(list) && list.length > 0) return list;
-    }
-  } catch {}
-  // Минимальный набор на случай отсутствия API
-  return [
-    'UTC',
-    'Europe/Moscow',
-    'Europe/Kaliningrad',
-    'Asia/Yekaterinburg',
-    'Asia/Novosibirsk',
-    'Asia/Krasnoyarsk',
-    'Asia/Irkutsk',
-    'Asia/Yakutsk',
-    'Asia/Vladivostok',
-    'Asia/Sakhalin',
-    'Asia/Magadan',
-    'Asia/Kamchatka',
-  ];
-};
-
 const TimezoneContext = createContext<TimezoneContextValue | undefined>(
   undefined
 );
@@ -79,7 +53,10 @@ export const TimezoneProvider: React.FC<{ children: React.ReactNode }> = ({
     getStoredTimezone() || defaultTimezone
   );
 
-  const availableTimezones = useMemo(() => buildTimezoneList(), []);
+  const availableTimezones = useMemo(
+    () => buildTimezoneOptions([timezone, defaultTimezone, getStoredTimezone()]),
+    [timezone]
+  );
 
   const setTimezone = (tz: string) => {
     setTimezoneState(tz);

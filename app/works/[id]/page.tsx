@@ -154,318 +154,138 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Заголовок и кнопки управления */}
         <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <div className="mb-4 md:mb-0">
-              <div className="flex items-center mb-2">
-                <div className="bg-primary-100 rounded-lg p-2 mr-3">
-                  <svg
-                    className="w-6 h-6 text-primary-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">
-                    Рабочий проект
-                  </p>
-                  <div className="flex items-center space-x-3">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                      {workData.name}
-                    </h1>
-                    {workData.isArchived && (
-                      <span className="px-3 py-1 text-sm rounded-full bg-orange-100 text-orange-800 border border-orange-200">
-                        Архив
-                      </span>
-                    )}
+          <div className="flex flex-col gap-16 bg-white rounded-xl shadow-sm p-6 border border-gray-100 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 flex-1 items-start gap-4 lg:items-center">
+              <button
+                type="button"
+                onClick={() => router.push('/works')}
+                aria-label="Назад к списку"
+                className="mt-1 flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-800"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+
+              <div className="flex min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:gap-6">
+                <div className="flex min-w-0 items-center">
+                  <div className="bg-primary-100 rounded-lg p-2 mr-3">
+                    <svg
+                      className="w-6 h-6 text-primary-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">
+                      Рабочий проект
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <h1 className="truncate text-2xl md:text-3xl font-bold text-gray-900">
+                        {workData.name}
+                      </h1>
+                      {workData.isArchived && (
+                        <span className="px-3 py-1 text-sm rounded-full bg-orange-100 text-orange-800 border border-orange-200">
+                          Архив
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V6a2 2 0 012-2h4a2 2 0 012 2v1m-6 0h6m-6 0l6 6-6 6"
-                  />
-                </svg>
-                ID: {workData.id}
-                <span className="mx-2">•</span>
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Дата выхода:{' '}
-                {workData.releaseDate
-                  ? formatDateForDisplay(workData.releaseDate)
-                  : 'Не указана'}
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-600 lg:ml-auto">
+                  <span>
+                    Общий бюджет:{' '}
+                    <span className="text-gray-900">
+                      {formatAmountWithCurrency(
+                        displaySalary,
+                        salaryCurrency,
+                        isSalaryConfidential
+                      )}
+                    </span>
+                  </span>
+                  <span className="text-gray-300">|</span>
+                  <span>
+                    Дата выхода:{' '}
+                    <span className="text-gray-900">
+                      {workData.releaseDate
+                        ? formatDateForDisplay(workData.releaseDate)
+                        : 'Не указана'}
+                    </span>
+                  </span>
+                  <span className="text-gray-300">|</span>
+                  <span>
+                    Ответственный:{' '}
+                    <span className="text-gray-900">{responsibleName}</span>
+                  </span>
+                </div>
               </div>
             </div>
 
             <div className="flex space-x-3">
               {canEdit && (
-                <>
-                  <Button
-                    variant={isEditing ? 'secondary' : 'primary'}
-                    onClick={() => setIsEditing(!isEditing)}
-                    className={`px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 ${
-                      isEditing
-                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
-                        : 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 shadow-lg hover:shadow-xl'
-                    }`}
-                  >
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      {isEditing ? (
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      ) : (
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      )}
-                    </svg>
-                    {isEditing ? 'Отменить' : 'Редактировать'}
-                  </Button>
-
-                  {workData.isArchived ? (
-                    <Button
-                      onClick={handleRestoreWork}
-                      className="px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl"
-                    >
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
-                      </svg>
-                      Восстановить
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleArchiveWork}
-                      className="px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-700 text-white hover:from-orange-700 hover:to-orange-800 shadow-lg hover:shadow-xl"
-                    >
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 8h14l-1 9H6L5 8zm0 0V6a2 2 0 012-2h10a2 2 0 012 2v2M9 12v4m6-4v4"
-                        />
-                      </svg>
-                      Архивировать
-                    </Button>
-                  )}
-                </>
-              )}
-
-              <Button
-                onClick={() => router.push('/works')}
-                variant="secondary"
-                className="px-6 py-3 rounded-lg shadow-sm border border-gray-400 bg-gray-50 text-gray-800 hover:bg-gray-100 hover:border-gray-500 font-medium transition-all duration-200"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <Button
+                  variant={isEditing ? 'secondary' : 'primary'}
+                  onClick={() => setIsEditing(!isEditing)}
+                  className={`px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200 ${
+                    isEditing
+                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                      : 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 shadow-lg hover:shadow-xl'
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                  />
-                </svg>
-                Назад к списку
-              </Button>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    {isEditing ? (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    ) : (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    )}
+                  </svg>
+                  {isEditing ? 'Отменить' : 'Редактировать'}
+                </Button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Карточка с информацией о работе */}
-        <div className="mb-10">
-          <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl overflow-hidden shadow-lg">
-            <div className="px-6 py-8 text-white">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div className="mb-6 lg:mb-0 flex-grow">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-white bg-opacity-20 rounded-lg p-3 mr-4">
-                      <svg
-                        className="w-8 h-8 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-medium text-primary-100 mb-1">
-                        Проект
-                      </h2>
-                      <div className="flex items-center space-x-3">
-                        <h1 className="text-3xl font-bold leading-tight">
-                          {workData.name}
-                        </h1>
-                        {workData.isArchived && (
-                          <span className="px-3 py-1 text-sm rounded-full bg-white bg-opacity-20 text-white border border-white border-opacity-30">
-                            Архив
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-6">
-                    <div className="flex items-center">
-                      <div className="bg-white bg-opacity-20 rounded-full p-2 mr-3">
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="text-sm text-primary-200 block">
-                          Ответственный
-                        </span>
-                        <span className="text-lg font-semibold">
-                          {responsibleName}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <div className="bg-white bg-opacity-20 rounded-full p-2 mr-3">
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V6a2 2 0 012-2h4a2 2 0 012 2v1m-6 0h6m-6 0l6 6-6 6"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="text-sm text-primary-200 block">
-                          Дата выхода
-                        </span>
-                        <span className="text-lg font-semibold">
-                          {formatDateForDisplay(workData.releaseDate)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-shrink-0">
-                  <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-6 text-center border border-white border-opacity-20">
-                    <div className="text-sm text-primary-100 mb-2 flex items-center justify-center">
-                      <svg
-                        className="w-4 h-4 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                        />
-                      </svg>
-                      Общий бюджет
-                    </div>
-                    <div className="flex items-center justify-center gap-3 mb-1">
-                      <span className="text-4xl font-bold">
-                        {formatAmountWithCurrency(
-                          displaySalary,
-                          salaryCurrency,
-                          isSalaryConfidential
-                        )}
-                      </span>
-                    </div>
-                    <div className="text-xs text-primary-200">
-                      {isSalaryConfidential
-                        ? 'Информация скрыта'
-                        : salaryCurrency === 'RUB'
-                          ? 'Российские рубли'
-                          : 'Доллары США'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {isEditing ? (
-              <div className="bg-white px-6 py-6">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+        {isEditing ? (
+          <div className="mb-10">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-6 py-6">
+              <div className="mb-4">
+                <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <h3 className="flex items-center text-lg font-semibold text-gray-900">
                     <svg
                       className="w-5 h-5 mr-2 text-primary-600"
                       fill="none"
@@ -481,68 +301,46 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     </svg>
                     Редактирование работы
                   </h3>
-                  <p className="text-sm text-gray-600">
-                    Измените основные параметры работы
-                  </p>
+                  <span className="inline-flex items-center text-sm text-gray-500">
+                    <span className="mr-2 text-gray-300">|</span>
+                    ID: {workData.id}
+                  </span>
                 </div>
-                <WorkForm
-                  onRegisterDocsHandlers={(h) => (docsHandlersRef.current = h)}
-                  workId={id}
-                  formData={formData}
-                  users={users}
-                  onChange={handleChange}
-                  onSubmit={handleWorkFormSubmit}
-                  onCancel={() => {
-                    try {
-                      docsHandlersRef.current?.discard?.();
-                    } catch (e) {}
-                    setIsEditing(false);
-                  }}
-                  isLoading={isLoading}
-                />
+                <p className="text-sm text-gray-600">
+                  Измените основные параметры работы
+                </p>
               </div>
-            ) : (
-              <div className="bg-white">
-                <WorkDetails work={workData} users={users} />
-              </div>
-            )}
+              <WorkForm
+                onRegisterDocsHandlers={(h) => (docsHandlersRef.current = h)}
+                workId={id}
+                formData={formData}
+                users={users}
+                onChange={handleChange}
+                onSubmit={handleWorkFormSubmit}
+                onCancel={() => {
+                  try {
+                    docsHandlersRef.current?.discard?.();
+                  } catch (e) {}
+                  setIsEditing(false);
+                }}
+                onArchiveAction={
+                  workData.isArchived ? handleRestoreWork : handleArchiveWork
+                }
+                archiveActionLabel={
+                  workData.isArchived ? 'Восстановить' : 'Архивировать'
+                }
+                archiveActionVariant={workData.isArchived ? 'restore' : 'archive'}
+                isLoading={isLoading}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <WorkDetails work={workData} users={users} />
+        )}
 
         {/* Главные табы для переключения между разделами */}
         <div className="mb-8">
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-            {/* Заголовок секции */}
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="bg-primary-100 rounded-lg p-2 mr-3">
-                    <svg
-                      className="w-6 h-6 text-primary-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      Управление проектом
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      Обязанности команды и история поступлений средств
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Табы */}
             <div className="border-b border-gray-200">
               <div className="flex">

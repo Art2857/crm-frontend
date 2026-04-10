@@ -19,7 +19,7 @@ interface PaymentConfirmModalProps {
   currency: CurrencyType;
   periods: Array<{ startDate: string; endDate: string }>;
   workNames: string[];
-  closureDate?: string;
+  calculationDate?: string;
   isBulk?: boolean;
   hasOverpayment?: boolean;
 }
@@ -32,7 +32,7 @@ export default function PaymentConfirmModal({
   currency,
   periods,
   workNames,
-  closureDate,
+  calculationDate,
   isBulk = false,
   hasOverpayment = false,
 }: PaymentConfirmModalProps) {
@@ -46,7 +46,9 @@ export default function PaymentConfirmModal({
     .join(', ');
 
   const formattedWorks = workNames.join(', ');
-  const formattedClosureDate = closureDate ? formatRussian(closureDate) : null;
+  const formattedCalculationDate = calculationDate
+    ? formatRussian(calculationDate)
+    : null;
 
   const handleConfirm = () => {
     onConfirm();
@@ -90,11 +92,11 @@ export default function PaymentConfirmModal({
                     )}
                     <span> по {isMultipleWorks ? 'работам' : 'работе'} </span>
                     <span className="font-semibold">{formattedWorks}</span>
-                    {formattedClosureDate && (
+                    {formattedCalculationDate && (
                       <>
                         <span> с закрытием периодов до </span>
                         <span className="font-semibold text-blue-700">
-                          {formattedClosureDate}
+                          {formattedCalculationDate}
                         </span>
                       </>
                     )}
@@ -102,11 +104,11 @@ export default function PaymentConfirmModal({
                 ) : (
                   <>
                     <span>Будет произведено закрытие периодов</span>
-                    {formattedClosureDate && (
+                    {formattedCalculationDate && (
                       <>
                         <span> до </span>
                         <span className="font-semibold text-blue-700">
-                          {formattedClosureDate}
+                          {formattedCalculationDate}
                         </span>
                       </>
                     )}

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { getCurrentDateISO } from '../../utils/date';
 
 export function usePeriodDates() {
   const [workPeriodDates, setWorkPeriodDates] = useState<
@@ -11,8 +12,7 @@ export function usePeriodDates() {
   const getWorkPeriodDate = useCallback(
     (workId: string): string => {
       if (workPeriodDates[workId]) return workPeriodDates[workId];
-      const d = new Date();
-      return d.toISOString().split('T')[0];
+      return getCurrentDateISO();
     },
     [workPeriodDates]
   );
@@ -20,8 +20,7 @@ export function usePeriodDates() {
   const getUserPeriodDate = useCallback(
     (userId: string): string => {
       if (userPeriodDates[userId]) return userPeriodDates[userId];
-      const d = new Date();
-      return d.toISOString().split('T')[0];
+      return getCurrentDateISO();
     },
     [userPeriodDates]
   );

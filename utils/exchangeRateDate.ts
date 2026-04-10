@@ -247,35 +247,3 @@ export const ExchangeRateDates = {
   }
 };
 
-/**
- * Вспомогательные функции для обратной совместимости
- * Постепенно заменят старые функции в коде
- */
-
-/**
- * Парсит дату DD.MM.YYYY в объект Date
- * @deprecated Используйте ExchangeRateDate.fromString().toDate()
- */
-export function parseExchangeRateDate(dateStr: string): Date | null {
-  try {
-    return new ExchangeRateDate(dateStr).toDate();
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Форматирует Date в DD.MM.YYYY
- * @deprecated Используйте ExchangeRateDate.fromDate().toString()
- */
-export function formatExchangeRateDate(date: Date): string {
-  return new ExchangeRateDate(date).toString();
-}
-
-/**
- * Проверяет валидность строки даты DD.MM.YYYY
- * @deprecated Используйте ExchangeRateDates.isValidString()
- */
-export function isValidExchangeRateDate(dateStr: string): boolean {
-  return ExchangeRateDates.isValidString(dateStr);
-}
