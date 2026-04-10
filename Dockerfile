@@ -9,6 +9,7 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN mkdir -p public
 
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_APP_VERSION
