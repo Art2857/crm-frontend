@@ -368,7 +368,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
           {onArchiveAction && archiveActionLabel && (
             <Button
               type="button"
-              variant={archiveActionVariant === 'restore' ? 'primary' : 'danger'}
+              variant={
+                archiveActionVariant === 'restore' ? 'primary' : 'danger'
+              }
               onClick={onArchiveAction}
               disabled={isLoading}
               className={`px-6 py-2 flex items-center ${

@@ -329,7 +329,9 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 archiveActionLabel={
                   workData.isArchived ? 'Восстановить' : 'Архивировать'
                 }
-                archiveActionVariant={workData.isArchived ? 'restore' : 'archive'}
+                archiveActionVariant={
+                  workData.isArchived ? 'restore' : 'archive'
+                }
                 isLoading={isLoading}
               />
             </div>

@@ -951,8 +951,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
                 <div className="space-y-4 pl-4">
                   {/* Отображаем сворачиваемые группы, если они есть */}
-                  {group.collapsibleGroups &&
-                  group.collapsibleGroups.length > 0
+                  {group.collapsibleGroups && group.collapsibleGroups.length > 0
                     ? group.collapsibleGroups.map((collapsibleGroup) =>
                         renderCollapsibleGroup(collapsibleGroup, groupIndex)
                       )
