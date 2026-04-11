@@ -59,7 +59,10 @@ export default function ResponsibleWorkGroup({
   const sortedWorks = [...group.works].sort((a, b) => b.income - a.income);
 
   return (
-    <Card className="overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300">
+    <Card
+      className="overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300"
+      bodyClassName="p-0"
+    >
       {/* Заголовок группы */}
       <div
         className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 cursor-pointer hover:from-gray-100 hover:to-gray-200 transition-colors"
@@ -288,16 +291,22 @@ export default function ResponsibleWorkGroup({
 
       {/* Детали группы */}
       {isExpanded && (
-        <div className="p-4 sm:p-6 bg-gray-50">
+        <div className="border-t border-gray-200 bg-white">
           {/* Мобильное отображение */}
-          <div className="block sm:hidden space-y-4">
+          <div className="block space-y-4 p-4 sm:hidden">
             {sortedWorks.map((work) => (
               <div
                 key={work.id}
                 className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="font-medium text-gray-900">{work.name}</div>
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-900">{work.name}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Ответственный:{' '}
+                      {work.responsibleUserName || group.responsibleUserName}
+                    </div>
+                  </div>
                   <button
                     onClick={() => onViewWork(work.id)}
                     className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-all duration-200 ml-2 flex-shrink-0"
@@ -470,7 +479,7 @@ export default function ResponsibleWorkGroup({
 
           {/* Десктопное отображение */}
           <div className="hidden sm:block overflow-x-auto">
-            <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
+            <table className="min-w-full">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">
@@ -497,6 +506,10 @@ export default function ResponsibleWorkGroup({
                     <td className="py-3 px-4">
                       <div className="font-medium text-gray-900">
                         {work.name}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Ответственный:{' '}
+                        {work.responsibleUserName || group.responsibleUserName}
                       </div>
                     </td>
                     <td

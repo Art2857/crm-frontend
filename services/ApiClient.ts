@@ -78,6 +78,13 @@ interface RequestMap {
 }
 
 // Sanitize data before sending to prevent XSS
+const RAW_STRING_FIELDS = new Set([
+  'password',
+  'currentPassword',
+  'newPassword',
+  'refreshToken',
+]);
+
 const sanitizeRequestData = (data: any): any => {
   if (!data) return data;
 
@@ -106,6 +113,11 @@ const sanitizeRequestData = (data: any): any => {
   const sanitized = { ...data };
   for (const [key, value] of Object.entries(sanitized)) {
     if (typeof value === 'string') {
+      if (RAW_STRING_FIELDS.has(key)) {
+        sanitized[key] = value;
+        continue;
+      }
+
       // First trim to remove excess whitespace, then sanitize to prevent XSS
       const trimmedValue = value.trim();
       // Предотвращаем XSS, кодируя специальные символы HTML

@@ -135,6 +135,16 @@ export const authService = {
   */
 
   logout: (): void => {
+    const refreshToken = tokenStorage.getRefreshToken();
+
+    if (refreshToken) {
+      authApi
+        .post(AUTH_ENDPOINTS.logout, { refreshToken })
+        .catch((error) => {
+          console.error('Ошибка при отзыве refresh токена:', error);
+        });
+    }
+
     // Удаляем текущий аккаунт из менеджера аккаунтов
     if (typeof window !== 'undefined') {
       const currentAccount = accountManagerService.getCurrentAccount();

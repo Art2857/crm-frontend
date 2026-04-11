@@ -3,6 +3,7 @@ import React, { ReactNode } from 'react';
 interface CardProps {
   title?: string;
   className?: string;
+  bodyClassName?: string;
   children: ReactNode;
   footer?: ReactNode;
 }
@@ -10,6 +11,7 @@ interface CardProps {
 const Card: React.FC<CardProps> = ({
   title,
   className = '',
+  bodyClassName = 'px-4 py-5 sm:p-6',
   children,
   footer,
 }) => {
@@ -23,7 +25,7 @@ const Card: React.FC<CardProps> = ({
         </div>
       )}
 
-      <div className="px-4 py-5 sm:p-6">{children}</div>
+      <div className={bodyClassName}>{children}</div>
 
       {footer && (
         <div className="border-t border-gray-200 px-4 py-4 sm:px-6 bg-gray-50">

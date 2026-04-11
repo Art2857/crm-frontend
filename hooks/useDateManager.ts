@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTimezone } from '../contexts/TimezoneContext';
 import { dateManager } from '../utils/DateManager';
 
@@ -9,41 +9,45 @@ import { dateManager } from '../utils/DateManager';
  */
 export const useDateManager = () => {
   const timezoneContext = useTimezone();
+  const timezone = timezoneContext?.timezone || 'UTC';
 
   // Синхронизируем timezone при изменении контекста
   useEffect(() => {
-    if (timezoneContext?.timezone) {
-      dateManager.setUserTimezone(timezoneContext.timezone);
+    if (timezone) {
+      dateManager.setUserTimezone(timezone);
     }
-  }, [timezoneContext?.timezone]);
+  }, [timezone]);
 
-  return {
-    dateManager,
-    timezone: timezoneContext?.timezone || 'UTC',
+  return useMemo(
+    () => ({
+      dateManager,
+      timezone,
 
-    // Методы форматирования с учетом текущего timezone
-    formatISO: (date: string | Date | null | undefined) =>
-      dateManager.formatISO(date),
+      // Методы форматирования с учетом текущего timezone
+      formatISO: (date: string | Date | null | undefined) =>
+        dateManager.formatISO(date),
 
-    formatRussian: (date: string | Date | null | undefined) =>
-      dateManager.formatRussian(date),
+      formatRussian: (date: string | Date | null | undefined) =>
+        dateManager.formatRussian(date),
 
-    formatRussianWithTime: (date: string | Date | null | undefined) =>
-      dateManager.formatRussianWithTime(date, true),
+      formatRussianWithTime: (date: string | Date | null | undefined) =>
+        dateManager.formatRussianWithTime(date, true),
 
-    formatByField: (
-      date: string | Date | null | undefined,
-      fieldName: string
-    ) => dateManager.formatByField(date, fieldName, true),
+      formatByField: (
+        date: string | Date | null | undefined,
+        fieldName: string
+      ) => dateManager.formatByField(date, fieldName, true),
 
-    // Вспомогательные методы
-    getCurrentDateISO: () => dateManager.getCurrentDateISO(),
-    getYesterdayISO: () => dateManager.getYesterdayISO(),
-    calculateAge: (birthday: string | Date | null | undefined) =>
-      dateManager.calculateAge(birthday),
+      // Вспомогательные методы
+      getCurrentDateISO: () => dateManager.getCurrentDateISO(),
+      getYesterdayISO: () => dateManager.getYesterdayISO(),
+      calculateAge: (birthday: string | Date | null | undefined) =>
+        dateManager.calculateAge(birthday),
 
-    // Валидация
-    isValidRussianFormat: (dateString: string) =>
-      dateManager.isValidRussianFormat(dateString),
-  };
+      // Валидация
+      isValidRussianFormat: (dateString: string) =>
+        dateManager.isValidRussianFormat(dateString),
+    }),
+    [timezone]
+  );
 };

@@ -106,7 +106,22 @@ export default function LoginPage() {
         if (login.fulfilled.match(resultAction)) {
           // Второй шаг - получить полные данные пользователя
           await dispatch(getCurrentUser());
-          router.push('/dashboard');
+
+          const redirectAfterLogin =
+            typeof window !== 'undefined'
+              ? localStorage.getItem('redirectAfterLogin')
+              : null;
+
+          if (
+            redirectAfterLogin &&
+            redirectAfterLogin !== '/login' &&
+            redirectAfterLogin !== '/register'
+          ) {
+            localStorage.removeItem('redirectAfterLogin');
+            router.push(redirectAfterLogin);
+          } else {
+            router.push('/dashboard');
+          }
         } else if (login.rejected.match(resultAction) && resultAction.payload) {
           setServerError(resultAction.payload as string);
         }

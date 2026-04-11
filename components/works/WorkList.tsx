@@ -44,12 +44,6 @@ export default function WorkList({
                 scope="col"
                 className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Ответственный
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
                 Стоимость
               </th>
               <th
@@ -70,11 +64,11 @@ export default function WorkList({
           <tbody className="bg-white divide-y divide-gray-200">
             {works.map((work) => (
               <tr key={work.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {work.name}
-                </td>
-                <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-600">
-                  {getResponsibleName(work)}
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  <div className="font-medium">{work.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Ответственный: {getResponsibleName(work)}
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-600">
                   <div className="flex items-center justify-center space-x-3">

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '../ui/Modal';
 import Input from '../ui/Input';
 import { User } from '../../types/user';
+import { env } from '../../config/env';
 
 interface ReAuthPopupProps {
   isOpen: boolean;
@@ -73,16 +74,13 @@ export const ReAuthPopup: React.FC<ReAuthPopupProps> = ({
 
     try {
       // Call the login API
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ login: localLogin, password }),
-        }
-      );
+      const response = await fetch(`${env.apiBaseUrl}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ login: localLogin, password }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

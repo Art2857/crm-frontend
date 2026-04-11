@@ -28,7 +28,7 @@ export interface AuthResponse {
   refresh_token?: string;
   access_token_expires_at?: string; // ISO timestamp
   refresh_token_expires_at?: string; // ISO timestamp
-  user: User;
+  user?: User;
 }
 
 export interface AuthState {

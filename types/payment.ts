@@ -31,7 +31,7 @@ export interface PaymentCalculation {
 // Core payment entity used in history and responses
 export interface Payment {
   id: string;
-  workId: string;
+  workId: string | null;
   fromUserId: string;
   toUserId: string;
   amount: number;
@@ -41,10 +41,9 @@ export interface Payment {
   createdAt?: string;
   periodStart?: string | null;
   periodEnd?: string | null;
-  work: {
-    id: string;
+  work?: {
     name: string;
-  };
+  } | null;
   duty?: {
     id: string;
     name: string;
@@ -152,7 +151,7 @@ export interface CalculatePaymentDto {
 
 // Create a one-off payment
 export interface MakePaymentDto {
-  workId: string;
+  workId?: string;
   userId: string;
   amount: number;
   paymentType: PaymentType;

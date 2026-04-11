@@ -14,6 +14,237 @@ export interface SavedAccount {
 
 const ACCOUNTS_STORAGE_KEY = 'crm_saved_accounts';
 const CURRENT_ACCOUNT_ID_KEY = 'crm_current_account_id';
+const EXPIRED_AT_FALLBACK = new Date(0).toISOString();
+
+type AccountLike = {
+  id?: string | null;
+  user?: Partial<User> | null;
+};
+
+interface NormalizedAccountResult {
+  account: SavedAccount | null;
+  changed: boolean;
+}
+
+const normalizeTextValue = (value?: string | null): string | null => {
+  if (typeof value !== 'string') return null;
+
+  const normalizedValue = value.trim();
+  return normalizedValue.length > 0 ? normalizedValue : null;
+};
+
+const normalizeIdentityValue = (value?: string | null): string | null => {
+  const normalizedValue = normalizeTextValue(value);
+  return normalizedValue ? normalizedValue.toLowerCase() : null;
+};
+
+const getCanonicalAccountId = (account: AccountLike): string | null => {
+  return (
+    normalizeTextValue(account.user?.id) ||
+    normalizeTextValue(account.id) ||
+    normalizeTextValue(account.user?.login) ||
+    normalizeTextValue(account.user?.email) ||
+    null
+  );
+};
+
+const areAccountsEquivalent = (left: AccountLike, right: AccountLike): boolean => {
+  const leftUserId = normalizeTextValue(left.user?.id);
+  const rightUserId = normalizeTextValue(right.user?.id);
+
+  if (leftUserId && rightUserId && leftUserId === rightUserId) {
+    return true;
+  }
+
+  const leftLogin = normalizeIdentityValue(left.user?.login);
+  const rightLogin = normalizeIdentityValue(right.user?.login);
+
+  if (leftLogin && rightLogin && leftLogin === rightLogin) {
+    return true;
+  }
+
+  const leftEmail = normalizeIdentityValue(left.user?.email);
+  const rightEmail = normalizeIdentityValue(right.user?.email);
+
+  if (leftEmail && rightEmail && leftEmail === rightEmail) {
+    return true;
+  }
+
+  const leftId = normalizeTextValue(left.id);
+  const rightId = normalizeTextValue(right.id);
+
+  return Boolean(leftId && rightId && leftId === rightId);
+};
+
+const getLastUsedTimestamp = (account: SavedAccount): number => {
+  const timestamp = new Date(account.lastUsed).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const mergeAccounts = (primary: SavedAccount, secondary: SavedAccount): SavedAccount => {
+  const freshestAccount =
+    getLastUsedTimestamp(primary) >= getLastUsedTimestamp(secondary)
+      ? primary
+      : secondary;
+  const oldestAccount = freshestAccount === primary ? secondary : primary;
+  const canonicalId =
+    getCanonicalAccountId(freshestAccount) ||
+    getCanonicalAccountId(oldestAccount) ||
+    freshestAccount.id;
+  const canonicalLogin =
+    normalizeTextValue(freshestAccount.user.login) ||
+    normalizeTextValue(oldestAccount.user.login) ||
+    normalizeTextValue(freshestAccount.user.email) ||
+    normalizeTextValue(oldestAccount.user.email) ||
+    canonicalId;
+
+  return {
+    ...oldestAccount,
+    ...freshestAccount,
+    id: canonicalId,
+    user: {
+      ...oldestAccount.user,
+      ...freshestAccount.user,
+      id: canonicalId,
+      login: canonicalLogin,
+    },
+    token: freshestAccount.token || oldestAccount.token,
+    refreshToken: freshestAccount.refreshToken || oldestAccount.refreshToken,
+    accessTokenExpiresAt:
+      freshestAccount.accessTokenExpiresAt || oldestAccount.accessTokenExpiresAt,
+    refreshTokenExpiresAt:
+      freshestAccount.refreshTokenExpiresAt || oldestAccount.refreshTokenExpiresAt,
+    lastUsed:
+      getLastUsedTimestamp(freshestAccount) >= getLastUsedTimestamp(oldestAccount)
+        ? freshestAccount.lastUsed
+        : oldestAccount.lastUsed,
+  };
+};
+
+const normalizeSavedAccount = (rawAccount: unknown): NormalizedAccountResult => {
+  if (!rawAccount || typeof rawAccount !== 'object') {
+    return { account: null, changed: true };
+  }
+
+  const account = rawAccount as Partial<SavedAccount>;
+
+  if (!account.user || typeof account.user !== 'object') {
+    return { account: null, changed: true };
+  }
+
+  const canonicalId = getCanonicalAccountId(account);
+
+  if (!canonicalId) {
+    return { account: null, changed: true };
+  }
+
+  const normalizedLogin =
+    normalizeTextValue(account.user.login) ||
+    normalizeTextValue(account.user.email) ||
+    canonicalId;
+  const normalizedAccount: SavedAccount = {
+    id: canonicalId,
+    user: {
+      ...(account.user as User),
+      id: canonicalId,
+      login: normalizedLogin,
+    },
+    token: typeof account.token === 'string' ? account.token : '',
+    refreshToken:
+      typeof account.refreshToken === 'string' ? account.refreshToken : '',
+    accessTokenExpiresAt:
+      typeof account.accessTokenExpiresAt === 'string'
+        ? account.accessTokenExpiresAt
+        : EXPIRED_AT_FALLBACK,
+    refreshTokenExpiresAt:
+      typeof account.refreshTokenExpiresAt === 'string'
+        ? account.refreshTokenExpiresAt
+        : EXPIRED_AT_FALLBACK,
+    lastUsed:
+      typeof account.lastUsed === 'string'
+        ? account.lastUsed
+        : new Date(0).toISOString(),
+  };
+
+  const changed =
+    account.id !== normalizedAccount.id ||
+    account.user.id !== normalizedAccount.user.id ||
+    account.user.login !== normalizedAccount.user.login ||
+    account.refreshToken !== normalizedAccount.refreshToken ||
+    account.accessTokenExpiresAt !== normalizedAccount.accessTokenExpiresAt ||
+    account.refreshTokenExpiresAt !== normalizedAccount.refreshTokenExpiresAt ||
+    account.lastUsed !== normalizedAccount.lastUsed;
+
+  return { account: normalizedAccount, changed };
+};
+
+const dedupeAccounts = (
+  accounts: SavedAccount[],
+  currentAccountId: string | null
+): {
+  accounts: SavedAccount[];
+  currentAccountId: string | null;
+  changed: boolean;
+} => {
+  const dedupedAccounts: SavedAccount[] = [];
+  let resolvedCurrentAccountId = currentAccountId;
+  let changed = false;
+
+  for (const account of accounts) {
+    const existingIndex = dedupedAccounts.findIndex((savedAccount) =>
+      areAccountsEquivalent(savedAccount, account)
+    );
+
+    if (existingIndex < 0) {
+      dedupedAccounts.push(account);
+      continue;
+    }
+
+    const existingAccount = dedupedAccounts[existingIndex];
+    const mergedAccount = mergeAccounts(existingAccount, account);
+    dedupedAccounts[existingIndex] = mergedAccount;
+    changed = true;
+
+    if (
+      resolvedCurrentAccountId &&
+      (resolvedCurrentAccountId === existingAccount.id ||
+        resolvedCurrentAccountId === account.id ||
+        resolvedCurrentAccountId === existingAccount.user.id ||
+        resolvedCurrentAccountId === account.user.id)
+    ) {
+      resolvedCurrentAccountId = mergedAccount.id;
+    }
+  }
+
+  if (
+    resolvedCurrentAccountId &&
+    !dedupedAccounts.some((account) => account.id === resolvedCurrentAccountId)
+  ) {
+    resolvedCurrentAccountId = dedupedAccounts[0]?.id ?? null;
+    changed = true;
+  }
+
+  return {
+    accounts: dedupedAccounts,
+    currentAccountId: resolvedCurrentAccountId,
+    changed,
+  };
+};
+
+const persistAccounts = (
+  accounts: SavedAccount[],
+  currentAccountId: string | null
+): void => {
+  if (typeof window === 'undefined') return;
+
+  localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+
+  if (currentAccountId) {
+    localStorage.setItem(CURRENT_ACCOUNT_ID_KEY, currentAccountId);
+  } else {
+    localStorage.removeItem(CURRENT_ACCOUNT_ID_KEY);
+  }
+};
 
 // Сервис для управления сохраненными аккаунтами
 export const accountManagerService = {
@@ -31,25 +262,23 @@ export const accountManagerService = {
     if (!accountsJson) return [];
 
     try {
-      const accounts = JSON.parse(accountsJson);
-      // Migration: mark accounts without expiration dates as expired
-      return accounts.map((account: SavedAccount) => {
-        if (!account || !account.user) return null;
+      const parsedAccounts = JSON.parse(accountsJson) as unknown[];
+      const currentAccountId = localStorage.getItem(CURRENT_ACCOUNT_ID_KEY);
+      let changed = !Array.isArray(parsedAccounts);
+      const normalizedAccounts = (Array.isArray(parsedAccounts) ? parsedAccounts : [])
+        .map((account) => {
+          const result = normalizeSavedAccount(account);
+          changed = changed || result.changed;
+          return result.account;
+        })
+        .filter((account): account is SavedAccount => account !== null);
+      const deduped = dedupeAccounts(normalizedAccounts, currentAccountId);
 
-        if (!account.refreshToken || !account.accessTokenExpiresAt || !account.refreshTokenExpiresAt || !account.user.login) {
-          return {
-            ...account,
-            user: {
-              ...account.user,
-              login: account.user.login || account.user.email || account.id,
-            },
-            refreshToken: account.refreshToken || '',
-            accessTokenExpiresAt: account.accessTokenExpiresAt || new Date(0).toISOString(),
-            refreshTokenExpiresAt: account.refreshTokenExpiresAt || new Date(0).toISOString(),
-          };
-        }
-        return account;
-      }).filter(Boolean);
+      if (changed || deduped.changed) {
+        persistAccounts(deduped.accounts, deduped.currentAccountId);
+      }
+
+      return deduped.accounts;
     } catch (error) {
       console.error('Ошибка при чтении сохраненных аккаунтов:', error);
       return [];
@@ -71,16 +300,12 @@ export const accountManagerService = {
     }
 
     const accounts = this.getSavedAccounts();
-
-    // Обновляем аккаунт по стабильному идентификатору пользователя,
-    // чтобы смена логина/email не создавала дубликаты.
-    const existingAccountIndex = accounts.findIndex(
-      (acc: SavedAccount) => acc?.id === user.id
-    );
-
     const account: SavedAccount = {
       id: user.id,
-      user,
+      user: {
+        ...user,
+        login: normalizeTextValue(user.login) || normalizeTextValue(user.email) || user.id,
+      },
       token,
       refreshToken,
       accessTokenExpiresAt,
@@ -88,15 +313,36 @@ export const accountManagerService = {
       lastUsed: new Date().toISOString(),
     };
 
-    // Обновляем существующий аккаунт или добавляем новый
-    if (existingAccountIndex >= 0) {
-      accounts[existingAccountIndex] = account;
+    const matchingAccountIndices = accounts.reduce(
+      (indices: number[], savedAccount, index) => {
+        if (areAccountsEquivalent(savedAccount, account)) {
+          indices.push(index);
+        }
+        return indices;
+      },
+      []
+    );
+
+    let nextAccounts = [...accounts];
+
+    if (matchingAccountIndices.length > 0) {
+      const firstMatchingIndex = matchingAccountIndices[0];
+      nextAccounts = nextAccounts.filter(
+        (_, index) => !matchingAccountIndices.includes(index)
+      );
+      nextAccounts.splice(firstMatchingIndex, 0, account);
     } else {
-      accounts.push(account);
+      nextAccounts.push(account);
     }
 
-    // Сохраняем обновленный список
-    localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+    const deduped = dedupeAccounts(
+      nextAccounts,
+      setAsCurrent ? account.id : this.getCurrentAccountId()
+    );
+    persistAccounts(
+      deduped.accounts,
+      setAsCurrent ? account.id : deduped.currentAccountId
+    );
 
     // Устанавливаем текущий аккаунт только если это требуется
     if (setAsCurrent) {
@@ -110,23 +356,46 @@ export const accountManagerService = {
     if (typeof window === 'undefined') return;
 
     const accounts = this.getSavedAccounts();
-    const existingAccountIndex = accounts.findIndex(
-      (acc: SavedAccount) => acc?.id === user.id
+    const normalizedUser = {
+      ...user,
+      login: normalizeTextValue(user.login) || normalizeTextValue(user.email) || user.id,
+    };
+    const matchingAccountIndices = accounts.reduce(
+      (indices: number[], savedAccount, index) => {
+        if (
+          areAccountsEquivalent(savedAccount, {
+            id: user.id,
+            user: normalizedUser,
+          })
+        ) {
+          indices.push(index);
+        }
+        return indices;
+      },
+      []
     );
 
-    if (existingAccountIndex < 0) {
+    if (matchingAccountIndices.length === 0) {
       return;
     }
 
-    accounts[existingAccountIndex] = {
-      ...accounts[existingAccountIndex],
-      user: {
-        ...accounts[existingAccountIndex].user,
-        ...user,
-      },
-    };
+    const updatedAccounts = accounts.map((savedAccount, index) => {
+      if (!matchingAccountIndices.includes(index)) {
+        return savedAccount;
+      }
 
-    localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+      return {
+        ...savedAccount,
+        id: normalizeTextValue(savedAccount.user.id) || user.id,
+        user: {
+          ...savedAccount.user,
+          ...normalizedUser,
+          id: normalizeTextValue(savedAccount.user.id) || user.id,
+        },
+      };
+    });
+    const deduped = dedupeAccounts(updatedAccounts, this.getCurrentAccountId());
+    persistAccounts(deduped.accounts, deduped.currentAccountId);
   },
 
   // Удаление аккаунта

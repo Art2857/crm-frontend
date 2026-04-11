@@ -41,7 +41,7 @@ export const isRefreshTokenExpired = (expiresAt: string | null | undefined): boo
  * Refresh access and refresh tokens using the refresh token
  * Updates tokenStorage with new tokens and expiration dates
  * @param refreshToken The refresh token to use
- * @returns AuthResponse with new tokens and user data
+ * @returns AuthResponse with new tokens and optional user data
  * @throws Error if refresh fails
  */
 export const refreshTokens = async (refreshToken: string): Promise<AuthResponse> => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { useRouter } from 'next/navigation';
 import Layout from '../../components/layout/Layout';
@@ -24,9 +24,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const notification = useNotification();
   const { timezone: currentTimezone } = useTimezone();
-  const { formatISO, formatRussian, dateManager } = useDateManager();
-
-  const initializedRef = useRef(false);
+  const { formatRussian, dateManager } = useDateManager();
 
   const [isEditing, setIsEditing] = useState(false);
   const [status, setStatus] = useState<UserStatus>(UserStatus.WORKING);
@@ -115,7 +113,7 @@ export default function ProfilePage() {
         if (user.birthday) {
           const dateObj = dateManager.parseDate(user.birthday);
           if (dateObj) {
-            setValue('birthday', formatISO(dateObj));
+            setValue('birthday', dateManager.formatISO(dateObj));
           } else {
             setValue('birthday', '');
           }
@@ -140,9 +138,7 @@ export default function ProfilePage() {
         setPreferencesText('');
       }
     }
-
-    initializedRef.current = true;
-  }, [dateManager, formatISO, isAuthenticated, router, setValue, user]);
+  }, [dateManager, isAuthenticated, router, setValue, user]);
 
   const onSubmit = async (data: UpdateProfileDto) => {
     setIsSaving(true);

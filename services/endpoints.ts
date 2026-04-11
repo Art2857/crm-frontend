@@ -19,7 +19,7 @@ export const USERS_ENDPOINTS = {
   history: (id: string) => `/users/${id}/history`,
   profile: (id: string) => `/users/${id}/profile`,
   sensitive: (id: string) => `/users/${id}/sensitive`,
-  archived: '/users/archived/list',
+  archived: '/users/archived',
   archive: (id: string) => `/users/${id}/archive`,
   restore: (id: string) => `/users/${id}/restore`,
 } as const;
