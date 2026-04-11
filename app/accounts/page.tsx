@@ -53,7 +53,7 @@ export default function AccountsPage() {
           setCredentials({
             user: account.user,
             token: account.token,
-          })
+          }),
         );
         showSuccess('Аккаунт успешно переключен');
 
@@ -66,10 +66,7 @@ export default function AccountsPage() {
     } catch (error) {
       console.error('Error switching account:', error);
 
-      if (
-        error instanceof Error &&
-        error.message.includes('Re-authentication required')
-      ) {
+      if (error instanceof Error && error.message.includes('Re-authentication required')) {
         showInfo('Переключение аккаунта отменено');
       } else {
         showError('Не удалось переключить аккаунт. Попробуйте еще раз.');
@@ -84,8 +81,7 @@ export default function AccountsPage() {
     if (user && accountId === user.id) {
       await alert({
         title: 'Невозможно удалить аккаунт',
-        message:
-          'Невозможно удалить текущий аккаунт. Сначала переключитесь на другой аккаунт.',
+        message: 'Невозможно удалить текущий аккаунт. Сначала переключитесь на другой аккаунт.',
         variant: 'danger',
       });
       return;
@@ -132,16 +128,14 @@ export default function AccountsPage() {
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-lg font-medium">Ваши аккаунты</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Здесь вы можете управлять всеми сохраненными аккаунтами и быстро
-              переключаться между ними.
+              Здесь вы можете управлять всеми сохраненными аккаунтами и быстро переключаться между
+              ними.
             </p>
           </div>
 
           {accounts.length === 0 ? (
             <div className="p-6 text-center">
-              <p className="text-gray-500 mb-4">
-                У вас пока нет сохраненных аккаунтов
-              </p>
+              <p className="text-gray-500 mb-4">У вас пока нет сохраненных аккаунтов</p>
               <Button onClick={handleAddNewAccount}>Добавить аккаунт</Button>
             </div>
           ) : (
@@ -167,8 +161,7 @@ export default function AccountsPage() {
                         {account.user.email || 'Email не указан'}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        Последний вход:{' '}
-                        {new Date(account.lastUsed).toLocaleString()}
+                        Последний вход: {new Date(account.lastUsed).toLocaleString()}
                       </p>
                     </div>
                     <div className="flex space-x-2">

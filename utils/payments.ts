@@ -2,10 +2,7 @@
 
 export type CurrencyType = 'RUB' | 'USD';
 
-export const formatCurrency = (
-  amount: number,
-  currency: CurrencyType = 'RUB'
-) => {
+export const formatCurrency = (amount: number, currency: CurrencyType = 'RUB') => {
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency',
     currency,
@@ -16,7 +13,7 @@ export const formatCurrency = (
 // Safely resolve duty currency from either a top-level `currency` field
 // or a nested `duty.currency` field. Defaults to 'RUB' if missing/unknown.
 export function resolveDutyCurrency<T extends { duty?: { currency?: string } }>(
-  obj: T & { currency?: string }
+  obj: T & { currency?: string },
 ): CurrencyType {
   const top = obj.currency;
   const nested = obj.duty?.currency;

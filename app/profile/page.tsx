@@ -39,62 +39,55 @@ export default function ProfilePage() {
   });
 
   // Используем наш кастомный хук с валидацией
-  const {
-    values,
-    errors,
-    handleChange,
-    handleBlur,
-    setValue,
-    handleSubmit,
-    validateForm,
-  } = useForm<UpdateProfileDto>(
-    {
-      login: '',
-      email: '',
-      firstName: '',
-      lastName: '',
-      middleName: '',
-      birthday: '',
-      timezone: '',
-      workStart: '',
-      workEnd: '',
-    },
-    {
-      login: {
-        required: true,
-        minLength: 3,
-        maxLength: 50,
-        pattern: /^[a-zA-Z0-9_.-]+$/,
+  const { values, errors, handleChange, handleBlur, setValue, handleSubmit, validateForm } =
+    useForm<UpdateProfileDto>(
+      {
+        login: '',
+        email: '',
+        firstName: '',
+        lastName: '',
+        middleName: '',
+        birthday: '',
+        timezone: '',
+        workStart: '',
+        workEnd: '',
       },
-      email: {
-        required: false,
-        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      {
+        login: {
+          required: true,
+          minLength: 3,
+          maxLength: 50,
+          pattern: /^[a-zA-Z0-9_.-]+$/,
+        },
+        email: {
+          required: false,
+          pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        },
+        firstName: {
+          required: true,
+          minLength: 2,
+          maxLength: 50,
+        },
+        lastName: {
+          required: true,
+          minLength: 2,
+          maxLength: 50,
+        },
+        middleName: {
+          maxLength: 50,
+        },
+        birthday: {
+          required: false,
+          isDate: true,
+        },
+        workStart: {
+          pattern: /^([01]\d|2[0-3]):[0-5]\d$/,
+        },
+        workEnd: {
+          pattern: /^([01]\d|2[0-3]):[0-5]\d$/,
+        },
       },
-      firstName: {
-        required: true,
-        minLength: 2,
-        maxLength: 50,
-      },
-      lastName: {
-        required: true,
-        minLength: 2,
-        maxLength: 50,
-      },
-      middleName: {
-        maxLength: 50,
-      },
-      birthday: {
-        required: false,
-        isDate: true,
-      },
-      workStart: {
-        pattern: /^([01]\d|2[0-3]):[0-5]\d$/,
-      },
-      workEnd: {
-        pattern: /^([01]\d|2[0-3]):[0-5]\d$/,
-      },
-    }
-  );
+    );
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -131,9 +124,7 @@ export default function ProfilePage() {
 
       setStatus((user.status as UserStatus) || UserStatus.WORKING);
       try {
-        setPreferencesText(
-          typeof user.preferences === 'string' ? user.preferences : ''
-        );
+        setPreferencesText(typeof user.preferences === 'string' ? user.preferences : '');
       } catch {
         setPreferencesText('');
       }
@@ -143,12 +134,15 @@ export default function ProfilePage() {
   const onSubmit = async (data: UpdateProfileDto) => {
     setIsSaving(true);
     try {
+      if (!user) {
+        notification.showError('Пользователь не авторизован');
+        return;
+      }
+
       if (!validateForm()) {
         const errorMessages = Object.values(errors).filter(Boolean);
         if (errorMessages.length > 0) {
-          notification.showError(
-            `Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`
-          );
+          notification.showError(`Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`);
           setIsSaving(false);
           return;
         }
@@ -176,9 +170,7 @@ export default function ProfilePage() {
           return;
         }
         if (passwordForm.newPassword.length < 8) {
-          notification.showError(
-            'Новый пароль должен содержать минимум 8 символов'
-          );
+          notification.showError('Новый пароль должен содержать минимум 8 символов');
           setIsSaving(false);
           return;
         }
@@ -198,9 +190,7 @@ export default function ProfilePage() {
         const endMinutes = eh * 60 + em;
 
         if (startMinutes >= endMinutes) {
-          notification.showError(
-            'Время начала работы должно быть раньше времени окончания'
-          );
+          notification.showError('Время начала работы должно быть раньше времени окончания');
           setIsSaving(false);
           return;
         }
@@ -222,7 +212,7 @@ export default function ProfilePage() {
         } catch (e) {
           console.error('Ошибка при форматировании даты рождения:', e);
           notification.showError(
-            'Ошибка при форматировании даты рождения. Пожалуйста, проверьте формат.'
+            'Ошибка при форматировании даты рождения. Пожалуйста, проверьте формат.',
           );
           setIsSaving(false);
           return;
@@ -232,9 +222,7 @@ export default function ProfilePage() {
       }
 
       data.email =
-        typeof data.email === 'string' && data.email.trim().length > 0
-          ? data.email.trim()
-          : null;
+        typeof data.email === 'string' && data.email.trim().length > 0 ? data.email.trim() : null;
       data.status = status;
       // Бэкенд ожидает строку; не отправляем пустые значения
       if (preferencesText && preferencesText.trim().length > 0) {
@@ -248,7 +236,7 @@ export default function ProfilePage() {
       }
 
       const resultAction = await dispatch(
-        updateUserProfile({ role: user.role, userId: user!.id, data })
+        updateUserProfile({ role: user.role, userId: user.id, data }),
       );
 
       if (updateUserProfile.fulfilled.match(resultAction)) {
@@ -265,16 +253,14 @@ export default function ProfilePage() {
             notification.showError(
               `Профиль сохранен, но пароль не изменен: ${
                 passwordError?.message || 'Не удалось изменить пароль'
-              }`
+              }`,
             );
             return;
           }
         }
 
         notification.showSuccess(
-          passwordChanged
-            ? 'Профиль и пароль успешно обновлены'
-            : 'Профиль успешно обновлен'
+          passwordChanged ? 'Профиль и пароль успешно обновлены' : 'Профиль успешно обновлен',
         );
 
         // Выходим из режима редактирования
@@ -286,10 +272,7 @@ export default function ProfilePage() {
         });
 
         await dispatch(getCurrentUser());
-      } else if (
-        updateUserProfile.rejected.match(resultAction) &&
-        resultAction.payload
-      ) {
+      } else if (updateUserProfile.rejected.match(resultAction) && resultAction.payload) {
         notification.showError(resultAction.payload as string);
       }
     } catch (err) {
@@ -325,9 +308,7 @@ export default function ProfilePage() {
       setValue('middleName', user.middleName || '');
       setValue('workStart', user.workStart || '');
       setValue('workEnd', user.workEnd || '');
-      setPreferencesText(
-        typeof user.preferences === 'string' ? user.preferences : ''
-      );
+      setPreferencesText(typeof user.preferences === 'string' ? user.preferences : '');
     }
   };
 
@@ -375,12 +356,7 @@ export default function ProfilePage() {
           </div>
           {!isEditing && (
             <Button onClick={handleEdit} variant="outline">
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -420,14 +396,10 @@ export default function ProfilePage() {
                     {isEditing ? (
                       <select
                         value={status}
-                        onChange={(e) =>
-                          handleStatusChange(e.target.value as UserStatus)
-                        }
+                        onChange={(e) => handleStatusChange(e.target.value as UserStatus)}
                         className="bg-white text-gray-900 rounded px-2 py-1 text-sm"
                       >
-                        <option value={UserStatus.WORKING}>
-                          На рабочем месте
-                        </option>
+                        <option value={UserStatus.WORKING}>На рабочем месте</option>
                         <option value={UserStatus.AWAY}>Отсутствую</option>
                         <option value={UserStatus.LUNCH}>Обедаю</option>
                         <option value={UserStatus.SLEEP}>Сплю</option>
@@ -466,9 +438,7 @@ export default function ProfilePage() {
                           placeholder="Введите логин"
                         />
                         {errors.login && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.login}
-                          </p>
+                          <p className="text-red-500 text-xs mt-1">{errors.login}</p>
                         )}
                       </div>
                       <div>
@@ -477,7 +447,7 @@ export default function ProfilePage() {
                         </label>
                         <input
                           type="email"
-                          value={values.email}
+                          value={values.email ?? ''}
                           onChange={handleChange}
                           onBlur={handleBlur}
                           name="email"
@@ -485,9 +455,7 @@ export default function ProfilePage() {
                           placeholder="Введите email"
                         />
                         {errors.email && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.email}
-                          </p>
+                          <p className="text-red-500 text-xs mt-1">{errors.email}</p>
                         )}
                       </div>
                     </div>
@@ -508,9 +476,7 @@ export default function ProfilePage() {
                           placeholder="Введите имя"
                         />
                         {errors.firstName && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.firstName}
-                          </p>
+                          <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
                         )}
                       </div>
                       <div>
@@ -527,9 +493,7 @@ export default function ProfilePage() {
                           placeholder="Введите фамилию"
                         />
                         {errors.lastName && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.lastName}
-                          </p>
+                          <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
                         )}
                       </div>
                       <div>
@@ -556,7 +520,7 @@ export default function ProfilePage() {
                         </label>
                         <input
                           type="date"
-                          value={values.birthday}
+                          value={values.birthday ?? ''}
                           onChange={handleChange}
                           onBlur={handleBlur}
                           name="birthday"
@@ -619,9 +583,7 @@ export default function ProfilePage() {
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-xs text-gray-500 mb-2">
-                            Текущий пароль
-                          </label>
+                          <label className="block text-xs text-gray-500 mb-2">Текущий пароль</label>
                           <input
                             type="password"
                             value={passwordForm.currentPassword}
@@ -632,9 +594,7 @@ export default function ProfilePage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-2">
-                            Новый пароль
-                          </label>
+                          <label className="block text-xs text-gray-500 mb-2">Новый пароль</label>
                           <input
                             type="password"
                             value={passwordForm.newPassword}
@@ -687,75 +647,53 @@ export default function ProfilePage() {
                 {/* Просмотр данных */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Логин
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {user.login}
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Логин</div>
+                    <div className="text-lg font-semibold text-gray-900">{user.login}</div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Email
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Email</div>
                     <div className="text-lg font-semibold text-gray-900">
                       {user.email || 'Не указан'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Имя
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Имя</div>
                     <div className="text-lg font-semibold text-gray-900">
                       {user.firstName || 'Не указано'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Фамилия
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Фамилия</div>
                     <div className="text-lg font-semibold text-gray-900">
                       {user.lastName || 'Не указано'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Отчество
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Отчество</div>
                     <div className="text-lg font-semibold text-gray-900">
                       {user.middleName || 'Не указано'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Дата рождения
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Дата рождения</div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {user.birthday
-                        ? formatRussian(user.birthday)
-                        : 'Не указана'}
+                      {user.birthday ? formatRussian(user.birthday) : 'Не указана'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Возраст
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Возраст</div>
                     <div className="text-lg font-semibold text-gray-900">
                       {age ? `${age} лет` : 'Не указан'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Часовой пояс
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Часовой пояс</div>
                     <div className="text-lg font-semibold text-gray-900">
                       {getTimezoneDisplayLabel(user.timezone)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Рабочее время
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Рабочее время</div>
                     <div className="text-lg font-semibold text-gray-900">
                       {user.workStart && user.workEnd
                         ? `${user.workStart} - ${user.workEnd}`
@@ -763,9 +701,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      Регистрация
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-2">Регистрация</div>
                     <div className="text-lg font-semibold text-gray-900">
                       {formatRussian(user.createdAt)}
                     </div>
@@ -774,9 +710,7 @@ export default function ProfilePage() {
 
                 {preferencesText && (
                   <div className="pt-4 border-t border-gray-100">
-                    <div className="text-sm font-medium text-gray-500 mb-3">
-                      Предпочтения
-                    </div>
+                    <div className="text-sm font-medium text-gray-500 mb-3">Предпочтения</div>
                     <div className="text-gray-900 leading-relaxed bg-gray-50 p-4 rounded-lg">
                       {preferencesText}
                     </div>

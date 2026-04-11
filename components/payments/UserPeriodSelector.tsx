@@ -1,11 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  CalendarIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
+import { CalendarIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import Button from '../ui/Button';
 import { formatDateToISO } from '../../utils/date';
 
@@ -23,25 +19,19 @@ export default function UserPeriodSelector({
   minDate,
 }: UserPeriodSelectorProps) {
   const [date, setDate] = useState<string>(selectedDate);
-  const normalizedMinDate = useMemo(
-    () => (minDate ? formatDateToISO(minDate) : ''),
-    [minDate]
-  );
+  const normalizedMinDate = useMemo(() => (minDate ? formatDateToISO(minDate) : ''), [minDate]);
 
   useEffect(() => {
     setDate(formatDateToISO(selectedDate));
   }, [selectedDate]);
 
-  const isDateTooEarly =
-    normalizedMinDate !== '' && formatDateToISO(date) < normalizedMinDate;
+  const isDateTooEarly = normalizedMinDate !== '' && formatDateToISO(date) < normalizedMinDate;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center space-x-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
         <CalendarIcon className="h-5 w-5 text-blue-600" />
-        <span className="text-sm font-medium text-blue-800">
-          Расчет задолженности до даты:
-        </span>
+        <span className="text-sm font-medium text-blue-800">Расчет задолженности до даты:</span>
         <input
           type="date"
           value={formatDateToISO(date)}

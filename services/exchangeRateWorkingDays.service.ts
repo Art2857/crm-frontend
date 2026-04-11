@@ -1,19 +1,19 @@
 /**
  * Сервис для работы с рабочими днями в контексте котировок ЦБ РФ
  * Принципы: SOLID, DRY, KISS
- * 
+ *
  * Single Responsibility: только рабочие дни для котировок
  * Open/Closed: легко расширяется для других центробанков
  * Dependency Inversion: зависит от интерфейсов
  */
 
 import { ExchangeRateDate, ExchangeRateDates } from '../utils/exchangeRateDate';
-import { 
-  isCBRWorkingDay, 
-  getLastCBRWorkingDay, 
+import {
+  isCBRWorkingDay,
+  getLastCBRWorkingDay,
   getNextCBRWorkingDay,
   getCBRWorkingDaysInRange,
-  hasCBRWorkingDaysBetween
+  hasCBRWorkingDaysBetween,
 } from '../utils/cbr-working-days';
 
 /**
@@ -24,7 +24,10 @@ export interface IExchangeRateWorkingDaysService {
   getNextWorkingDay(date: ExchangeRateDate | string | Date): ExchangeRateDate;
   getPreviousWorkingDay(date: ExchangeRateDate | string | Date): ExchangeRateDate;
   getLastWorkingDay(): ExchangeRateDate;
-  getWorkingDaysInRange(start: ExchangeRateDate | string, end: ExchangeRateDate | string): ExchangeRateDate[];
+  getWorkingDaysInRange(
+    start: ExchangeRateDate | string,
+    end: ExchangeRateDate | string,
+  ): ExchangeRateDate[];
   countWorkingDays(start: ExchangeRateDate | string, end: ExchangeRateDate | string): number;
   hasWorkingDaysBetween(start: ExchangeRateDate | string, end: ExchangeRateDate | string): boolean;
 }
@@ -56,14 +59,14 @@ export class ExchangeRateWorkingDaysService implements IExchangeRateWorkingDaysS
   getPreviousWorkingDay(date: ExchangeRateDate | string | Date): ExchangeRateDate {
     const dateObj = this.normalizeToDate(date);
     const currentDate = new Date(dateObj);
-    
+
     for (let i = 1; i <= 7; i++) {
       currentDate.setDate(currentDate.getDate() - 1);
       if (isCBRWorkingDay(currentDate)) {
         return ExchangeRateDates.fromDate(new Date(currentDate));
       }
     }
-    
+
     throw new Error('Could not find previous CBR working day within last week');
   }
 
@@ -78,16 +81,19 @@ export class ExchangeRateWorkingDaysService implements IExchangeRateWorkingDaysS
   /**
    * Получает все рабочие дни ЦБ РФ в диапазоне (включительно)
    */
-  getWorkingDaysInRange(start: ExchangeRateDate | string, end: ExchangeRateDate | string): ExchangeRateDate[] {
+  getWorkingDaysInRange(
+    start: ExchangeRateDate | string,
+    end: ExchangeRateDate | string,
+  ): ExchangeRateDate[] {
     const startDate = this.normalizeToExchangeRateDate(start);
     const endDate = this.normalizeToExchangeRateDate(end);
-    
+
     if (startDate.isAfter(endDate)) {
       throw new Error('Start date must be before or equal to end date');
     }
-    
+
     const allDates = ExchangeRateDates.range(startDate, endDate);
-    return allDates.filter(date => this.isWorkingDay(date));
+    return allDates.filter((date) => this.isWorkingDay(date));
   }
 
   /**
@@ -103,7 +109,7 @@ export class ExchangeRateWorkingDaysService implements IExchangeRateWorkingDaysS
   hasWorkingDaysBetween(start: ExchangeRateDate | string, end: ExchangeRateDate | string): boolean {
     const startDate = this.normalizeToDate(start);
     const endDate = this.normalizeToDate(end);
-    
+
     return hasCBRWorkingDaysBetween(startDate, endDate);
   }
 
@@ -114,14 +120,22 @@ export class ExchangeRateWorkingDaysService implements IExchangeRateWorkingDaysS
     const exchangeDate = this.normalizeToExchangeRateDate(date);
     const jsDate = exchangeDate.toDate();
     const dayOfWeek = jsDate.getDay();
-    const dayNames = ['ВОСКР(❌)', 'ПОНЕД(❌)', 'ВТОРН(✅)', 'СРЕДА(✅)', 'ЧЕТВ(✅)', 'ПЯТН(✅)', 'СУББ(✅)'];
-    
+    const dayNames = [
+      'ВОСКР(❌)',
+      'ПОНЕД(❌)',
+      'ВТОРН(✅)',
+      'СРЕДА(✅)',
+      'ЧЕТВ(✅)',
+      'ПЯТН(✅)',
+      'СУББ(✅)',
+    ];
+
     return {
       date: exchangeDate.value,
       dayOfWeek: dayOfWeek,
       dayName: dayNames[dayOfWeek],
       isWorkingDay: this.isWorkingDay(exchangeDate),
-      note: 'ЦБ РФ: Выходные ВС+ПН, Рабочие ВТ-СБ'
+      note: 'ЦБ РФ: Выходные ВС+ПН, Рабочие ВТ-СБ',
     };
   }
 
@@ -132,15 +146,15 @@ export class ExchangeRateWorkingDaysService implements IExchangeRateWorkingDaysS
     if (date instanceof Date) {
       return date;
     }
-    
+
     if (date instanceof ExchangeRateDate) {
       return date.toDate();
     }
-    
+
     if (typeof date === 'string') {
       return new ExchangeRateDate(date).toDate();
     }
-    
+
     throw new Error(`Invalid date format: ${date}`);
   }
 
@@ -151,7 +165,7 @@ export class ExchangeRateWorkingDaysService implements IExchangeRateWorkingDaysS
     if (date instanceof ExchangeRateDate) {
       return date;
     }
-    
+
     return new ExchangeRateDate(date);
   }
 }

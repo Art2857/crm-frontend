@@ -40,9 +40,7 @@ export default function CreateWorkPage() {
   }, [dispatch, user?.role]);
 
   // Обработчик изменения полей формы
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -91,11 +89,13 @@ export default function CreateWorkPage() {
       return;
     }
 
+    if (!user?.role) {
+      return;
+    }
+
     try {
       setSuccess('');
-      const resultAction = await dispatch(
-        createWork({ role: user.role, data: formData })
-      );
+      const resultAction = await dispatch(createWork({ role: user.role, data: formData }));
 
       if (createWork.fulfilled.match(resultAction)) {
         setSuccess('Работа успешно создана');
@@ -119,17 +119,12 @@ export default function CreateWorkPage() {
     <Layout>
       <div className="py-6">
         <div className="mx-auto max-w-3xl sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-            Создание новой работы
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-6">Создание новой работы</h1>
 
           <Card>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                   Название работы
                 </label>
                 <Input
@@ -168,25 +163,18 @@ export default function CreateWorkPage() {
                     ))}
                   </Select>
                 ) : (
-                  <div className="text-gray-500 italic">
-                    Загрузка списка пользователей...
-                  </div>
+                  <div className="text-gray-500 italic">Загрузка списка пользователей...</div>
                 )}
               </div>
 
               <div>
                 <div className="flex items-center mb-1">
-                  <label
-                    htmlFor="salary"
-                    className="block text-sm font-medium text-gray-700 mr-4"
-                  >
+                  <label htmlFor="salary" className="block text-sm font-medium text-gray-700 mr-4">
                     Бюджет проекта
                   </label>
                   <CurrencySwitch
                     value={formData.currency as 'RUB' | 'USD'}
-                    onChange={(val) =>
-                      setFormData((p) => ({ ...p, currency: val }))
-                    }
+                    onChange={(val) => setFormData((p) => ({ ...p, currency: val }))}
                     size="sm"
                   />
                 </div>
@@ -235,18 +223,10 @@ export default function CreateWorkPage() {
               {success && <Alert type="success">{success}</Alert>}
 
               <div className="flex justify-end space-x-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.push('/works')}
-                >
+                <Button type="button" variant="outline" onClick={() => router.push('/works')}>
                   Отмена
                 </Button>
-                <Button
-                  type="submit"
-                  isLoading={isLoading}
-                  disabled={isLoading}
-                >
+                <Button type="submit" isLoading={isLoading} disabled={isLoading}>
                   Создать работу
                 </Button>
               </div>

@@ -16,11 +16,7 @@ const WorksPage = () => {
   const [showWorks, setShowWorks] = useState(false);
 
   const dispatch = useAppDispatch();
-  const {
-    isAuthenticated,
-    user,
-    isLoading: authLoading,
-  } = useAppSelector((s) => s.auth);
+  const { isAuthenticated, user, isLoading: authLoading } = useAppSelector((s) => s.auth);
   React.useEffect(() => {
     if (!authLoading && (!isAuthenticated || !user)) {
       dispatch(getCurrentUser()).catch(() => {});
@@ -62,9 +58,7 @@ const WorksPage = () => {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
-          <span className="text-gray-600">
-            Перенаправление на страницу входа...
-          </span>
+          <span className="text-gray-600">Перенаправление на страницу входа...</span>
         </div>
       </Layout>
     );
@@ -141,9 +135,7 @@ const WorksPage = () => {
             {showArchived ? 'Нет архивных работ' : 'Нет доступных работ'}
           </h3>
           <p className="mt-2 text-gray-500 mb-6">
-            {showArchived
-              ? 'Архивные работы отсутствуют'
-              : 'Создайте новую работу для просмотра'}
+            {showArchived ? 'Архивные работы отсутствуют' : 'Создайте новую работу для просмотра'}
           </p>
           {user?.role === 'ADMIN' && !showArchived && (
             <Button
@@ -172,9 +164,7 @@ const WorksPage = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Работы</h1>
-            <p className="text-gray-600 mt-1">
-              Управляйте работами и аналитикой
-            </p>
+            <p className="text-gray-600 mt-1">Управляйте работами и аналитикой</p>
           </div>
           <div className="flex space-x-3">
             <Button
@@ -185,16 +175,8 @@ const WorksPage = () => {
               {showWorks ? 'Показать по сотрудникам' : 'Показать все работы'}
             </Button>
             <Button
-              variant={
-                (showWorks ? listShowArchived : showArchived)
-                  ? 'primary'
-                  : 'secondary'
-              }
-              onClick={() =>
-                showWorks
-                  ? toggleListArchived()
-                  : setShowArchived(!showArchived)
-              }
+              variant={(showWorks ? listShowArchived : showArchived) ? 'primary' : 'secondary'}
+              onClick={() => (showWorks ? toggleListArchived() : setShowArchived(!showArchived))}
               className="rounded-lg px-4 py-2 shadow-sm"
               disabled={showWorks ? listLoading : analyticsLoading}
             >

@@ -14,7 +14,6 @@ import { TimezoneStorage } from '../contexts/TimezoneContext';
 export const initializeTimezoneSupport = () => {
   // Timezone уже автоматически добавляется в ApiClient.ts
   // Никаких дополнительных действий не требуется
-
 };
 
 /**

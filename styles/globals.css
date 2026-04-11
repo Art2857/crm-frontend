@@ -6,7 +6,7 @@
   body {
     @apply bg-gray-100;
   }
-  
+
   /* Блокируем скролл без смещения контента (без position: fixed) */
   body.modal-open {
     overflow: hidden;
@@ -18,19 +18,19 @@
   .form-input {
     @apply rounded-md shadow-sm border-gray-300 focus:border-primary-500 focus:ring-primary-500;
   }
-  
+
   .btn {
     @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
-  
+
   .btn-primary {
     @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
   }
-  
+
   .btn-secondary {
     @apply bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500;
   }
-  
+
   .btn-outline {
     @apply bg-white border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-primary-500;
   }
@@ -175,5 +175,7 @@
 }
 
 .history-group:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-} 
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

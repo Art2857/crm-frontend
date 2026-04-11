@@ -34,14 +34,7 @@ export default function FinancialSummary({
       overpaid: convert(overpaidAmount, 'RUB', to),
       remaining: convert(remainingDebt, 'RUB', to),
     };
-  }, [
-    convert,
-    totalAccrued,
-    totalPaid,
-    overpaidAmount,
-    remainingDebt,
-    currency,
-  ]);
+  }, [convert, totalAccrued, totalPaid, overpaidAmount, remainingDebt, currency]);
 
   return (
     <div className={`grid grid-cols-4 gap-3 text-center ${className}`}>
@@ -53,9 +46,7 @@ export default function FinancialSummary({
       </div>
       <div className="bg-green-50 rounded-lg p-2">
         <p className="text-xs text-green-600 font-medium">Выплачено</p>
-        <p className="text-sm font-bold text-green-800">
-          {formatCurrency(display.paid, currency)}
-        </p>
+        <p className="text-sm font-bold text-green-800">{formatCurrency(display.paid, currency)}</p>
       </div>
       <div className="bg-yellow-50 rounded-lg p-2">
         <p className="text-xs text-yellow-700 font-medium">Переплата</p>
@@ -63,11 +54,7 @@ export default function FinancialSummary({
           {formatCurrency(display.overpaid, currency)}
         </p>
       </div>
-      <div
-        className={`rounded-lg p-2 ${
-          remainingDebt > 0 ? 'bg-red-50' : 'bg-orange-50'
-        }`}
-      >
+      <div className={`rounded-lg p-2 ${remainingDebt > 0 ? 'bg-red-50' : 'bg-orange-50'}`}>
         <p
           className={`text-xs font-medium ${
             remainingDebt > 0 ? 'text-red-600' : 'text-orange-600'
@@ -76,9 +63,7 @@ export default function FinancialSummary({
           Остаток
         </p>
         <p
-          className={`text-sm font-bold ${
-            remainingDebt > 0 ? 'text-red-800' : 'text-orange-800'
-          }`}
+          className={`text-sm font-bold ${remainingDebt > 0 ? 'text-red-800' : 'text-orange-800'}`}
         >
           {formatCurrency(display.remaining, currency)}
         </p>

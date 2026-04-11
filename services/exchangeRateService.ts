@@ -1,19 +1,22 @@
 /**
  * Единый сервис для работы с котировками валют
  * Следует принципам SOLID, DRY, KISS
- * 
+ *
  * Single Responsibility: управление котировками валют
  * Open/Closed: легко расширяется новыми валютами и источниками данных
  * Liskov Substitution: может быть заменен на другую реализацию
  * Interface Segregation: четкие интерфейсы для разных аспектов работы
  * Dependency Inversion: зависит от абстракций (интерфейсов)
- * 
+ *
  * DRY: единое место для всей логики котировок
  * KISS: простой API для работы с котировками
  */
 
 import { ExchangeRateDate, ExchangeRateDates } from '../utils/exchangeRateDate';
-import { exchangeRateWorkingDaysService, IExchangeRateWorkingDaysService } from './exchangeRateWorkingDays.service';
+import {
+  exchangeRateWorkingDaysService,
+  IExchangeRateWorkingDaysService,
+} from './exchangeRateWorkingDays.service';
 
 /**
  * Интерфейс котировки валюты
@@ -67,7 +70,11 @@ export interface IExchangeRateCacheStats {
 export interface IExchangeRateStorage {
   getRate(currencyCode: string, date: string): Promise<IExchangeRate | null>;
   setRate(rate: IExchangeRate): Promise<void>;
-  getRatesInRange(currencyCode: string, startDate: string, endDate: string): Promise<IExchangeRate[]>;
+  getRatesInRange(
+    currencyCode: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<IExchangeRate[]>;
   getAllRates(currencyCode: string): Promise<IExchangeRate[]>;
   getCacheStats(): Promise<IExchangeRateCacheStats>;
   clear(): Promise<void>;
@@ -88,7 +95,7 @@ export interface IExchangeRateProvider {
 export const DEFAULT_SEARCH_CONFIG: IExchangeRateSearchConfig = {
   maxDaysBack: 365,
   onlyWorkingDays: true,
-  fallbackToAnyDay: true
+  fallbackToAnyDay: true,
 };
 
 /**
@@ -104,7 +111,7 @@ export class ExchangeRateService {
     storage: IExchangeRateStorage,
     provider: IExchangeRateProvider,
     workingDaysService: IExchangeRateWorkingDaysService = exchangeRateWorkingDaysService,
-    config: IExchangeRateSearchConfig = DEFAULT_SEARCH_CONFIG
+    config: IExchangeRateSearchConfig = DEFAULT_SEARCH_CONFIG,
   ) {
     this.storage = storage;
     this.provider = provider;
@@ -115,7 +122,10 @@ export class ExchangeRateService {
   /**
    * Получает котировку валюты на конкретную дату
    */
-  async getRate(currencyCode: string, date: ExchangeRateDate | string): Promise<IExchangeRate | null> {
+  async getRate(
+    currencyCode: string,
+    date: ExchangeRateDate | string,
+  ): Promise<IExchangeRate | null> {
     const exchangeDate = typeof date === 'string' ? ExchangeRateDates.fromString(date) : date;
     return this.storage.getRate(currencyCode, exchangeDate.value);
   }
@@ -125,13 +135,15 @@ export class ExchangeRateService {
    * Ищет от указанной даты (или текущей) назад до нахождения котировки
    */
   async getLatestRate(
-    currencyCode: string, 
+    currencyCode: string,
     fromDate?: ExchangeRateDate | string,
-    config: Partial<IExchangeRateSearchConfig> = {}
+    config: Partial<IExchangeRateSearchConfig> = {},
   ): Promise<IExchangeRateSearchResult> {
     const searchConfig = { ...this.defaultConfig, ...config };
-    const startDate = fromDate 
-      ? (typeof fromDate === 'string' ? ExchangeRateDates.fromString(fromDate) : fromDate)
+    const startDate = fromDate
+      ? typeof fromDate === 'string'
+        ? ExchangeRateDates.fromString(fromDate)
+        : fromDate
       : ExchangeRateDates.today();
 
     console.log(`🔍 Поиск последней котировки ${currencyCode} от ${startDate.value}`);
@@ -145,17 +157,19 @@ export class ExchangeRateService {
         if (this.workingDays.isWorkingDay(currentDate)) {
           const rate = await this.storage.getRate(currencyCode, currentDate.value);
           if (rate) {
-            console.log(`✅ Найдена котировка ${currencyCode} на ${currentDate.value}: ${rate.rate}`);
+            console.log(
+              `✅ Найдена котировка ${currencyCode} на ${currentDate.value}: ${rate.rate}`,
+            );
             return {
               found: true,
               rate,
               searchedDate: startDate.value,
               actualDate: currentDate.value,
-              daysSearched: daysSearched + 1
+              daysSearched: daysSearched + 1,
             };
           }
         }
-        
+
         currentDate = currentDate.subtractDays(1);
         daysSearched++;
       }
@@ -170,16 +184,18 @@ export class ExchangeRateService {
       while (daysSearched < searchConfig.maxDaysBack) {
         const rate = await this.storage.getRate(currencyCode, currentDate.value);
         if (rate) {
-          console.log(`✅ Найдена котировка ${currencyCode} на ${currentDate.value}: ${rate.rate} (любой день)`);
+          console.log(
+            `✅ Найдена котировка ${currencyCode} на ${currentDate.value}: ${rate.rate} (любой день)`,
+          );
           return {
             found: true,
             rate,
             searchedDate: startDate.value,
             actualDate: currentDate.value,
-            daysSearched: daysSearched + 1
+            daysSearched: daysSearched + 1,
           };
         }
-        
+
         currentDate = currentDate.subtractDays(1);
         daysSearched++;
       }
@@ -189,7 +205,7 @@ export class ExchangeRateService {
     return {
       found: false,
       searchedDate: startDate.value,
-      daysSearched
+      daysSearched,
     };
   }
 
@@ -202,43 +218,43 @@ export class ExchangeRateService {
     missingDates: ExchangeRateDate[];
   }> {
     const latestResult = await this.getLatestRate(currencyCode);
-    
+
     if (!latestResult.found) {
       return {
         needsUpdate: true,
         reason: 'Нет котировок в кеше',
-        missingDates: []
+        missingDates: [],
       };
     }
 
     const latestDate = ExchangeRateDates.fromString(latestResult.rate!.date);
     const today = ExchangeRateDates.today();
-    
+
     // Проверяем, есть ли рабочие дни между последней котировкой и сегодня
     if (this.workingDays.hasWorkingDaysBetween(latestDate, today)) {
-      const missingDates = this.workingDays.getWorkingDaysInRange(
-        latestDate.addDays(1), 
-        today
-      );
-      
+      const missingDates = this.workingDays.getWorkingDaysInRange(latestDate.addDays(1), today);
+
       return {
         needsUpdate: true,
         reason: `Пропущены рабочие дни после ${latestDate.value}`,
-        missingDates
+        missingDates,
       };
     }
 
     return {
       needsUpdate: false,
       reason: 'Данные актуальны',
-      missingDates: []
+      missingDates: [],
     };
   }
 
   /**
    * Загружает недостающие котировки
    */
-  async loadMissingRates(currencyCode: string, dates: ExchangeRateDate[]): Promise<{
+  async loadMissingRates(
+    currencyCode: string,
+    dates: ExchangeRateDate[],
+  ): Promise<{
     loaded: number;
     failed: ExchangeRateDate[];
   }> {
@@ -249,12 +265,14 @@ export class ExchangeRateService {
       try {
         console.log(`📡 Загружаем котировки на ${date.value}`);
         const rates = await this.provider.fetchRates(date);
-        const targetRate = rates.find(r => r.currencyCode === currencyCode);
-        
+        const targetRate = rates.find((r) => r.currencyCode === currencyCode);
+
         if (targetRate) {
           await this.storage.setRate(targetRate);
           loaded++;
-          console.log(`✅ Сохранена котировка ${currencyCode} на ${date.value}: ${targetRate.rate}`);
+          console.log(
+            `✅ Сохранена котировка ${currencyCode} на ${date.value}: ${targetRate.rate}`,
+          );
         } else {
           console.log(`⚠️ Котировка ${currencyCode} на ${date.value} не найдена в ответе API`);
           failed.push(date);
@@ -278,23 +296,23 @@ export class ExchangeRateService {
     reason: string;
   }> {
     const updateCheck = await this.checkForUpdates(currencyCode);
-    
+
     if (!updateCheck.needsUpdate) {
       return {
         needsUpdate: false,
         loaded: 0,
         failed: [],
-        reason: updateCheck.reason
+        reason: updateCheck.reason,
       };
     }
 
     const loadResult = await this.loadMissingRates(currencyCode, updateCheck.missingDates);
-    
+
     return {
       needsUpdate: true,
       loaded: loadResult.loaded,
       failed: loadResult.failed,
-      reason: updateCheck.reason
+      reason: updateCheck.reason,
     };
   }
 
@@ -302,8 +320,8 @@ export class ExchangeRateService {
    * Принудительное обновление - загружает данные за указанный период
    */
   async forceUpdate(
-    currencyCode: string, 
-    daysBack: number = 60
+    currencyCode: string,
+    daysBack: number = 60,
   ): Promise<{
     loaded: number;
     failed: ExchangeRateDate[];
@@ -311,9 +329,11 @@ export class ExchangeRateService {
     const endDate = ExchangeRateDates.today();
     const startDate = endDate.subtractDays(daysBack);
     const workingDates = this.workingDays.getWorkingDaysInRange(startDate, endDate);
-    
-    console.log(`🔄 Принудительное обновление ${currencyCode} за ${daysBack} дней (${workingDates.length} рабочих дней)`);
-    
+
+    console.log(
+      `🔄 Принудительное обновление ${currencyCode} за ${daysBack} дней (${workingDates.length} рабочих дней)`,
+    );
+
     return this.loadMissingRates(currencyCode, workingDates);
   }
 
@@ -338,14 +358,14 @@ export class ExchangeRateService {
     const stats = await this.getCacheStats();
     const latestResult = await this.getLatestRate(currencyCode);
     const updateCheck = await this.checkForUpdates(currencyCode);
-    
+
     return {
       currency: currencyCode,
       cache: stats,
       latest: latestResult,
       updates: updateCheck,
       workingDaysConfig: { type: 'CBR', name: 'ЦБ РФ рабочие дни (вт-сб)' },
-      searchConfig: this.defaultConfig
+      searchConfig: this.defaultConfig,
     };
   }
 

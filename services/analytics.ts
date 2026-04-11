@@ -73,7 +73,7 @@ export const analyticsService = {
     _role: Role,
     endDate?: string,
     worksIds?: string[],
-    targetUserId?: string
+    targetUserId?: string,
   ): Promise<ResponsibleUser[]> {
     // дата по умолчанию — сегодня
     if (!endDate) {
@@ -131,8 +131,7 @@ export const analyticsService = {
         }));
         // Use backend aggregated RUB totals to avoid extra per-work calls
         const totalAccruedRub = w.totals.accrued;
-        const overpaidAmount =
-          w.overpaidAmount ?? Math.max(w.totals.paid - totalAccruedRub, 0);
+        const overpaidAmount = w.overpaidAmount ?? Math.max(w.totals.paid - totalAccruedRub, 0);
         const requiresAttention = w.requiresAttention || false;
         return {
           workId: w.workId,
@@ -179,8 +178,7 @@ export const analyticsService = {
         totalAccrued: u.totals.totalAccrued,
         totalPaid: u.totals.totalPaid,
         overpaidAmount:
-          u.totals.overpaidAmount ??
-          works.reduce((s, w) => s + (w.overpaidAmount || 0), 0),
+          u.totals.overpaidAmount ?? works.reduce((s, w) => s + (w.overpaidAmount || 0), 0),
         remainingDebt: u.totals.remainingDebt,
         isPaymentDue: u.totals.isPaymentDue,
         requiresAttention: requiresAttentionUser,
@@ -204,7 +202,7 @@ export const analyticsService = {
     const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
       ANALYTICS_ENDPOINTS.paymentsCalculation,
-      { params: queryParams }
+      { params: queryParams },
     );
     return data;
   },
@@ -219,7 +217,7 @@ export const analyticsService = {
     const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
       ANALYTICS_ENDPOINTS.paymentsCalculationUser,
-      { params: queryParams }
+      { params: queryParams },
     );
     return data;
   },
@@ -228,9 +226,7 @@ export const analyticsService = {
    */
   async getMyDebts(): Promise<MyDebtsResponse> {
     try {
-      const response = await privateApi.get<MyDebtsResponse>(
-        ANALYTICS_ENDPOINTS.myDebts
-      );
+      const response = await privateApi.get<MyDebtsResponse>(ANALYTICS_ENDPOINTS.myDebts);
       return response.data;
     } catch (error) {
       logger.error('Error fetching my debts:', error);

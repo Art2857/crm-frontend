@@ -9,16 +9,16 @@ export interface ExchangeRatesState {
   rates: Record<string, ExchangeRate>; // key: "USD-2024-08-30"
   latestRates: Record<string, ExchangeRate>; // key: currency code
   chartData: Record<string, ChartDataPoint[]>; // key: "USD-from-to"
-  
+
   // Метаданные кеша
   lastUpdate: string | null;
   cacheStatus: 'loading' | 'loaded' | 'error' | 'empty';
-  
+
   // UI состояние
   isLoading: boolean;
   isUpdating: boolean; // для фонового обновления
   error: string | null;
-  
+
   // Статистика
   totalCachedRates: number;
   lastSyncDate: string | null;
@@ -39,7 +39,7 @@ const initialState: ExchangeRatesState = {
 
 // Утилиты для ключей
 const createRateKey = (currencyCode: string, date: string) => `${currencyCode}-${date}`;
-const createChartKey = (currencyCode: string, fromDate: string, toDate: string) => 
+const createChartKey = (currencyCode: string, fromDate: string, toDate: string) =>
   `${currencyCode}-${fromDate}-${toDate}`;
 
 // Конвертация между форматами
@@ -94,20 +94,22 @@ export const loadFromCache = createAsyncThunk(
       console.error('Error loading from cache:', error);
       throw error;
     }
-  }
+  },
 );
 
 // Обновление данных с API
 export const updateFromAPI = createAsyncThunk(
   'exchangeRates/updateFromAPI',
-  async (params: { 
-    currencyCode?: string; 
-    fromDate?: Date; 
-    toDate?: Date;
-    force?: boolean; // принудительное обновление
-  } = {}) => {
+  async (
+    params: {
+      currencyCode?: string;
+      fromDate?: Date;
+      toDate?: Date;
+      force?: boolean; // принудительное обновление
+    } = {},
+  ) => {
     const { currencyCode = 'USD', fromDate, toDate, force = false } = params;
-    
+
     try {
       // Проверяем, нужно ли обновление
       if (!force) {
@@ -116,7 +118,7 @@ export const updateFromAPI = createAsyncThunk(
           const lastUpdateDate = new Date(lastUpdate);
           const now = new Date();
           const diffHours = (now.getTime() - lastUpdateDate.getTime()) / (1000 * 60 * 60);
-          
+
           // Если данные свежие (меньше часа), не обновляем
           if (diffHours < 1) {
             return null;
@@ -135,7 +137,7 @@ export const updateFromAPI = createAsyncThunk(
       if (response && response.data && response.data.length > 0) {
         const cachedRates = response.data.map(exchangeRateToCache);
         await indexedDBManager.saveRates(cachedRates);
-        
+
         // Обновляем метаданные
         const now = new Date().toISOString();
         await indexedDBManager.setMetadata('lastUpdate', now);
@@ -151,37 +153,29 @@ export const updateFromAPI = createAsyncThunk(
       console.error('Error updating from API:', error);
       throw error;
     }
-  }
+  },
 );
 
 // Получение данных для графика (всегда с API для актуальности)
 export const loadChartData = createAsyncThunk(
   'exchangeRates/loadChartData',
-  async (params: {
-    currencyCode: string;
-    fromDate: Date;
-    toDate: Date;
-  }) => {
+  async (params: { currencyCode: string; fromDate: Date; toDate: Date }) => {
     const { currencyCode, fromDate, toDate } = params;
 
     const chartKey = createChartKey(
       currencyCode,
       fromDate.toISOString().split('T')[0],
-      toDate.toISOString().split('T')[0]
+      toDate.toISOString().split('T')[0],
     );
 
     try {
       // Всегда загружаем с API — бэкенд обеспечит подгрузку недостающих дат
-      const response = await exchangeRatesService.getChartData(
-        currencyCode,
-        fromDate,
-        toDate
-      );
+      const response = await exchangeRatesService.getChartData(currencyCode, fromDate, toDate);
 
       if (response && response.length > 0) {
         // Сохраняем в IndexedDB для оффлайн-доступа
         const now = new Date().toISOString();
-        const cachedRates: CachedExchangeRate[] = response.map(point => ({
+        const cachedRates: CachedExchangeRate[] = response.map((point) => ({
           currencyCode,
           rate: point.rate,
           nominal: point.nominal,
@@ -202,11 +196,11 @@ export const loadChartData = createAsyncThunk(
       const cachedRates = await indexedDBManager.getRatesInRange(
         currencyCode,
         fromDate.toISOString().split('T')[0],
-        toDate.toISOString().split('T')[0]
+        toDate.toISOString().split('T')[0],
       );
 
       if (cachedRates.length > 0) {
-        const chartData: ChartDataPoint[] = cachedRates.map(rate => ({
+        const chartData: ChartDataPoint[] = cachedRates.map((rate) => ({
           date: rate.date,
           rate: rate.rate,
           nominal: rate.nominal,
@@ -229,18 +223,21 @@ export const loadChartData = createAsyncThunk(
       console.error('Error loading chart data:', error);
       throw error;
     }
-  }
+  },
 );
 
 // Быстрая конвертация валют (без API запросов)
 export const convertCurrency = createAsyncThunk(
   'exchangeRates/convertCurrency',
-  async (params: {
-    amount: number;
-    fromCurrency: string;
-    toCurrency: string;
-    date?: string; // если не указана, используется последний курс
-  }, { getState }) => {
+  async (
+    params: {
+      amount: number;
+      fromCurrency: string;
+      toCurrency: string;
+      date?: string; // если не указана, используется последний курс
+    },
+    { getState },
+  ) => {
     const { amount, fromCurrency, toCurrency, date } = params;
     const state = getState() as { exchangeRates: ExchangeRatesState };
 
@@ -248,7 +245,12 @@ export const convertCurrency = createAsyncThunk(
       let rate: ExchangeRate | null = null;
 
       // Поддерживаем только конвертации USD<->RUB, используем курс USD как базовый
-      if (!((fromCurrency === 'USD' && toCurrency === 'RUB') || (fromCurrency === 'RUB' && toCurrency === 'USD'))) {
+      if (
+        !(
+          (fromCurrency === 'USD' && toCurrency === 'RUB') ||
+          (fromCurrency === 'RUB' && toCurrency === 'USD')
+        )
+      ) {
         throw new Error(`Конвертация ${fromCurrency} -> ${toCurrency} не поддерживается`);
       }
 
@@ -268,7 +270,7 @@ export const convertCurrency = createAsyncThunk(
         // Просто ищем последний курс через IndexedDB (динамически!)
         const cached = await indexedDBManager.getLatestRate(rateCurrency);
         rate = cached ? cacheToExchangeRate(cached) : null;
-        
+
         console.log('🔍 Получили из IndexedDB последний курс:', rate);
       }
 
@@ -277,7 +279,10 @@ export const convertCurrency = createAsyncThunk(
         if (normalizedDate) {
           try {
             const apiService = await import('../../services/exchangeRates');
-            const result = await apiService.exchangeRatesService.getRateByDate('USD', new Date(normalizedDate));
+            const result = await apiService.exchangeRatesService.getRateByDate(
+              'USD',
+              new Date(normalizedDate),
+            );
             if (result) {
               rate = result as ExchangeRate;
             }
@@ -314,7 +319,7 @@ export const convertCurrency = createAsyncThunk(
       console.error('Error converting currency:', error);
       throw error;
     }
-  }
+  },
 );
 
 // Очистка старого кеша
@@ -323,37 +328,39 @@ export const cleanOldCache = createAsyncThunk(
   async (daysToKeep: number = 365) => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-    
+
     await indexedDBManager.cleanOldRates(cutoffDate.toISOString().split('T')[0]);
-    
+
     const cacheSize = await indexedDBManager.getCacheSize();
     return cacheSize;
-  }
+  },
 );
 
 // Новая функция: умная загрузка недостающих данных
 export const smartLoadMissingData = createAsyncThunk(
   'exchangeRates/smartLoadMissingData',
-  async (params: { 
-    currencyCode?: string;
-    checkDaysBack?: number; // на сколько дней назад проверять
-  } = {}) => {
+  async (
+    params: {
+      currencyCode?: string;
+      checkDaysBack?: number; // на сколько дней назад проверять
+    } = {},
+  ) => {
     const { currencyCode = 'USD', checkDaysBack = 60 } = params;
-    
+
     try {
       // Проверяем какие данные у нас есть (принудительно используем правильную функцию)
       console.log(`🔎 smartLoadMissingData: Проверяем последний курс для ${currencyCode}`);
       const latestRate = await indexedDBManager.getLatestRate(currencyCode);
       console.log(`📋 Получили последний курс:`, latestRate);
-      
+
       const today = new Date();
       let needsUpdate = true;
-      
+
       if (latestRate) {
         // ПАРСИМ ДАТУ В ФОРМАТЕ DD.MM.YYYY ПРАВИЛЬНО!
         let latestDate: Date;
         const dateStr = latestRate.date;
-        
+
         if (dateStr.includes('.')) {
           // Формат DD.MM.YYYY
           const [day, month, year] = dateStr.split('.');
@@ -362,33 +369,45 @@ export const smartLoadMissingData = createAsyncThunk(
           // Формат ISO
           latestDate = new Date(dateStr);
         }
-        const diffDays = Math.floor((today.getTime() - latestDate.getTime()) / (1000 * 60 * 60 * 24));
-        
+        const diffDays = Math.floor(
+          (today.getTime() - latestDate.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
         // ПРОВЕРЯЕМ НА РАБОЧИе ДНИ! Не просто 3 дня!
-        console.log(`📅 Последние данные: ${latestRate.date} (парсинг: ${latestDate.toISOString().split('T')[0]}), разница дней: ${diffDays}`);
-        
+        console.log(
+          `📅 Последние данные: ${latestRate.date} (парсинг: ${latestDate.toISOString().split('T')[0]}), разница дней: ${diffDays}`,
+        );
+
         // Проверяем есть ли рабочие дни между последними данными и сегодня
         let hasWorkingDaysBetween = false;
         const checkDate = new Date(latestDate);
         checkDate.setDate(checkDate.getDate() + 1); // Начинаем со следующего дня
-        
-        console.log(`🔍 Проверяем дни с ${checkDate.toISOString().split('T')[0]} по ${today.toISOString().split('T')[0]}`);
-        
+
+        console.log(
+          `🔍 Проверяем дни с ${checkDate.toISOString().split('T')[0]} по ${today.toISOString().split('T')[0]}`,
+        );
+
         while (checkDate <= today) {
           const dayOfWeek = checkDate.getDay();
-          const dayName = ['VOSKR', 'PONED', 'VTOR', 'SREDA', 'CHETV', 'PYATN', 'SUBBOT'][dayOfWeek];
-          
-          console.log(`📅 Проверяем ${checkDate.toISOString().split('T')[0]} (${dayName}, dayOfWeek=${dayOfWeek})`);
-          
+          const dayName = ['VOSKR', 'PONED', 'VTOR', 'SREDA', 'CHETV', 'PYATN', 'SUBBOT'][
+            dayOfWeek
+          ];
+
+          console.log(
+            `📅 Проверяем ${checkDate.toISOString().split('T')[0]} (${dayName}, dayOfWeek=${dayOfWeek})`,
+          );
+
           // Рабочие дни ЦБ РФ: вт-сб (2-6), ИСКЛЮЧАЕМ вс-пн (0,1)
           if (dayOfWeek >= 2 && dayOfWeek <= 6) {
             hasWorkingDaysBetween = true;
-            console.log(`📈 НАШЛИ рабочий день без данных: ${checkDate.toISOString().split('T')[0]} (${dayName})`);
+            console.log(
+              `📈 НАШЛИ рабочий день без данных: ${checkDate.toISOString().split('T')[0]} (${dayName})`,
+            );
             break;
           }
           checkDate.setDate(checkDate.getDate() + 1);
         }
-        
+
         if (!hasWorkingDaysBetween) {
           needsUpdate = false;
           console.log('✅ Нет рабочих дней для обновления');
@@ -396,45 +415,52 @@ export const smartLoadMissingData = createAsyncThunk(
           console.log(`🚀 НУЖНО ОБНОВЛЕНИЕ! Есть рабочие дни без данных`);
         }
       }
-      
+
       if (!needsUpdate) {
         console.log(`✅ smartLoadMissingData: Данные актуальны для ${currencyCode}`);
         console.log(`📅 smartLoadMissingData: Последняя дата: ${latestRate?.date}`);
         return {
           message: 'Данные актуальны',
           latestDate: latestRate?.date,
-          loaded: 0
+          loaded: 0,
         };
       }
-      
+
       // Загружаем недостающие данные с API (ПОСЛЕДНИЕ 60 ДНЕЙ!)
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - 60); // Увеличиваем до 60 дней назад
-      
-      console.log(`🚀 Загружаем данные с ${fromDate.toISOString().split('T')[0]} по ${today.toISOString().split('T')[0]}`);
+
+      console.log(
+        `🚀 Загружаем данные с ${fromDate.toISOString().split('T')[0]} по ${today.toISOString().split('T')[0]}`,
+      );
       console.log(`📡 Параметры API запроса:`, {
         currencyCode,
         fromDate: fromDate.toISOString().split('T')[0],
-        toDate: today.toISOString().split('T')[0]
+        toDate: today.toISOString().split('T')[0],
       });
-      
+
       // ОТЛАДКА: покажем какие дни должны быть рабочими по логике ЦБ РФ
       console.log('🏦 Ожидаемые рабочие дни ЦБ РФ в запрашиваемом диапазоне:');
-      const expectedWorkingDays = [];
+      const expectedWorkingDays: string[] = [];
       const checkFrom = new Date('2025-08-20'); // Проверим последние дни августа
       const checkTo = new Date('2025-08-31');
-      
+
       for (let d = new Date(checkFrom); d <= checkTo; d.setDate(d.getDate() + 1)) {
         const dayOfWeek = d.getDay();
         const isWorkingCBR = dayOfWeek >= 2 && dayOfWeek <= 6; // вт-сб
         const dateStr = d.toISOString().split('T')[0];
         const dayNames = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
-        
-        console.log(`   ${dateStr} (${dayNames[dayOfWeek]}): ${isWorkingCBR ? '✅ Должен быть' : '❌ Выходной'}`);
+
+        console.log(
+          `   ${dateStr} (${dayNames[dayOfWeek]}): ${isWorkingCBR ? '✅ Должен быть' : '❌ Выходной'}`,
+        );
         if (isWorkingCBR) expectedWorkingDays.push(dateStr);
       }
-      console.log(`🎯 Итого ожидается ${expectedWorkingDays.length} рабочих дней:`, expectedWorkingDays);
-      
+      console.log(
+        `🎯 Итого ожидается ${expectedWorkingDays.length} рабочих дней:`,
+        expectedWorkingDays,
+      );
+
       let response;
       try {
         response = await exchangeRatesService.getExchangeRates({
@@ -444,18 +470,23 @@ export const smartLoadMissingData = createAsyncThunk(
         });
         console.log('📈 Ответ API:', response);
         console.log('📊 Количество записей:', response?.data?.length);
-        console.log('📅 Первые 10 дат из API:', response?.data?.slice(0, 10).map(r => r.date));
-        
+        console.log(
+          '📅 Первые 10 дат из API:',
+          response?.data?.slice(0, 10).map((r) => r.date),
+        );
+
         // Проверим какие рабочие дни ЦБ РФ пропущены в ответе
         if (response?.data) {
-          const receivedDates = response.data.map(r => {
+          const receivedDates = response.data.map((r) => {
             const date = r.date;
             return date.includes('T') ? date.split('T')[0] : date;
           });
-          
+
           console.log('📋 Полученные даты в ISO формате:', receivedDates.slice(0, 10));
-          
-          const missingWorkingDays = expectedWorkingDays.filter(expected => !receivedDates.includes(expected));
+
+          const missingWorkingDays = expectedWorkingDays.filter(
+            (expected) => !receivedDates.includes(expected),
+          );
           if (missingWorkingDays.length > 0) {
             console.warn('⚠️ ПРОПУЩЕНЫ рабочие дни ЦБ РФ:', missingWorkingDays);
           } else {
@@ -466,46 +497,46 @@ export const smartLoadMissingData = createAsyncThunk(
         console.error('❌ Ошибка API:', apiError);
         throw apiError;
       }
-      
+
       if (response && response.data && response.data.length > 0) {
         // Сохраняем в IndexedDB
         const cachedRates = response.data.map(exchangeRateToCache);
         await indexedDBManager.saveRates(cachedRates);
-        
+
         // Обновляем метаданные
         const now = new Date().toISOString();
         await indexedDBManager.setMetadata('lastUpdate', now);
         await indexedDBManager.setMetadata('lastSyncDate', now);
-        
+
         // Находим МАКСИМАЛЬНУЮ дату среди загруженных данных через рефакторенные утилиты
-        const dates = response.data.map(rate => rate.date);
+        const dates = response.data.map((rate) => rate.date);
         const sortedDates = dates.sort((a, b) => {
           return new Date(b).getTime() - new Date(a).getTime();
         });
-        
+
         const maxDate = sortedDates[0] || '';
-        
+
         console.log(`📊 smartLoadMissingData: Загружено ${response.data.length} курсов`);
         console.log(`📅 smartLoadMissingData: Максимальная дата среди загруженных: ${maxDate}`);
         console.log(`🗂️ smartLoadMissingData: Все загруженные даты:`, sortedDates.slice(0, 5));
-        
+
         return {
           message: 'Данные обновлены',
           rates: response.data,
           loaded: response.data.length,
-          latestDate: maxDate
+          latestDate: maxDate,
         };
       }
-      
+
       return {
         message: 'Новых данных нет',
-        loaded: 0
+        loaded: 0,
       };
     } catch (error) {
       console.error('Error in smartLoadMissingData:', error);
       throw error;
     }
-  }
+  },
 );
 
 // Slice
@@ -517,28 +548,27 @@ const exchangeRatesSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    
+
     // Установка статуса загрузки
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
-    
+
     // Добавление курса в состояние
     addRate: (state, action: PayloadAction<ExchangeRate>) => {
       const rate = action.payload;
       const key = createRateKey(rate.currencyCode, rate.date);
       state.rates[key] = rate;
-      
+
       // ЭКСТРЕННЫЙ ФИКС: Очищаем latestRates полностью перед обновлением
 
-      
       // Очищаем старые данные для этой валюты
       delete state.latestRates[rate.currencyCode];
-      
+
       // Добавляем новые данные
       state.latestRates[rate.currencyCode] = rate;
     },
-    
+
     // Очистка кеша
     clearCache: (state) => {
       state.rates = {};
@@ -561,19 +591,19 @@ const exchangeRatesSlice = createSlice({
       .addCase(loadFromCache.fulfilled, (state, action) => {
         state.isLoading = false;
         state.cacheStatus = 'loaded';
-        
+
         if (action.payload) {
           // Добавляем курсы в состояние
-          action.payload.rates.forEach(rate => {
+          action.payload.rates.forEach((rate) => {
             const key = createRateKey(rate.currencyCode, rate.date);
             state.rates[key] = rate;
           });
-          
+
           // Обновляем последний курс
           if (action.payload.latestRate) {
             state.latestRates[action.payload.latestRate.currencyCode] = action.payload.latestRate;
           }
-          
+
           state.lastUpdate = action.payload.lastUpdate;
           state.lastSyncDate = action.payload.lastSyncDate;
           state.totalCachedRates = action.payload.totalCachedRates;
@@ -593,33 +623,27 @@ const exchangeRatesSlice = createSlice({
       })
       .addCase(updateFromAPI.fulfilled, (state, action) => {
         state.isUpdating = false;
-        
 
-        
         if (action.payload) {
           // ФИКС: Анализируем что приходит и НЕ перезаписываем более свежие данные
-          action.payload.rates.forEach(rate => {
-
-            
+          action.payload.rates.forEach((rate) => {
             const key = createRateKey(rate.currencyCode, rate.date);
-            
+
             // Проверяем есть ли уже более свежие данные
             const existingLatest = state.latestRates[rate.currencyCode];
             if (existingLatest && existingLatest.date > rate.date) {
-
               return; // Пропускаем старые данные
             }
-            
+
             state.rates[key] = rate;
-            
+
             // Обновляем последний курс только если это действительно свежие данные
             const currentLatest = state.latestRates[rate.currencyCode];
             if (!currentLatest || rate.date > currentLatest.date) {
-
               state.latestRates[rate.currencyCode] = rate;
             }
           });
-          
+
           state.lastUpdate = action.payload.updateTime;
           state.lastSyncDate = action.payload.updateTime;
           state.totalCachedRates = Object.keys(state.rates).length;
@@ -638,7 +662,7 @@ const exchangeRatesSlice = createSlice({
       })
       .addCase(loadChartData.fulfilled, (state, action) => {
         state.isLoading = false;
-        
+
         if (action.payload) {
           state.chartData[action.payload.chartKey] = action.payload.data;
         }
@@ -649,16 +673,14 @@ const exchangeRatesSlice = createSlice({
       });
 
     // convertCurrency
-    builder
-      .addCase(convertCurrency.rejected, (state, action) => {
-        state.error = action.error.message || 'Ошибка конвертации валюты';
-      });
+    builder.addCase(convertCurrency.rejected, (state, action) => {
+      state.error = action.error.message || 'Ошибка конвертации валюты';
+    });
 
     // cleanOldCache
-    builder
-      .addCase(cleanOldCache.fulfilled, (state, action) => {
-        state.totalCachedRates = action.payload.ratesCount;
-      });
+    builder.addCase(cleanOldCache.fulfilled, (state, action) => {
+      state.totalCachedRates = action.payload.ratesCount;
+    });
 
     // smartLoadMissingData
     builder
@@ -668,17 +690,17 @@ const exchangeRatesSlice = createSlice({
       })
       .addCase(smartLoadMissingData.fulfilled, (state, action) => {
         state.isUpdating = false;
-        
+
         if (action.payload && action.payload.rates) {
           // Добавляем новые курсы
-          action.payload.rates.forEach(rate => {
+          action.payload.rates.forEach((rate) => {
             const key = createRateKey(rate.currencyCode, rate.date);
             state.rates[key] = rate;
-            
+
             // НЕ обновляем latestRates - сравнение строк дат DD.MM.YYYY не работает!
             // IndexedDB всегда даст правильный последний курс
           });
-          
+
           state.lastUpdate = new Date().toISOString();
           state.lastSyncDate = new Date().toISOString();
           state.totalCachedRates = Object.keys(state.rates).length;
@@ -695,7 +717,8 @@ export const { clearError, setLoading, addRate, clearCache } = exchangeRatesSlic
 export default exchangeRatesSlice.reducer;
 
 // Селекторы
-export const selectExchangeRates = (state: { exchangeRates: ExchangeRatesState }) => state.exchangeRates;
+export const selectExchangeRates = (state: { exchangeRates: ExchangeRatesState }) =>
+  state.exchangeRates;
 
 // Селектор последнего курса - ИДЕМ В IndexedDB!
 export const selectLatestRate = createSelector(
@@ -705,7 +728,7 @@ export const selectLatestRate = createSelector(
   ],
   (latestRates, currencyCode) => {
     return latestRates[currencyCode] || null;
-  }
+  },
 );
 
 export const selectRateByDate = createSelector(
@@ -713,15 +736,16 @@ export const selectRateByDate = createSelector(
     (state: { exchangeRates: ExchangeRatesState }) => state.exchangeRates.rates,
     (_: any, currencyCode: string, date: string) => createRateKey(currencyCode, date),
   ],
-  (rates, key) => rates[key]
+  (rates, key) => rates[key],
 );
 
 export const selectChartData = createSelector(
   [
     (state: { exchangeRates: ExchangeRatesState }) => state.exchangeRates.chartData,
-    (_: any, currencyCode: string, fromDate: string, toDate: string) => createChartKey(currencyCode, fromDate, toDate),
+    (_: any, currencyCode: string, fromDate: string, toDate: string) =>
+      createChartKey(currencyCode, fromDate, toDate),
   ],
-  (chartData, key) => chartData[key]
+  (chartData, key) => chartData[key],
 );
 
 // Мемоизированный селектор для статуса кеша
@@ -734,5 +758,5 @@ export const selectCacheStatus = createSelector(
     lastSync: exchangeRates.lastSyncDate,
     isLoading: exchangeRates.isLoading,
     isUpdating: exchangeRates.isUpdating,
-  })
+  }),
 );

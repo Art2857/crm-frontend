@@ -6,9 +6,16 @@
 // Основные сервисы
 export { ExchangeRateService } from './exchangeRateService';
 export { WorkingDaysService, workingDaysService } from './workingDaysService';
-export { ExchangeRateWorkingDaysService, exchangeRateWorkingDaysService } from './exchangeRateWorkingDays.service';
+export {
+  ExchangeRateWorkingDaysService,
+  exchangeRateWorkingDaysService,
+} from './exchangeRateWorkingDays.service';
 export { ExchangeRateFacade, exchangeRateFacade } from './exchangeRateFacade';
-export { exchangeRateSystem, initializeExchangeRateSystem, useExchangeRateSystem } from './exchangeRateSystem';
+export {
+  exchangeRateSystem,
+  initializeExchangeRateSystem,
+  useExchangeRateSystem,
+} from './exchangeRateSystem';
 
 // Хранилище
 export { IndexedDBExchangeRateStorage, indexedDBStorage } from '../storage/indexedDBStorage';
@@ -19,17 +26,17 @@ export { CBRExchangeRateProvider, cbrProvider } from '../providers/cbrProvider';
 // Утилиты
 export * from '../utils/exchangeRateDate';
 // Exchange rate working days (CBR: tue-sat)
-export { 
-  isCBRWorkingDay as isExchangeRateWorkingDay, 
-  getLastCBRWorkingDay as getLastExchangeRateWorkingDay 
+export {
+  isCBRWorkingDay as isExchangeRateWorkingDay,
+  getLastCBRWorkingDay as getLastExchangeRateWorkingDay,
 } from '../utils/cbr-working-days';
 
-// Salary working days (standard: mon-fri)  
-export { 
-  isSalaryWorkingDay, 
+// Salary working days (standard: mon-fri)
+export {
+  isSalaryWorkingDay,
   getLastSalaryWorkingDay,
   getSalaryWorkingDaysInPeriod,
-  getSalaryWorkingDaysInMonth
+  getSalaryWorkingDaysInMonth,
 } from '../utils/salary-working-days';
 
 // Хуки
@@ -42,17 +49,12 @@ export type {
   IExchangeRateSearchConfig,
   IExchangeRateCacheStats,
   IExchangeRateStorage,
-  IExchangeRateProvider
+  IExchangeRateProvider,
 } from './exchangeRateService';
 
-export type {
-  IWorkingDaysConfig,
-  IWorkingDaysService
-} from './workingDaysService';
+export type { IWorkingDaysConfig, IWorkingDaysService } from './workingDaysService';
 
-export type {
-  IExchangeRateDate
-} from '../utils/exchangeRateDate';
+export type { IExchangeRateDate } from '../utils/exchangeRateDate';
 
 // Компоненты
 export { default as CurrencyConverter } from '../components/exchange-rates/CurrencyConverter';
@@ -69,7 +71,7 @@ export const QuickStartConfigs = {
     enableDebugMode: false,
     enableAutoUpdate: true,
     updateIntervalMinutes: 60,
-    supportedCurrencies: ['USD', 'EUR']
+    supportedCurrencies: ['USD', 'EUR'],
   },
 
   /**
@@ -80,7 +82,7 @@ export const QuickStartConfigs = {
     enableDebugMode: true,
     enableAutoUpdate: true,
     updateIntervalMinutes: 5,
-    supportedCurrencies: ['USD', 'EUR', 'CNY', 'GBP', 'JPY']
+    supportedCurrencies: ['USD', 'EUR', 'CNY', 'GBP', 'JPY'],
   },
 
   /**
@@ -91,8 +93,8 @@ export const QuickStartConfigs = {
     enableDebugMode: false,
     enableAutoUpdate: false,
     updateIntervalMinutes: 0,
-    supportedCurrencies: ['USD']
-  }
+    supportedCurrencies: ['USD'],
+  },
 };
 
 /**
@@ -121,5 +123,5 @@ export const QuickStart = {
   async minimal() {
     const { initializeExchangeRateSystem } = await import('./exchangeRateSystem');
     return initializeExchangeRateSystem(QuickStartConfigs.minimal);
-  }
+  },
 };

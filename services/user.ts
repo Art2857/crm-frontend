@@ -38,17 +38,12 @@ interface GetAllUsersParams {
 
 export const userService = {
   // Получение списка всех пользователей (только для админа)
-  getAll: async (
-    getAllUsersParams: GetAllUsersParams
-  ): Promise<User[]> => {
+  getAll: async (getAllUsersParams: GetAllUsersParams): Promise<User[]> => {
     try {
-      const response = await privateApi.get<User[]>(
-        USERS_ENDPOINTS.base,
-        {
-          headers: ApiClient.getNoCacheHeaders(),
-          params: getAllUsersParams,
-        }
-      );
+      const response = await privateApi.get<User[]>(USERS_ENDPOINTS.base, {
+        headers: ApiClient.getNoCacheHeaders(),
+        params: getAllUsersParams,
+      });
       return response.data;
     } catch (error) {
       logger.error('Error fetching users:', error);
@@ -57,24 +52,17 @@ export const userService = {
   },
 
   // Алиас для getAll для совместимости с кодом, который использует getAllUsers
-  getAllUsers: async (
-    getAllUsersParams: GetAllUsersParams
-  ): Promise<User[]> => {
+  getAllUsers: async (getAllUsersParams: GetAllUsersParams): Promise<User[]> => {
     return userService.getAll(getAllUsersParams);
   },
 
   // Получение одного пользователя по ID
   getById: async (id: string): Promise<UserWithHistory> => {
     try {
-
-
       // Делаем запрос к API без параметров в URL, которые могут вызывать проблемы с CORS
-      const response = await privateApi.get<UserWithHistory>(
-        USERS_ENDPOINTS.byId(id),
-        {
-          headers: ApiClient.getNoCacheHeaders(),
-        }
-      );
+      const response = await privateApi.get<UserWithHistory>(USERS_ENDPOINTS.byId(id), {
+        headers: ApiClient.getNoCacheHeaders(),
+      });
 
       return response.data;
     } catch (error) {
@@ -84,10 +72,7 @@ export const userService = {
   },
 
   // Обновление профиля пользователя (неконфиденциальная информация)
-  updateProfile: async (
-    id: string,
-    data: Partial<UpdateProfileDto>
-  ): Promise<User> => {
+  updateProfile: async (id: string, data: Partial<UpdateProfileDto>): Promise<User> => {
     try {
       // Подготавливаем и санитизируем данные перед отправкой
       const processedData: Record<string, any> = {};
@@ -129,13 +114,9 @@ export const userService = {
       }
 
       // Отправляем запрос на обновление профиля
-      const response = await privateApi.patch<User>(
-        USERS_ENDPOINTS.profile(id),
-        processedData,
-        {
-          headers: ApiClient.getNoCacheHeaders(),
-        }
-      );
+      const response = await privateApi.patch<User>(USERS_ENDPOINTS.profile(id), processedData, {
+        headers: ApiClient.getNoCacheHeaders(),
+      });
 
       if (typeof window !== 'undefined') {
         accountManagerService.updateAccountUser(response.data);
@@ -149,10 +130,7 @@ export const userService = {
   },
 
   // Обновление конфиденциальной информации (только для админа)
-  updateSensitiveData: async (
-    id: string,
-    data: UpdateSensitiveDataDto
-  ): Promise<User> => {
+  updateSensitiveData: async (id: string, data: UpdateSensitiveDataDto): Promise<User> => {
     try {
       const processedData: Record<string, any> = {};
 
@@ -180,13 +158,9 @@ export const userService = {
         }
       }
 
-      const response = await privateApi.patch<User>(
-        USERS_ENDPOINTS.sensitive(id),
-        processedData,
-        {
-          headers: ApiClient.getNoCacheHeaders(),
-        }
-      );
+      const response = await privateApi.patch<User>(USERS_ENDPOINTS.sensitive(id), processedData, {
+        headers: ApiClient.getNoCacheHeaders(),
+      });
 
       if (typeof window !== 'undefined') {
         accountManagerService.updateAccountUser(response.data);
@@ -200,9 +174,7 @@ export const userService = {
   },
 
   // Получение истории пользователя
-  getUserHistory: async (
-    userId: string
-  ): Promise<UserWithHistory> => {
+  getUserHistory: async (userId: string): Promise<UserWithHistory> => {
     try {
       // Получаем данные пользователя
       const userData = await userService.getById(userId);
@@ -215,7 +187,7 @@ export const userService = {
           USERS_ENDPOINTS.history(userId),
           {
             headers: ApiClient.getNoCacheHeaders(),
-          }
+          },
         );
 
         // Комбинируем данные в один объект
@@ -226,10 +198,7 @@ export const userService = {
 
         return userWithHistory;
       } catch (error) {
-        logger.error(
-          `Ошибка при загрузке истории пользователя ${userId}:`,
-          error
-        );
+        logger.error(`Ошибка при загрузке истории пользователя ${userId}:`, error);
         // Если не удалось загрузить историю, возвращаем пользователя с пустой историей
         return {
           ...userData,
@@ -237,10 +206,7 @@ export const userService = {
         };
       }
     } catch (error) {
-      logger.error(
-        `Ошибка при загрузке пользователя и истории ${userId}:`,
-        error
-      );
+      logger.error(`Ошибка при загрузке пользователя и истории ${userId}:`, error);
       throw error;
     }
   },
@@ -249,11 +215,14 @@ export const userService = {
   createUser: async (data: CreateUserDto): Promise<User> => {
     try {
       // Если есть токен, используем приватный клиент, чтобы пробросить Authorization
-      const response = await privateApi.post<AuthResponse>(
-        AUTH_ENDPOINTS.register,
-        data
-      );
-      return response.data.user;
+      const response = await privateApi.post<AuthResponse>(AUTH_ENDPOINTS.register, data);
+      const createdUser = response.data.user;
+
+      if (!createdUser) {
+        throw new Error('Сервер не вернул созданного пользователя');
+      }
+
+      return createdUser;
     } catch (error: any) {
       // Подробное логирование для отладки
       logger.error('Ошибка при создании пользователя:', {
@@ -269,9 +238,7 @@ export const userService = {
       // ApiError имеет свойство status, если ответ получен
       // Если status отсутствует и это не ошибка валидации, значит ответа не было
       if (!error.status && !error.isValidationError && !error.response) {
-        throw new Error(
-          'Нет ответа от сервера. Проверьте подключение к интернету.'
-        );
+        throw new Error('Нет ответа от сервера. Проверьте подключение к интернету.');
       }
 
       // Получаем статус и данные из ошибки (поддержка и ApiError и AxiosError)
@@ -280,39 +247,34 @@ export const userService = {
 
       // Проверяем ответ на слишком много запросов
       if (status === 429) {
-        throw new Error(
-          'Слишком много запросов. Пожалуйста, попробуйте позже.'
-        );
+        throw new Error('Слишком много запросов. Пожалуйста, попробуйте позже.');
       }
 
       // Структурированная обработка ошибок валидации
       if (error.isValidationError) {
         logger.debug('Обработка ошибки валидации:', error);
         // Если у нас есть детализированные ошибки валидации по полям
-        if (
-          error.validationErrors &&
-          Object.keys(error.validationErrors).length > 0
-        ) {
+        if (error.validationErrors && Object.keys(error.validationErrors).length > 0) {
           // Генерируем понятное пользователю сообщение об ошибке
-          const formattedErrors = [];
+          const formattedErrors: string[] = [];
 
           // Добавляем общее сообщение, если есть
           if (error.errorMessages && error.errorMessages.length > 0) {
             // Удаляем дубликаты
-            const uniqueMessages = Array.from(new Set(error.errorMessages));
+            const uniqueMessages = Array.from(new Set(error.errorMessages as string[]));
             formattedErrors.push(...uniqueMessages);
           }
 
           // Добавляем ошибки по полям
-          for (const [field, messages] of Object.entries(
-            error.validationErrors
-          )) {
+          for (const [field, messages] of Object.entries(error.validationErrors)) {
             if (field === '_general') continue; // Общие ошибки уже добавлены выше
 
             // Преобразуем в массив и удаляем дубликаты
             const messageArray = Array.isArray(messages)
-              ? messages
-              : [messages];
+              ? messages.filter((message): message is string => typeof message === 'string')
+              : typeof messages === 'string'
+                ? [messages]
+                : [];
             const uniqueMessages = Array.from(new Set(messageArray)).join(', ');
             formattedErrors.push(`${field}: ${uniqueMessages}`);
           }
@@ -326,7 +288,9 @@ export const userService = {
         // Если есть оригинальный объект ответа, используем его
         if (responseData && typeof responseData === 'object') {
           if (Array.isArray(responseData.message)) {
-            throw new Error(`Проверьте введённые данные и попробуйте снова:\n${responseData.message.join('\n')}`);
+            throw new Error(
+              `Проверьте введённые данные и попробуйте снова:\n${responseData.message.join('\n')}`,
+            );
           } else if (typeof responseData.message === 'string') {
             throw new Error(responseData.message);
           }
@@ -343,8 +307,7 @@ export const userService = {
       } else if (status === 500) {
         // Внутренняя ошибка сервера - более информативное сообщение
         const errorMessage =
-          responseData?.message ||
-          'Внутренняя ошибка сервера. Обратитесь к администратору.';
+          responseData?.message || 'Внутренняя ошибка сервера. Обратитесь к администратору.';
         throw new Error(errorMessage);
       }
 

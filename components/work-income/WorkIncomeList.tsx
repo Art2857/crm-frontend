@@ -50,10 +50,7 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
   };
 
   const getCurrencyLabel = (currency: 'RUB' | 'USD') => {
-    return (
-      CURRENCY_OPTIONS.find((option) => option.value === currency)?.label ||
-      currency
-    );
+    return CURRENCY_OPTIONS.find((option) => option.value === currency)?.label || currency;
   };
 
   // Цветовые схемы для валют
@@ -104,9 +101,7 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
               />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Записей о доходах пока нет
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Записей о доходах пока нет</h3>
           <p className="text-gray-500">
             Добавьте первую запись о поступлении средств для этой работы
           </p>
@@ -157,10 +152,7 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {sortedIncomes.map((income) => (
-              <tr
-                key={income.id}
-                className="hover:bg-gray-50 transition-colors"
-              >
+              <tr key={income.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {formatDate(income.receivedDate)}
@@ -184,10 +176,7 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
                       <div
                         className={`text-sm font-medium ${getCurrencyStyles(income.convertedCurrency as 'RUB' | 'USD').converted}`}
                       >
-                        {formatAmount(
-                          income.convertedAmount,
-                          income.convertedCurrency
-                        )}
+                        {formatAmount(income.convertedAmount, income.convertedCurrency)}
                       </div>
                       {income.exchangeRate && (
                         <div className="text-xs text-gray-500">

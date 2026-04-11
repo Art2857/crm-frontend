@@ -30,7 +30,7 @@ interface CalculationModalProps {
     amount: number,
     userName: string,
     workName: string,
-    calculationDate?: string
+    calculationDate?: string,
   ) => void;
   isDebtsView: boolean;
   calculationDate?: string;
@@ -60,11 +60,7 @@ export default function CalculationModal({
 
   // Sync initial currency when provided/opened
   useEffect(() => {
-    if (
-      isOpen &&
-      initialCurrency &&
-      (initialCurrency === 'USD' || initialCurrency === 'RUB')
-    ) {
+    if (isOpen && initialCurrency && (initialCurrency === 'USD' || initialCurrency === 'RUB')) {
       setDisplayCurrency(initialCurrency);
     }
   }, [isOpen, initialCurrency]);
@@ -73,7 +69,13 @@ export default function CalculationModal({
   const { convert, isLoading: isLoadingRate, rate } = useCurrencyConversion();
 
   const renderDutyFormula = useCallback(
-    (monthlyAmount, calculatedAmount, dutyCurrency, days, monthDays) => {
+    (
+      monthlyAmount: number,
+      calculatedAmount: number,
+      dutyCurrency: CurrencyType,
+      days: number,
+      monthDays: number,
+    ) => {
       const view = buildDutyFormulaView({
         monthlyAmount,
         calculatedAmount,
@@ -91,7 +93,7 @@ export default function CalculationModal({
         </span>
       );
     },
-    [displayCurrency, rate]
+    [displayCurrency, rate],
   );
 
   // Конвертированные значения для отображения
@@ -105,17 +107,9 @@ export default function CalculationModal({
       };
     }
 
-    const totalAccrued = convert(
-      calculation.totalAccrued,
-      'RUB',
-      displayCurrency
-    );
+    const totalAccrued = convert(calculation.totalAccrued, 'RUB', displayCurrency);
     const totalPaid = convert(calculation.totalPaid, 'RUB', displayCurrency);
-    const remainingDebt = convert(
-      calculation.remainingDebt,
-      'RUB',
-      displayCurrency
-    );
+    const remainingDebt = convert(calculation.remainingDebt, 'RUB', displayCurrency);
 
     return {
       totalAccrued: Math.round(totalAccrued),
@@ -185,8 +179,7 @@ export default function CalculationModal({
                 {(() => {
                   const userName = calculation?.userName || 'Пользователь';
                   const workName = calculation?.workName || 'Работа';
-                  if (isUserCalculation)
-                    return `Детальный расчет по пользователю: ${userName}`;
+                  if (isUserCalculation) return `Детальный расчет по пользователю: ${userName}`;
                   if (
                     calculation?.periods[0]?.duties.length === 1 &&
                     !isDebtsView &&
@@ -199,11 +192,7 @@ export default function CalculationModal({
             </div>
             <div className="flex items-center gap-3 relative">
               <div className="relative">
-                <CurrencySwitch
-                  value={displayCurrency}
-                  onChange={setDisplayCurrency}
-                  size="sm"
-                />
+                <CurrencySwitch value={displayCurrency} onChange={setDisplayCurrency} size="sm" />
                 <div className="absolute right-0 top-full mt-1 text-xs leading-none text-gray-500 whitespace-nowrap bg-white px-1 rounded pointer-events-none z-10 antialiased">
                   {isLoadingRate
                     ? 'Курс: загрузка...'
@@ -212,16 +201,8 @@ export default function CalculationModal({
                       : 'Курс недоступен'}
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -234,22 +215,15 @@ export default function CalculationModal({
           </div>
 
           {/* Для расчета по конкретной обязанности показываем только расчеты */}
-          {calculation?.periods[0]?.duties.length === 1 &&
-          !isDebtsView &&
-          !showPaymentHistory ? (
+          {calculation?.periods[0]?.duties.length === 1 && !isDebtsView && !showPaymentHistory ? (
             <div className="space-y-4">
               {/* Общая информация */}
               <div className="bg-blue-50 rounded-lg p-4 mb-6">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-sm text-blue-600 font-medium">
-                      Всего начислено
-                    </p>
+                    <p className="text-sm text-blue-600 font-medium">Всего начислено</p>
                     <p className="text-2xl font-bold text-blue-900">
-                      {formatCurrency(
-                        displayValues.totalAccrued,
-                        displayCurrency
-                      )}
+                      {formatCurrency(displayValues.totalAccrued, displayCurrency)}
                     </p>
                   </div>
                   <div>
@@ -265,10 +239,7 @@ export default function CalculationModal({
                       {isDebtsView ? 'Мне должны' : 'К доплате'}
                     </p>
                     <p className="text-2xl font-bold text-red-900">
-                      {formatCurrency(
-                        displayValues.remainingDebt,
-                        displayCurrency
-                      )}
+                      {formatCurrency(displayValues.remainingDebt, displayCurrency)}
                     </p>
                   </div>
                 </div>
@@ -278,12 +249,9 @@ export default function CalculationModal({
               <div className="flex gap-3">
                 {calculation.lastClosureDate && (
                   <div className="bg-blue-50 rounded-md px-3 py-2 flex-1 text-center border border-blue-200">
-                    <p className="text-xs text-blue-600 font-medium">
-                      Последнее закрытие
-                    </p>
+                    <p className="text-xs text-blue-600 font-medium">Последнее закрытие</p>
                     <p className="text-sm font-semibold text-blue-800">
-                      {formatRussian(calculation.lastClosureDate) ||
-                        'Неизвестная дата'}
+                      {formatRussian(calculation.lastClosureDate) || 'Неизвестная дата'}
                     </p>
                   </div>
                 )}
@@ -316,9 +284,7 @@ export default function CalculationModal({
                       <div className="flex items-center justify-between mb-3">
                         <h5 className="font-medium text-gray-900">
                           Период {index + 1}:{' '}
-                          {formatRussian(period.startDate) ||
-                            'Неизвестная дата'}{' '}
-                          -{' '}
+                          {formatRussian(period.startDate) || 'Неизвестная дата'} -{' '}
                           {formatRussian(period.endDate) || 'Неизвестная дата'}
                         </h5>
                         <Badge className="bg-blue-100 text-blue-800">
@@ -339,22 +305,19 @@ export default function CalculationModal({
                                   {workGroup.workName}
                                 </div>
                                 {workGroup.duties.map((duty, dutyIndex) => {
-                                  const dutyCurrency =
-                                    (duty.currency as CurrencyType) || 'RUB';
+                                  const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
                                   return (
                                     <div
                                       key={`duty-${duty.dutyId}-${workGroup.workId}-${index}-${dutyIndex}`}
                                       className="flex items-center justify-between text-sm ml-4"
                                     >
-                                      <span className="text-gray-700">
-                                        {duty.dutyName}:
-                                      </span>
+                                      <span className="text-gray-700">{duty.dutyName}:</span>
                                       {renderDutyFormula(
                                         duty.monthlyAmount as number,
                                         duty.calculatedAmount as number,
                                         dutyCurrency,
                                         period.days,
-                                        period.monthDays
+                                        period.monthDays,
                                       )}
                                     </div>
                                   );
@@ -363,22 +326,19 @@ export default function CalculationModal({
                             ))
                           : // Если нет группировки - отображаем как раньше
                             period.duties.map((duty, dutyIndex) => {
-                              const dutyCurrency =
-                                (duty.currency as CurrencyType) || 'RUB';
+                              const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
                               return (
                                 <div
                                   key={`duty-${duty.dutyId}-${index}-${dutyIndex}`}
                                   className="flex items-center justify-between text-sm"
                                 >
-                                  <span className="text-gray-700">
-                                    {duty.dutyName}:
-                                  </span>
+                                  <span className="text-gray-700">{duty.dutyName}:</span>
                                   {renderDutyFormula(
                                     duty.monthlyAmount as number,
                                     duty.calculatedAmount as number,
                                     dutyCurrency,
                                     period.days,
-                                    period.monthDays
+                                    period.monthDays,
                                   )}
                                 </div>
                               );
@@ -388,46 +348,27 @@ export default function CalculationModal({
                           <span>Итого за период:</span>
                           <span className="text-blue-600">
                             {formatCurrency(
-                              Array.isArray(period.workGroups) &&
-                                period.workGroups.length > 0
+                              Array.isArray(period.workGroups) && period.workGroups.length > 0
                                 ? period.workGroups.reduce(
                                     (sum, wg) =>
                                       sum +
                                       wg.duties.reduce((s, duty) => {
                                         const dutyCurrency =
-                                          (duty.currency as CurrencyType) ||
-                                          'RUB';
-                                        const amt =
-                                          Number(duty.calculatedAmount) || 0;
-                                        return (
-                                          s +
-                                          convert(
-                                            amt,
-                                            dutyCurrency,
-                                            displayCurrency
-                                          )
-                                        );
+                                          (duty.currency as CurrencyType) || 'RUB';
+                                        const amt = Number(duty.calculatedAmount) || 0;
+                                        return s + convert(amt, dutyCurrency, displayCurrency);
                                       }, 0),
-                                    0
+                                    0,
                                   )
-                                : (Array.isArray(period.duties)
-                                    ? period.duties
-                                    : []
-                                  ).reduce((s, duty: any) => {
-                                    const dutyCurrency =
-                                      (duty.currency as CurrencyType) || 'RUB';
-                                    const amt =
-                                      Number(duty.calculatedAmount) || 0;
-                                    return (
-                                      s +
-                                      convert(
-                                        amt,
-                                        dutyCurrency,
-                                        displayCurrency
-                                      )
-                                    );
-                                  }, 0),
-                              displayCurrency
+                                : (Array.isArray(period.duties) ? period.duties : []).reduce(
+                                    (s, duty: any) => {
+                                      const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
+                                      const amt = Number(duty.calculatedAmount) || 0;
+                                      return s + convert(amt, dutyCurrency, displayCurrency);
+                                    },
+                                    0,
+                                  ),
+                              displayCurrency,
                             )}
                           </span>
                         </div>
@@ -444,10 +385,7 @@ export default function CalculationModal({
                     Общая сумма за все периоды:
                   </h5>
                   <span className="text-2xl font-bold text-green-700">
-                    {formatCurrency(
-                      displayValues.totalAccrued,
-                      displayCurrency
-                    )}
+                    {formatCurrency(displayValues.totalAccrued, displayCurrency)}
                   </span>
                 </div>
               </div>
@@ -459,14 +397,9 @@ export default function CalculationModal({
               <div className="bg-blue-50 rounded-lg p-4 mb-6">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-sm text-blue-600 font-medium">
-                      Всего начислено
-                    </p>
+                    <p className="text-sm text-blue-600 font-medium">Всего начислено</p>
                     <p className="text-2xl font-bold text-blue-900">
-                      {formatCurrency(
-                        displayValues.totalAccrued,
-                        displayCurrency
-                      )}
+                      {formatCurrency(displayValues.totalAccrued, displayCurrency)}
                     </p>
                   </div>
                   <div>
@@ -482,10 +415,7 @@ export default function CalculationModal({
                       {isDebtsView ? 'Мне должны' : 'К доплате'}
                     </p>
                     <p className="text-2xl font-bold text-red-900">
-                      {formatCurrency(
-                        displayValues.remainingDebt,
-                        displayCurrency
-                      )}
+                      {formatCurrency(displayValues.remainingDebt, displayCurrency)}
                     </p>
                   </div>
                 </div>
@@ -496,24 +426,18 @@ export default function CalculationModal({
                     <div className="flex justify-center gap-6 text-sm">
                       {calculation.lastClosureDate && (
                         <div className="text-center">
-                          <span className="text-blue-600 font-medium">
-                            Последнее закрытие:{' '}
-                          </span>
+                          <span className="text-blue-600 font-medium">Последнее закрытие: </span>
                           <span className="text-blue-800 font-semibold">
-                            {formatRussian(calculation.lastClosureDate) ||
-                              'Неизвестная дата'}
+                            {formatRussian(calculation.lastClosureDate) || 'Неизвестная дата'}
                           </span>
                         </div>
                       )}
                       {calculationDate && (
                         <div className="text-center">
                           <CalendarIcon className="h-4 w-4 inline mr-1 text-green-600" />
-                          <span className="text-green-600 font-medium">
-                            Расчет до:{' '}
-                          </span>
+                          <span className="text-green-600 font-medium">Расчет до: </span>
                           <span className="text-green-800 font-semibold">
-                            {formatRussian(calculationDate) ||
-                              'Неизвестная дата'}
+                            {formatRussian(calculationDate) || 'Неизвестная дата'}
                           </span>
                         </div>
                       )}
@@ -550,8 +474,7 @@ export default function CalculationModal({
                               <span> {periodEndLocalDateString} </span>
                             </h5>
                             <Badge className="bg-blue-100 text-blue-800">
-                              {period.days || 0} из {period.monthDays || 0}{' '}
-                              рабочих дней
+                              {period.days || 0} из {period.monthDays || 0} рабочих дней
                             </Badge>
                           </div>
                           <div className="space-y-2">
@@ -567,23 +490,19 @@ export default function CalculationModal({
                                       {workGroup.workName}
                                     </div>
                                     {workGroup.duties.map((duty, dutyIndex) => {
-                                      const dutyCurrency =
-                                        (duty.currency as CurrencyType) ||
-                                        'RUB';
+                                      const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
                                       return (
                                         <div
                                           key={`duty-detail-${duty.dutyId}-${workGroup.workId}-${index}-${dutyIndex}`}
                                           className="flex items-center justify-between text-sm ml-4"
                                         >
-                                          <span className="text-gray-700">
-                                            {duty.dutyName}:
-                                          </span>
+                                          <span className="text-gray-700">{duty.dutyName}:</span>
                                           {renderDutyFormula(
                                             duty.monthlyAmount as number,
                                             duty.calculatedAmount as number,
                                             dutyCurrency,
                                             period.days,
-                                            period.monthDays
+                                            period.monthDays,
                                           )}
                                         </div>
                                       );
@@ -592,8 +511,7 @@ export default function CalculationModal({
                                 ))
                               : // Если нет группировки - отображаем все обязанности
                                 period.duties.map((duty, dutyIndex) => {
-                                  const dutyCurrency =
-                                    (duty.currency as CurrencyType) || 'RUB';
+                                  const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
                                   return (
                                     <div
                                       key={`duty-alt-${duty.dutyId}-${index}-${dutyIndex}`}
@@ -616,7 +534,7 @@ export default function CalculationModal({
                                         duty.calculatedAmount as number,
                                         dutyCurrency,
                                         period.days,
-                                        period.monthDays
+                                        period.monthDays,
                                       )}
                                     </div>
                                   );
@@ -626,48 +544,28 @@ export default function CalculationModal({
                               <span>Итого за период:</span>
                               <span className="text-blue-600">
                                 {formatCurrency(
-                                  Array.isArray(period.workGroups) &&
-                                    period.workGroups.length > 0
+                                  Array.isArray(period.workGroups) && period.workGroups.length > 0
                                     ? period.workGroups.reduce(
                                         (sum, wg) =>
                                           sum +
                                           wg.duties.reduce((s, duty) => {
                                             const dutyCurrency =
-                                              (duty.currency as CurrencyType) ||
-                                              'RUB';
-                                            const amt =
-                                              Number(duty.calculatedAmount) ||
-                                              0;
-                                            return (
-                                              s +
-                                              convert(
-                                                amt,
-                                                dutyCurrency,
-                                                displayCurrency
-                                              )
-                                            );
+                                              (duty.currency as CurrencyType) || 'RUB';
+                                            const amt = Number(duty.calculatedAmount) || 0;
+                                            return s + convert(amt, dutyCurrency, displayCurrency);
                                           }, 0),
-                                        0
+                                        0,
                                       )
-                                    : (Array.isArray(period.duties)
-                                        ? period.duties
-                                        : []
-                                      ).reduce((s, duty: any) => {
-                                        const dutyCurrency =
-                                          (duty.currency as CurrencyType) ||
-                                          'RUB';
-                                        const amt =
-                                          Number(duty.calculatedAmount) || 0;
-                                        return (
-                                          s +
-                                          convert(
-                                            amt,
-                                            dutyCurrency,
-                                            displayCurrency
-                                          )
-                                        );
-                                      }, 0),
-                                  displayCurrency
+                                    : (Array.isArray(period.duties) ? period.duties : []).reduce(
+                                        (s, duty: any) => {
+                                          const dutyCurrency =
+                                            (duty.currency as CurrencyType) || 'RUB';
+                                          const amt = Number(duty.calculatedAmount) || 0;
+                                          return s + convert(amt, dutyCurrency, displayCurrency);
+                                        },
+                                        0,
+                                      ),
+                                  displayCurrency,
                                 )}
                               </span>
                             </div>
@@ -683,10 +581,7 @@ export default function CalculationModal({
                         Общая сумма за все периоды:
                       </h5>
                       <span className="text-2xl font-bold text-green-700">
-                        {formatCurrency(
-                          displayValues.totalAccrued,
-                          displayCurrency
-                        )}
+                        {formatCurrency(displayValues.totalAccrued, displayCurrency)}
                       </span>
                     </div>
                   </div>
@@ -694,105 +589,95 @@ export default function CalculationModal({
                 {/* Правая колонка - История выплат */}
                 {showPaymentHistory && (
                   <div className="space-y-4">
-                    <h4 className="text-lg font-medium text-gray-900">
-                      История выплат:
-                    </h4>
+                    <h4 className="text-lg font-medium text-gray-900">История выплат:</h4>
                     <p className="text-sm text-gray-600">
                       (учитываются для долга: зарплата и аванс)
                     </p>
                     {calculation.paymentHistory.length > 0 ? (
                       <div className="space-y-3">
                         <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3">
-                          {calculation.paymentHistory.map(
-                            (payment, paymentIndex) => (
-                              <div
-                                key={`payment-${payment.id}-${paymentIndex}`}
-                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                              >
-                                <div className="flex items-center space-x-4">
-                                  <div
-                                    className={`p-2 rounded-full ${
-                                      payment.type === 'SALARY'
-                                        ? 'bg-green-100'
-                                        : payment.type === 'BONUS'
-                                          ? 'bg-blue-100'
-                                          : payment.type === 'EXTRA'
-                                            ? 'bg-purple-100'
-                                            : 'bg-yellow-100'
-                                    }`}
-                                  >
-                                    {payment.type === 'SALARY' ? (
-                                      <CurrencyDollarIcon className="h-5 w-5 text-green-600" />
-                                    ) : payment.type === 'BONUS' ? (
-                                      <BanknotesIcon className="h-5 w-5 text-blue-600" />
-                                    ) : payment.type === 'EXTRA' ? (
-                                      <BanknotesIcon className="h-5 w-5 text-purple-600" />
-                                    ) : (
-                                      <BanknotesIcon className="h-5 w-5 text-yellow-600" />
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className="flex items-center space-x-2 mb-1">
-                                      <Badge
-                                        className={
-                                          payment.type === 'SALARY'
-                                            ? 'bg-green-100 text-green-800'
-                                            : payment.type === 'BONUS'
-                                              ? 'bg-blue-100 text-blue-800'
-                                              : payment.type === 'EXTRA'
-                                                ? 'bg-purple-100 text-purple-800'
-                                                : 'bg-yellow-100 text-yellow-800'
-                                        }
-                                      >
-                                        {payment.type === 'SALARY'
-                                          ? 'Зарплата'
-                                          : payment.type === 'BONUS'
-                                            ? 'Премия'
-                                            : payment.type === 'EXTRA'
-                                              ? 'Доплата'
-                                              : 'Аванс'}
-                                      </Badge>
-                                      <span className="text-sm text-gray-600">
-                                        {formatRussian(payment.date) ||
-                                          'Неизвестная дата'}
-                                      </span>
-                                      {payment.createdAt && (
-                                        <span className="text-xs text-gray-500 ml-2">
-                                          <span>создано: </span>
-                                          <span>
-                                            {formatRussian(payment.createdAt) ||
-                                              'Неизвестная дата'}
-                                          </span>
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="font-medium text-gray-900">
-                                      {payment.description}
-                                    </p>
-                                    {payment.workName &&
-                                      (isUserCalculation ||
-                                        !calculation.workName ||
-                                        payment.workName !==
-                                          calculation.workName) && (
-                                        <p className="mt-1 text-sm text-blue-700">
-                                          Работа: {payment.workName}
-                                        </p>
-                                      )}
-                                  </div>
+                          {calculation.paymentHistory.map((payment, paymentIndex) => (
+                            <div
+                              key={`payment-${payment.id}-${paymentIndex}`}
+                              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="flex items-center space-x-4">
+                                <div
+                                  className={`p-2 rounded-full ${
+                                    payment.type === 'SALARY'
+                                      ? 'bg-green-100'
+                                      : payment.type === 'BONUS'
+                                        ? 'bg-blue-100'
+                                        : payment.type === 'EXTRA'
+                                          ? 'bg-purple-100'
+                                          : 'bg-yellow-100'
+                                  }`}
+                                >
+                                  {payment.type === 'SALARY' ? (
+                                    <CurrencyDollarIcon className="h-5 w-5 text-green-600" />
+                                  ) : payment.type === 'BONUS' ? (
+                                    <BanknotesIcon className="h-5 w-5 text-blue-600" />
+                                  ) : payment.type === 'EXTRA' ? (
+                                    <BanknotesIcon className="h-5 w-5 text-purple-600" />
+                                  ) : (
+                                    <BanknotesIcon className="h-5 w-5 text-yellow-600" />
+                                  )}
                                 </div>
-                                <div className="text-right">
-                                  <p className="text-lg font-bold text-green-600">
-                                    +
-                                    {formatCurrency(
-                                      payment.amount,
-                                      (payment.currency as CurrencyType) ||
-                                        'RUB'
+                                <div>
+                                  <div className="flex items-center space-x-2 mb-1">
+                                    <Badge
+                                      className={
+                                        payment.type === 'SALARY'
+                                          ? 'bg-green-100 text-green-800'
+                                          : payment.type === 'BONUS'
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : payment.type === 'EXTRA'
+                                              ? 'bg-purple-100 text-purple-800'
+                                              : 'bg-yellow-100 text-yellow-800'
+                                      }
+                                    >
+                                      {payment.type === 'SALARY'
+                                        ? 'Зарплата'
+                                        : payment.type === 'BONUS'
+                                          ? 'Премия'
+                                          : payment.type === 'EXTRA'
+                                            ? 'Доплата'
+                                            : 'Аванс'}
+                                    </Badge>
+                                    <span className="text-sm text-gray-600">
+                                      {formatRussian(payment.date) || 'Неизвестная дата'}
+                                    </span>
+                                    {payment.createdAt && (
+                                      <span className="text-xs text-gray-500 ml-2">
+                                        <span>создано: </span>
+                                        <span>
+                                          {formatRussian(payment.createdAt) || 'Неизвестная дата'}
+                                        </span>
+                                      </span>
                                     )}
-                                  </p>
+                                  </div>
+                                  <p className="font-medium text-gray-900">{payment.description}</p>
+                                  {payment.workName &&
+                                    (isUserCalculation ||
+                                      !calculation.workName ||
+                                      payment.workName !== calculation.workName) && (
+                                      <p className="mt-1 text-sm text-blue-700">
+                                        Работа: {payment.workName}
+                                      </p>
+                                    )}
                                 </div>
                               </div>
-                            )
-                          )}
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-green-600">
+                                  +
+                                  {formatCurrency(
+                                    payment.amount,
+                                    (payment.currency as CurrencyType) || 'RUB',
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                         {/* Итого по выплатам */}
                         <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200 mt-4">
@@ -801,10 +686,7 @@ export default function CalculationModal({
                               {`Итого ${isDebtsView ? 'получено' : 'выплачено'}:`}
                             </h5>
                             <span className="text-2xl font-bold text-green-700">
-                              {formatCurrency(
-                                displayValues.actualTotalPaid,
-                                displayCurrency
-                              )}
+                              {formatCurrency(displayValues.actualTotalPaid, displayCurrency)}
                             </span>
                           </div>
                         </div>
@@ -812,12 +694,8 @@ export default function CalculationModal({
                     ) : (
                       <div className="bg-gray-50 rounded-lg p-8 text-center">
                         <DocumentTextIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          История пуста
-                        </h3>
-                        <p className="text-gray-600">
-                          Выплат по этой работе пока не было
-                        </p>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">История пуста</h3>
+                        <p className="text-gray-600">Выплат по этой работе пока не было</p>
                       </div>
                     )}
                   </div>
@@ -831,10 +709,9 @@ export default function CalculationModal({
                     <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
                       <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
                       <span>
-                        На выбранную дату ({formatRussian(calculationDate)})
-                        новых начислений уже нет, потому что период закрыт по{' '}
-                        {formatRussian(calculation.lastClosureDate)}. Выберите
-                        более позднюю дату.
+                        На выбранную дату ({formatRussian(calculationDate)}) новых начислений уже
+                        нет, потому что период закрыт по{' '}
+                        {formatRussian(calculation.lastClosureDate)}. Выберите более позднюю дату.
                       </span>
                     </div>
                   )}
@@ -848,16 +725,13 @@ export default function CalculationModal({
                           calculation.remainingDebt,
                           calculation.userName || 'Пользователь',
                           calculation.workName || 'Работа',
-                          calculationDate
+                          calculationDate,
                         );
                       }}
                       className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <BanknotesIcon className="h-5 w-5 mr-2" />
-                      <>
-                        Выплатить зарплату (
-                        {formatCurrency(calculation.remainingDebt, 'RUB')})
-                      </>
+                      <>Выплатить зарплату ({formatCurrency(calculation.remainingDebt, 'RUB')})</>
                     </Button>
                   ) : (
                     <Button
@@ -887,19 +761,17 @@ export default function CalculationModal({
                 <div className="flex flex-col items-center gap-3">
                   <div className="bg-blue-50 rounded-lg p-4 text-center w-full">
                     <p className="text-blue-700 font-medium">
-                      Это общий расчет по всем работам пользователя. Можно
-                      выполнить мульти-выплату/закрытие периодов одним
-                      действием.
+                      Это общий расчет по всем работам пользователя. Можно выполнить
+                      мульти-выплату/закрытие периодов одним действием.
                     </p>
                   </div>
                   {isDateBeforeClosure && (
                     <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 w-full">
                       <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
                       <span>
-                        На выбранную дату ({formatRussian(calculationDate)})
-                        новых начислений уже нет, потому что период закрыт по{' '}
-                        {formatRussian(calculation.lastClosureDate)}. Выберите
-                        более позднюю дату.
+                        На выбранную дату ({formatRussian(calculationDate)}) новых начислений уже
+                        нет, потому что период закрыт по{' '}
+                        {formatRussian(calculation.lastClosureDate)}. Выберите более позднюю дату.
                       </span>
                     </div>
                   )}
@@ -909,8 +781,7 @@ export default function CalculationModal({
                       onClick={() => openConfirmModal(onBulkPayAllWorks)}
                       className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <BanknotesIcon className="h-5 w-5 mr-2" />{' '}
-                      Выплатить/закрыть по всем работам
+                      <BanknotesIcon className="h-5 w-5 mr-2" /> Выплатить/закрыть по всем работам
                     </Button>
                   )}
                 </div>
@@ -919,8 +790,8 @@ export default function CalculationModal({
               {isDebtsView && (
                 <div className="bg-blue-50 rounded-lg p-4 text-center">
                   <p className="text-blue-700 font-medium">
-                    💡 Это ваша задолженность. Для получения выплаты обратитесь
-                    к ответственному за работу.
+                    💡 Это ваша задолженность. Для получения выплаты обратитесь к ответственному за
+                    работу.
                   </p>
                 </div>
               )}
@@ -946,9 +817,7 @@ export default function CalculationModal({
           workNames={confirmModalWorkNames}
           calculationDate={calculationDate}
           isBulk={isUserCalculation}
-          hasOverpayment={
-            displayValues.actualTotalPaid > displayValues.totalAccrued
-          }
+          hasOverpayment={displayValues.actualTotalPaid > displayValues.totalAccrued}
         />
       )}
     </>

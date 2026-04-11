@@ -113,7 +113,7 @@ export function getTimezoneOffsetMinutes(timezone: string): number {
       Number(parts.day),
       Number(parts.hour),
       Number(parts.minute),
-      Number(parts.second)
+      Number(parts.second),
     );
 
     return Math.round((timezoneLocal - now.getTime()) / 60000);
@@ -137,10 +137,10 @@ function createExtraTimezoneOption(timezone: string): TimezoneOption {
 }
 
 export function buildTimezoneOptions(
-  extraTimezones: Array<string | null | undefined> = []
+  extraTimezones: Array<string | null | undefined> = [],
 ): TimezoneOption[] {
   const optionMap = new Map<string, TimezoneOption>(
-    CURATED_TIMEZONE_OPTIONS.map((option) => [option.value, option])
+    CURATED_TIMEZONE_OPTIONS.map((option) => [option.value, option]),
   );
 
   for (const timezone of extraTimezones) {
@@ -166,7 +166,7 @@ export function getTimezoneDisplayLabel(timezone?: string | null): string {
   }
 
   const matchingOption = buildTimezoneOptions([timezone]).find(
-    (option) => option.value === timezone
+    (option) => option.value === timezone,
   );
 
   return matchingOption?.label ?? timezone;

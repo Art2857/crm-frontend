@@ -20,11 +20,9 @@ export const fetchDashboardData = createAsyncThunk(
     try {
       return await dashboardService.getDashboardData();
     } catch (error: any) {
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить данные главной страницы'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить данные главной страницы');
     }
-  }
+  },
 );
 
 const dashboardSlice = createSlice({

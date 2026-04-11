@@ -13,11 +13,7 @@ interface WorkListProps {
   onViewWork: (workId: string) => void;
 }
 
-export default function WorkList({
-  works,
-  getResponsibleName,
-  onViewWork,
-}: WorkListProps) {
+export default function WorkList({ works, getResponsibleName, onViewWork }: WorkListProps) {
   // Formatting centralized in utils/currency
 
   if (!works || works.length === 0) {
@@ -75,7 +71,7 @@ export default function WorkList({
                     <span>
                       {formatAmountWithCurrency(
                         Number(work.salary || 0),
-                        work.currency === 'USD' ? 'USD' : 'RUB'
+                        work.currency === 'USD' ? 'USD' : 'RUB',
                       )}
                     </span>
                   </div>
@@ -100,12 +96,7 @@ export default function WorkList({
                     className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-all duration-200"
                     aria-label="Открыть"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"

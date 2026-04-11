@@ -52,6 +52,8 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         window.removeEventListener('refreshTokenExpired' as any, handleRefreshTokenExpired);
       };
     }
+
+    return undefined;
   }, []);
 
   const showReAuthPopup = useCallback((login: string, accountId: string): Promise<boolean> => {
@@ -77,7 +79,13 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [reAuthState.resolve]);
 
   const handleSuccess = useCallback(
-    (user: User, accessToken: string, refreshToken: string, accessTokenExpiresAt: string, refreshTokenExpiresAt: string) => {
+    (
+      user: User,
+      accessToken: string,
+      refreshToken: string,
+      accessTokenExpiresAt: string,
+      refreshTokenExpiresAt: string,
+    ) => {
       // Update the saved account with new tokens and user data
       accountManagerService.saveAccount(
         user,
@@ -85,7 +93,7 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         refreshToken,
         accessTokenExpiresAt,
         refreshTokenExpiresAt,
-        true // Set as current
+        true, // Set as current
       );
 
       // Update tokenStorage
@@ -95,10 +103,12 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       tokenStorage.setRefreshTokenExpiresAt(refreshTokenExpiresAt);
 
       // Update Redux state to actually switch the account
-      dispatch(setCredentials({
-        user: user,
-        token: accessToken,
-      }));
+      dispatch(
+        setCredentials({
+          user: user,
+          token: accessToken,
+        }),
+      );
 
       // Dispatch account switched event
       if (typeof window !== 'undefined') {
@@ -118,7 +128,7 @@ export const ReAuthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         accountId: '',
       });
     },
-    [reAuthState.resolve, dispatch]
+    [reAuthState.resolve, dispatch],
   );
 
   const contextValue: ReAuthContextValue = {

@@ -36,11 +36,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      className="w-full max-w-md mx-auto"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} className="w-full max-w-md mx-auto">
       <div className="p-6">
         <h2 className="text-lg font-medium text-gray-900 mb-2">{title}</h2>
         <p className="text-sm text-gray-500 mb-6">{message}</p>

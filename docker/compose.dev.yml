@@ -2,12 +2,12 @@ name: crm-frontend-dev
 
 services:
   crm_frontend:
-    image: node:22-alpine
+    image: node:24-alpine
     working_dir: /app
     env_file:
       - ../.env
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - ..:/app
       - /app/node_modules

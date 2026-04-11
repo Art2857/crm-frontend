@@ -60,13 +60,11 @@ export default function PaymentHistoryItem({
               {getPaymentTypeLabel(payment.paymentType)}
             </span>
             <span className="text-sm text-gray-700 font-semibold">
-              Закрытие:{' '}
-              {formatRussian(payment.paymentDate) || 'Неизвестная дата'}
+              Закрытие: {formatRussian(payment.paymentDate) || 'Неизвестная дата'}
             </span>
             {payment.createdAt && (
               <span className="text-xs text-gray-500 ml-2">
-                (создано:{' '}
-                {formatRussian(payment.createdAt) || 'Неизвестная дата'})
+                (создано: {formatRussian(payment.createdAt) || 'Неизвестная дата'})
               </span>
             )}
           </div>
@@ -79,9 +77,7 @@ export default function PaymentHistoryItem({
           </p>
 
           <div className="text-sm text-gray-600">
-            <span className="font-medium">
-              {isReceived ? 'От' : isSent ? 'Для' : 'Между'}:
-            </span>
+            <span className="font-medium">{isReceived ? 'От' : isSent ? 'Для' : 'Между'}:</span>
             <span className="ml-1">
               {isReceived
                 ? `${payment.fromUser.firstName} ${payment.fromUser.lastName}`
@@ -109,11 +105,7 @@ export default function PaymentHistoryItem({
         <div className="text-right">
           <p
             className={`text-lg font-bold ${
-              isReceived
-                ? 'text-green-600'
-                : isSent
-                  ? 'text-blue-600'
-                  : 'text-gray-600'
+              isReceived ? 'text-green-600' : isSent ? 'text-blue-600' : 'text-gray-600'
             }`}
           >
             {isReceived ? '+' : isSent ? '-' : ''}
@@ -128,9 +120,7 @@ export default function PaymentHistoryItem({
 
           {/* exchangeRate теперь есть почти всегда, но на всякий случай оставим проверку */}
           {payment.exchangeRate != null && (
-            <p className="text-xs text-gray-500 mt-1">
-              Курс: {payment.exchangeRate}
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Курс: {payment.exchangeRate}</p>
           )}
         </div>
         {isSent && (

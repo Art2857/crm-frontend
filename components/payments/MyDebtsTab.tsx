@@ -5,12 +5,7 @@ import Link from 'next/link';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { formatCurrency, CurrencyType } from '../../utils/payments';
-import {
-  CheckCircleIcon,
-  UserIcon,
-  CalendarIcon,
-  EyeIcon,
-} from '@heroicons/react/24/outline';
+import { CheckCircleIcon, UserIcon, CalendarIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { MyDebt } from '../../services/analytics';
 import type { DutyDebt } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
@@ -18,18 +13,10 @@ import { useDateManager } from '../../hooks/useDateManager';
 interface MyDebtsTabProps {
   myDebts: MyDebt[];
   currentUserId?: string;
-  onShowCalculation: (
-    userId: string,
-    workId: string,
-    dutyId?: string
-  ) => Promise<void>;
+  onShowCalculation: (userId: string, workId: string, dutyId?: string) => Promise<void>;
 }
 
-export default function MyDebtsTab({
-  myDebts,
-  currentUserId,
-  onShowCalculation,
-}: MyDebtsTabProps) {
+export default function MyDebtsTab({ myDebts, currentUserId, onShowCalculation }: MyDebtsTabProps) {
   const { formatRussian } = useDateManager();
   // Для отладки структуры данных
   // eslint-disable-next-line no-console
@@ -53,27 +40,19 @@ export default function MyDebtsTab({
   return (
     <div className="space-y-6">
       {myDebts.map((debt) => (
-        <Card
-          key={debt.workId}
-          className="overflow-hidden hover:shadow-lg transition-shadow"
-        >
+        <Card key={debt.workId} className="overflow-hidden hover:shadow-lg transition-shadow">
           <div className="p-6">
             {/* Заголовок карточки */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-4">
                 <div
                   className={`w-4 h-4 rounded-full ${
-                    debt.isPaymentDue
-                      ? 'bg-red-400 animate-pulse'
-                      : 'bg-green-400'
+                    debt.isPaymentDue ? 'bg-red-400 animate-pulse' : 'bg-green-400'
                   }`}
                 />
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">
-                    <Link
-                      href={`/works/${debt.workId}`}
-                      className="hover:underline"
-                    >
+                    <Link href={`/works/${debt.workId}`} className="hover:underline">
                       {debt.workName}
                     </Link>
                   </h3>
@@ -99,17 +78,14 @@ export default function MyDebtsTab({
               <div className="flex items-center space-x-2 mb-4 text-sm text-gray-600">
                 <CalendarIcon className="h-4 w-4" />
                 <span>
-                  Последнее закрытие:{' '}
-                  {formatRussian(debt.lastClosureDate) || 'Неизвестная дата'}
+                  Последнее закрытие: {formatRussian(debt.lastClosureDate) || 'Неизвестная дата'}
                 </span>
               </div>
             )}
 
             {/* Обязанности */}
             <div className="space-y-3 mb-4">
-              <h4 className="text-sm font-semibold text-gray-700">
-                Мои обязанности:
-              </h4>
+              <h4 className="text-sm font-semibold text-gray-700">Мои обязанности:</h4>
               {debt.duties.map((duty: DutyDebt, index) => {
                 const dutyCurrency = (duty.currency as CurrencyType) || 'RUB';
                 return (
@@ -138,9 +114,7 @@ export default function MyDebtsTab({
                       </div>
 
                       <Button
-                        onClick={() =>
-                          handleShowCalculation(debt.workId, duty.id)
-                        }
+                        onClick={() => handleShowCalculation(debt.workId, duty.id)}
                         size="sm"
                         className="bg-green-100 text-green-600 hover:bg-green-200 border border-green-200"
                       >
@@ -155,9 +129,7 @@ export default function MyDebtsTab({
             {/* Общая информация */}
             <div className="flex items-center justify-between pt-4 border-t border-gray-200">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">
-                  Общая задолженность:
-                </span>
+                <span className="text-sm text-gray-600">Общая задолженность:</span>
                 <Button
                   onClick={() => handleShowCalculation(debt.workId)}
                   size="sm"

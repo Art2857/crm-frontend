@@ -22,4 +22,3 @@ const defaultValue: DocumentsStagingConfig = {
 export const DocumentsStagingContext = createContext<DocumentsStagingConfig>(defaultValue);
 
 export const useDocumentsStaging = () => useContext(DocumentsStagingContext);
-

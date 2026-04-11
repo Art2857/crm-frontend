@@ -23,11 +23,7 @@ export function useUsersMap(users: User[]): Record<string, User> {
 export function useUserDisplayName(user: User | undefined): string {
   return useMemo(() => {
     if (!user) return 'Пользователь';
-    return (
-      `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
-      user.email ||
-      'Пользователь'
-    );
+    return `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Пользователь';
   }, [user]);
 }
 

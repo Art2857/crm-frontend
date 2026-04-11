@@ -4,16 +4,16 @@
  */
 
 import { store } from '../store';
-import { 
-  loadFromCache, 
-  updateFromAPI, 
-  loadChartData, 
+import {
+  loadFromCache,
+  updateFromAPI,
+  loadChartData,
   convertCurrency,
   cleanOldCache,
   smartLoadMissingData,
   selectLatestRate,
   selectChartData,
-  selectCacheStatus
+  selectCacheStatus,
 } from '../store/slices/exchangeRates';
 import { indexedDBManager } from '../utils/indexedDB';
 
@@ -35,19 +35,21 @@ export interface ConversionResult {
 class ExchangeRateCacheService {
   private initialized = false;
   private initPromise: Promise<CacheInitResult> | null = null;
-  
+
   // Return current USD->RUB rate using Redux/IndexedDB only (no API fallback)
   async getUsdRubRate(date?: string): Promise<number> {
     if (!this.initialized) {
       await this.initialize();
     }
     const normalizedDate = date ? new Date(date).toISOString().split('T')[0] : undefined;
-    const result = await store.dispatch(convertCurrency({
-      amount: 1,
-      fromCurrency: 'USD',
-      toCurrency: 'RUB',
-      date: normalizedDate,
-    }));
+    const result = await store.dispatch(
+      convertCurrency({
+        amount: 1,
+        fromCurrency: 'USD',
+        toCurrency: 'RUB',
+        date: normalizedDate,
+      }),
+    );
     if (result.payload && typeof result.payload === 'object') {
       const payload: any = result.payload;
       return payload.rate as number;
@@ -74,7 +76,7 @@ class ExchangeRateCacheService {
       await indexedDBManager.ensureMetadataIntegrity();
 
       const cacheResult = await store.dispatch(loadFromCache(currencyCode));
-      
+
       let fromCache = false;
       let ratesCount = 0;
       let lastUpdate: string | null = null;
@@ -84,12 +86,11 @@ class ExchangeRateCacheService {
         fromCache = true;
         ratesCount = payload.totalCachedRates || 0;
         lastUpdate = payload.lastUpdate || null;
-
       }
 
-      
       // Используем умную загрузку недостающих данных
-      store.dispatch(smartLoadMissingData({ currencyCode }))
+      store
+        .dispatch(smartLoadMissingData({ currencyCode }))
         .then((result) => {
           console.log('🚀 Умная загрузка завершена:', result.payload);
         })
@@ -97,11 +98,9 @@ class ExchangeRateCacheService {
           console.error('❌ Ошибка умной загрузки:', error);
         });
 
-      
       this._scheduleCleanup();
 
       this.initialized = true;
-  
 
       return {
         fromCache,
@@ -137,7 +136,7 @@ class ExchangeRateCacheService {
     // Проверяем, нужна ли очистка (раз в день)
     const lastCleanup = localStorage.getItem('exchangeRatesLastCleanup');
     const now = new Date();
-    
+
     if (!lastCleanup) {
       localStorage.setItem('exchangeRatesLastCleanup', now.toISOString());
       return;
@@ -149,7 +148,6 @@ class ExchangeRateCacheService {
     if (diffDays >= 1) {
       store.dispatch(cleanOldCache(365)); // Оставляем данные за год
       localStorage.setItem('exchangeRatesLastCleanup', now.toISOString());
-
     }
   }
 
@@ -169,21 +167,24 @@ class ExchangeRateCacheService {
 
     const chartKey = `${currencyCode}-${fromDate.toISOString().split('T')[0]}-${toDate.toISOString().split('T')[0]}`;
     const state = store.getState();
-    const cachedData = selectChartData(state, currencyCode, fromDate.toISOString().split('T')[0], toDate.toISOString().split('T')[0]);
+    const cachedData = selectChartData(
+      state,
+      currencyCode,
+      fromDate.toISOString().split('T')[0],
+      toDate.toISOString().split('T')[0],
+    );
 
     if (cachedData) {
-
       return cachedData;
     }
 
-
     const result = await store.dispatch(loadChartData({ currencyCode, fromDate, toDate }));
-    
+
     if (result.payload && typeof result.payload === 'object') {
       const payload = result.payload as any;
       return payload.data || [];
     }
-    
+
     throw new Error('Не удалось загрузить данные для графика');
   }
 
@@ -194,9 +195,8 @@ class ExchangeRateCacheService {
     amount: number,
     fromCurrency: string,
     toCurrency: string,
-    date?: string
+    date?: string,
   ): Promise<ConversionResult> {
-    
     // Одинаковые валюты
     if (fromCurrency === toCurrency) {
       return {
@@ -208,18 +208,20 @@ class ExchangeRateCacheService {
         instant: true,
       };
     }
-    
+
     // УПРОЩАЕМ: всегда используем полную Redux логику для надежности
     await this._ensureInitialized();
-    
+
     try {
       const normalizedDate = date ? new Date(date).toISOString().split('T')[0] : undefined;
-      const result = await store.dispatch(convertCurrency({
-        amount,
-        fromCurrency,
-        toCurrency,
-        date: normalizedDate,
-      }));
+      const result = await store.dispatch(
+        convertCurrency({
+          amount,
+          fromCurrency,
+          toCurrency,
+          date: normalizedDate,
+        }),
+      );
 
       if (result.payload && typeof result.payload === 'object') {
         const payload = result.payload as any;
@@ -236,7 +238,7 @@ class ExchangeRateCacheService {
       throw new Error('Конвертация не удалась');
     } catch (error) {
       console.error('Redux convertCurrency failed:', error);
-      
+
       // Последний fallback к API
       try {
         const { exchangeRatesService } = await import('./exchangeRates');
@@ -257,7 +259,7 @@ class ExchangeRateCacheService {
         };
       } catch (apiError) {
         const err = apiError as any;
-        const msg = (err && err.message) ? err.message : 'Неизвестная ошибка API';
+        const msg = err && err.message ? err.message : 'Неизвестная ошибка API';
         throw new Error(`Не удалось получить курс: ${msg}`);
       }
     }
@@ -267,15 +269,14 @@ class ExchangeRateCacheService {
    * Принудительное обновление данных
    */
   async forceUpdate(currencyCode: string = 'USD') {
-
-    
-    const result = await store.dispatch(updateFromAPI({ 
-      currencyCode, 
-      force: true 
-    }));
+    const result = await store.dispatch(
+      updateFromAPI({
+        currencyCode,
+        force: true,
+      }),
+    );
 
     if (result.payload) {
-
       return result.payload;
     }
 
@@ -294,22 +295,18 @@ class ExchangeRateCacheService {
    * Очистка всего кеша
    */
   async clearCache() {
-
-    
     // Очищаем Redux
     const { clearCache } = await import('../store/slices/exchangeRates');
     store.dispatch(clearCache());
 
     // Очищаем IndexedDB
     await indexedDBManager.cleanOldRates(new Date().toISOString());
-    
+
     // Очищаем localStorage
     localStorage.removeItem('exchangeRatesLastCleanup');
 
     this.initialized = false;
     this.initPromise = null;
-
-
   }
 
   /**
@@ -358,7 +355,6 @@ class ExchangeRateCacheService {
     // Предзагружаем данные за последний месяц
     try {
       await this.getChartData(currencyCode, lastMonth, now);
-
     } catch (error) {
       console.warn('⚠️  Предзагрузка данных не удалась:', error);
     }

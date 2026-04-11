@@ -34,31 +34,23 @@ const ModalContext = createContext<ModalContextType>({
 export const useModal = () => useContext(ModalContext);
 
 // Провайдер контекста
-export const ModalProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Состояние для модального окна подтверждения
-  const [confirmConfig, setConfirmConfig] = useState<
-    ConfirmOptions & { isOpen: boolean }
-  >({
+  const [confirmConfig, setConfirmConfig] = useState<ConfirmOptions & { isOpen: boolean }>({
     isOpen: false,
     title: '',
     message: '',
   });
 
   // Состояние для информационного модального окна
-  const [alertConfig, setAlertConfig] = useState<
-    AlertOptions & { isOpen: boolean }
-  >({
+  const [alertConfig, setAlertConfig] = useState<AlertOptions & { isOpen: boolean }>({
     isOpen: false,
     title: '',
     message: '',
   });
 
   // Состояние для хранения resolve-функции промиса
-  const [confirmResolve, setConfirmResolve] = useState<
-    ((value: boolean) => void) | null
-  >(null);
+  const [confirmResolve, setConfirmResolve] = useState<((value: boolean) => void) | null>(null);
   const [alertResolve, setAlertResolve] = useState<(() => void) | null>(null);
 
   // Функция для показа модального окна подтверждения

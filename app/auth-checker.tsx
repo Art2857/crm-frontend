@@ -9,17 +9,9 @@ import { logger } from '../utils/logger';
 import { isJwtExpired, getRoleFromToken } from '../utils/jwt';
 import { accountManagerService } from '../services/accountManager';
 
-export default function AuthChecker({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthChecker({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const {
-    isAuthenticated,
-    user,
-    isLoading: authLoading,
-  } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user, isLoading: authLoading } = useAppSelector((state) => state.auth);
   const [isInitializing, setIsInitializing] = useState(true);
   const initializationRef = useRef(false); // Предотвращаем множественные инициализации
 
@@ -54,10 +46,7 @@ export default function AuthChecker({
             // Очистка и редирект
             tokenStorage.clearAll();
             if (typeof window !== 'undefined') {
-              localStorage.setItem(
-                'redirectAfterLogin',
-                window.location.pathname
-              );
+              localStorage.setItem('redirectAfterLogin', window.location.pathname);
               window.location.href = '/login';
               return;
             }
@@ -71,9 +60,7 @@ export default function AuthChecker({
 
           // Получаем роль из токена, если пользователь не загружен
           const currentToken = tokenStorage.getAccessToken();
-          const role =
-            user?.role ||
-            (currentToken ? getRoleFromToken(currentToken) : null);
+          const role = user?.role || (currentToken ? getRoleFromToken(currentToken) : null);
 
           if (role) {
             await dispatch(getCurrentUser()).unwrap();
@@ -84,9 +71,7 @@ export default function AuthChecker({
           }
         } else if (!hasToken && isAuthenticated) {
           // Если токена нет, но состояние показывает аутентификацию - очищаем состояние
-          logger.debug(
-            'AuthChecker: токен отсутствует, но состояние аутентифицировано - очищаем'
-          );
+          logger.debug('AuthChecker: токен отсутствует, но состояние аутентифицировано - очищаем');
           tokenStorage.clearAll();
         }
       } catch (error: any) {
@@ -116,9 +101,7 @@ export default function AuthChecker({
 
       // Skip verification if account switching is in progress
       if (accountManagerService.isSwitching()) {
-        logger.info(
-          'AuthChecker: пропуск проверки, выполняется переключение аккаунта'
-        );
+        logger.info('AuthChecker: пропуск проверки, выполняется переключение аккаунта');
         return;
       }
 
@@ -127,55 +110,43 @@ export default function AuthChecker({
 
       if (isJwtExpired(token)) {
         try {
-          logger.info(
-            '🔄 AuthChecker: вкладка активирована, token истёк — refresh'
-          );
+          logger.info('🔄 AuthChecker: вкладка активирована, token истёк — refresh');
           await authService.refreshTokens();
         } catch (e) {
           tokenStorage.clearAll();
           if (typeof window !== 'undefined') {
-            localStorage.setItem(
-              'redirectAfterLogin',
-              window.location.pathname
-            );
+            localStorage.setItem('redirectAfterLogin', window.location.pathname);
             window.location.href = '/login';
           }
         }
       }
     };
 
-    const onAccountSwitched = async (
-      event: CustomEvent<{ accountId: string }>
-    ) => {
-      logger.info(
-        `🔄 AuthChecker: переключение аккаунта на ${event.detail.accountId}`
-      );
-      // Wait for a small delay to ensure local storage is fully synced
-      await new Promise((resolve) => setTimeout(resolve, 50));
+    const onAccountSwitched = (event: Event) => {
+      const accountSwitchEvent = event as CustomEvent<{ accountId: string }>;
 
-      try {
-        await dispatch(getCurrentUser()).unwrap();
-        logger.info('✅ AuthChecker: данные нового аккаунта загружены');
-      } catch (error) {
-        logger.error(
-          '❌ AuthChecker: ошибка загрузки данных после переключения:',
-          error
+      void (async () => {
+        logger.info(
+          `🔄 AuthChecker: переключение аккаунта на ${accountSwitchEvent.detail.accountId}`,
         );
-      }
+        // Wait for a small delay to ensure local storage is fully synced
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        try {
+          await dispatch(getCurrentUser()).unwrap();
+          logger.info('✅ AuthChecker: данные нового аккаунта загружены');
+        } catch (error) {
+          logger.error('❌ AuthChecker: ошибка загрузки данных после переключения:', error);
+        }
+      })();
     };
 
     document.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener(
-      'accountSwitched',
-      onAccountSwitched as EventListener
-    );
+    window.addEventListener('accountSwitched', onAccountSwitched);
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener(
-        'accountSwitched',
-        onAccountSwitched as EventListener
-      );
+      window.removeEventListener('accountSwitched', onAccountSwitched);
     };
   }, [dispatch]);
 

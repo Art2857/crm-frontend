@@ -24,19 +24,15 @@ export const useDateManager = () => {
       timezone,
 
       // Методы форматирования с учетом текущего timezone
-      formatISO: (date: string | Date | null | undefined) =>
-        dateManager.formatISO(date),
+      formatISO: (date: string | Date | null | undefined) => dateManager.formatISO(date),
 
-      formatRussian: (date: string | Date | null | undefined) =>
-        dateManager.formatRussian(date),
+      formatRussian: (date: string | Date | null | undefined) => dateManager.formatRussian(date),
 
       formatRussianWithTime: (date: string | Date | null | undefined) =>
         dateManager.formatRussianWithTime(date, true),
 
-      formatByField: (
-        date: string | Date | null | undefined,
-        fieldName: string
-      ) => dateManager.formatByField(date, fieldName, true),
+      formatByField: (date: string | Date | null | undefined, fieldName: string) =>
+        dateManager.formatByField(date, fieldName, true),
 
       // Вспомогательные методы
       getCurrentDateISO: () => dateManager.getCurrentDateISO(),
@@ -45,9 +41,8 @@ export const useDateManager = () => {
         dateManager.calculateAge(birthday),
 
       // Валидация
-      isValidRussianFormat: (dateString: string) =>
-        dateManager.isValidRussianFormat(dateString),
+      isValidRussianFormat: (dateString: string) => dateManager.isValidRussianFormat(dateString),
     }),
-    [timezone]
+    [timezone],
   );
 };

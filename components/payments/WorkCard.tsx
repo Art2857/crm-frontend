@@ -4,11 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-  EyeIcon,
-} from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronRightIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { WorkDetail } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
 import FinancialSummary from './FinancialSummary';
@@ -33,18 +29,12 @@ export default function WorkCard({
   currency = 'RUB',
 }: WorkCardProps) {
   const { formatRussian } = useDateManager();
-  const accrued =
-    typeof accruedOverride === 'number'
-      ? accruedOverride
-      : (work.totalAccrued ?? 0);
+  const accrued = typeof accruedOverride === 'number' ? accruedOverride : (work.totalAccrued ?? 0);
   const paidForDisplay = work.paidAmount || 0;
   return (
     <div className="group">
       <Card className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md">
-        <div
-          className="p-4 cursor-pointer"
-          onClick={() => onToggleExpanded(work.workId)}
-        >
+        <div className="p-4 cursor-pointer" onClick={() => onToggleExpanded(work.workId)}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div
@@ -64,8 +54,7 @@ export default function WorkCard({
                 </h4>
                 {work.lastClosureDate && (
                   <p className="text-sm text-gray-500">
-                    Последнее закрытие:{' '}
-                    {formatRussian(work.lastClosureDate) || 'Неизвестная дата'}
+                    Последнее закрытие: {formatRussian(work.lastClosureDate) || 'Неизвестная дата'}
                   </p>
                 )}
               </div>
@@ -104,11 +93,7 @@ export default function WorkCard({
         </div>
 
         {/* Детали работы */}
-        {isExpanded && (
-          <div className="border-t border-gray-100 bg-gray-50/50 p-4">
-            {children}
-          </div>
-        )}
+        {isExpanded && <div className="border-t border-gray-100 bg-gray-50/50 p-4">{children}</div>}
       </Card>
     </div>
   );

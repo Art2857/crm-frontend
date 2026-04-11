@@ -14,11 +14,7 @@ interface UseConfirmationResult<T> {
   /**
    * Выполняет действие с запросом подтверждения
    */
-  confirmAndExecute: (
-    params: T,
-    message: string,
-    options?: ConfirmOptions
-  ) => Promise<void>;
+  confirmAndExecute: (params: T, message: string, options?: ConfirmOptions) => Promise<void>;
 }
 
 /**
@@ -26,17 +22,11 @@ interface UseConfirmationResult<T> {
  * Использует модальные окна вместо стандартного window.confirm
  * @param action Функция, которая будет выполнена после подтверждения
  */
-export const useConfirmation = <T = void>(
-  action: ConfirmAction<T>
-): UseConfirmationResult<T> => {
+export const useConfirmation = <T = void>(action: ConfirmAction<T>): UseConfirmationResult<T> => {
   const { confirm } = useModal();
 
   const confirmAndExecute = useCallback(
-    async (
-      params: T,
-      message: string,
-      options?: ConfirmOptions
-    ): Promise<void> => {
+    async (params: T, message: string, options?: ConfirmOptions): Promise<void> => {
       // Запрашиваем подтверждение у пользователя через модальное окно
       const isConfirmed = await confirm({
         title: options?.title || 'Подтверждение действия',
@@ -51,7 +41,7 @@ export const useConfirmation = <T = void>(
         await action(params);
       }
     },
-    [action, confirm]
+    [action, confirm],
   );
 
   return { confirmAndExecute };

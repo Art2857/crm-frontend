@@ -2,7 +2,7 @@
  * Инициализация системы котировок валют
  * Объединяет все рефакторенные сервисы в единую систему
  * Следует принципам SOLID, DRY, KISS
- * 
+ *
  * Этот файл должен быть импортирован в точке входа приложения
  * для инициализации всей системы котировок
  */
@@ -30,7 +30,7 @@ const DEFAULT_CONFIG: ExchangeRateSystemConfig = {
   enableDebugMode: process.env.NODE_ENV === 'development',
   enableAutoUpdate: true,
   updateIntervalMinutes: 30,
-  supportedCurrencies: ['USD', 'EUR', 'CNY', 'GBP', 'JPY']
+  supportedCurrencies: ['USD', 'EUR', 'CNY', 'GBP', 'JPY'],
 };
 
 /**
@@ -75,7 +75,6 @@ class ExchangeRateSystemManager {
 
       this.isInitialized = true;
       console.log('✅ Система котировок успешно инициализирована');
-
     } catch (error) {
       console.error('❌ Ошибка инициализации системы котировок:', error);
       throw error;
@@ -95,7 +94,9 @@ class ExchangeRateSystemManager {
       if (stats.totalRates === 0) {
         console.log('📥 Кеш пуст, потребуется загрузка данных');
       } else {
-        console.log(`📋 В кеше ${stats.totalRates} котировок для валют: ${stats.currencies.join(', ')}`);
+        console.log(
+          `📋 В кеше ${stats.totalRates} котировок для валют: ${stats.currencies.join(', ')}`,
+        );
       }
     } catch (error) {
       console.warn('⚠️ Проблема с инициализацией хранилища:', error);
@@ -107,11 +108,11 @@ class ExchangeRateSystemManager {
    */
   private setupAutoUpdate(): void {
     const intervalMs = this.config.updateIntervalMinutes * 60 * 1000;
-    
+
     this.updateInterval = setInterval(async () => {
       try {
         console.log('⏰ Автоматическое обновление котировок...');
-        
+
         for (const currency of this.config.supportedCurrencies) {
           const result = await exchangeRateFacade.smartUpdate(currency);
           if (result.loaded > 0) {
@@ -131,7 +132,7 @@ class ExchangeRateSystemManager {
    */
   private setupDebugMode(): void {
     console.log('🐛 Отладочный режим включен');
-    
+
     // Дополнительное логирование
     if (typeof window !== 'undefined') {
       (window as any).__exchangeRateSystem = {
@@ -139,38 +140,38 @@ class ExchangeRateSystemManager {
         facade: exchangeRateFacade,
         storage: indexedDBStorage,
         workingDays: exchangeRateWorkingDaysService,
-        
+
         // Быстрые команды для отладки
         async quickTest() {
           console.log('🧪 Быстрый тест системы...');
-          
+
           const usdRate = await exchangeRateFacade.getLatestRate('USD');
           console.log('💵 USD курс:', usdRate);
-          
+
           const cacheInfo = await exchangeRateFacade.getCacheInfo();
           console.log('📊 Кеш:', cacheInfo);
-          
+
           const debugInfo = await exchangeRateFacade.getDebugInfo('USD');
           console.log('🔍 Отладочная информация:', debugInfo);
-          
+
           exchangeRateFacade.testWorkingDays();
         },
-        
+
         async clearAll() {
           console.log('🗑️ Полная очистка системы...');
           await exchangeRateFacade.clearCache();
           console.log('✅ Кеш очищен');
         },
-        
+
         async forceReload() {
           console.log('🔄 Принудительная перезагрузка...');
           for (const currency of DEFAULT_CONFIG.supportedCurrencies) {
             await exchangeRateFacade.forceUpdate(currency, 30);
           }
           console.log('✅ Данные перезагружены');
-        }
+        },
       };
-      
+
       console.log('🛠️ Отладочные команды доступны через __exchangeRateSystem');
     }
   }
@@ -181,9 +182,9 @@ class ExchangeRateSystemManager {
   private async performInitialDataLoad(): Promise<void> {
     try {
       console.log('📡 Проверка актуальности данных...');
-      
+
       let needsUpdate = false;
-      
+
       for (const currency of this.config.supportedCurrencies) {
         const result = await exchangeRateFacade.smartUpdate(currency);
         if (result.loaded > 0) {
@@ -191,7 +192,7 @@ class ExchangeRateSystemManager {
           needsUpdate = true;
         }
       }
-      
+
       if (!needsUpdate) {
         console.log('✅ Все данные актуальны');
       }
@@ -208,7 +209,7 @@ class ExchangeRateSystemManager {
       clearInterval(this.updateInterval);
       this.updateInterval = null;
     }
-    
+
     this.isInitialized = false;
     console.log('🛑 Система котировок остановлена');
   }
@@ -220,7 +221,7 @@ class ExchangeRateSystemManager {
     return {
       initialized: this.isInitialized,
       config: this.config,
-      autoUpdateActive: this.updateInterval !== null
+      autoUpdateActive: this.updateInterval !== null,
     };
   }
 
@@ -229,7 +230,7 @@ class ExchangeRateSystemManager {
    */
   updateConfig(newConfig: Partial<ExchangeRateSystemConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    
+
     // Перенастраиваем автообновление если изменился интервал
     if (newConfig.updateIntervalMinutes && this.config.enableAutoUpdate) {
       if (this.updateInterval) {
@@ -249,12 +250,12 @@ export const exchangeRateSystem = new ExchangeRateSystemManager();
  * Функция для быстрой инициализации системы
  */
 export async function initializeExchangeRateSystem(
-  config?: Partial<ExchangeRateSystemConfig>
+  config?: Partial<ExchangeRateSystemConfig>,
 ): Promise<void> {
   if (config) {
     exchangeRateSystem.updateConfig(config);
   }
-  
+
   await exchangeRateSystem.initialize();
 }
 
@@ -266,7 +267,7 @@ export function useExchangeRateSystem() {
     system: exchangeRateSystem,
     facade: exchangeRateFacade,
     initialize: () => exchangeRateSystem.initialize(),
-    getStatus: () => exchangeRateSystem.getSystemStatus()
+    getStatus: () => exchangeRateSystem.getSystemStatus(),
   };
 }
 

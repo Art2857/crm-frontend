@@ -19,13 +19,9 @@ export function useWorksList() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const {
-    isAuthenticated,
-    user,
-    isLoading: authLoading,
-  } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user, isLoading: authLoading } = useAppSelector((state) => state.auth);
   const { works, userWorks, archivedWorks, isLoading, error } = useAppSelector(
-    (state) => state.works
+    (state) => state.works,
   );
   const { users } = useAppSelector((state) => state.users);
 
@@ -72,9 +68,7 @@ export function useWorksList() {
           setViewType('all');
         } else {
           logger.debug('Fetching user works for userId:', user.id);
-          promises.push(
-            dispatch(fetchUserWorks({ role: user.role, userId: user.id }))
-          );
+          promises.push(dispatch(fetchUserWorks({ role: user.role, userId: user.id })));
           setViewType('user');
         }
         await Promise.all(promises);
@@ -105,10 +99,14 @@ export function useWorksList() {
     (id: string) => {
       router.push(`/works/${id}`);
     },
-    [router]
+    [router],
   );
 
   const handleToggleView = useCallback(async () => {
+    if (!user) {
+      return;
+    }
+
     if (user.role === 'ADMIN' || user.role === 'MANAGER') {
       const newViewType = viewType === 'all' ? 'user' : 'all';
       if (newViewType === 'user' && userWorks.length === 0) {
@@ -140,7 +138,7 @@ export function useWorksList() {
         notification.showError('Ошибка при архивировании работы');
       }
     },
-    [dispatch, notification]
+    [dispatch, notification],
   );
 
   const handleRestore = useCallback(
@@ -152,7 +150,7 @@ export function useWorksList() {
         notification.showError('Ошибка при восстановлении работы');
       }
     },
-    [dispatch, notification]
+    [dispatch, notification],
   );
 
   const getResponsibleName = useCallback(
@@ -166,7 +164,7 @@ export function useWorksList() {
       }
       return 'Не назначен';
     },
-    [usersMap]
+    [usersMap],
   );
 
   const isEmptyWorksList = displayedWorks.length === 0 && !isLoading;

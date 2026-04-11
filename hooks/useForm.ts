@@ -27,7 +27,7 @@ interface Errors {
  */
 export const useForm = <T extends Record<string, any>>(
   initialValues: T,
-  validationRules: FieldRules = {}
+  validationRules: FieldRules = {},
 ) => {
   const [values, setValues] = useState<T>(initialValues);
   const [errors, setErrors] = useState<Errors>({});
@@ -54,9 +54,7 @@ export const useForm = <T extends Record<string, any>>(
     // Создание и валидация объекта Date
     const date = new Date(year, month, day);
     const isValidDateObject =
-      date.getFullYear() === year &&
-      date.getMonth() === month &&
-      date.getDate() === day;
+      date.getFullYear() === year && date.getMonth() === month && date.getDate() === day;
 
     // Проверка, что дата не в будущем (для даты рождения)
     const today = new Date();
@@ -87,8 +85,7 @@ export const useForm = <T extends Record<string, any>>(
 
       if (
         rules.required &&
-        (!trimmedValue ||
-          (Array.isArray(trimmedValue) && trimmedValue.length === 0))
+        (!trimmedValue || (Array.isArray(trimmedValue) && trimmedValue.length === 0))
       ) {
         return 'Поле обязательно для заполнения';
       }
@@ -109,19 +106,11 @@ export const useForm = <T extends Record<string, any>>(
         return `Максимальная длина ${rules.maxLength} символов`;
       }
 
-      if (
-        rules.min &&
-        typeof trimmedValue === 'number' &&
-        trimmedValue < rules.min
-      ) {
+      if (rules.min && typeof trimmedValue === 'number' && trimmedValue < rules.min) {
         return `Минимальное значение ${rules.min}`;
       }
 
-      if (
-        rules.max &&
-        typeof trimmedValue === 'number' &&
-        trimmedValue > rules.max
-      ) {
+      if (rules.max && typeof trimmedValue === 'number' && trimmedValue > rules.max) {
         return `Максимальное значение ${rules.max}`;
       }
 
@@ -186,7 +175,7 @@ export const useForm = <T extends Record<string, any>>(
 
       return '';
     },
-    [validationRules]
+    [validationRules],
   );
 
   /**
@@ -194,9 +183,7 @@ export const useForm = <T extends Record<string, any>>(
    * @param e - событие изменения
    */
   const handleChange = useCallback(
-    (
-      e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-    ) => {
+    (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { name, value, type } = e.target;
       let parsedValue: any = value;
 
@@ -213,18 +200,14 @@ export const useForm = <T extends Record<string, any>>(
       // чтобы дать пользователю возможность полностью ввести значение
       setValues((prev) => ({ ...prev, [name]: parsedValue }));
     },
-    []
+    [],
   );
 
   /**
    * Обработчик потери фокуса полем формы
    */
   const handleBlur = useCallback(
-    (
-      e: React.FocusEvent<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-      >
-    ) => {
+    (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { name } = e.target;
 
       // Отмечаем поле как "тронутое"
@@ -239,7 +222,7 @@ export const useForm = <T extends Record<string, any>>(
         [name]: error,
       }));
     },
-    [touched, validateField, values]
+    [touched, validateField, values],
   );
 
   /**
@@ -321,7 +304,7 @@ export const useForm = <T extends Record<string, any>>(
         setIsSubmitting(false);
       };
     },
-    [validateForm, prepareValuesForSubmit]
+    [validateForm, prepareValuesForSubmit],
   );
 
   /**

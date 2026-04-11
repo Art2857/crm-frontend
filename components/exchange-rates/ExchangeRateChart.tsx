@@ -100,8 +100,7 @@ export function ExchangeRateChart({
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium text-gray-900">{label}</p>
           <p className="text-blue-600">
-            <span className="font-medium">{currency}/RUB:</span>{' '}
-            {formatValue(data.displayRate)}
+            <span className="font-medium">{currency}/RUB:</span> {formatValue(data.displayRate)}
           </p>
           <p className="text-gray-500 text-sm">
             Номинал: {data.nominal} {currency}
@@ -121,9 +120,7 @@ export function ExchangeRateChart({
         <div className="text-center">
           <div className="text-gray-400 text-lg mb-2">📈</div>
           <p className="text-gray-500">Нет данных для отображения</p>
-          <p className="text-gray-400 text-sm">
-            Выберите другой период или валюту
-          </p>
+          <p className="text-gray-400 text-sm">Выберите другой период или валюту</p>
         </div>
       </div>
     );

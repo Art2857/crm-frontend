@@ -27,28 +27,17 @@ export const documentsService = {
     return res.data;
   },
 
-  async uploadForUser(params: {
-    userId: string;
-    name: string;
-    file: File;
-  }): Promise<UserDocument> {
+  async uploadForUser(params: { userId: string; name: string; file: File }): Promise<UserDocument> {
     const { userId, name, file } = params;
     const formData = new FormData();
     formData.append('name', name);
     formData.append('file', file);
 
-    const res = await privateApi.post<UserDocument>(
-      `/users/${userId}/upload-file`,
-      formData
-    );
+    const res = await privateApi.post<UserDocument>(`/users/${userId}/upload-file`, formData);
     return res.data;
   },
 
-  async uploadForWork(params: {
-    workId: string;
-    name: string;
-    file: File;
-  }): Promise<UserDocument> {
+  async uploadForWork(params: { workId: string; name: string; file: File }): Promise<UserDocument> {
     const { workId, name, file } = params;
     const formData = new FormData();
     formData.append('name', name);
@@ -56,22 +45,18 @@ export const documentsService = {
 
     const res = await privateApi.post<UserDocument>(
       `/work-history/${workId}/upload-file`,
-      formData
+      formData,
     );
     return res.data;
   },
 
   async getDownloadUrl(documentId: string): Promise<DownloadUrlResponse> {
-    const res = await privateApi.get<DownloadUrlResponse>(
-      `/documents/${documentId}/download-url`
-    );
+    const res = await privateApi.get<DownloadUrlResponse>(`/documents/${documentId}/download-url`);
     return res.data;
   },
 
   async getPreviewUrl(documentId: string): Promise<DownloadUrlResponse> {
-    const res = await privateApi.get<DownloadUrlResponse>(
-      `/documents/${documentId}/preview-url`
-    );
+    const res = await privateApi.get<DownloadUrlResponse>(`/documents/${documentId}/preview-url`);
     return res.data;
   },
 

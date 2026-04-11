@@ -10,7 +10,7 @@ import { useExchangeRates } from '../../hooks/exchange-rates/useExchangeRates';
 // Функция для поиска последнего рабочего дня (ЦБ публикует вт-сб, выходные вс-пн)
 const getLastWorkingDay = (date: Date): Date => {
   // Ищем последний рабочий день от указанной даты назад
-  let current = new Date(date);
+  const current = new Date(date);
   for (let i = 0; i < 30; i++) {
     const dayOfWeek = current.getDay();
     // Рабочие дни ЦБ РФ: вторник-суббота (2-6), выходные воскресенье-понедельник (0,1)
@@ -101,16 +101,10 @@ export default function ExchangeRatesPage() {
 
   // Функция для обработки статистики графика
   const handleStatsCalculated = useCallback(
-    (stats: {
-      min: number;
-      max: number;
-      avg: number;
-      change: number;
-      changePercent: number;
-    }) => {
+    (stats: { min: number; max: number; avg: number; change: number; changePercent: number }) => {
       setChartStats(stats);
     },
-    []
+    [],
   );
 
   // Форматирование значений для отображения
@@ -167,21 +161,15 @@ export default function ExchangeRatesPage() {
               <div className="flex flex-wrap justify-center gap-4 text-sm">
                 <div className="text-center">
                   <div className="text-gray-500">Мин.</div>
-                  <div className="font-medium">
-                    {formatValue(chartStats.min)}
-                  </div>
+                  <div className="font-medium">{formatValue(chartStats.min)}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-gray-500">Макс.</div>
-                  <div className="font-medium">
-                    {formatValue(chartStats.max)}
-                  </div>
+                  <div className="font-medium">{formatValue(chartStats.max)}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-gray-500">Среднее</div>
-                  <div className="font-medium">
-                    {formatValue(chartStats.avg)}
-                  </div>
+                  <div className="font-medium">{formatValue(chartStats.avg)}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-gray-500">Изменение</div>
@@ -189,8 +177,7 @@ export default function ExchangeRatesPage() {
                     className={`font-medium ${chartStats.change >= 0 ? 'text-green-600' : 'text-red-600'}`}
                   >
                     {chartStats.change >= 0 ? '+' : ''}
-                    {formatValue(chartStats.change)} (
-                    {chartStats.changePercent >= 0 ? '+' : ''}
+                    {formatValue(chartStats.change)} ({chartStats.changePercent >= 0 ? '+' : ''}
                     {chartStats.changePercent.toFixed(2)}%)
                   </div>
                 </div>
@@ -198,32 +185,16 @@ export default function ExchangeRatesPage() {
             )}
 
             <div className="flex items-center gap-2 flex-shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPresetRange(7)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setPresetRange(7)}>
                 7 дней
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPresetRange(30)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setPresetRange(30)}>
                 1 месяц
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPresetRange(90)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setPresetRange(90)}>
                 3 месяца
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPresetRange(365)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setPresetRange(365)}>
                 1 год
               </Button>
             </div>

@@ -14,11 +14,7 @@ interface UseWorkDutiesProps {
   role: Role; // Добавляем параметр role
 }
 
-export const useWorkDuties = ({
-  workId,
-  workSalary,
-  role,
-}: UseWorkDutiesProps) => {
+export const useWorkDuties = ({ workId, workSalary, role }: UseWorkDutiesProps) => {
   const dispatch = useAppDispatch();
   const {
     workDistributions,
@@ -63,9 +59,7 @@ export const useWorkDuties = ({
 
       // Выполняем запрос
       try {
-        const result = await dispatch(
-          fetchDistributionsByWorkId({ role, workId })
-        ).unwrap();
+        const result = await dispatch(fetchDistributionsByWorkId({ role, workId })).unwrap();
 
         setIsInitiallyLoaded(true);
         return result;
@@ -118,19 +112,19 @@ export const useWorkDuties = ({
 
     // Обновляем предыдущее значение зарплаты
     prevWorkSalaryRef.current = workSalary;
-  }, [
-    workSalary,
-    isInitiallyLoaded,
-    isEditingDuties,
-    loadDistributions,
-    dispatch,
-  ]);
+  }, [workSalary, isInitiallyLoaded, isEditingDuties, loadDistributions, dispatch]);
 
   // Загружаем новые данные при выходе из режима редактирования
   const wasEditingRef = useRef(false);
   useEffect(() => {
     // Перезагружаем только если действительно вышли из режима редактирования (было true, стало false)
-    if (wasEditingRef.current && !isEditingDuties && workId && isInitiallyLoaded && !isLoadingRef.current) {
+    if (
+      wasEditingRef.current &&
+      !isEditingDuties &&
+      workId &&
+      isInitiallyLoaded &&
+      !isLoadingRef.current
+    ) {
       loadDistributions();
     }
     wasEditingRef.current = isEditingDuties;
@@ -141,8 +135,7 @@ export const useWorkDuties = ({
     if (!workDistributions || workDistributions.length === 0) return null;
 
     return [...workDistributions].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )[0];
   }, [workDistributions]);
 
@@ -157,7 +150,7 @@ export const useWorkDuties = ({
         currency?: 'RUB' | 'USD';
       }>,
       effectiveDate?: string,
-      workHistoryId?: string
+      workHistoryId?: string,
     ) => {
       if (!workId) return null;
 
@@ -181,9 +174,7 @@ export const useWorkDuties = ({
         } else if (!historyId) {
           try {
             // Получаем последнюю запись истории работы
-            const latestHistory = await workService.getLatestWorkHistory(
-              workId
-            );
+            const latestHistory = await workService.getLatestWorkHistory(workId);
             historyId = latestHistory.id;
           } catch (error) {
             console.error('Ошибка при получении истории работы:', error);
@@ -203,7 +194,7 @@ export const useWorkDuties = ({
             workHistoryId: historyId,
             details: validDuties, // допускается [] для обнуления
             effectiveDate,
-          })
+          }),
         ).unwrap();
 
         // Обновляем список распределений для текущей работы
@@ -229,11 +220,7 @@ export const useWorkDuties = ({
         ) {
           // Используем первое сообщение из массива
           errorMsg = String(error.errorMessages[0]);
-        } else if (
-          error.details &&
-          Array.isArray(error.details) &&
-          error.details.length > 0
-        ) {
+        } else if (error.details && Array.isArray(error.details) && error.details.length > 0) {
           // Если есть детализированные сообщения об ошибках
           errorMsg = error.details.map((d: unknown) => String(d)).join('\n');
         } else if (typeof error.message === 'string' && error.message) {
@@ -246,14 +233,12 @@ export const useWorkDuties = ({
 
         setErrorMessage(errorMsg);
 
-
-
         return null;
       } finally {
         setIsLoading(false);
       }
     },
-    [dispatch, workId, role, getCurrentDistribution]
+    [dispatch, workId, role, getCurrentDistribution],
   );
 
   // Очистка сообщений

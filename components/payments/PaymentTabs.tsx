@@ -2,11 +2,7 @@
 
 import React from 'react';
 import Badge from '../ui/Badge';
-import {
-  BuildingOfficeIcon,
-  UserIcon,
-  DocumentTextIcon,
-} from '@heroicons/react/24/outline';
+import { BuildingOfficeIcon, UserIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { MyDebt } from '../../services/analytics';
 import { ResponsibleUser } from '../../types/payments';
 

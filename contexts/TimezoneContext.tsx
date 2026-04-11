@@ -1,12 +1,6 @@
 'use client';
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { buildTimezoneOptions, TimezoneOption } from '../utils/timezones';
 
 export type TimezoneContextValue = {
@@ -42,20 +36,14 @@ const setStoredTimezone = (tz: string) => {
   } catch {}
 };
 
-const TimezoneContext = createContext<TimezoneContextValue | undefined>(
-  undefined
-);
+const TimezoneContext = createContext<TimezoneContextValue | undefined>(undefined);
 
-export const TimezoneProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [timezone, setTimezoneState] = useState<string>(
-    getStoredTimezone() || defaultTimezone
-  );
+export const TimezoneProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [timezone, setTimezoneState] = useState<string>(getStoredTimezone() || defaultTimezone);
 
   const availableTimezones = useMemo(
     () => buildTimezoneOptions([timezone, defaultTimezone, getStoredTimezone()]),
-    [timezone]
+    [timezone],
   );
 
   const setTimezone = (tz: string) => {
@@ -70,14 +58,10 @@ export const TimezoneProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const value = useMemo(
     () => ({ timezone, setTimezone, availableTimezones }),
-    [timezone, availableTimezones]
+    [timezone, availableTimezones],
   );
 
-  return (
-    <TimezoneContext.Provider value={value}>
-      {children}
-    </TimezoneContext.Provider>
-  );
+  return <TimezoneContext.Provider value={value}>{children}</TimezoneContext.Provider>;
 };
 
 export const useTimezone = () => {

@@ -14,7 +14,7 @@ export async function GET() {
         version: process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0',
         environment: process.env.NODE_ENV || 'development',
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     // Не шумим в логах: этот эндпойнт используется инфраструктурой
@@ -24,7 +24,7 @@ export async function GET() {
         timestamp: new Date().toISOString(),
         error: 'Health check failed',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

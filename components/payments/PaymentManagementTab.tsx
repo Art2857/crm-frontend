@@ -18,11 +18,7 @@ interface PaymentManagementTabProps {
   onToggleUserExpanded: (userId: string) => void;
   onToggleWorkExpanded: (workId: string) => void;
   onWorkPeriodDateChange: (workId: string, date: string) => void;
-  onShowCalculation: (
-    userId: string,
-    workId: string,
-    dutyId?: string
-  ) => Promise<void>;
+  onShowCalculation: (userId: string, workId: string, dutyId?: string) => Promise<void>;
   onShowUserCalculation?: (userId: string) => Promise<void>;
   getWorkPeriodDate: (workId: string) => string;
 }
@@ -43,9 +39,7 @@ export default function PaymentManagementTab({
     return (
       <Card className="p-12 text-center">
         <UserIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Нет пользователей
-        </h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Нет пользователей</h3>
         <p className="text-gray-600">Пока нет сотрудников, требующих выплат</p>
       </Card>
     );
@@ -60,8 +54,7 @@ export default function PaymentManagementTab({
           isExpanded={expandedWorks.has(work.workId)}
           onToggleExpanded={onToggleWorkExpanded}
           onShowCalculation={(workId) => {
-            const firstUser =
-              work.users && work.users.length > 0 ? work.users[0] : null;
+            const firstUser = work.users && work.users.length > 0 ? work.users[0] : null;
             if (firstUser) {
               onShowCalculation(firstUser.userId, workId);
             }
@@ -106,9 +99,7 @@ export default function PaymentManagementTab({
                 >
                   {/* Обязанности пользователя */}
                   <div>
-                    <h5 className="text-sm font-semibold text-gray-700 mb-2">
-                      Обязанности:
-                    </h5>
+                    <h5 className="text-sm font-semibold text-gray-700 mb-2">Обязанности:</h5>
                     <div className="space-y-2">
                       {user.duties.map((duty, index) => (
                         <DutyCard
@@ -118,10 +109,8 @@ export default function PaymentManagementTab({
                           userCurrencyByDuty={Object.fromEntries(
                             (user.duties || []).map((d) => [
                               d.dutyId,
-                              (d.currency === 'USD'
-                                ? 'USD'
-                                : 'RUB') as CurrencyType,
-                            ])
+                              (d.currency === 'USD' ? 'USD' : 'RUB') as CurrencyType,
+                            ]),
                           )}
                           onShowCalculation={(dutyId) =>
                             onShowCalculation(user.userId, work.workId, dutyId)

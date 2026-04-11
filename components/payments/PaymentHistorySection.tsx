@@ -3,11 +3,7 @@
 import React from 'react';
 import Badge from '../ui/Badge';
 import { formatCurrency } from '../../utils/payments';
-import {
-  CurrencyDollarIcon,
-  BanknotesIcon,
-  DocumentTextIcon,
-} from '@heroicons/react/24/outline';
+import { CurrencyDollarIcon, BanknotesIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { useDateManager } from '../../hooks/useDateManager';
 
 interface PaymentHistoryItem {
@@ -30,10 +26,7 @@ export default function PaymentHistorySection({
   isDebtsView,
 }: PaymentHistorySectionProps) {
   const { formatRussian } = useDateManager();
-  const totalPaid = paymentHistory.reduce(
-    (sum, payment) => sum + payment.amount,
-    0
-  );
+  const totalPaid = paymentHistory.reduce((sum, payment) => sum + payment.amount, 0);
 
   return (
     <div className="space-y-4">
@@ -94,31 +87,21 @@ export default function PaymentHistorySection({
                                 : 'Аванс'}
                         </Badge>
                         <span className="text-sm text-gray-700 font-semibold">
-                          Закрытие:{' '}
-                          {formatRussian(payment.date) || 'Неизвестная дата'}
+                          Закрытие: {formatRussian(payment.date) || 'Неизвестная дата'}
                         </span>
                         {payment.createdAt && (
                           <span className="text-xs text-gray-500">
-                            (создано:{' '}
-                            {formatRussian(payment.createdAt) ||
-                              'Неизвестная дата'}
-                            )
+                            (создано: {formatRussian(payment.createdAt) || 'Неизвестная дата'})
                           </span>
                         )}
                       </div>
-                      <p className="font-medium text-gray-900">
-                        {payment.description}
-                      </p>
+                      <p className="font-medium text-gray-900">{payment.description}</p>
                     </div>
                   </div>
 
                   <div className="text-right">
                     <p className="text-lg font-bold text-green-600">
-                      +
-                      {formatCurrency(
-                        payment.amount,
-                        payment.currency ?? 'RUB'
-                      )}
+                      +{formatCurrency(payment.amount, payment.currency ?? 'RUB')}
                     </p>
                   </div>
                 </div>
@@ -132,18 +115,14 @@ export default function PaymentHistorySection({
               <h5 className="text-lg font-semibold text-green-800">
                 Итого {isDebtsView ? 'получено' : 'выплачено'}:
               </h5>
-              <span className="text-2xl font-bold text-green-700">
-                {formatCurrency(totalPaid)}
-              </span>
+              <span className="text-2xl font-bold text-green-700">{formatCurrency(totalPaid)}</span>
             </div>
           </div>
         </div>
       ) : (
         <div className="bg-gray-50 rounded-lg p-8 text-center">
           <DocumentTextIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            История пуста
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">История пуста</h3>
           <p className="text-gray-600">Выплат по этой работе пока не было</p>
         </div>
       )}

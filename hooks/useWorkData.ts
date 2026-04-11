@@ -26,12 +26,7 @@ interface UseWorkDataParams {
 const isEqual = (obj1: any, obj2: any): boolean => {
   if (obj1 === obj2) return true;
 
-  if (
-    typeof obj1 !== 'object' ||
-    obj1 === null ||
-    typeof obj2 !== 'object' ||
-    obj2 === null
-  ) {
+  if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
     return obj1 === obj2;
   }
 
@@ -77,13 +72,14 @@ export const useWorkData = ({
       currency: 'RUB' as const,
       releaseDate: '',
     };
-    
+
     if (!initialData) return defaultData;
-    
+
     return {
       ...defaultData,
       ...initialData,
-      salary: typeof initialData.salary === 'number' ? initialData.salary.toString() : initialData.salary,
+      salary:
+        typeof initialData.salary === 'number' ? initialData.salary.toString() : initialData.salary,
     };
   });
 
@@ -96,11 +92,14 @@ export const useWorkData = ({
       const processedData: UpdateWorkDto = {
         name: initialData.name,
         responsibleUserId: initialData.responsibleUserId,
-        salary: typeof initialData.salary === 'number' ? initialData.salary.toString() : initialData.salary,
+        salary:
+          typeof initialData.salary === 'number'
+            ? initialData.salary.toString()
+            : initialData.salary,
         currency: initialData.currency || 'RUB',
         releaseDate: initialData.releaseDate || '',
       };
-      
+
       setFormData(processedData);
     }
   }, [initialData]);
@@ -118,36 +117,44 @@ export const useWorkData = ({
   }, [isAuthenticated, router]);
 
   // Обработчик изменения полей формы
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      const { name, value, type } = e.target;
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
 
-      setFormData((prev) => {
-        const newData = { ...prev };
+    setFormData((prev) => {
+      const newData = { ...prev };
 
-        // Для числовых полей преобразуем значение к числу
-        if (type === 'number' || name === 'salary') {
-          newData[name] = value === '' ? 0 : Number(value);
-        } else {
-          newData[name] = value;
-        }
+      switch (name) {
+        case 'salary':
+          newData.salary = String(value === '' ? 0 : Number(value));
+          break;
+        case 'currency':
+          newData.currency = value === 'USD' ? 'USD' : 'RUB';
+          break;
+        case 'name':
+          newData.name = value;
+          break;
+        case 'responsibleUserId':
+          newData.responsibleUserId = value;
+          break;
+        case 'releaseDate':
+          newData.releaseDate = value;
+          break;
+        default:
+          if (type === 'number') {
+            newData.salary = String(value === '' ? 0 : Number(value));
+          }
+      }
 
-
-
-        return newData;
-      });
-    },
-    []
-  );
+      return newData;
+    });
+  }, []);
 
   // Функция для принудительной перезагрузки данных работы
   const reload = useCallback(async () => {
     try {
       if (!id) return;
       setIsLoading(true);
-      const updatedWorkData = await dispatch(
-        fetchWorkById({ role, workId: id })
-      ).unwrap();
+      const updatedWorkData = await dispatch(fetchWorkById({ role, workId: id })).unwrap();
       setIsLoading(false);
       return updatedWorkData;
     } catch (error) {
@@ -155,6 +162,8 @@ export const useWorkData = ({
       setIsLoading(false);
       showError(handleError(error).message);
     }
+
+    return undefined;
   }, [id, role, dispatch, showError, handleError]);
 
   // Обработчик отправки формы
@@ -169,9 +178,7 @@ export const useWorkData = ({
           ...formData,
         };
 
-        const updatedWork = await dispatch(
-          updateWork({ role, id, data: dataToSubmit })
-        ).unwrap();
+        const updatedWork = await dispatch(updateWork({ role, id, data: dataToSubmit })).unwrap();
 
         showSuccess('Работа успешно обновлена');
         setIsEditing(false);
@@ -185,7 +192,7 @@ export const useWorkData = ({
         setIsLoading(false);
       }
     },
-    [formData, id, role, dispatch, showSuccess, showError, handleError, reload]
+    [formData, id, role, dispatch, showSuccess, showError, handleError, reload],
   );
 
   return {

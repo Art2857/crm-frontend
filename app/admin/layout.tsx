@@ -6,14 +6,11 @@ import { useAppSelector } from '../../store';
 import Layout from '../../components/layout/Layout';
 import { Role } from '../../types/user';
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, user, isLoading } = useAppSelector((s) => s.auth);
   const [ready, setReady] = useState(false);
+  const hasAdminAccess = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
 
   useEffect(() => {
     if (isLoading) return;
@@ -22,12 +19,12 @@ export default function AdminLayout({
       return;
     }
 
-    if (![Role.ADMIN, Role.MANAGER].includes(user?.role)) {
+    if (!hasAdminAccess) {
       router.replace('/dashboard');
       return;
     }
     setReady(true);
-  }, [isAuthenticated, isLoading, user, router]);
+  }, [hasAdminAccess, isAuthenticated, isLoading, router]);
 
   if (!ready) {
     return (

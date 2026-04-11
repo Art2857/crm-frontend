@@ -1,12 +1,6 @@
 'use client';
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Modal from '../ui/Modal';
@@ -50,16 +44,10 @@ const WORD_DOCUMENT_TYPES = new Set([
 ]);
 
 function isWordDocument(mimeType?: string | null): boolean {
-  return mimeType !== undefined && mimeType !== null
-    ? WORD_DOCUMENT_TYPES.has(mimeType)
-    : false;
+  return mimeType !== undefined && mimeType !== null ? WORD_DOCUMENT_TYPES.has(mimeType) : false;
 }
 
-export default function DocumentsManager({
-  mode,
-  entityId,
-  label = 'Документы',
-}: Props) {
+export default function DocumentsManager({ mode, entityId, label = 'Документы' }: Props) {
   const notification = useNotification();
   const staging = useDocumentsStaging();
   const [documents, setDocuments] = useState<UserDocument[]>([]);
@@ -87,10 +75,7 @@ export default function DocumentsManager({
     } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to delete document', err);
-      const msg =
-        err?.originalData?.message ||
-        err?.message ||
-        'Не удалось удалить документ';
+      const msg = err?.originalData?.message || err?.message || 'Не удалось удалить документ';
       notification.showError(msg, 8000);
     }
   });
@@ -106,10 +91,7 @@ export default function DocumentsManager({
     } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to load documents', err);
-      const msg =
-        err?.originalData?.message ||
-        err?.message ||
-        'Не удалось загрузить документы';
+      const msg = err?.originalData?.message || err?.message || 'Не удалось загрузить документы';
       notification.showError(msg, 8000);
     } finally {
       setLoading(false);
@@ -143,9 +125,7 @@ export default function DocumentsManager({
     try {
       setSaving(true);
       const isDeferred =
-        staging.isDeferred &&
-        staging.mode === mode &&
-        staging.entityId === entityId;
+        staging.isDeferred && staging.mode === mode && staging.entityId === entityId;
       if (isDeferred) {
         setPendingAdds((prev) => [
           ...prev,
@@ -178,10 +158,7 @@ export default function DocumentsManager({
     } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error('Failed to upload document', err);
-      const msg =
-        err?.originalData?.message ||
-        err?.message ||
-        'Не удалось загрузить документ';
+      const msg = err?.originalData?.message || err?.message || 'Не удалось загрузить документ';
       notification.showError(msg, 8000);
     } finally {
       setSaving(false);
@@ -209,9 +186,7 @@ export default function DocumentsManager({
         setIsDownloadOpen(false);
         return;
       }
-      const { url, filename } = await documentsService.getDownloadUrl(
-        selectedDoc.id
-      );
+      const { url, filename } = await documentsService.getDownloadUrl(selectedDoc.id);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename || selectedDoc.originalName;
@@ -223,9 +198,7 @@ export default function DocumentsManager({
       // eslint-disable-next-line no-console
       console.error('Failed to get download URL', err);
       const msg =
-        err?.originalData?.message ||
-        err?.message ||
-        'Не удалось получить ссылку на файл';
+        err?.originalData?.message || err?.message || 'Не удалось получить ссылку на файл';
       notification.showError(msg, 8000);
     }
   };
@@ -246,14 +219,12 @@ export default function DocumentsManager({
       if (isWordDocument(selectedDoc.mimeType)) {
         previewWindow = window.open('', '_blank');
         if (!previewWindow) {
-          notification.showError(
-            'Разрешите открытие новой вкладки для предпросмотра документа'
-          );
+          notification.showError('Разрешите открытие новой вкладки для предпросмотра документа');
           return;
         }
 
         previewWindow.document.write(
-          '<div style="font-family: Arial, sans-serif; padding: 16px;">Загрузка документа...</div>'
+          '<div style="font-family: Arial, sans-serif; padding: 16px;">Загрузка документа...</div>',
         );
 
         const html = await documentsService.getPreviewHtml(selectedDoc.id);
@@ -274,9 +245,7 @@ export default function DocumentsManager({
       // eslint-disable-next-line no-console
       console.error('Failed to get preview URL', err);
       const msg =
-        err?.originalData?.message ||
-        err?.message ||
-        'Не удалось получить ссылку на предпросмотр';
+        err?.originalData?.message || err?.message || 'Не удалось получить ссылку на предпросмотр';
       notification.showError(msg, 8000);
     }
   };
@@ -299,9 +268,7 @@ export default function DocumentsManager({
       // eslint-disable-next-line no-console
       console.error('Failed to download all documents (zip)', err);
       const msg =
-        err?.originalData?.message ||
-        err?.message ||
-        'Не удалось скачать архив документов';
+        err?.originalData?.message || err?.message || 'Не удалось скачать архив документов';
       notification.showError(msg, 8000);
     }
   };
@@ -321,39 +288,23 @@ export default function DocumentsManager({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isDeferred =
-    staging.isDeferred &&
-    staging.mode === mode &&
-    staging.entityId === entityId;
+  const isDeferred = staging.isDeferred && staging.mode === mode && staging.entityId === entityId;
   const stagedKept = useMemo(
-    () =>
-      isDeferred
-        ? documents.filter((d) => !pendingDeletes.has(d.id))
-        : documents,
-    [documents, pendingDeletes, isDeferred]
+    () => (isDeferred ? documents.filter((d) => !pendingDeletes.has(d.id)) : documents),
+    [documents, pendingDeletes, isDeferred],
   );
   const stagedPending = useMemo(
-    () =>
-      isDeferred
-        ? pendingAdds.map((p) => ({ ...p, __pending: true as const }))
-        : [],
-    [pendingAdds, isDeferred]
+    () => (isDeferred ? pendingAdds.map((p) => ({ ...p, __pending: true as const })) : []),
+    [pendingAdds, isDeferred],
   );
   const displayDocs = useMemo<any[]>(
     () => (isDeferred ? [...stagedKept, ...stagedPending] : (documents as any)),
-    [isDeferred, stagedKept, stagedPending, documents]
+    [isDeferred, stagedKept, stagedPending, documents],
   );
   const hasDocuments = !loading && displayDocs.length > 0;
   // Регистрируем в родителе обработчики коммита/отмены отложенных изменений через контекст
   useEffect(() => {
-    if (
-      !(
-        staging.isDeferred &&
-        staging.mode === mode &&
-        staging.entityId === entityId
-      )
-    )
-      return;
+    if (!(staging.isDeferred && staging.mode === mode && staging.entityId === entityId)) return;
     if (!staging.registerHandlers) return;
     const commit = async () => {
       if (committingRef.current) return;
@@ -406,9 +357,7 @@ export default function DocumentsManager({
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label}
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
         <div className="flex items-center gap-2">
           {hasDocuments && (
             <Button
@@ -443,9 +392,7 @@ export default function DocumentsManager({
               >
                 {doc.name}
               </button>
-              {idx < displayDocs.length - 1 && (
-                <span className="mx-1 text-gray-400">,</span>
-              )}
+              {idx < displayDocs.length - 1 && <span className="mx-1 text-gray-400">,</span>}
             </React.Fragment>
           ))}
         </div>
@@ -465,9 +412,7 @@ export default function DocumentsManager({
               onChange={(e: any) => setAddName(e.target.value)}
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Файл
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Файл</label>
               <input
                 type="file"
                 accept={ACCEPT_ATTR}
@@ -481,11 +426,7 @@ export default function DocumentsManager({
           </div>
 
           <div className="flex justify-end gap-2 mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsAddOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
               Отмена
             </Button>
             <Button type="button" onClick={onSaveAdd} isLoading={saving}>
@@ -517,9 +458,7 @@ export default function DocumentsManager({
             {selectedDoc?.originalName && (
               <div className="mt-2">
                 <div className="text-gray-500">Оригинальное имя</div>
-                <div className="text-gray-700 break-all">
-                  {selectedDoc.originalName}
-                </div>
+                <div className="text-gray-700 break-all">{selectedDoc.originalName}</div>
               </div>
             )}
           </div>
@@ -532,7 +471,7 @@ export default function DocumentsManager({
                 if (!selectedDoc) return;
                 if ((selectedDoc as any).__pending) {
                   setPendingAdds((prev) =>
-                    prev.filter((p) => p.tempId !== (selectedDoc as any).tempId)
+                    prev.filter((p) => p.tempId !== (selectedDoc as any).tempId),
                   );
                   setIsDownloadOpen(false);
                 } else if (
@@ -541,15 +480,14 @@ export default function DocumentsManager({
                   staging.entityId === entityId
                 ) {
                   setPendingDeletes(
-                    (prev) =>
-                      new Set([...Array.from(prev), (selectedDoc as any).id])
+                    (prev) => new Set([...Array.from(prev), (selectedDoc as any).id]),
                   );
                   setIsDownloadOpen(false);
                 } else {
                   deleteConfirm.confirmAndExecute(
                     (selectedDoc as any).id,
                     'Удалить этот документ?',
-                    { variant: 'danger' }
+                    { variant: 'danger' },
                   );
                 }
               }}

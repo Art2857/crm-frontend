@@ -70,12 +70,9 @@ export default function WorkAnalyticsView({
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Нет данных для анализа
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Нет данных для анализа</h3>
             <p className="text-gray-500 mb-6">
-              Создайте работы и назначьте ответственных для просмотра
-              аналитической информации
+              Создайте работы и назначьте ответственных для просмотра аналитической информации
             </p>
             {userRole === 'ADMIN' && (
               <Button

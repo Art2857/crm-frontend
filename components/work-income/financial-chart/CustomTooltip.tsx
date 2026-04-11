@@ -19,11 +19,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
     const data = payload[0].payload;
 
     // Поступления
-    if (
-      hoveredType === 'income' &&
-      data.incomeItems &&
-      data.incomeItems.length > 0
-    ) {
+    if (hoveredType === 'income' && data.incomeItems && data.incomeItems.length > 0) {
       return (
         <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-lg text-sm max-w-xs z-50 relative pointer-events-none">
           <div className="font-bold mb-2 border-b pb-1 text-gray-700">
@@ -34,28 +30,22 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
               Поступлений: {data.incomeItems.length}
             </div>
             {data.incomeItems.map((item: any, idx: number) => (
-              <div
-                key={idx}
-                className="mb-2 border-b border-gray-100 last:border-0 pb-1 last:pb-0"
-              >
+              <div key={idx} className="mb-2 border-b border-gray-100 last:border-0 pb-1 last:pb-0">
                 <div className="text-gray-800 font-bold">
                   +{formatAmountWithCurrency(item.amount, item.currency)}
-                  {item.currency !==
-                    (item.convertedCurrency || workCurrency) && (
+                  {item.currency !== (item.convertedCurrency || workCurrency) && (
                     <span className="text-gray-400 font-normal ml-1 text-xs">
                       (
                       {formatAmountWithCurrency(
                         item.convertedAmount,
-                        item.convertedCurrency || workCurrency
+                        item.convertedCurrency || workCurrency,
                       )}
                       )
                     </span>
                   )}
                 </div>
                 {item.description && (
-                  <div className="text-gray-600 italic text-xs">
-                    &quot;{item.description}&quot;
-                  </div>
+                  <div className="text-gray-600 italic text-xs">&quot;{item.description}&quot;</div>
                 )}
               </div>
             ))}
@@ -69,11 +59,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
     }
 
     // Обязанности распределения на сумму, траты
-    if (
-      hoveredType === 'expense' &&
-      data.expenseItems &&
-      data.expenseItems.length > 0
-    ) {
+    if (hoveredType === 'expense' && data.expenseItems && data.expenseItems.length > 0) {
       return (
         <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-lg text-sm max-w-xs z-50 relative pointer-events-none">
           <div className="font-bold mb-2 border-b pb-1 text-gray-700">
@@ -84,16 +70,9 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
               Выплат: {data.expenseItems.length}
             </div>
             {data.expenseItems.map((item: any, idx: number) => (
-              <div
-                key={idx}
-                className="mb-2 border-b border-gray-100 last:border-0 pb-1 last:pb-0"
-              >
+              <div key={idx} className="mb-2 border-b border-gray-100 last:border-0 pb-1 last:pb-0">
                 <div className="text-gray-800 font-bold">
-                  -
-                  {formatAmountWithCurrency(
-                    item.amount,
-                    item.currency || 'RUB'
-                  )}
+                  -{formatAmountWithCurrency(item.amount, item.currency || 'RUB')}
                 </div>
                 {item.toUser && (
                   <div className="text-gray-600 text-xs">
@@ -104,10 +83,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
             ))}
             <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
               Накоплено (на конец дня):{' '}
-              {formatAmountWithCurrency(
-                Math.abs(data.accAfter),
-                workCurrency || 'RUB'
-              )}
+              {formatAmountWithCurrency(Math.abs(data.accAfter), workCurrency || 'RUB')}
             </div>
           </div>
         </div>
@@ -119,8 +95,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
       return (
         <div className="bg-white p-2 border border-pink-200 shadow-sm rounded text-xs z-50 relative pointer-events-none">
           <div className="text-pink-600 font-semibold">
-            План расходов:{' '}
-            {formatAmountWithCurrency(Math.abs(data.plannedExpense), 'RUB')}
+            План расходов: {formatAmountWithCurrency(Math.abs(data.plannedExpense), 'RUB')}
           </div>
           <div className="text-gray-400 text-[10px] mt-1">
             {new Date(data.date).toLocaleDateString()}

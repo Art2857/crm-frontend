@@ -32,9 +32,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
 
   // Получаем последнее распределение (самое актуальное)
   // Всегда берём первое (самое свежее) - даже если оно пустое (обнулено при архивации)
-  const latestDistribution = useMemo<
-    DistributionWithDetails | undefined
-  >(() => {
+  const latestDistribution = useMemo<DistributionWithDetails | undefined>(() => {
     if (!distributions || distributions.length === 0) return undefined;
     return distributions[0];
   }, [distributions]);
@@ -44,9 +42,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
     if (!latestDistribution) return [];
 
     if (showOnlyCurrentUser && currentUserId) {
-      return latestDistribution.details.filter(
-        (detail) => detail.user.id === currentUserId
-      );
+      return latestDistribution.details.filter((detail) => detail.user.id === currentUserId);
     }
 
     return latestDistribution.details;
@@ -64,12 +60,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
               onClick={onEditDuties}
               className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -99,12 +90,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
               onClick={onEditDuties}
               className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -134,8 +120,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
             <p className="text-sm text-gray-500">
               Обновлено:{' '}
               {formatDateForDisplay(
-                latestDistribution.workHistory.effectiveDate ||
-                  latestDistribution.createdAt
+                latestDistribution.workHistory.effectiveDate || latestDistribution.createdAt,
               )}
             </p>
           </div>
@@ -146,12 +131,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
               onClick={onEditDuties}
               className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg px-5 py-2.5 shadow-sm hover:from-green-700 hover:to-green-800 font-medium transition-all duration-200 flex items-center"
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -193,18 +173,13 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
                 const user = usersMap[detail.user.id];
                 const userName = user
                   ? `${user.lastName || ''} ${user.firstName || ''}`.trim()
-                  : detail.user.email ||
-                      (detail.user.firstName && detail.user.lastName)
+                  : detail.user.email || (detail.user.firstName && detail.user.lastName)
                     ? `${detail.user.lastName || ''} ${detail.user.firstName || ''}`.trim()
                     : `ID: ${detail.user.id}`;
 
                 // Преобразуем строковые значения в числа для функции formatPayment
-                const numericPrice = detail.price
-                  ? parseFloat(detail.price)
-                  : null;
-                const numericPercentage = detail.percentage
-                  ? parseFloat(detail.percentage)
-                  : null;
+                const numericPrice = detail.price ? parseFloat(detail.price) : null;
+                const numericPercentage = detail.percentage ? parseFloat(detail.percentage) : null;
                 const numericCalculatedValue = detail.calculatedValue
                   ? parseFloat(detail.calculatedValue)
                   : null;
@@ -225,7 +200,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
                         numericPrice,
                         numericPercentage,
                         numericCalculatedValue,
-                        detailCurrency
+                        detailCurrency,
                       )}
                     </td>
                   </tr>

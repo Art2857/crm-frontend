@@ -15,9 +15,7 @@ interface WorkIncomeFormProps {
   workId: string;
   income?: WorkIncome; // Для редактирования
   isSubmitting?: boolean;
-  onSubmit: (
-    data: CreateWorkIncomeRequest | UpdateWorkIncomeRequest
-  ) => Promise<void>;
+  onSubmit: (data: CreateWorkIncomeRequest | UpdateWorkIncomeRequest) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -28,9 +26,7 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const [formData, setFormData] = useState<WorkIncomeFormData>(
-    EMPTY_WORK_INCOME_FORM
-  );
+  const [formData, setFormData] = useState<WorkIncomeFormData>(EMPTY_WORK_INCOME_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEditing = !!income;
@@ -141,10 +137,7 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Сумма */}
       <div>
-        <label
-          htmlFor="amount"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
+        <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
           Сумма поступления *
         </label>
         <div className="relative">
@@ -165,25 +158,18 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
             disabled={isSubmitting}
           />
         </div>
-        {errors.amount && (
-          <p className="mt-1 text-sm text-red-600">{errors.amount}</p>
-        )}
+        {errors.amount && <p className="mt-1 text-sm text-red-600">{errors.amount}</p>}
       </div>
 
       {/* Валюта */}
       <div>
-        <label
-          htmlFor="currency"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
+        <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-2">
           Валюта *
         </label>
         <select
           id="currency"
           value={formData.currency}
-          onChange={(e) =>
-            handleChange('currency', e.target.value as 'RUB' | 'USD')
-          }
+          onChange={(e) => handleChange('currency', e.target.value as 'RUB' | 'USD')}
           className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
             errors.currency
               ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
@@ -197,17 +183,12 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
             </option>
           ))}
         </select>
-        {errors.currency && (
-          <p className="mt-1 text-sm text-red-600">{errors.currency}</p>
-        )}
+        {errors.currency && <p className="mt-1 text-sm text-red-600">{errors.currency}</p>}
       </div>
 
       {/* Дата поступления */}
       <div>
-        <label
-          htmlFor="receivedDate"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
+        <label htmlFor="receivedDate" className="block text-sm font-medium text-gray-700 mb-2">
           Дата поступления *
         </label>
         <input
@@ -223,17 +204,12 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
           }`}
           disabled={isSubmitting}
         />
-        {errors.receivedDate && (
-          <p className="mt-1 text-sm text-red-600">{errors.receivedDate}</p>
-        )}
+        {errors.receivedDate && <p className="mt-1 text-sm text-red-600">{errors.receivedDate}</p>}
       </div>
 
       {/* Описание */}
       <div>
-        <label
-          htmlFor="description"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
           Описание
         </label>
         <textarea
@@ -256,28 +232,16 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
           ) : (
             <div />
           )}
-          <p className="text-xs text-gray-500">
-            {formData.description.length}/500 символов
-          </p>
+          <p className="text-xs text-gray-500">{formData.description.length}/500 символов</p>
         </div>
       </div>
 
       {/* Кнопки */}
       <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
           Отменить
         </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          isLoading={isSubmitting}
-          disabled={isSubmitting}
-        >
+        <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
           {isEditing ? 'Сохранить изменения' : 'Добавить запись'}
         </Button>
       </div>

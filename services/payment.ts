@@ -27,14 +27,9 @@ import { logger } from '../utils/logger';
 /**
  * Производит выплату сотруднику
  */
-export const makePayment = async (
-  paymentData: MakePaymentDto
-): Promise<PaymentResponse> => {
+export const makePayment = async (paymentData: MakePaymentDto): Promise<PaymentResponse> => {
   try {
-    const response = await privateApi.post<PaymentResponse>(
-      PAYMENTS_ENDPOINTS.base,
-      paymentData
-    );
+    const response = await privateApi.post<PaymentResponse>(PAYMENTS_ENDPOINTS.base, paymentData);
     return response.data;
   } catch (error) {
     logger.error('Error making payment:', error);
@@ -45,16 +40,13 @@ export const makePayment = async (
 /**
  * Получает историю выплат
  */
-export const fetchPaymentHistory = async (
-  params?: PaymentHistoryDto
-): Promise<PaymentHistory> => {
+export const fetchPaymentHistory = async (params?: PaymentHistoryDto): Promise<PaymentHistory> => {
   try {
     const searchParams = new URLSearchParams();
 
     if (params?.workId) searchParams.append('workId', params.workId);
     if (params?.userId) searchParams.append('userId', params.userId);
-    if (params?.paymentType)
-      searchParams.append('paymentType', params.paymentType);
+    if (params?.paymentType) searchParams.append('paymentType', params.paymentType);
     if (params?.startDate) searchParams.append('startDate', params.startDate);
     if (params?.endDate) searchParams.append('endDate', params.endDate);
     if (params?.page) searchParams.append('page', params.page.toString());
@@ -91,9 +83,7 @@ export const fetchMyDebts = async (): Promise<MyDebts> => {
 export const fetchMyPayments = async (): Promise<MyPayments> => {
   try {
     // Бэкенд не предоставляет /payments/my-payments. Используем /payments/history и агрегируем на клиенте
-    const response = await privateApi.get<PaymentHistory>(
-      PAYMENTS_ENDPOINTS.history
-    );
+    const response = await privateApi.get<PaymentHistory>(PAYMENTS_ENDPOINTS.history);
     const history = response.data;
 
     // Статистика: суммарно отправлено/получено и текущий месяц
@@ -101,16 +91,15 @@ export const fetchMyPayments = async (): Promise<MyPayments> => {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    let totalSent = 0;
+    const totalSent = 0;
     let totalReceived = 0;
-    let currentMonthSent = 0;
+    const currentMonthSent = 0;
     let currentMonthReceived = 0;
 
     for (const p of history.payments) {
       const paymentDate = new Date(p.paymentDate);
       const isCurrentMonth =
-        paymentDate.getMonth() === currentMonth &&
-        paymentDate.getFullYear() === currentYear;
+        paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
 
       // Если текущий пользователь является отправителем/получателем — сервер уже отфильтровал релевантные записи
       // Определим направление по наличию from/to относительно userId недоступно здесь → считаем все платежи как «актуальные»
@@ -138,9 +127,7 @@ export const fetchMyPayments = async (): Promise<MyPayments> => {
 /**
  * Удаляет выплату (отменяет ошибочную выплату)
  */
-export const deletePayment = async (
-  paymentId: string
-): Promise<void> => {
+export const deletePayment = async (paymentId: string): Promise<void> => {
   try {
     await privateApi.delete(PAYMENTS_ENDPOINTS.byId(paymentId));
   } catch (error) {
@@ -156,12 +143,12 @@ export const deletePayment = async (
  * Создает выплату и закрывает период
  */
 export const createPaymentAndClose = async (
-  paymentData: CreatePaymentAndCloseDto
+  paymentData: CreatePaymentAndCloseDto,
 ): Promise<CreatePaymentAndCloseResponseDto> => {
   try {
     const response = await privateApi.post<CreatePaymentAndCloseResponseDto>(
       PAYMENTS_ENDPOINTS.createAndClose,
-      paymentData
+      paymentData,
     );
     return response.data;
   } catch (error) {
@@ -173,13 +160,10 @@ export const createPaymentAndClose = async (
 /**
  * Получает последний закрытый день для пары работа+пользователь
  */
-export const getClosureDate = async (
-  workId: string,
-  userId: string
-): Promise<string | null> => {
+export const getClosureDate = async (workId: string, userId: string): Promise<string | null> => {
   try {
     const response = await privateApi.get<{ closureDate: string | null }>(
-      `${PAYMENTS_ENDPOINTS.closureDate}?workId=${workId}&userId=${userId}`
+      `${PAYMENTS_ENDPOINTS.closureDate}?workId=${workId}&userId=${userId}`,
     );
     return response.data.closureDate;
   } catch (error) {
@@ -188,21 +172,16 @@ export const getClosureDate = async (
   }
 };
 
-export const closePeriod = async (
-  params: {
-    workId: string;
-    userId: string;
-    closureDate: string; // YYYY-MM-DD — дата «расчёт до»
-  }
-) => {
-  const { data } = await privateApi.post(
-    `${PAYMENTS_ENDPOINTS.base}/close-period`,
-    {
-      workId: params.workId,
-      targetUserId: params.userId,
-      closureDate: params.closureDate,
-    }
-  );
+export const closePeriod = async (params: {
+  workId: string;
+  userId: string;
+  closureDate: string; // YYYY-MM-DD — дата «расчёт до»
+}) => {
+  const { data } = await privateApi.post(`${PAYMENTS_ENDPOINTS.base}/close-period`, {
+    workId: params.workId,
+    targetUserId: params.userId,
+    closureDate: params.closureDate,
+  });
   return data;
 };
 
@@ -213,11 +192,8 @@ export const bulkCreateAndClose = async (
     amount: number; // 0 — только закрытие
     paymentDate: string; // YYYY-MM-DD
     description?: string;
-  }>
+  }>,
 ) => {
-  const { data } = await privateApi.post(
-    PAYMENTS_ENDPOINTS.bulkCreateAndClose,
-    { items }
-  );
+  const { data } = await privateApi.post(PAYMENTS_ENDPOINTS.bulkCreateAndClose, { items });
   return data;
 };

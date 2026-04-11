@@ -10,16 +10,21 @@ class ExchangeRatesService {
   private api = privateApi;
 
   async getExchangeRates(params?: any): Promise<{ data: ExchangeRate[]; total: number }> {
-    const response = await this.api.get<{ data: ExchangeRate[]; total: number }>('/exchange-rates', { params });
-    
+    const response = await this.api.get<{ data: ExchangeRate[]; total: number }>(
+      '/exchange-rates',
+      { params },
+    );
+
     // Возвращаем данные как есть (строковые даты)
     return response.data;
   }
 
   // Получение последней котировки для валюты
   async getLatestRate(currencyCode: string): Promise<ExchangeRate | null> {
-    const response = await this.api.get<ExchangeRate | null>(`/exchange-rates/latest/${currencyCode}`);
-    
+    const response = await this.api.get<ExchangeRate | null>(
+      `/exchange-rates/latest/${currencyCode}`,
+    );
+
     if (!response.data) {
       return null;
     }
@@ -32,31 +37,29 @@ class ExchangeRatesService {
   async getChartData(
     currencyCode: string,
     fromDate?: Date,
-    toDate?: Date
+    toDate?: Date,
   ): Promise<ChartDataPoint[]> {
     const params: any = {};
-    
+
     if (fromDate) {
       params.fromDate = fromDate.toISOString().split('T')[0]; // YYYY-MM-DD
     }
-    
+
     if (toDate) {
       params.toDate = toDate.toISOString().split('T')[0]; // YYYY-MM-DD
     }
 
-    const response = await this.api.get<ChartDataPoint[]>(
-      `/exchange-rates/chart/${currencyCode}`,
-      { params, timeout: 120000 }
-    );
+    const response = await this.api.get<ChartDataPoint[]>(`/exchange-rates/chart/${currencyCode}`, {
+      params,
+      timeout: 120000,
+    });
 
     // Обрабатываем данные для графика
-    return response.data.map(point => ({
+    return response.data.map((point) => ({
       ...point,
       displayRate: point.rate / point.nominal, // Рассчитываем курс за единицу валюты
     }));
   }
-
-
 
   // Получение списка доступных валют
   async getAvailableCurrencies(): Promise<string[]> {
@@ -71,12 +74,10 @@ class ExchangeRatesService {
     };
 
     const response = await this.api.post<CurrencyConversion>('/exchange-rates/convert', payload);
-    
+
     // Возвращаем данные как есть (строковые даты)
     return response.data;
   }
-
-
 
   // Административные методы
   async syncCurrentRates(): Promise<{ message: string }> {
@@ -100,7 +101,9 @@ class ExchangeRatesService {
   }
 
   async getSyncStatus(): Promise<{ lastSyncDate: Date | null }> {
-    const response = await this.api.get<{ lastSyncDate: string | null }>('/exchange-rates/sync/status');
+    const response = await this.api.get<{ lastSyncDate: string | null }>(
+      '/exchange-rates/sync/status',
+    );
     return {
       lastSyncDate: response.data.lastSyncDate ? new Date(response.data.lastSyncDate) : null,
     };
@@ -122,13 +125,16 @@ class ExchangeRatesService {
     }).format(amount);
   }
 
-  calculateRateChange(current: number, previous: number): {
+  calculateRateChange(
+    current: number,
+    previous: number,
+  ): {
     absolute: number;
     percentage: number;
   } {
     const absolute = current - previous;
     const percentage = previous !== 0 ? (absolute / previous) * 100 : 0;
-    
+
     return { absolute, percentage };
   }
 
@@ -136,7 +142,7 @@ class ExchangeRatesService {
   async getHistoricalRates(
     currencyCode: string,
     fromDate: Date,
-    toDate: Date
+    toDate: Date,
   ): Promise<ExchangeRate[]> {
     const result = await this.getExchangeRates({
       currencyCode,

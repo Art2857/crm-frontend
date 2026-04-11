@@ -18,9 +18,7 @@ interface WorkIncomeModalProps {
   error?: string | null;
   successMessage?: string | null;
   onClearMessages?: () => void;
-  onSubmit: (
-    data: CreateWorkIncomeRequest | UpdateWorkIncomeRequest
-  ) => Promise<void>;
+  onSubmit: (data: CreateWorkIncomeRequest | UpdateWorkIncomeRequest) => Promise<void>;
 }
 
 const WorkIncomeModal: React.FC<WorkIncomeModalProps> = ({
@@ -70,9 +68,7 @@ const WorkIncomeModal: React.FC<WorkIncomeModalProps> = ({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {isEditing
-                      ? 'Редактировать запись о доходе'
-                      : 'Добавить запись о доходе'}
+                    {isEditing ? 'Редактировать запись о доходе' : 'Добавить запись о доходе'}
                   </h3>
                   <p className="text-sm text-gray-600">
                     {isEditing
@@ -86,12 +82,7 @@ const WorkIncomeModal: React.FC<WorkIncomeModalProps> = ({
                 disabled={isSubmitting}
                 className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-full p-1 transition-colors"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

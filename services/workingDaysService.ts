@@ -1,7 +1,7 @@
 /**
  * Сервис для работы с рабочими днями
  * Следует принципам SOLID, DRY, KISS
- * 
+ *
  * Single Responsibility: только логика рабочих дней
  * Open/Closed: легко добавить новые правила для выходных
  * Liskov Substitution: интерфейс может быть заменен на другую реализацию
@@ -15,13 +15,13 @@ import { ExchangeRateDate, ExchangeRateDates } from '../utils/exchangeRateDate';
  * Дни недели (JavaScript стандарт)
  */
 export enum WeekDay {
-  SUNDAY = 0,    // Воскресенье 
-  MONDAY = 1,    // Понедельник
-  TUESDAY = 2,   // Вторник
-  WEDNESDAY = 3, // Среда  
-  THURSDAY = 4,  // Четверг
-  FRIDAY = 5,    // Пятница
-  SATURDAY = 6   // Суббота
+  SUNDAY = 0, // Воскресенье
+  MONDAY = 1, // Понедельник
+  TUESDAY = 2, // Вторник
+  WEDNESDAY = 3, // Среда
+  THURSDAY = 4, // Четверг
+  FRIDAY = 5, // Пятница
+  SATURDAY = 6, // Суббота
 }
 
 /**
@@ -40,7 +40,10 @@ export interface IWorkingDaysService {
   getNextWorkingDay(date: ExchangeRateDate | string | Date): ExchangeRateDate;
   getPreviousWorkingDay(date: ExchangeRateDate | string | Date): ExchangeRateDate;
   getLastWorkingDay(): ExchangeRateDate;
-  getWorkingDaysInRange(start: ExchangeRateDate | string, end: ExchangeRateDate | string): ExchangeRateDate[];
+  getWorkingDaysInRange(
+    start: ExchangeRateDate | string,
+    end: ExchangeRateDate | string,
+  ): ExchangeRateDate[];
   countWorkingDays(start: ExchangeRateDate | string, end: ExchangeRateDate | string): number;
   hasWorkingDaysBetween(start: ExchangeRateDate | string, end: ExchangeRateDate | string): boolean;
 }
@@ -55,9 +58,9 @@ export const STANDARD_WORKING_DAYS_CONFIG: IWorkingDaysConfig = {
     WeekDay.WEDNESDAY,
     WeekDay.THURSDAY,
     WeekDay.FRIDAY,
-    WeekDay.SATURDAY
+    WeekDay.SATURDAY,
   ],
-  holidays: []
+  holidays: [],
 };
 
 /**
@@ -77,17 +80,17 @@ export class WorkingDaysService implements IWorkingDaysService {
     const exchangeDate = this.normalizeDate(date);
     const jsDate = exchangeDate.toDate();
     const dayOfWeek = jsDate.getDay() as WeekDay;
-    
+
     // Проверяем, что день входит в рабочие дни
     if (!this.config.workingDays.includes(dayOfWeek)) {
       return false;
     }
-    
+
     // Проверяем, что день не является праздником
     if (this.config.holidays.includes(exchangeDate.value)) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -97,16 +100,17 @@ export class WorkingDaysService implements IWorkingDaysService {
   getNextWorkingDay(date: ExchangeRateDate | string | Date): ExchangeRateDate {
     let current = this.normalizeDate(date).addDays(1);
     let attempts = 0;
-    
-    while (!this.isWorkingDay(current) && attempts < 14) { // Защита от бесконечного цикла
+
+    while (!this.isWorkingDay(current) && attempts < 14) {
+      // Защита от бесконечного цикла
       current = current.addDays(1);
       attempts++;
     }
-    
+
     if (attempts >= 14) {
       throw new Error('Could not find next working day within 2 weeks');
     }
-    
+
     return current;
   }
 
@@ -116,16 +120,17 @@ export class WorkingDaysService implements IWorkingDaysService {
   getPreviousWorkingDay(date: ExchangeRateDate | string | Date): ExchangeRateDate {
     let current = this.normalizeDate(date).subtractDays(1);
     let attempts = 0;
-    
-    while (!this.isWorkingDay(current) && attempts < 14) { // Защита от бесконечного цикла
+
+    while (!this.isWorkingDay(current) && attempts < 14) {
+      // Защита от бесконечного цикла
       current = current.subtractDays(1);
       attempts++;
     }
-    
+
     if (attempts >= 14) {
       throw new Error('Could not find previous working day within 2 weeks');
     }
-    
+
     return current;
   }
 
@@ -134,27 +139,30 @@ export class WorkingDaysService implements IWorkingDaysService {
    */
   getLastWorkingDay(): ExchangeRateDate {
     const today = ExchangeRateDates.today();
-    
+
     if (this.isWorkingDay(today)) {
       return today;
     }
-    
+
     return this.getPreviousWorkingDay(today);
   }
 
   /**
    * Получает все рабочие дни в диапазоне (включительно)
    */
-  getWorkingDaysInRange(start: ExchangeRateDate | string, end: ExchangeRateDate | string): ExchangeRateDate[] {
+  getWorkingDaysInRange(
+    start: ExchangeRateDate | string,
+    end: ExchangeRateDate | string,
+  ): ExchangeRateDate[] {
     const startDate = this.normalizeDate(start);
     const endDate = this.normalizeDate(end);
-    
+
     if (startDate.isAfter(endDate)) {
       throw new Error('Start date must be before or equal to end date');
     }
-    
+
     const allDates = ExchangeRateDates.range(startDate, endDate);
-    return allDates.filter(date => this.isWorkingDay(date));
+    return allDates.filter((date) => this.isWorkingDay(date));
   }
 
   /**
@@ -170,21 +178,21 @@ export class WorkingDaysService implements IWorkingDaysService {
   hasWorkingDaysBetween(start: ExchangeRateDate | string, end: ExchangeRateDate | string): boolean {
     const startDate = this.normalizeDate(start);
     const endDate = this.normalizeDate(end);
-    
+
     if (startDate.isAfter(endDate)) {
       return false;
     }
-    
+
     // Проверяем дни между start и end (не включая сами start и end)
     let current = startDate.addDays(1);
-    
+
     while (current.isBefore(endDate)) {
       if (this.isWorkingDay(current)) {
         return true;
       }
       current = current.addDays(1);
     }
-    
+
     return false;
   }
 
@@ -217,7 +225,7 @@ export class WorkingDaysService implements IWorkingDaysService {
    */
   removeHoliday(date: ExchangeRateDate | string): void {
     const holidayDate = this.normalizeDate(date);
-    this.config.holidays = this.config.holidays.filter(h => h !== holidayDate.value);
+    this.config.holidays = this.config.holidays.filter((h) => h !== holidayDate.value);
   }
 
   /**
@@ -227,8 +235,16 @@ export class WorkingDaysService implements IWorkingDaysService {
     const exchangeDate = this.normalizeDate(date);
     const jsDate = exchangeDate.toDate();
     const dayOfWeek = jsDate.getDay() as WeekDay;
-    const dayNames = ['ВОСКР(❌)', 'ПОНЕД(❌)', 'ВТОРН(✅)', 'СРЕДА(✅)', 'ЧЕТВ(✅)', 'ПЯТН(✅)', 'СУББ(✅)'];
-    
+    const dayNames = [
+      'ВОСКР(❌)',
+      'ПОНЕД(❌)',
+      'ВТОРН(✅)',
+      'СРЕДА(✅)',
+      'ЧЕТВ(✅)',
+      'ПЯТН(✅)',
+      'СУББ(✅)',
+    ];
+
     return {
       date: exchangeDate.value,
       dayOfWeek: dayOfWeek,
@@ -236,8 +252,8 @@ export class WorkingDaysService implements IWorkingDaysService {
       isInWorkingDays: this.config.workingDays.includes(dayOfWeek),
       isHoliday: this.config.holidays.includes(exchangeDate.value),
       isWorkingDay: this.isWorkingDay(exchangeDate),
-      workingDaysConfig: this.config.workingDays.map(day => dayNames[day]),
-      note: 'ЦБ РФ: Выходные ВС+ПН, Рабочие ВТ-СБ'
+      workingDaysConfig: this.config.workingDays.map((day) => dayNames[day]),
+      note: 'ЦБ РФ: Выходные ВС+ПН, Рабочие ВТ-СБ',
     };
   }
 
@@ -248,7 +264,7 @@ export class WorkingDaysService implements IWorkingDaysService {
     if (date instanceof ExchangeRateDate) {
       return date;
     }
-    
+
     return new ExchangeRateDate(date);
   }
 }

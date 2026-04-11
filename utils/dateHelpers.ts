@@ -8,7 +8,7 @@
 export const formatDateSafe = (
   date: Date | string | null | undefined,
   options?: Intl.DateTimeFormatOptions,
-  fallback: string = 'Неизвестно'
+  fallback: string = 'Неизвестно',
 ): string => {
   if (!date) {
     return fallback;
@@ -16,18 +16,18 @@ export const formatDateSafe = (
 
   try {
     let validDate: Date;
-    
+
     if (typeof date === 'string') {
       validDate = new Date(date);
     } else {
       validDate = date;
     }
-    
+
     // Проверяем, что дата валидна
     if (isNaN(validDate.getTime())) {
       return fallback;
     }
-    
+
     return new Intl.DateTimeFormat('ru-RU', options).format(validDate);
   } catch {
     return fallback;
@@ -44,18 +44,18 @@ export const parseDate = (date: Date | string | null | undefined): Date | null =
 
   try {
     let parsedDate: Date;
-    
+
     if (typeof date === 'string') {
       parsedDate = new Date(date);
     } else {
       parsedDate = date;
     }
-    
+
     // Проверяем, что дата валидна
     if (isNaN(parsedDate.getTime())) {
       return null;
     }
-    
+
     return parsedDate;
   } catch {
     return null;

@@ -37,9 +37,7 @@ export default function PaymentHistoryTab({
     refetch,
   } = usePaymentHistory({ recipientId });
 
-  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(
-    null
-  );
+  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handleFiltersChange = (newFilters: Partial<PaymentHistoryDto>) => {
@@ -70,9 +68,7 @@ export default function PaymentHistoryTab({
         await refetch();
       } catch (error) {
         console.error('Error deleting payment:', error);
-        alert(
-          error instanceof Error ? error.message : 'Ошибка при удалении выплаты'
-        );
+        alert(error instanceof Error ? error.message : 'Ошибка при удалении выплаты');
       } finally {
         setDeletingPaymentId(null);
       }
@@ -99,9 +95,7 @@ export default function PaymentHistoryTab({
               />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Ошибка загрузки
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Ошибка загрузки</h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <Button onClick={refetch} variant="primary">
             Попробовать снова
@@ -130,9 +124,7 @@ export default function PaymentHistoryTab({
               {totalAmountRub > 0 && (
                 <div className="flex items-center space-x-2 text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200 ml-6">
                   <span className="font-medium">Всего получено:</span>
-                  <span className="font-bold">
-                    {formatCurrency(totalAmountRub, 'RUB')}
-                  </span>
+                  <span className="font-bold">{formatCurrency(totalAmountRub, 'RUB')}</span>
                 </div>
               )}
             </div>
@@ -190,14 +182,8 @@ export default function PaymentHistoryTab({
                   ? 'По заданным фильтрам выплат не найдено. Попробуйте изменить критерии поиска.'
                   : 'Пока не было совершено ни одной выплаты.'}
               </p>
-              {(filters.paymentType ||
-                filters.startDate ||
-                filters.endDate) && (
-                <Button
-                  onClick={handleClearFilters}
-                  variant="outline"
-                  className="mt-4"
-                >
+              {(filters.paymentType || filters.startDate || filters.endDate) && (
+                <Button onClick={handleClearFilters} variant="outline" className="mt-4">
                   Очистить фильтры
                 </Button>
               )}

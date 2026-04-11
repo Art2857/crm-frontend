@@ -12,9 +12,7 @@ function round2(n: number) {
 }
 
 function formatRate(r: number | null | undefined) {
-  return r == null
-    ? '…'
-    : r.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
+  return r == null ? '…' : r.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
 }
 
 export function formatCurrencySmart(amount: number, currency: CurrencyType) {
@@ -39,15 +37,8 @@ export function buildDutyFormulaView(params: {
   displayCurrency: CurrencyType;
   rate?: number | null;
 }): DutyFormulaView {
-  const {
-    monthlyAmount,
-    calculatedAmount,
-    dutyCurrency,
-    days,
-    monthDays,
-    displayCurrency,
-    rate,
-  } = params;
+  const { monthlyAmount, calculatedAmount, dutyCurrency, days, monthDays, displayCurrency, rate } =
+    params;
 
   const left = `${formatCurrency(monthlyAmount || 0, dutyCurrency)} × ${days || 0}/${monthDays || 0}`;
 
@@ -59,8 +50,7 @@ export function buildDutyFormulaView(params: {
   const rateRounded = typeof rate === 'number' ? round2(rate) : null;
   const base = Number(calculatedAmount) || 0;
 
-  const op: '×' | '÷' =
-    dutyCurrency === 'USD' && displayCurrency === 'RUB' ? '×' : '÷';
+  const op: '×' | '÷' = dutyCurrency === 'USD' && displayCurrency === 'RUB' ? '×' : '÷';
 
   // if no rate, still show structure
   if (rateRounded === null) {

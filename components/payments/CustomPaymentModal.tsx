@@ -45,14 +45,10 @@ export default function CustomPaymentModal({
 
   const [selectedWorkId, setSelectedWorkId] = useState(defaultWorkId || '');
   const [selectedUserId, setSelectedUserId] = useState(defaultUserId || '');
-  const [amount, setAmount] = useState(
-    defaultAmount ? String(defaultAmount) : ''
-  );
+  const [amount, setAmount] = useState(defaultAmount ? String(defaultAmount) : '');
   const [currency, setCurrency] = useState<'RUB' | 'USD'>('RUB');
   const [type, setType] = useState('SALARY');
-  const [description, setDescription] = useState(
-    defaultAmount ? 'Выплата' : ''
-  );
+  const [description, setDescription] = useState(defaultAmount ? 'Выплата' : '');
   const [paymentDate, setPaymentDate] = useState(() => getCurrentDateISO());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [minPaymentDate, setMinPaymentDate] = useState<string | null>(null);
@@ -99,18 +95,13 @@ export default function CustomPaymentModal({
   useEffect(() => {
     if (selectedWorkId && selectedUserId) {
       (async () => {
-        const closureDate = await getClosureDate(
-          selectedWorkId,
-          selectedUserId
-        );
-        const minAllowedPaymentDate = closureDate
-          ? shiftDateISOByDays(closureDate, 1)
-          : null;
+        const closureDate = await getClosureDate(selectedWorkId, selectedUserId);
+        const minAllowedPaymentDate = closureDate ? shiftDateISOByDays(closureDate, 1) : null;
         setMinPaymentDate(minAllowedPaymentDate);
         setPaymentDate((currentPaymentDate) =>
           minAllowedPaymentDate && currentPaymentDate < minAllowedPaymentDate
             ? minAllowedPaymentDate
-            : currentPaymentDate
+            : currentPaymentDate,
         );
       })();
     } else {
@@ -138,8 +129,7 @@ export default function CustomPaymentModal({
     const newErrors: Record<string, string> = {};
     if (!selectedWorkId) newErrors.work = 'Выберите работу';
     if (!selectedUserId) newErrors.user = 'Выберите получателя';
-    if (!amount || parseFloat(amount) <= 0)
-      newErrors.amount = 'Укажите сумму выплаты';
+    if (!amount || parseFloat(amount) <= 0) newErrors.amount = 'Укажите сумму выплаты';
     if (!paymentDate) {
       newErrors.paymentDate = 'Укажите дату выплаты';
     } else if (minPaymentDate && paymentDate < minPaymentDate) {
@@ -197,21 +187,14 @@ export default function CustomPaymentModal({
               </div>
               <div>
                 <h3 className="text-xl font-bold">Создать выплату</h3>
-                <p className="text-purple-100 text-sm">
-                  Произвольная выплата сотруднику
-                </p>
+                <p className="text-purple-100 text-sm">Произвольная выплата сотруднику</p>
               </div>
             </div>
             <button
               onClick={onClose}
               className="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
             >
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -303,9 +286,7 @@ export default function CustomPaymentModal({
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-lg">
-                      {currency === 'USD' ? '$' : '₽'}
-                    </span>
+                    <span className="text-gray-500 text-lg">{currency === 'USD' ? '$' : '₽'}</span>
                   </div>
                   <Input
                     id="customAmount"
@@ -324,11 +305,7 @@ export default function CustomPaymentModal({
                     required
                   />
                   <div className="absolute inset-y-0 right-2 flex items-center">
-                    <CurrencySwitch
-                      value={currency}
-                      onChange={setCurrency}
-                      size="sm"
-                    />
+                    <CurrencySwitch value={currency} onChange={setCurrency} size="sm" />
                   </div>
                 </div>
                 {/* TODO: показать долг, когда будет API */}
@@ -381,9 +358,7 @@ export default function CustomPaymentModal({
                       <div className="flex items-center space-x-2">
                         <span className="text-lg">{option.icon}</span>
                         <div>
-                          <p className="font-medium text-gray-900">
-                            {option.label}
-                          </p>
+                          <p className="font-medium text-gray-900">{option.label}</p>
                           <p className="text-xs text-gray-500">{option.desc}</p>
                         </div>
                       </div>
@@ -442,8 +417,7 @@ export default function CustomPaymentModal({
                 />
                 {minPaymentDate && (
                   <p className="text-xs text-amber-600 -mt-3">
-                    Минимальная дата:{' '}
-                    {minPaymentDate.split('-').reverse().join('.')}
+                    Минимальная дата: {minPaymentDate.split('-').reverse().join('.')}
                   </p>
                 )}
               </div>

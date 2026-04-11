@@ -4,12 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Button from '../ui/Button';
 import Notification from '../ui/Notification';
 import { useWorkIncome } from '../../hooks/useWorkIncome';
-import {
-  WorkIncomeList,
-  WorkIncomeModal,
-  DeleteWorkIncomeModal,
-  WorkIncomeStats,
-} from './index';
+import { WorkIncomeList, WorkIncomeModal, DeleteWorkIncomeModal, WorkIncomeStats } from './index';
 import {
   WorkIncome,
   CreateWorkIncomeRequest,
@@ -120,7 +115,11 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
   };
 
   // Обработчики CRUD операций
-  const handleCreateSubmit = async (data: CreateWorkIncomeRequest) => {
+  const handleCreateSubmit = async (data: CreateWorkIncomeRequest | UpdateWorkIncomeRequest) => {
+    if (!('workId' in data)) {
+      return;
+    }
+
     const success = await createIncome(data);
     if (success) {
       setIsCreateModalOpen(false);
@@ -131,7 +130,7 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
     }
   };
 
-  const handleEditSubmit = async (data: UpdateWorkIncomeRequest) => {
+  const handleEditSubmit = async (data: CreateWorkIncomeRequest | UpdateWorkIncomeRequest) => {
     if (!selectedIncome) return;
 
     const success = await updateIncome(selectedIncome.id, data);
@@ -177,9 +176,7 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
       {/* Заголовок и действия */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-            История поступлений средств
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">История поступлений средств</h3>
           <p className="text-sm text-gray-600">
             Учет реальных доходов по работе с автоматической конвертацией валют
           </p>
@@ -206,12 +203,7 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -231,12 +223,7 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
                 size="sm"
                 disabled={isLoading || isSubmitting}
               >
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

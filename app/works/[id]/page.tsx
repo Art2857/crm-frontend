@@ -72,21 +72,16 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     }
   }, [isEditing]);
 
-  const salaryCurrency: 'RUB' | 'USD' =
-    workData?.currency === 'USD' ? 'USD' : 'RUB';
+  const salaryCurrency: 'RUB' | 'USD' = workData?.currency === 'USD' ? 'USD' : 'RUB';
   const displaySalary = Number(workData?.salary || 0);
   const isSalaryConfidential = (workData as any)?.isConfidential === true;
   const isWorkerNotResponsible = user?.role === 'WORKER' && !isResponsible;
 
   // Состояние для табов
-  const [activeTab, setActiveTab] = React.useState<
-    'duties' | 'dutiesHistory' | 'income'
-  >('duties');
+  const [activeTab, setActiveTab] = React.useState<'duties' | 'dutiesHistory' | 'income'>('duties');
 
   // Отслеживаем, какие табы уже были посещены (для ленивой инициализации)
-  const [visitedTabs, setVisitedTabs] = React.useState<Set<string>>(
-    () => new Set(['duties'])
-  );
+  const [visitedTabs, setVisitedTabs] = React.useState<Set<string>>(() => new Set(['duties']));
   React.useEffect(() => {
     setVisitedTabs((prev) => {
       if (prev.has(activeTab)) return prev;
@@ -101,6 +96,49 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     }
   }, [activeTab, workHistory, isLoadingHistory, loadDutiesHistory]);
 
+  React.useEffect(() => {
+    if (
+      error &&
+      typeof window !== 'undefined' &&
+      localStorage.getItem('redirectAfterLogin') === window.location.pathname
+    ) {
+      localStorage.removeItem('redirectAfterLogin');
+    }
+  }, [error]);
+
+  // При ошибке показываем явное состояние вместо бесконечного спиннера
+  if (error) {
+    const isNotFoundError = error.toLowerCase().includes('не найдена') || error.includes('404');
+
+    return (
+      <Layout>
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3 space-y-3">
+                <p className="text-sm text-red-700">
+                  {isNotFoundError
+                    ? 'Работа не найдена. Вероятно, ссылка устарела после пересоздания базы.'
+                    : `Ошибка при загрузке данных: ${String(error)}`}
+                </p>
+                <Button onClick={() => router.push('/works')}>Вернуться к списку работ</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   // Если данные еще не загружены, показываем индикатор загрузки
   if (isLoading || !workData) {
     return (
@@ -109,41 +147,6 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-600"></div>
           </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Если произошла ошибка при загрузке данных
-  if (error) {
-    return (
-      <Layout>
-        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-red-500"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">
-                  Ошибка при загрузке данных: {String(error)}
-                </p>
-              </div>
-            </div>
-          </div>
-          <Button onClick={() => router.push('/works')}>
-            Вернуться к списку работ
-          </Button>
         </div>
       </Layout>
     );
@@ -162,12 +165,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 aria-label="Назад к списку"
                 className="mt-1 flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-800"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -195,9 +193,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 font-medium">
-                      Рабочий проект
-                    </p>
+                    <p className="text-sm text-gray-500 font-medium">Рабочий проект</p>
                     <div className="flex items-center space-x-3">
                       <h1 className="truncate text-2xl md:text-3xl font-bold text-gray-900">
                         {workData.name}
@@ -218,7 +214,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                       {formatAmountWithCurrency(
                         displaySalary,
                         salaryCurrency,
-                        isSalaryConfidential
+                        isSalaryConfidential,
                       )}
                     </span>
                   </span>
@@ -233,8 +229,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   </span>
                   <span className="text-gray-300">|</span>
                   <span>
-                    Ответственный:{' '}
-                    <span className="text-gray-900">{responsibleName}</span>
+                    Ответственный: <span className="text-gray-900">{responsibleName}</span>
                   </span>
                 </div>
               </div>
@@ -306,9 +301,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     ID: {workData.id}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Измените основные параметры работы
-                </p>
+                <p className="text-sm text-gray-600">Измените основные параметры работы</p>
               </div>
               <WorkForm
                 onRegisterDocsHandlers={(h) => (docsHandlersRef.current = h)}
@@ -323,15 +316,9 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                   } catch (e) {}
                   setIsEditing(false);
                 }}
-                onArchiveAction={
-                  workData.isArchived ? handleRestoreWork : handleArchiveWork
-                }
-                archiveActionLabel={
-                  workData.isArchived ? 'Восстановить' : 'Архивировать'
-                }
-                archiveActionVariant={
-                  workData.isArchived ? 'restore' : 'archive'
-                }
+                onArchiveAction={workData.isArchived ? handleRestoreWork : handleArchiveWork}
+                archiveActionLabel={workData.isArchived ? 'Восстановить' : 'Архивировать'}
+                archiveActionVariant={workData.isArchived ? 'restore' : 'archive'}
                 isLoading={isLoading}
               />
             </div>
@@ -461,9 +448,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
 
             {/* Контент табов */}
             <div className="p-6">
-              <div
-                style={{ display: activeTab === 'duties' ? 'block' : 'none' }}
-              >
+              <div style={{ display: activeTab === 'duties' ? 'block' : 'none' }}>
                 {isEditingDuties ? (
                   <div>
                     <div className="mb-6 pb-4 border-b border-gray-200">
@@ -496,9 +481,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                       workSalary={workData.salary}
                       workCurrency={salaryCurrency}
                       releaseDate={workData.releaseDate}
-                      currentDistribution={
-                        distributions.length > 0 ? distributions[0] : null
-                      }
+                      currentDistribution={distributions.length > 0 ? distributions[0] : null}
                       distributions={distributions}
                       isLoading={false}
                     />
@@ -524,9 +507,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 {!visitedTabs.has('dutiesHistory') ? null : isLoadingHistory ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mb-4"></div>
-                    <p className="text-gray-500 text-sm">
-                      Загрузка истории обязанностей...
-                    </p>
+                    <p className="text-gray-500 text-sm">Загрузка истории обязанностей...</p>
                   </div>
                 ) : (
                   <WorkDutiesHistory
@@ -545,9 +526,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 )}
               </div>
 
-              <div
-                style={{ display: activeTab === 'income' ? 'block' : 'none' }}
-              >
+              <div style={{ display: activeTab === 'income' ? 'block' : 'none' }}>
                 {!visitedTabs.has('income') ? null : (
                   <WorkIncomeManagement
                     workId={id}

@@ -1,7 +1,7 @@
 /**
  * Утилиты для рабочих дней ЦБ РФ в контексте КОТИРОВОК
  * Рабочие дни ЦБ РФ: вторник-суббота
- * 
+ *
  * Принципы: SOLID, DRY, KISS
  * Single Responsibility: только логика рабочих дней ЦБ РФ для котировок
  */
@@ -28,11 +28,7 @@ export function isCBRWorkingDay(date: Date): boolean {
  * @returns Количество рабочих дней ЦБ РФ в периоде
  */
 export function getCBRWorkingDaysInPeriod(startDate: Date, endDate: Date): number {
-  if (
-    isNaN(startDate.getTime()) ||
-    isNaN(endDate.getTime()) ||
-    startDate > endDate
-  ) {
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate > endDate) {
     return 0;
   }
 
@@ -70,11 +66,11 @@ export function getCBRWorkingDaysInMonth(date: Date): number {
  */
 export function getLastCBRWorkingDay(): Date {
   const today = new Date();
-  
+
   if (isCBRWorkingDay(today)) {
     return today;
   }
-  
+
   // Ищем предыдущий рабочий день ЦБ РФ
   const workingDay = new Date(today);
   for (let i = 1; i <= 7; i++) {
@@ -83,7 +79,7 @@ export function getLastCBRWorkingDay(): Date {
       return workingDay;
     }
   }
-  
+
   throw new Error('Could not find CBR working day within last week');
 }
 
@@ -95,14 +91,14 @@ export function getLastCBRWorkingDay(): Date {
 export function getNextCBRWorkingDay(date: Date): Date {
   const nextDay = new Date(date);
   nextDay.setDate(nextDay.getDate() + 1);
-  
+
   for (let i = 1; i <= 7; i++) {
     if (isCBRWorkingDay(nextDay)) {
       return nextDay;
     }
     nextDay.setDate(nextDay.getDate() + 1);
   }
-  
+
   throw new Error('Could not find CBR working day within next week');
 }
 
@@ -135,14 +131,14 @@ export function getCBRWorkingDaysInRange(startDate: Date, endDate: Date): Date[]
 export function hasCBRWorkingDaysBetween(startDate: Date, endDate: Date): boolean {
   const nextDay = new Date(startDate);
   nextDay.setDate(nextDay.getDate() + 1);
-  
+
   while (nextDay < endDate) {
     if (isCBRWorkingDay(nextDay)) {
       return true;
     }
     nextDay.setDate(nextDay.getDate() + 1);
   }
-  
+
   return false;
 }
 

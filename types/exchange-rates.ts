@@ -8,8 +8,6 @@ export interface ExchangeRate {
   updatedAt: string;
 }
 
-
-
 export interface ChartDataPoint {
   date: string;
   rate: number;
@@ -26,17 +24,9 @@ export interface CurrencyConversion {
   date: string;
 }
 
-
-
 export interface CurrencyConverterRequest {
   amount: number;
   fromCurrency: string;
   toCurrency: string;
   date?: Date;
 }
-
-
-
-
-
-

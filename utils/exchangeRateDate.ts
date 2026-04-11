@@ -1,7 +1,7 @@
 /**
  * Утилиты для работы с датами в контексте котировок
  * Следует принципам SOLID, DRY, KISS
- * 
+ *
  * Single Responsibility: только работа с датами для котировок
  * Open/Closed: легко расширяется новыми форматами
  * DRY: единое место для всей логики дат котировок
@@ -103,9 +103,8 @@ export class ExchangeRateDate implements IExchangeRateDate {
    * Проверяет, что эта дата позже другой
    */
   isAfter(other: IExchangeRateDate | string): boolean {
-    const otherDate = typeof other === 'string' 
-      ? new ExchangeRateDate(other).toDate() 
-      : other.toDate();
+    const otherDate =
+      typeof other === 'string' ? new ExchangeRateDate(other).toDate() : other.toDate();
     return this.toDate() > otherDate;
   }
 
@@ -113,9 +112,8 @@ export class ExchangeRateDate implements IExchangeRateDate {
    * Проверяет, что эта дата раньше другой
    */
   isBefore(other: IExchangeRateDate | string): boolean {
-    const otherDate = typeof other === 'string' 
-      ? new ExchangeRateDate(other).toDate() 
-      : other.toDate();
+    const otherDate =
+      typeof other === 'string' ? new ExchangeRateDate(other).toDate() : other.toDate();
     return this.toDate() < otherDate;
   }
 
@@ -183,7 +181,7 @@ export const ExchangeRateDates = {
    */
   tryParse(input: string | Date | null | undefined): ExchangeRateDate | null {
     if (!input) return null;
-    
+
     try {
       return new ExchangeRateDate(input);
     } catch {
@@ -203,7 +201,7 @@ export const ExchangeRateDates = {
    */
   sortDescending(dates: (ExchangeRateDate | string)[]): ExchangeRateDate[] {
     return dates
-      .map(d => typeof d === 'string' ? new ExchangeRateDate(d) : d)
+      .map((d) => (typeof d === 'string' ? new ExchangeRateDate(d) : d))
       .sort((a, b) => {
         const dateA = a.toDate();
         const dateB = b.toDate();
@@ -216,7 +214,7 @@ export const ExchangeRateDates = {
    */
   sortAscending(dates: (ExchangeRateDate | string)[]): ExchangeRateDate[] {
     return dates
-      .map(d => typeof d === 'string' ? new ExchangeRateDate(d) : d)
+      .map((d) => (typeof d === 'string' ? new ExchangeRateDate(d) : d))
       .sort((a, b) => {
         const dateA = a.toDate();
         const dateB = b.toDate();
@@ -230,20 +228,19 @@ export const ExchangeRateDates = {
   range(start: ExchangeRateDate | string, end: ExchangeRateDate | string): ExchangeRateDate[] {
     const startDate = typeof start === 'string' ? new ExchangeRateDate(start) : start;
     const endDate = typeof end === 'string' ? new ExchangeRateDate(end) : end;
-    
+
     if (startDate.isAfter(endDate)) {
       throw new Error('Start date must be before or equal to end date');
     }
 
     const dates: ExchangeRateDate[] = [];
     let current = startDate;
-    
+
     while (!current.isAfter(endDate)) {
       dates.push(current);
       current = current.addDays(1);
     }
-    
-    return dates;
-  }
-};
 
+    return dates;
+  },
+};

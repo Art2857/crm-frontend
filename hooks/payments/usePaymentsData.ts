@@ -13,45 +13,33 @@ interface LoadParams {
 
 function mergeWorksById(
   existingWorks: ResponsibleUser['works'],
-  updatedWorks: ResponsibleUser['works']
+  updatedWorks: ResponsibleUser['works'],
 ) {
-  const updatedWorksMap = new Map(
-    updatedWorks.map((work) => [work.workId, work] as const)
-  );
+  const updatedWorksMap = new Map(updatedWorks.map((work) => [work.workId, work] as const));
 
   const mergedWorks = existingWorks.map(
-    (existingWork) => updatedWorksMap.get(existingWork.workId) ?? existingWork
+    (existingWork) => updatedWorksMap.get(existingWork.workId) ?? existingWork,
   );
 
   const newWorks = updatedWorks.filter(
-    (work) => !existingWorks.some((existing) => existing.workId === work.workId)
+    (work) => !existingWorks.some((existing) => existing.workId === work.workId),
   );
 
   return [...mergedWorks, ...newWorks];
 }
 
 function buildUserTotalsFromWorks(works: ResponsibleUser['works']) {
-  const totalAccrued = works.reduce(
-    (sum, work) => sum + (work.totalAccrued || 0),
-    0
-  );
-  const totalPaid = works.reduce(
-    (sum, work) => sum + (work.paidAmount || 0),
-    0
-  );
+  const totalAccrued = works.reduce((sum, work) => sum + (work.totalAccrued || 0), 0);
+  const totalPaid = works.reduce((sum, work) => sum + (work.paidAmount || 0), 0);
   const totalDebt = works.reduce(
     (sum, work) => sum + ((work.totalAccrued || 0) - (work.paidAmount || 0)),
-    0
+    0,
   );
   const remainingDebt = works.reduce(
-    (sum, work) =>
-      sum + Math.max((work.totalAccrued || 0) - (work.paidAmount || 0), 0),
-    0
+    (sum, work) => sum + Math.max((work.totalAccrued || 0) - (work.paidAmount || 0), 0),
+    0,
   );
-  const overpaidAmount = works.reduce(
-    (sum, work) => sum + (work.overpaidAmount || 0),
-    0
-  );
+  const overpaidAmount = works.reduce((sum, work) => sum + (work.overpaidAmount || 0), 0);
 
   return {
     totalAccrued,
@@ -71,13 +59,17 @@ export function usePaymentsData() {
 
   const getWorksData = useCallback(
     async (data: LoadParams = {}) => {
+      if (!user?.role) {
+        throw new Error('Пользователь не аутентифицирован');
+      }
+
       const { endDate, targetWorkId, targetUserId } = data;
 
       const mappedUsers = await analyticsService.getPaymentsManagement(
         user.role,
         endDate,
         targetWorkId ? [targetWorkId] : undefined,
-        targetUserId
+        targetUserId,
       );
 
       const sortByName = (arr: ResponsibleUser[]) =>
@@ -89,7 +81,7 @@ export function usePaymentsData() {
 
       return sortByName(mappedUsers);
     },
-    [user.role]
+    [user?.role],
   );
 
   const fetchWorksData = useCallback(
@@ -97,7 +89,7 @@ export function usePaymentsData() {
       const mappedUsers = await getWorksData(data);
       setUsersData(mappedUsers);
     },
-    [getWorksData]
+    [getWorksData],
   );
 
   const updateWorksData = useCallback(
@@ -105,13 +97,11 @@ export function usePaymentsData() {
       const mappedUsers = await getWorksData(data);
       setUsersData((prev) => {
         const updatedUsersMap = new Map(
-          mappedUsers.map((userEntry) => [userEntry.userId, userEntry] as const)
+          mappedUsers.map((userEntry) => [userEntry.userId, userEntry] as const),
         );
 
         const nextUsers = prev.map((existingUser) => {
-          const updatedUserInNewResult = updatedUsersMap.get(
-            existingUser.userId
-          );
+          const updatedUserInNewResult = updatedUsersMap.get(existingUser.userId);
           if (!updatedUserInNewResult) {
             return existingUser;
           }
@@ -134,16 +124,13 @@ export function usePaymentsData() {
         });
 
         const newUsers = mappedUsers.filter(
-          (mappedUser) =>
-            !prev.some(
-              (existingUser) => existingUser.userId === mappedUser.userId
-            )
+          (mappedUser) => !prev.some((existingUser) => existingUser.userId === mappedUser.userId),
         );
 
         return [...nextUsers, ...newUsers];
       });
     },
-    [getWorksData]
+    [getWorksData],
   );
 
   const fetchMyDebtsData = useCallback(async () => {

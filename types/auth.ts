@@ -31,6 +31,10 @@ export interface AuthResponse {
   user?: User;
 }
 
+export interface AuthResponseWithUser extends AuthResponse {
+  user: User;
+}
+
 export interface AuthState {
   user: User | null;
   token: string | null;

@@ -104,7 +104,7 @@ export const Modal: React.FC<ModalProps> = ({
         handleClose();
       }
     },
-    [closeOnBackdropClick, handleClose]
+    [closeOnBackdropClick, handleClose],
   );
 
   // Обработчик клика вне модального окна

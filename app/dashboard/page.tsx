@@ -11,15 +11,8 @@ import { BriefcaseIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'works' | 'history'>('works');
-  const {
-    user,
-    data,
-    isLoading,
-    fullName,
-    age,
-    formatSalaryDay,
-    formatReleaseDate,
-  } = useDashboard();
+  const { user, data, isLoading, fullName, age, formatSalaryDay, formatReleaseDate } =
+    useDashboard();
 
   // Показываем загрузку, если нет пользователя или данные загружаются
   if (!user || isLoading) {
@@ -37,9 +30,7 @@ export default function DashboardPage() {
     return (
       <Layout>
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 border-b pb-4">
-            Ваша панель
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-8 border-b pb-4">Ваша панель</h1>
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-10 text-center">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
@@ -145,9 +136,7 @@ export default function DashboardPage() {
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                   />
                 </svg>
-                <p className="mt-4 text-gray-500">
-                  У вас пока нет работ или распределений
-                </p>
+                <p className="mt-4 text-gray-500">У вас пока нет работ или распределений</p>
               </div>
             )}
           </>

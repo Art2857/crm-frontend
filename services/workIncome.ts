@@ -74,7 +74,9 @@ class WorkIncomeService {
    * Обновить курсы валют для всех записей о доходах работы
    */
   async refreshCurrencyConversions(workId: string): Promise<{ message: string }> {
-    const response = await this.api.post<{ message: string }>(`/work-income/work/${workId}/refresh-conversions`);
+    const response = await this.api.post<{ message: string }>(
+      `/work-income/work/${workId}/refresh-conversions`,
+    );
     return response.data;
   }
 
@@ -200,10 +202,12 @@ class WorkIncomeService {
    */
   formatAmount(amount: number, currency: 'RUB' | 'USD'): string {
     const symbol = currency === 'RUB' ? '₽' : '$';
-    return new Intl.NumberFormat('ru-RU', {
-      minimumFractionDigits: currency === 'RUB' ? 0 : 2,
-      maximumFractionDigits: currency === 'RUB' ? 0 : 2,
-    }).format(amount) + ` ${symbol}`;
+    return (
+      new Intl.NumberFormat('ru-RU', {
+        minimumFractionDigits: currency === 'RUB' ? 0 : 2,
+        maximumFractionDigits: currency === 'RUB' ? 0 : 2,
+      }).format(amount) + ` ${symbol}`
+    );
   }
 
   /**

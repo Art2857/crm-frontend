@@ -21,9 +21,9 @@ export default function AdminUsersPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
-  const [sort, setSort] = useState<
-    'name_asc' | 'name_desc' | 'createdAt_asc' | 'createdAt_desc'
-  >('name_asc');
+  const [sort, setSort] = useState<'name_asc' | 'name_desc' | 'createdAt_asc' | 'createdAt_desc'>(
+    'name_asc',
+  );
 
   const clearFilters = () => {
     setSearch('');
@@ -32,28 +32,28 @@ export default function AdminUsersPage() {
   };
 
   const displayedUsers = useMemo(
-    () =>
-      (users || []).filter(
-        (u) => !!u && !!(u as any).isArchived === showArchived
-      ),
-    [users, showArchived]
+    () => (users || []).filter((u) => !!u && !!(u as any).isArchived === showArchived),
+    [users, showArchived],
   );
   const dispatch = useAppDispatch();
   const router = useRouter();
   const notification = useNotification();
+  const canManageUsers = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
 
-  const buildFetchParams = useCallback(
-    () =>
-      ({
-        role: user?.role,
-        archivingStatus: showArchived ? 'archived' : 'actual',
-        search: search || undefined,
-        roleFilter: roleFilter || undefined,
-        orderBy: sort.startsWith('createdAt') ? 'createdAt' : 'name',
-        orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
-      }) as any,
-    [roleFilter, search, showArchived, sort, user?.role]
-  );
+  const buildFetchParams = useCallback(() => {
+    if (!user) {
+      return null;
+    }
+
+    return {
+      role: user.role,
+      archivingStatus: showArchived ? 'archived' : 'actual',
+      search: search || undefined,
+      roleFilter: roleFilter || undefined,
+      orderBy: sort.startsWith('createdAt') ? 'createdAt' : 'name',
+      orderDirection: sort.endsWith('desc') ? 'desc' : 'asc',
+    } as const;
+  }, [roleFilter, search, showArchived, sort, user]);
 
   const extractErrorMessage = async (error: any): Promise<string> => {
     const errorPayload = error instanceof Promise ? await error : error;
@@ -70,35 +70,36 @@ export default function AdminUsersPage() {
   };
 
   const archiveConfirm = useConfirmation<string>(async (id: string) => {
+    const fetchParams = buildFetchParams();
+    if (!fetchParams) {
+      return;
+    }
+
     try {
       await privateApi.patch(`/users/${id}/archive`);
       notification.showSuccess('Пользователь успешно архивирован');
-      if (user) {
-        await dispatch(fetchAllUsers(buildFetchParams()));
-      }
+      await dispatch(fetchAllUsers(fetchParams));
     } catch (error: any) {
       const errorMessage = await extractErrorMessage(error);
       if (errorMessage) notification.showError(errorMessage, 10000);
-      else
-        notification.showError(
-          'Произошла ошибка при архивировании пользователя',
-          10000
-        );
+      else notification.showError('Произошла ошибка при архивировании пользователя', 10000);
     }
   });
 
   const restoreConfirm = useConfirmation<string>(async (id: string) => {
+    const fetchParams = buildFetchParams();
+    if (!fetchParams) {
+      return;
+    }
+
     try {
       await privateApi.patch(`/users/${id}/restore`);
       notification.showSuccess('Пользователь восстановлен из архива');
-      if (user) {
-        await dispatch(fetchAllUsers(buildFetchParams()));
-      }
+      await dispatch(fetchAllUsers(fetchParams));
     } catch (error: any) {
       const errorMessage = await extractErrorMessage(error);
       if (errorMessage) notification.showError(errorMessage, 10000);
-      else
-        notification.showError('Не удалось восстановить пользователя', 10000);
+      else notification.showError('Не удалось восстановить пользователя', 10000);
     }
   });
 
@@ -109,32 +110,29 @@ export default function AdminUsersPage() {
       return;
     }
 
-    if (![Role.ADMIN, Role.MANAGER].includes(user?.role)) {
+    if (!canManageUsers || !user) {
       router.push('/dashboard');
       return;
     }
 
     // Загрузка данных о пользователях с фильтрами по умолчанию
-    dispatch(fetchAllUsers(buildFetchParams()));
-  }, [buildFetchParams, dispatch, isAuthenticated, router, user]);
+    const fetchParams = buildFetchParams();
+    if (fetchParams) {
+      dispatch(fetchAllUsers(fetchParams));
+    }
+  }, [buildFetchParams, canManageUsers, dispatch, isAuthenticated, router, user]);
 
   // Запрашиваем при изменении фильтров (с дебаунсом для поля поиска)
   useEffect(() => {
     if (!user || !isAuthenticated) return;
     const timer = setTimeout(() => {
-      dispatch(fetchAllUsers(buildFetchParams()));
+      const fetchParams = buildFetchParams();
+      if (fetchParams) {
+        dispatch(fetchAllUsers(fetchParams));
+      }
     }, 300);
     return () => clearTimeout(timer);
-  }, [
-    buildFetchParams,
-    dispatch,
-    isAuthenticated,
-    roleFilter,
-    search,
-    showArchived,
-    sort,
-    user,
-  ]);
+  }, [buildFetchParams, dispatch, isAuthenticated, roleFilter, search, showArchived, sort, user]);
 
   if (!user || ![Role.ADMIN, Role.MANAGER].includes(user.role)) {
     return (
@@ -148,9 +146,7 @@ export default function AdminUsersPage() {
   const formatUserName = (user: User | undefined): string => {
     if (!user) return 'Неизвестный пользователь';
     return (
-      [user.lastName, user.firstName, user.middleName]
-        .filter(Boolean)
-        .join(' ') || 'Имя не указано'
+      [user.lastName, user.firstName, user.middleName].filter(Boolean).join(' ') || 'Имя не указано'
     );
   };
 
@@ -180,9 +176,7 @@ export default function AdminUsersPage() {
     <div className="max-w-7xl mx-auto pb-8 sm:px-6 lg:px-8">
       <div className="px-0 pb-6 pt-0 sm:px-0">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Управление пользователями
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Управление пользователями</h1>
 
           <div className="flex gap-3">
             <Button
@@ -354,7 +348,7 @@ export default function AdminUsersPage() {
                                       {
                                         confirmText: 'Восстановить',
                                         variant: 'primary',
-                                      }
+                                      },
                                     )
                                   }
                                 >
@@ -372,7 +366,7 @@ export default function AdminUsersPage() {
                                       {
                                         confirmText: 'Архивировать',
                                         variant: 'danger',
-                                      }
+                                      },
                                     )
                                   }
                                 >

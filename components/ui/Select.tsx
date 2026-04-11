@@ -1,9 +1,4 @@
-import React, {
-  SelectHTMLAttributes,
-  forwardRef,
-  useRef,
-  useState,
-} from 'react';
+import React, { SelectHTMLAttributes, forwardRef, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 interface Option {
@@ -19,33 +14,16 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  (
-    {
-      label,
-      options,
-      children,
-      error,
-      fullWidth = false,
-      className = '',
-      ...props
-    },
-    ref
-  ) => {
+  ({ label, options, children, error, fullWidth = false, className = '', ...props }, ref) => {
     const isDisabled = props.disabled === true;
     const baseClasses = `px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 transition-all duration-200${isDisabled ? ' bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`;
-    const errorClasses = error
-      ? 'bg-red-50 focus:bg-red-50 focus:ring-red-500 text-red-900'
-      : '';
+    const errorClasses = error ? 'bg-red-50 focus:bg-red-50 focus:ring-red-500 text-red-900' : '';
     const widthClass = fullWidth ? 'w-full' : '';
     const [isOpen, setIsOpen] = useState(false);
 
     // Обработка значения перед рендерингом
     const selectProps = { ...props };
-    if (
-      'value' in selectProps &&
-      selectProps.value !== undefined &&
-      selectProps.value !== null
-    ) {
+    if ('value' in selectProps && selectProps.value !== undefined && selectProps.value !== null) {
       selectProps.value = String(selectProps.value);
     }
 
@@ -96,10 +74,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className={`${fullWidth ? 'w-full' : ''} mb-4`}>
         {label && (
-          <label
-            htmlFor={props.id}
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
+          <label htmlFor={props.id} className="block text-sm font-medium text-gray-700 mb-2">
             {label}
             {props.required && (
               <span aria-hidden="true" className="text-red-500 ml-1">
@@ -133,7 +108,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
       </div>
     );
-  }
+  },
 );
 
 Select.displayName = 'Select';

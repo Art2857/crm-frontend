@@ -49,8 +49,8 @@ export interface WorkIncomeListResponse {
 export interface WorkIncomeStats {
   totalRub: number;
   totalUsd: number;
-  avgSalaryRub: number;  // Средняя ЗП в рублях с учетом коэффициентов рабочих дней
-  avgSalaryUsd: number;  // Средняя ЗП в долларах с учетом коэффициентов рабочих дней
+  avgSalaryRub: number; // Средняя ЗП в рублях с учетом коэффициентов рабочих дней
+  avgSalaryUsd: number; // Средняя ЗП в долларах с учетом коэффициентов рабочих дней
   lastIncomeDate?: string; // YYYY-MM-DD format
   workingDaysTotal: number; // Общее количество рабочих дней в периоде
   totalDays: number; // Общее количество дней в периоде (включая выходные)

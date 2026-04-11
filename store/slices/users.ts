@@ -31,12 +31,12 @@ export const fetchAllUsers = createAsyncThunk(
   'users/fetchAll',
   async (
     { role, roleFilter, ...restParams }: { role: Role; roleFilter?: string } & GetAllUsersParams,
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
-    const params: any = { ...restParams };
-    if (roleFilter) params.role = roleFilter;
-    const users = await userService.getAllUsers(params as any);
+      const params: any = { ...restParams };
+      if (roleFilter) params.role = roleFilter;
+      const users = await userService.getAllUsers(params as any);
       return users;
     } catch (error: any) {
       // Игнорируем отмененные запросы
@@ -45,11 +45,9 @@ export const fetchAllUsers = createAsyncThunk(
         // Возвращаем пустой массив вместо ошибки для отмененных запросов
         return [];
       }
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить пользователей'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить пользователей');
     }
-  }
+  },
 );
 
 export const fetchUserById = createAsyncThunk(
@@ -64,18 +62,16 @@ export const fetchUserById = createAsyncThunk(
         // Возвращаем null для отмененных запросов
         return null;
       }
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить пользователя'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить пользователя');
     }
-  }
+  },
 );
 
 export const updateUserProfile = createAsyncThunk(
   'users/updateProfile',
   async (
     { role, userId, data }: { role: Role; userId: string; data: any },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const user = await userService.updateProfile(userId, data);
@@ -86,18 +82,16 @@ export const updateUserProfile = createAsyncThunk(
         // тихий skip
         return null;
       }
-      return rejectWithValue(
-        error.message || 'Не удалось обновить профиль пользователя'
-      );
+      return rejectWithValue(error.message || 'Не удалось обновить профиль пользователя');
     }
-  }
+  },
 );
 
 export const updateUserSensitiveData = createAsyncThunk(
   'users/updateSensitiveData',
   async (
     { role, userId, data }: { role: Role; userId: string; data: any },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const user = await userService.updateSensitiveData(userId, data);
@@ -108,11 +102,9 @@ export const updateUserSensitiveData = createAsyncThunk(
         // тихий skip
         return null;
       }
-      return rejectWithValue(
-        error.message || 'Не удалось обновить данные пользователя'
-      );
+      return rejectWithValue(error.message || 'Не удалось обновить данные пользователя');
     }
-  }
+  },
 );
 
 export const createUser = createAsyncThunk(
@@ -138,19 +130,14 @@ export const createUser = createAsyncThunk(
         }
 
         // Если есть структурированные ошибки валидации, форматируем их
-        if (
-          error.validationErrors &&
-          Object.keys(error.validationErrors).length > 0
-        ) {
-          const fieldErrors = [];
+        if (error.validationErrors && Object.keys(error.validationErrors).length > 0) {
+          const fieldErrors: string[] = [];
 
-          for (const [field, messages] of Object.entries(
-            error.validationErrors
-          )) {
+          for (const [field, messages] of Object.entries(error.validationErrors)) {
             // Избегаем дублирования сообщений, проверяя, является ли messages массивом или строкой
             if (Array.isArray(messages)) {
               // Получаем уникальные сообщения из массива, удаляя дубликаты
-              const uniqueMessages = Array.from(new Set(messages));
+              const uniqueMessages = Array.from(new Set(messages as string[]));
               fieldErrors.push(`${field}: ${uniqueMessages.join(', ')}`);
             } else if (typeof messages === 'string') {
               fieldErrors.push(`${field}: ${messages}`);
@@ -158,9 +145,7 @@ export const createUser = createAsyncThunk(
           }
 
           if (fieldErrors.length > 0) {
-            return rejectWithValue(
-              `Ошибки валидации:\n${fieldErrors.join('\n')}`
-            );
+            return rejectWithValue(`Ошибки валидации:\n${fieldErrors.join('\n')}`);
           }
         }
 
@@ -168,9 +153,7 @@ export const createUser = createAsyncThunk(
         if (error.errorMessages && error.errorMessages.length > 0) {
           // Получаем уникальные сообщения
           const uniqueMessages = Array.from(new Set(error.errorMessages));
-          return rejectWithValue(
-            `Ошибки валидации:\n${uniqueMessages.join('\n')}`
-          );
+          return rejectWithValue(`Ошибки валидации:\n${uniqueMessages.join('\n')}`);
         }
 
         // Если ничего из вышеперечисленного не сработало, используем общее сообщение
@@ -189,19 +172,14 @@ export const createUser = createAsyncThunk(
       }
 
       // Если нет структурированного сообщения, используем общее сообщение
-      return rejectWithValue(
-        error.message || 'Не удалось создать пользователя'
-      );
+      return rejectWithValue(error.message || 'Не удалось создать пользователя');
     }
-  }
+  },
 );
 
 export const fetchUserHistory = createAsyncThunk(
   'users/fetchHistory',
-  async (
-    { role, userId }: { role: Role; userId: string },
-    { rejectWithValue }
-  ) => {
+  async ({ role, userId }: { role: Role; userId: string }, { rejectWithValue }) => {
     try {
       const userWithHistory = await userService.getUserHistory(userId);
       return userWithHistory;
@@ -211,11 +189,9 @@ export const fetchUserHistory = createAsyncThunk(
         // тихий skip
         return null;
       }
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить историю пользователя'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить историю пользователя');
     }
-  }
+  },
 );
 
 // Слайс
@@ -271,12 +247,13 @@ const usersSlice = createSlice({
       state.isLoading = false;
       // Игнорируем null результаты от отмененных запросов
       if (action.payload !== null && state.currentUser) {
+        const updatedUser = action.payload;
         state.currentUser = {
           ...state.currentUser,
-          ...action.payload,
+          ...updatedUser,
         };
         state.users = state.users.map((user) =>
-          user.id === action.payload.id ? { ...user, ...action.payload } : user
+          user.id === updatedUser.id ? { ...user, ...updatedUser } : user,
         );
       }
     });
@@ -297,12 +274,13 @@ const usersSlice = createSlice({
       state.isLoading = false;
       // Игнорируем null результаты от отмененных запросов
       if (action.payload !== null && state.currentUser) {
+        const updatedUser = action.payload;
         state.currentUser = {
           ...state.currentUser,
-          ...action.payload,
+          ...updatedUser,
         };
         state.users = state.users.map((user) =>
-          user.id === action.payload.id ? { ...user, ...action.payload } : user
+          user.id === updatedUser.id ? { ...user, ...updatedUser } : user,
         );
       }
     });

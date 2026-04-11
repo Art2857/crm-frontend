@@ -3,11 +3,7 @@
 import React from 'react';
 import Card from '../ui/Card';
 import { formatCurrency } from '../../utils/payments';
-import {
-  CurrencyDollarIcon,
-  BanknotesIcon,
-  ClockIcon,
-} from '@heroicons/react/24/outline';
+import { CurrencyDollarIcon, BanknotesIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { MyDebt } from '../../services/analytics';
 import { ResponsibleUser } from '../../types/payments';
 import { DisplayCurrency } from '../../hooks/useCurrencyConversion';
@@ -25,8 +21,11 @@ export default function PaymentStatistics({
   myDebts,
   displayCurrency,
 }: PaymentStatisticsProps) {
-  const { totalResponsibleDebt, totalMyDebt, overdueCount, isLoadingRate } =
-    usePaymentStats(responsibleUsers, myDebts, displayCurrency);
+  const { totalResponsibleDebt, totalMyDebt, overdueCount, isLoadingRate } = usePaymentStats(
+    responsibleUsers,
+    myDebts,
+    displayCurrency,
+  );
 
   return (
     <div className="mb-8">
@@ -37,13 +36,9 @@ export default function PaymentStatistics({
               <BanknotesIcon className="h-6 w-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-blue-600">
-                К выплате (ответственный)
-              </p>
+              <p className="text-sm font-medium text-blue-600">К выплате (ответственный)</p>
               <p className="text-2xl font-bold text-blue-900">
-                {isLoadingRate
-                  ? '...'
-                  : formatCurrency(totalResponsibleDebt, displayCurrency)}
+                {isLoadingRate ? '...' : formatCurrency(totalResponsibleDebt, displayCurrency)}
               </p>
             </div>
           </div>
@@ -55,13 +50,9 @@ export default function PaymentStatistics({
               <CurrencyDollarIcon className="h-6 w-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-green-600">
-                Предстоящая выручка
-              </p>
+              <p className="text-sm font-medium text-green-600">Предстоящая выручка</p>
               <p className="text-2xl font-bold text-green-900">
-                {isLoadingRate
-                  ? '...'
-                  : formatCurrency(totalMyDebt, displayCurrency)}
+                {isLoadingRate ? '...' : formatCurrency(totalMyDebt, displayCurrency)}
               </p>
             </div>
           </div>
@@ -73,12 +64,8 @@ export default function PaymentStatistics({
               <ClockIcon className="h-6 w-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-orange-600">
-                Просроченные
-              </p>
-              <p className="text-2xl font-bold text-orange-900">
-                {overdueCount}
-              </p>
+              <p className="text-sm font-medium text-orange-600">Просроченные</p>
+              <p className="text-2xl font-bold text-orange-900">{overdueCount}</p>
             </div>
           </div>
         </Card>

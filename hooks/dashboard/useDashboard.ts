@@ -14,9 +14,9 @@ export function useDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    logger.debug('useDashboard useEffect triggered', { 
-      isAuthenticated, 
-      user: user ? { id: user.id, role: user.role, email: user.email } : null 
+    logger.debug('useDashboard useEffect triggered', {
+      isAuthenticated,
+      user: user ? { id: user.id, role: user.role, email: user.email } : null,
     });
 
     if (!isAuthenticated) {
@@ -24,15 +24,15 @@ export function useDashboard() {
       router.push('/login');
       return;
     }
-    
+
     // Проверяем, что пользователь полностью загружен перед запросом данных
     if (user && user.role) {
       logger.debug('useDashboard: загружаем данные дашборда для роли', user.role);
       dispatch(fetchDashboardData());
     } else {
-      logger.debug('useDashboard: пользователь или роль не загружены', { 
-        hasUser: !!user, 
-        role: user?.role 
+      logger.debug('useDashboard: пользователь или роль не загружены', {
+        hasUser: !!user,
+        role: user?.role,
       });
     }
   }, [isAuthenticated, user, router, dispatch]);
@@ -59,19 +59,14 @@ export function useDashboard() {
     return salaryDays.map((d) => `${d} число`).join(', ');
   };
 
-  const formatReleaseDate = (
-    releaseDate: string | null | undefined
-  ): string => {
+  const formatReleaseDate = (releaseDate: string | null | undefined): string => {
     if (!releaseDate) return 'Не указана';
     const formattedDate = formatDateForDisplay(releaseDate);
     return formattedDate || 'Не указана';
   };
 
   const fullName = useMemo(() => getFullName(user), [user]);
-  const age = useMemo(
-    () => calculateAge(user?.birthday ?? null),
-    [user?.birthday]
-  );
+  const age = useMemo(() => calculateAge(user?.birthday ?? null), [user?.birthday]);
 
   return {
     user,

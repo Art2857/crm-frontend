@@ -8,10 +8,7 @@ import Button from '../../../components/ui/Button';
 import Link from 'next/link';
 import { Role } from '../../../types/user';
 import { fetchAllDuties } from '../../../store/slices/duties';
-import {
-  formatPercentage,
-  formatAmountWithCurrency,
-} from '../../../utils/currency';
+import { formatPercentage, formatAmountWithCurrency } from '../../../utils/currency';
 
 export default function AdminDutiesPage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -19,6 +16,7 @@ export default function AdminDutiesPage() {
   const [search, setSearch] = useState('');
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const canManageDuties = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
 
   useEffect(() => {
     // Проверка аутентификации и прав администратора
@@ -27,14 +25,14 @@ export default function AdminDutiesPage() {
       return;
     }
 
-    if (![Role.ADMIN, Role.MANAGER].includes(user?.role as Role)) {
+    if (!canManageDuties || !user) {
       router.push('/dashboard');
       return;
     }
 
     // Загрузка данных об обязанностях
     dispatch(fetchAllDuties({ role: user.role }));
-  }, [isAuthenticated, router, user, dispatch]);
+  }, [canManageDuties, dispatch, isAuthenticated, router, user]);
 
   const filteredDuties = useMemo(() => {
     if (!search) return duties;
@@ -54,9 +52,7 @@ export default function AdminDutiesPage() {
     <div className="max-w-7xl mx-auto pb-6 sm:px-6 lg:px-8">
       <div className="px-0 pb-6 pt-0 sm:px-0">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Управление обязанностями
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Управление обязанностями</h1>
 
           <div className="flex w-full sm:w-auto items-center gap-4">
             <input
@@ -118,14 +114,12 @@ export default function AdminDutiesPage() {
                       {duty.basePrice
                         ? formatAmountWithCurrency(
                             Number(duty.basePrice),
-                            duty.currency === 'USD' ? 'USD' : 'RUB'
+                            duty.currency === 'USD' ? 'USD' : 'RUB',
                           )
                         : '—'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {duty.basePercentage
-                        ? formatPercentage(duty.basePercentage, false)
-                        : '—'}
+                      {duty.basePercentage ? formatPercentage(duty.basePercentage, false) : '—'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {duty.minValue === null && duty.maxValue === null
@@ -133,19 +127,19 @@ export default function AdminDutiesPage() {
                         : duty.minValue !== null && duty.maxValue !== null
                           ? `${formatAmountWithCurrency(
                               Number(duty.minValue),
-                              duty.currency === 'USD' ? 'USD' : 'RUB'
+                              duty.currency === 'USD' ? 'USD' : 'RUB',
                             )} — ${formatAmountWithCurrency(
                               Number(duty.maxValue),
-                              duty.currency === 'USD' ? 'USD' : 'RUB'
+                              duty.currency === 'USD' ? 'USD' : 'RUB',
                             )}`
                           : duty.minValue !== null
                             ? `Мин: ${formatAmountWithCurrency(
                                 Number(duty.minValue),
-                                duty.currency === 'USD' ? 'USD' : 'RUB'
+                                duty.currency === 'USD' ? 'USD' : 'RUB',
                               )}`
                             : `Макс: ${formatAmountWithCurrency(
                                 Number(duty.maxValue),
-                                duty.currency === 'USD' ? 'USD' : 'RUB'
+                                duty.currency === 'USD' ? 'USD' : 'RUB',
                               )}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">

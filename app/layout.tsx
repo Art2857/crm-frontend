@@ -7,11 +7,7 @@ export const metadata: Metadata = {
   description: 'Система управления пользователями, работами и обязанностями',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
       <body>

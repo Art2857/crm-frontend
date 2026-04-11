@@ -1,59 +1,54 @@
 # CRM Frontend
 
-Frontend для CRM-системы на Next.js.
+Next.js frontend для CRM-системы.
 
-## Что делает сервис
-- Авторизация и проверка сессии.
-- Dashboard CRM.
-- Просмотр и создание работ.
-- Учёт и просмотр платежей.
-- Раздел курсов валют.
-- Профиль пользователя.
-- Админские разделы пользователей и обязанностей.
-- Разделы аккаунтов и возврата средств.
+## Требования
 
-## Стек
-- Node.js 22+
-- Next.js 14
-- React 18
-- TypeScript
-- Redux Toolkit
+- Node.js `24.14.1` (LTS)
+- npm `11+`
+- `crm-backend` на `http://localhost:3001`
 
 ## Порты по умолчанию
+
 - Frontend: `3000`
 - CRM API: `3001`
 
-## Переменные окружения
-- Шаблон: `.env.example`
-- Локальный файл: `.env`
+## Окружение
 
-Ключевые переменные:
-- `NEXT_PUBLIC_API_URL` — URL CRM backend, по умолчанию `http://localhost:3001/api`.
-- `NEXT_PUBLIC_APP_VERSION` — версия приложения для health-check.
-- `NEXT_PUBLIC_IGNORE_SSL` — отключение проверки SSL в dev при необходимости.
+- Шаблон переменных: `.env.example`
+- Локальная конфигурация: `.env`
+- Ключевые переменные: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_VERSION`, `NEXT_PUBLIC_IGNORE_SSL`
 
 ## Быстрый старт
+
 ```bash
 npm ci
 npm run dev
 ```
 
-Приложение будет доступно на `http://localhost:3000`.
+Frontend: `http://localhost:3000`
 
-## Запуск через Docker Compose
+## Docker dev
+
 ```bash
 docker compose -f docker/compose.dev.yml up -d
 ```
 
-## Полезные команды
+## Ключевые команды
+
 ```bash
 npm run dev
 npm run build
 npm run start
 npm run lint
 npm run lint:fix
+npm run format
 npm run typecheck
+npm run check
 ```
 
-## Зависимости
-- Для полноценной работы нужен `crm-backend` на `http://localhost:3001`.
+## Quality Gates
+
+- `pre-commit`: `lint-staged`
+- `commit-msg`: `commitlint`
+- Полный локальный прогон: `npm run check`

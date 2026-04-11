@@ -68,18 +68,13 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
   const renderPayment = (
     detail: DistributionWithDetails['details'][number],
-    numericSalaryValue: number
+    numericSalaryValue: number,
   ): string => {
     const numericPrice = detail.price ? parseFloat(detail.price) : null;
-    const numericPercentage = detail.percentage
-      ? parseFloat(detail.percentage)
-      : null;
+    const numericPercentage = detail.percentage ? parseFloat(detail.percentage) : null;
 
     const dutyCurrency: 'RUB' | 'USD' =
-      detail.currency ||
-      (detail.duty?.currency as 'RUB' | 'USD') ||
-      workCurrency ||
-      'RUB';
+      detail.currency || (detail.duty?.currency as 'RUB' | 'USD') || workCurrency || 'RUB';
 
     const pricePart = numericPrice ?? null; // assumed already in duty currency
     let percentPartInDuty: number | null = null;
@@ -88,38 +83,27 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
       !Number.isNaN(Number(numericPercentage)) &&
       numericSalaryValue
     ) {
-      const percentAmountWork =
-        (Number(numericPercentage) / 100) * numericSalaryValue;
-      const converted = convertSync(
-        percentAmountWork,
-        workCurrency || 'RUB',
-        dutyCurrency
-      );
+      const percentAmountWork = (Number(numericPercentage) / 100) * numericSalaryValue;
+      const converted = convertSync(percentAmountWork, workCurrency || 'RUB', dutyCurrency);
       percentPartInDuty = converted ?? percentAmountWork;
     }
 
     if (pricePart === null && percentPartInDuty === null) return 'Нет данных';
 
     const parts: string[] = [];
-    if (pricePart !== null)
-      parts.push(formatAmountWithCurrency(pricePart, dutyCurrency));
+    if (pricePart !== null) parts.push(formatAmountWithCurrency(pricePart, dutyCurrency));
     if (numericPercentage !== null) parts.push(`${Number(numericPercentage)}%`);
 
     let text = parts.join(' + ');
     const total = (pricePart ?? 0) + (percentPartInDuty ?? 0);
-    if (
-      !Number.isNaN(total) &&
-      (pricePart !== null || percentPartInDuty !== null)
-    ) {
+    if (!Number.isNaN(total) && (pricePart !== null || percentPartInDuty !== null)) {
       text += ` = ${formatAmountWithCurrency(total, dutyCurrency)}`;
     }
     return text;
   };
 
   // Состояние для редактирования effectiveDate
-  const [editingEffectiveDate, setEditingEffectiveDate] = useState<
-    string | null
-  >(null);
+  const [editingEffectiveDate, setEditingEffectiveDate] = useState<string | null>(null);
   const [tempDate, setTempDate] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
@@ -166,7 +150,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
       // проверяем, есть ли у него обязанности в этом распределении
       if (showOnlyCurrentUser && currentUserId) {
         const hasUserDuties = dist.details.some(
-          (detail) => detail.user && detail.user.id === currentUserId
+          (detail) => detail.user && detail.user.id === currentUserId,
         );
         if (!hasUserDuties) {
           return false;
@@ -206,7 +190,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
         const createdAt = item.updatedAt || item.createdAt;
         const effectiveDate = item.effectiveDate || createdAt; // Используем effectiveDate или fallback на createdAt
 
-        if (createdAt) {
+        if (createdAt && effectiveDate) {
           allHistoryItems.push({
             type: 'workHistory',
             data: item,
@@ -222,16 +206,17 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     if (validDistributions.length > 0) {
       validDistributions.forEach((item) => {
         if (item.createdAt) {
-          const effectiveDate =
-            item.workHistory.effectiveDate || item.createdAt; // Используем effectiveDate или fallback на createdAt
+          const effectiveDate = item.workHistory.effectiveDate || item.createdAt; // Используем effectiveDate или fallback на createdAt
 
-          allHistoryItems.push({
-            type: 'distribution',
-            data: item,
-            createdAt: item.createdAt,
-            effectiveDate,
-            effectiveDateForGrouping: effectiveDate.split('T')[0],
-          });
+          if (effectiveDate) {
+            allHistoryItems.push({
+              type: 'distribution',
+              data: item,
+              createdAt: item.createdAt,
+              effectiveDate,
+              effectiveDateForGrouping: effectiveDate.split('T')[0],
+            });
+          }
         }
       });
     }
@@ -303,9 +288,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   if (groupedHistory.length === 0) {
     return (
       <div className="py-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">
-          История изменений
-        </h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">История изменений</h3>
         <p className="text-gray-500 italic">История изменений отсутствует</p>
       </div>
     );
@@ -314,7 +297,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   // Находит различия между двумя распределениями
   const getDifferences = (
     current: DistributionWithDetails,
-    previous: DistributionWithDetails | null
+    previous: DistributionWithDetails | null,
   ) => {
     if (!previous) return {};
 
@@ -338,8 +321,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
       // Ищем соответствующую запись в предыдущем распределении
       const prevDetail = previous.details.find(
-        (d) =>
-          d.dutyId === currentDetail.dutyId && d.userId === currentDetail.userId
+        (d) => d.dutyId === currentDetail.dutyId && d.userId === currentDetail.userId,
       );
 
       if (prevDetail) {
@@ -358,10 +340,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   };
 
   // Функции для редактирования effectiveDate
-  const startEditingEffectiveDate = (
-    distributionId: string,
-    currentDate?: string
-  ) => {
+  const startEditingEffectiveDate = (distributionId: string, currentDate?: string) => {
     setEditingEffectiveDate(distributionId);
     setTempDate(currentDate ? currentDate.split('T')[0] : '');
   };
@@ -411,10 +390,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
         onUpdate();
       }
     } catch (error) {
-      console.error(
-        'Ошибка при обновлении даты вступления в силу для workHistory:',
-        error
-      );
+      console.error('Ошибка при обновлении даты вступления в силу для workHistory:', error);
     } finally {
       setIsUpdating(false);
     }
@@ -434,12 +410,8 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                 </div>
               </div>
               <div>
-                <h4 className="text-lg font-semibold text-gray-900">
-                  Изменение работы
-                </h4>
-                <p className="text-sm text-blue-600 font-medium">
-                  {workHistoryItem.name}
-                </p>
+                <h4 className="text-lg font-semibold text-gray-900">Изменение работы</h4>
+                <p className="text-sm text-blue-600 font-medium">{workHistoryItem.name}</p>
               </div>
             </div>
             <div className="text-right">
@@ -447,10 +419,8 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
               <div className="text-lg font-semibold text-gray-900">
                 {formatAmountWithCurrency(
                   Number(workHistoryItem.salary || 0),
-                  (workHistoryItem.currency as 'RUB' | 'USD') ||
-                    workCurrency ||
-                    'RUB',
-                  isConfidential
+                  (workHistoryItem.currency as 'RUB' | 'USD') || workCurrency || 'RUB',
+                  isConfidential,
                 )}
               </div>
             </div>
@@ -463,9 +433,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             <div className="flex items-center space-x-2">
               <span className="text-green-600 text-lg">📅</span>
               <div>
-                <div className="text-sm text-green-700 font-medium">
-                  Вступило в силу
-                </div>
+                <div className="text-sm text-green-700 font-medium">Вступило в силу</div>
                 <div className="flex items-center gap-2">
                   {editingEffectiveDate === workHistoryItem.id ? (
                     <div className="flex items-center gap-2">
@@ -479,9 +447,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                       <Button
                         size="sm"
                         variant="primary"
-                        onClick={() =>
-                          saveEffectiveDateWorkHistory(workHistoryItem)
-                        }
+                        onClick={() => saveEffectiveDateWorkHistory(workHistoryItem)}
                         disabled={isUpdating || !tempDate}
                         className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700"
                       >
@@ -511,7 +477,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                           onClick={() =>
                             startEditingEffectiveDate(
                               workHistoryItem.id,
-                              workHistoryItem.effectiveDate
+                              workHistoryItem.effectiveDate,
                             )
                           }
                           className="text-xs px-2 py-1 border-green-300 text-green-700 hover:bg-green-50"
@@ -527,16 +493,15 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             </div>
 
             {/* Ответственный */}
-            {workHistoryItem.responsibleUserId &&
-              usersMap[workHistoryItem.responsibleUserId] && (
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">Ответственный</div>
-                  <div className="text-sm font-medium text-gray-900">
-                    {`${usersMap[workHistoryItem.responsibleUserId].lastName || ''} ${usersMap[workHistoryItem.responsibleUserId].firstName || ''}`.trim() ||
-                      usersMap[workHistoryItem.responsibleUserId].email}
-                  </div>
+            {workHistoryItem.responsibleUserId && usersMap[workHistoryItem.responsibleUserId] && (
+              <div className="text-right">
+                <div className="text-sm text-gray-500">Ответственный</div>
+                <div className="text-sm font-medium text-gray-900">
+                  {`${usersMap[workHistoryItem.responsibleUserId].lastName || ''} ${usersMap[workHistoryItem.responsibleUserId].firstName || ''}`.trim() ||
+                    usersMap[workHistoryItem.responsibleUserId].email}
                 </div>
-              )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -544,10 +509,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
         <div className="px-6 py-3 bg-gray-50">
           <div className="text-xs text-gray-500">
             <span className="font-medium">Дата создания изменения:</span>{' '}
-            {formatDateForDisplay(
-              workHistoryItem.updatedAt || workHistoryItem.createdAt,
-              true
-            )}
+            {formatDateForDisplay(workHistoryItem.updatedAt || workHistoryItem.createdAt, true)}
           </div>
         </div>
       </div>
@@ -558,7 +520,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   const renderDistributionItem = (
     distribution: DistributionWithDetails,
     index: number,
-    groupIndex: number
+    groupIndex: number,
   ) => {
     // Находим предыдущее распределение для сравнения
     const getNextDistributionItem = () => {
@@ -597,9 +559,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     // Фильтруем детали: для WORKER (isConfidential) показываем только его обязанности
     const filteredDetails =
       (showOnlyCurrentUser || isConfidential) && currentUserId
-        ? distribution.details.filter(
-            (detail) => detail.user && detail.user.id === currentUserId
-          )
+        ? distribution.details.filter((detail) => detail.user && detail.user.id === currentUserId)
         : distribution.details;
 
     return (
@@ -614,9 +574,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                 </div>
               </div>
               <div>
-                <h4 className="text-lg font-semibold text-gray-900">
-                  Распределение обязанностей
-                </h4>
+                <h4 className="text-lg font-semibold text-gray-900">Распределение обязанностей</h4>
                 <p className="text-sm text-green-600 font-medium">
                   {distribution.workHistory.name}
                 </p>
@@ -627,10 +585,8 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
               <div className="text-lg font-semibold text-gray-900">
                 {formatAmountWithCurrency(
                   Number(distribution.workHistory.salary || 0),
-                  (distribution.workHistory.currency as 'RUB' | 'USD') ||
-                    workCurrency ||
-                    'RUB',
-                  isConfidential
+                  (distribution.workHistory.currency as 'RUB' | 'USD') || workCurrency || 'RUB',
+                  isConfidential,
                 )}
               </div>
             </div>
@@ -643,9 +599,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             <div className="flex items-center space-x-2">
               <span className="text-emerald-600 text-lg">📅</span>
               <div>
-                <div className="text-sm text-emerald-700 font-medium">
-                  Вступило в силу
-                </div>
+                <div className="text-sm text-emerald-700 font-medium">Вступило в силу</div>
                 <div className="flex items-center gap-2">
                   {editingEffectiveDate === distribution.workHistory.id ? (
                     <div className="flex items-center gap-2">
@@ -679,9 +633,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-xl font-bold text-emerald-800">
                         {distribution.workHistory.effectiveDate
-                          ? formatDateForDisplay(
-                              distribution.workHistory.effectiveDate
-                            )
+                          ? formatDateForDisplay(distribution.workHistory.effectiveDate)
                           : 'Не указано'}
                       </span>
                       {canEdit && (
@@ -691,7 +643,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                           onClick={() =>
                             startEditingEffectiveDate(
                               distribution.workHistory.id,
-                              distribution.workHistory.effectiveDate
+                              distribution.workHistory.effectiveDate,
                             )
                           }
                           className="text-xs px-2 py-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
@@ -713,8 +665,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                   <div className="text-sm text-gray-500">Ответственный</div>
                   <div className="text-sm font-medium text-gray-900">
                     {`${usersMap[distribution.workHistory.responsibleUserId].lastName || ''} ${usersMap[distribution.workHistory.responsibleUserId].firstName || ''}`.trim() ||
-                      usersMap[distribution.workHistory.responsibleUserId]
-                        .email}
+                      usersMap[distribution.workHistory.responsibleUserId].email}
                   </div>
                 </div>
               )}
@@ -754,8 +705,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                 const user = detail.user?.id ? usersMap[detail.user.id] : null;
                 const userName = user
                   ? `${user.lastName || ''} ${user.firstName || ''}`.trim()
-                  : detail.user?.email ||
-                      (detail.user?.lastName && detail.user?.firstName)
+                  : detail.user?.email || (detail.user?.lastName && detail.user?.firstName)
                     ? `${detail.user?.lastName || ''} ${detail.user?.firstName || ''}`.trim()
                     : `ID: ${detail.user?.id || 'неизвестно'}`;
 
@@ -766,20 +716,13 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
                 // Преобразуем workSalary в число для расчетов
                 const numericSalaryValue =
-                  typeof workSalary === 'string'
-                    ? parseFloat(workSalary)
-                    : workSalary;
+                  typeof workSalary === 'string' ? parseFloat(workSalary) : workSalary;
 
                 return (
-                  <tr
-                    key={detail.id}
-                    className={isChanged ? 'bg-yellow-50' : ''}
-                  >
+                  <tr key={detail.id} className={isChanged ? 'bg-yellow-50' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       <div className="flex items-center space-x-2">
-                        <span>
-                          {detail.duty?.name || 'Неизвестная обязанность'}
-                        </span>
+                        <span>{detail.duty?.name || 'Неизвестная обязанность'}</span>
                         {isChanged && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                             Изменено
@@ -795,7 +738,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                         detail,
                         typeof numericSalaryValue === 'number'
                           ? numericSalaryValue
-                          : Number(numericSalaryValue || 0)
+                          : Number(numericSalaryValue || 0),
                       )}
                     </td>
                   </tr>
@@ -827,7 +770,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
         createdAt: string;
       }>;
     },
-    groupIndex: number
+    groupIndex: number,
   ) => {
     const isExpanded = expandedGroups.has(collapsibleGroup.groupKey);
     const hasMultipleItems = collapsibleGroup.items.length > 1;
@@ -842,11 +785,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
         <div className="history-group">
           {latestItem.type === 'workHistory'
             ? renderWorkHistoryItem(latestItem.data as WorkHistory)
-            : renderDistributionItem(
-                latestItem.data as DistributionWithDetails,
-                0,
-                groupIndex
-              )}
+            : renderDistributionItem(latestItem.data as DistributionWithDetails, 0, groupIndex)}
         </div>
 
         {/* Кнопка для показа остальных изменений */}
@@ -879,16 +818,13 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                 className="mt-4 space-y-4 animate-fadeIn"
               >
                 {hiddenItems.map((item, index) => (
-                  <div
-                    key={`${item.type}-${item.createdAt}-hidden`}
-                    className="history-group"
-                  >
+                  <div key={`${item.type}-${item.createdAt}-hidden`} className="history-group">
                     {item.type === 'workHistory'
                       ? renderWorkHistoryItem(item.data as WorkHistory)
                       : renderDistributionItem(
                           item.data as DistributionWithDetails,
                           index + 1,
-                          groupIndex
+                          groupIndex,
                         )}
                   </div>
                 ))}
@@ -910,9 +846,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             </div>
           </div>
           <div>
-            <h3 className="text-xl font-bold text-gray-900">
-              История изменений
-            </h3>
+            <h3 className="text-xl font-bold text-gray-900">История изменений</h3>
             <p className="text-sm text-gray-500">
               Полная история модификаций обязанностей в проекте
             </p>
@@ -928,9 +862,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                   <div className="flex items-center space-x-3">
                     <div className="flex-shrink-0">
                       <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                        <span className="text-emerald-600 text-sm font-medium">
-                          📅
-                        </span>
+                        <span className="text-emerald-600 text-sm font-medium">📅</span>
                       </div>
                     </div>
                     <div>
@@ -953,20 +885,17 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                   {/* Отображаем сворачиваемые группы, если они есть */}
                   {group.collapsibleGroups && group.collapsibleGroups.length > 0
                     ? group.collapsibleGroups.map((collapsibleGroup) =>
-                        renderCollapsibleGroup(collapsibleGroup, groupIndex)
+                        renderCollapsibleGroup(collapsibleGroup, groupIndex),
                       )
                     : /* Fallback для старой логики, если нет сворачиваемых групп */
                       group.items.map((item, index) => (
-                        <div
-                          key={`${item.type}-${item.createdAt}`}
-                          className="mb-4"
-                        >
+                        <div key={`${item.type}-${item.createdAt}`} className="mb-4">
                           {item.type === 'workHistory'
                             ? renderWorkHistoryItem(item.data as WorkHistory)
                             : renderDistributionItem(
                                 item.data as DistributionWithDetails,
                                 index,
-                                groupIndex
+                                groupIndex,
                               )}
                         </div>
                       ))}
@@ -978,9 +907,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
               <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-gray-400 text-2xl">📝</span>
               </div>
-              <p className="text-gray-500 italic text-lg">
-                История изменений пуста
-              </p>
+              <p className="text-gray-500 italic text-lg">История изменений пуста</p>
               <p className="text-gray-400 text-sm mt-2">
                 Изменения будут отображаться здесь после их создания
               </p>

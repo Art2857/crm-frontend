@@ -80,10 +80,7 @@ export default function DutyForm({
       return false;
     }
 
-    if (
-      basePercentage &&
-      (parseFloat(basePercentage) < 0 || parseFloat(basePercentage) > 100)
-    ) {
+    if (basePercentage && (parseFloat(basePercentage) < 0 || parseFloat(basePercentage) > 100)) {
       setFormError('Базовый процент должен быть от 0 до 100');
       return false;
     }
@@ -118,9 +115,7 @@ export default function DutyForm({
     <Card>
       <form onSubmit={handleSubmit} className="space-y-6">
         {(formError || (error && error !== 'REQUEST_CANCELLED')) && (
-          <Alert type="error">
-            {formError || (error !== 'REQUEST_CANCELLED' ? error : '')}
-          </Alert>
+          <Alert type="error">{formError || (error !== 'REQUEST_CANCELLED' ? error : '')}</Alert>
         )}
 
         <div className="space-y-6">
@@ -140,16 +135,10 @@ export default function DutyForm({
           {/* Блок с финансовыми параметрами */}
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-900">
-                Финансовые параметры
-              </h3>
+              <h3 className="text-sm font-medium text-gray-900">Финансовые параметры</h3>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500">Валюта:</span>
-                <CurrencySwitch
-                  value={formData.currency}
-                  onChange={setCurrency}
-                  size="sm"
-                />
+                <CurrencySwitch value={formData.currency} onChange={setCurrency} size="sm" />
               </div>
             </div>
 
@@ -166,9 +155,7 @@ export default function DutyForm({
                   min="0"
                   fullWidth
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Оставьте пустым, если не требуется
-                </p>
+                <p className="mt-1 text-xs text-gray-500">Оставьте пустым, если не требуется</p>
               </div>
 
               <div>
@@ -176,9 +163,7 @@ export default function DutyForm({
                   id="basePercentage"
                   label="Базовый процент от зарплаты (%)"
                   value={formData.basePercentage}
-                  onChange={(e) =>
-                    handleChange('basePercentage', e.target.value)
-                  }
+                  onChange={(e) => handleChange('basePercentage', e.target.value)}
                   placeholder="20"
                   type="number"
                   step="0.01"
@@ -186,9 +171,7 @@ export default function DutyForm({
                   max="100"
                   fullWidth
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Оставьте пустым, если не требуется
-                </p>
+                <p className="mt-1 text-xs text-gray-500">Оставьте пустым, если не требуется</p>
               </div>
             </div>
 
@@ -205,9 +188,7 @@ export default function DutyForm({
                   min="0"
                   fullWidth
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Минимум (стоимость + процент)
-                </p>
+                <p className="mt-1 text-xs text-gray-500">Минимум (стоимость + процент)</p>
               </div>
 
               <div>
@@ -222,9 +203,7 @@ export default function DutyForm({
                   min="0"
                   fullWidth
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Максимум (стоимость + процент)
-                </p>
+                <p className="mt-1 text-xs text-gray-500">Максимум (стоимость + процент)</p>
               </div>
             </div>
           </div>
@@ -243,9 +222,7 @@ export default function DutyForm({
             </Button>
           )}
 
-          <div
-            className={`flex items-center space-x-3 ${!onDelete ? 'ml-auto' : ''}`}
-          >
+          <div className={`flex items-center space-x-3 ${!onDelete ? 'ml-auto' : ''}`}>
             <Button type="button" variant="outline" onClick={onCancel}>
               Отмена
             </Button>

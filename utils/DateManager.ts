@@ -37,8 +37,7 @@ export class DateManager {
   private constructor() {
     // Определяем timezone браузера по умолчанию
     try {
-      this.userTimezone =
-        Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      this.userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
     } catch {
       this.userTimezone = 'UTC';
     }
@@ -87,10 +86,7 @@ export class DateManager {
 
     try {
       // Проверяем российский формат DD.MM.YYYY
-      if (
-        typeof dateInput === 'string' &&
-        /^\d{2}\.\d{2}\.\d{4}$/.test(dateInput)
-      ) {
+      if (typeof dateInput === 'string' && /^\d{2}\.\d{2}\.\d{4}$/.test(dateInput)) {
         const parts = dateInput.split('.');
         const day = parseInt(parts[0], 10);
         const month = parseInt(parts[1], 10) - 1; // Месяцы с 0
@@ -99,21 +95,14 @@ export class DateManager {
         const date = new Date(year, month, day);
 
         // Проверяем валидность
-        if (
-          date.getFullYear() === year &&
-          date.getMonth() === month &&
-          date.getDate() === day
-        ) {
+        if (date.getFullYear() === year && date.getMonth() === month && date.getDate() === day) {
           return date;
         }
         return null;
       }
 
       // Проверяем ISO формат YYYY-MM-DD
-      if (
-        typeof dateInput === 'string' &&
-        /^\d{4}-\d{2}-\d{2}$/.test(dateInput)
-      ) {
+      if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
         const [year, month, day] = dateInput.split('-').map(Number);
         return new Date(Date.UTC(year, month - 1, day));
       }
@@ -158,10 +147,7 @@ export class DateManager {
   /**
    * Форматирует дату в российский формат с временем DD.MM.YYYY HH:MM
    */
-  formatRussianWithTime(
-    dateInput: DateInput,
-    useUserTimezone: boolean = true
-  ): string {
+  formatRussianWithTime(dateInput: DateInput, useUserTimezone: boolean = true): string {
     const date = this.parseDate(dateInput);
     if (!date) return '';
 
@@ -189,7 +175,7 @@ export class DateManager {
   format(
     dateInput: DateInput,
     format: DateFormat = 'russian',
-    useUserTimezone: boolean = true
+    useUserTimezone: boolean = true,
   ): string {
     switch (format) {
       case 'iso':
@@ -206,11 +192,7 @@ export class DateManager {
   /**
    * Автоматическое форматирование на основе типа поля
    */
-  formatByField(
-    dateInput: DateInput,
-    fieldName: string,
-    useUserTimezone: boolean = true
-  ): string {
+  formatByField(dateInput: DateInput, fieldName: string, useUserTimezone: boolean = true): string {
     if (this.isDateOnlyField(fieldName)) {
       return this.formatRussian(dateInput);
     } else {
@@ -252,11 +234,7 @@ export class DateManager {
     const year = parseInt(parts[2], 10);
 
     const date = new Date(year, month, day);
-    return (
-      date.getFullYear() === year &&
-      date.getMonth() === month &&
-      date.getDate() === day
-    );
+    return date.getFullYear() === year && date.getMonth() === month && date.getDate() === day;
   }
 
   /**
@@ -286,10 +264,7 @@ export class DateManager {
     let age = today.getFullYear() - birthday.getFullYear();
     const monthDiff = today.getMonth() - birthday.getMonth();
 
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthday.getDate())
-    ) {
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthday.getDate())) {
       age--;
     }
 
@@ -327,7 +302,7 @@ export const formatDateToISO = (date: DateInput): string => {
 
 export const formatDateForDisplay = (
   dateInput: DateInput,
-  includeTime: boolean = false
+  includeTime: boolean = false,
 ): string => {
   return includeTime
     ? dateManager.formatRussianWithTime(dateInput)
@@ -346,18 +321,11 @@ export const isValidRussianDateFormat = (dateString: string): boolean => {
   return dateManager.isValidRussianFormat(dateString);
 };
 
-export const shiftDateISOByDays = (
-  dateInput: DateInput,
-  days: number
-): string => {
+export const shiftDateISOByDays = (dateInput: DateInput, days: number): string => {
   const date = dateManager.parseDate(dateInput);
   if (!date) return '';
 
-  const shifted = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate() + days
-  );
+  const shifted = new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 
   return dateManager.formatISO(shifted);
 };

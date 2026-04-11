@@ -40,10 +40,7 @@ export default function UserCard({
   return (
     <div className="relative">
       <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-r from-white via-gray-50 to-white">
-        <div
-          className="p-6 cursor-pointer relative"
-          onClick={() => onToggleExpanded(user.userId)}
-        >
+        <div className="p-6 cursor-pointer relative" onClick={() => onToggleExpanded(user.userId)}>
           {/* Декоративная линия сверху */}
           <div
             className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
@@ -64,9 +61,7 @@ export default function UserCard({
                 }`}
               >
                 <UserIcon
-                  className={`h-7 w-7 ${
-                    user.requiresAttention ? 'text-red-600' : 'text-blue-600'
-                  }`}
+                  className={`h-7 w-7 ${user.requiresAttention ? 'text-red-600' : 'text-blue-600'}`}
                 />
                 {user.requiresAttention && (
                   <div className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center">
@@ -98,8 +93,7 @@ export default function UserCard({
                     <span>
                       Зарплата:{' '}
                       {user.salaryDays.length > 0
-                        ? user.salaryDays.map((d) => `${d}`).join(', ') +
-                          ' число'
+                        ? user.salaryDays.map((d) => `${d}`).join(', ') + ' число'
                         : 'Не указан'}
                     </span>
                   </div>
@@ -115,9 +109,7 @@ export default function UserCard({
             <div className="flex items-center space-x-4">
               <FinancialSummary
                 totalAccrued={
-                  typeof accruedOverride === 'number'
-                    ? accruedOverride
-                    : user.totalAccrued
+                  typeof accruedOverride === 'number' ? accruedOverride : user.totalAccrued
                 }
                 totalPaid={user.totalPaid}
                 remainingDebt={user.remainingDebt}
@@ -151,8 +143,7 @@ export default function UserCard({
 
           {user.lastPaymentDate && (
             <div className="mt-2 text-xs text-gray-400 text-center">
-              Последняя выплата:{' '}
-              {formatRussian(user.lastPaymentDate) || 'Неизвестная дата'}
+              Последняя выплата: {formatRussian(user.lastPaymentDate) || 'Неизвестная дата'}
             </div>
           )}
         </div>

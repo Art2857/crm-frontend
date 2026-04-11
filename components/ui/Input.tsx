@@ -1,9 +1,4 @@
-import React, {
-  InputHTMLAttributes,
-  forwardRef,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { InputHTMLAttributes, forwardRef, useEffect, useRef } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -26,11 +21,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputProps = { ...props } as InputProps;
 
     // Обеспечиваем корректное преобразование значений для управляемого компонента
-    if (
-      'value' in inputProps &&
-      inputProps.value !== undefined &&
-      inputProps.value !== null
-    ) {
+    if ('value' in inputProps && inputProps.value !== undefined && inputProps.value !== null) {
       // Оставляем значение как есть, чтобы форма корректно работала с разными типами
       // Это особенно важно для числовых полей
       inputProps.value = inputProps.value;
@@ -44,9 +35,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         const originalOnWheel = inputProps.onWheel as any;
         const originalOnKeyDown = inputProps.onKeyDown as any;
 
-        (inputProps as any).onWheel = (
-          e: React.WheelEvent<HTMLInputElement>
-        ) => {
+        (inputProps as any).onWheel = (e: React.WheelEvent<HTMLInputElement>) => {
           // Блокируем изменение значения колёсиком, когда инпут в фокусе
           e.preventDefault();
           // Не продолжаем всплытие нативного изменения
@@ -54,9 +43,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           if (typeof originalOnWheel === 'function') originalOnWheel(e);
         };
 
-        (inputProps as any).onKeyDown = (
-          e: React.KeyboardEvent<HTMLInputElement>
-        ) => {
+        (inputProps as any).onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
           // Блокируем ArrowUp/ArrowDown, чтобы не менять значение на +/-1 случайно
           if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
             e.preventDefault();
@@ -75,16 +62,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const isPasswordType = props.type === 'password';
 
     // Для полей пароля переключаем тип между password и text
-    const inputType = isPasswordType
-      ? showPassword
-        ? 'text'
-        : 'password'
-      : props.type;
+    const inputType = isPasswordType ? (showPassword ? 'text' : 'password') : props.type;
 
     // Добавляем padding справа для иконки глаза
-    const finalInputClasses = `${inputClasses} ${
-      isPasswordType ? 'pr-10' : ''
-    }`;
+    const finalInputClasses = `${inputClasses} ${isPasswordType ? 'pr-10' : ''}`;
 
     // Обновляем пропсы для инпута
     const finalInputProps = {
@@ -96,10 +77,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={`${fullWidth ? 'w-full' : ''} mb-4`}>
         {label && (
-          <label
-            htmlFor={props.id}
-            className="block text-mb font-medium text-gray-700 mb-2"
-          >
+          <label htmlFor={props.id} className="block text-mb font-medium text-gray-700 mb-2">
             {label}
             {props.required && (
               <span aria-hidden="true" className="text-red-500 ml-1">
@@ -159,7 +137,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
       </div>
     );
-  }
+  },
 );
 
 Input.displayName = 'Input';

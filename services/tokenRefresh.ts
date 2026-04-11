@@ -16,7 +16,7 @@ export const isAccessTokenExpired = (expiresAt: string | null | undefined): bool
     const currentTime = Date.now();
     // Consider token expired if within 1 minute of expiration
     const bufferTime = 60 * 1000; // 1 minute buffer
-    return currentTime >= (expirationTime - bufferTime);
+    return currentTime >= expirationTime - bufferTime;
   } catch {
     return true;
   }
@@ -50,17 +50,10 @@ export const refreshTokens = async (refreshToken: string): Promise<AuthResponse>
   }
 
   try {
-    const response = await authApi.post<AuthResponse>(
-      AUTH_ENDPOINTS.refresh,
-      { refreshToken }
-    );
+    const response = await authApi.post<AuthResponse>(AUTH_ENDPOINTS.refresh, { refreshToken });
 
-    const {
-      access_token,
-      refresh_token,
-      access_token_expires_at,
-      refresh_token_expires_at,
-    } = response.data;
+    const { access_token, refresh_token, access_token_expires_at, refresh_token_expires_at } =
+      response.data;
 
     // Update tokenStorage with new tokens and expiration dates
     tokenStorage.setAccessToken(access_token);
@@ -115,15 +108,11 @@ async function performRefresh(): Promise<string | null> {
     const response = await axios.post<AuthResponse>(
       `${API_URL}/auth/refresh`,
       { refreshToken: currentRefreshToken },
-      { withCredentials: true }
+      { withCredentials: true },
     );
 
-    const {
-      access_token,
-      refresh_token,
-      access_token_expires_at,
-      refresh_token_expires_at,
-    } = response.data;
+    const { access_token, refresh_token, access_token_expires_at, refresh_token_expires_at } =
+      response.data;
 
     if (access_token) tokenStorage.setAccessToken(access_token);
     if (refresh_token) tokenStorage.setRefreshToken(refresh_token);

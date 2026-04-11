@@ -29,6 +29,8 @@ const Notification: React.FC<NotificationProps> = ({
       // Очищаем таймер при размонтировании компонента или изменении сообщения
       return () => clearTimeout(timer);
     }
+
+    return undefined;
   }, [successMessage, onClearSuccess, autoHideDuration]);
 
   useEffect(() => {
@@ -41,6 +43,8 @@ const Notification: React.FC<NotificationProps> = ({
       // Очищаем таймер при размонтировании компонента или изменении сообщения
       return () => clearTimeout(timer);
     }
+
+    return undefined;
   }, [errorMessage, onClearError, autoHideDuration]);
 
   if (!successMessage && !errorMessage) {

@@ -60,22 +60,32 @@ type UpdateSensitiveFormData = {
 
 export default function EditUserPage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  const { currentUser, isLoading, error } = useAppSelector(
-    (state) => state.users
-  );
+  const { currentUser, isLoading, error } = useAppSelector((state) => state.users);
   const dispatch = useAppDispatch();
   const router = useRouter();
   const notification = useNotification();
   const [success, setSuccess] = useState('');
   const [serverError, setServerError] = useState('');
-  const [activeTab, setActiveTab] = useState<'profile' | 'sensitive'>(
-    'profile'
-  );
+  const [activeTab, setActiveTab] = useState<'profile' | 'sensitive'>('profile');
   const [isPreferencesFocused, setIsPreferencesFocused] = useState(false);
 
   const userId = params.id;
 
+  useEffect(() => {
+    if (
+      error &&
+      typeof window !== 'undefined' &&
+      localStorage.getItem('redirectAfterLogin') === window.location.pathname
+    ) {
+      localStorage.removeItem('redirectAfterLogin');
+    }
+  }, [error]);
+
   const archiveConfirm = useConfirmation<string>(async (id: string) => {
+    if (!user) {
+      return;
+    }
+
     try {
       await privateApi.patch(`/users/${id}/archive`);
       notification.showSuccess('Пользователь успешно архивирован');
@@ -91,15 +101,15 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         errorMessage = errorPayload.message;
       }
       if (errorMessage) notification.showError(errorMessage, 10000);
-      else
-        notification.showError(
-          'Произошла ошибка при архивировании пользователя',
-          10000
-        );
+      else notification.showError('Произошла ошибка при архивировании пользователя', 10000);
     }
   });
 
   const restoreConfirm = useConfirmation<string>(async (id: string) => {
+    if (!user) {
+      return;
+    }
+
     try {
       await privateApi.patch(`/users/${id}/restore`);
       notification.showSuccess('Пользователь восстановлен из архива');
@@ -115,8 +125,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         errorMessage = errorPayload.message;
       }
       if (errorMessage) notification.showError(errorMessage, 10000);
-      else
-        notification.showError('Не удалось восстановить пользователя', 10000);
+      else notification.showError('Не удалось восстановить пользователя', 10000);
     }
   });
 
@@ -164,7 +173,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       workEnd: {
         pattern: /^([01]\d|2[0-3]):[0-5]\d$/,
       },
-    }
+    },
   );
 
   const {
@@ -220,7 +229,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
             parseInt(value) <= 28) ||
           'День зарплаты должен быть числом от 1 до 28',
       },
-    }
+    },
   );
 
   useEffect(() => {
@@ -230,7 +239,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       return;
     }
 
-    if (user?.role !== Role.ADMIN && user?.role !== Role.MANAGER) {
+    if (!user || (user.role !== Role.ADMIN && user.role !== Role.MANAGER)) {
       router.push('/dashboard');
       return;
     }
@@ -267,7 +276,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       console.log(
         'Дата рождения из данных пользователя:',
         currentUser.birthday,
-        typeof currentUser.birthday
+        typeof currentUser.birthday,
       );
 
       if (currentUser.birthday) {
@@ -280,10 +289,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
             setProfileValue('birthday', formattedDate);
           } else {
-            console.warn(
-              'Invalid birthday date detected:',
-              currentUser.birthday
-            );
+            console.warn('Invalid birthday date detected:', currentUser.birthday);
             setProfileValue('birthday', '');
           }
         } catch (e) {
@@ -299,13 +305,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       setProfileValue('timezone', currentUser.timezone || '');
       setProfileValue('workStart', currentUser.workStart || '');
       setProfileValue('workEnd', currentUser.workEnd || '');
-      setProfileValue(
-        'status',
-        (currentUser.status as any) || (UserStatus.WORKING as any)
-      );
+      setProfileValue('status', (currentUser.status as any) || (UserStatus.WORKING as any));
       setProfileValue(
         'preferences',
-        currentUser.preferences ? JSON.stringify(currentUser.preferences) : ''
+        currentUser.preferences ? JSON.stringify(currentUser.preferences) : '',
       );
 
       // Заполнение формы чувствительных данных
@@ -314,15 +317,11 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       setSensitiveValue('role', currentUser.role);
       setSensitiveValue(
         'salaryDay1',
-        currentUser.salaryDays?.[0] !== undefined
-          ? String(currentUser.salaryDays[0])
-          : ''
+        currentUser.salaryDays?.[0] !== undefined ? String(currentUser.salaryDays[0]) : '',
       );
       setSensitiveValue(
         'salaryDay2',
-        currentUser.salaryDays?.[1] !== undefined
-          ? String(currentUser.salaryDays[1])
-          : ''
+        currentUser.salaryDays?.[1] !== undefined ? String(currentUser.salaryDays[1]) : '',
       );
       setSensitiveValue('characteristics', currentUser.characteristics || '');
     }
@@ -350,10 +349,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
               const formattedDate = date.toISOString().split('T')[0];
               setProfileValue('birthday', formattedDate);
             } else {
-              console.warn(
-                'Invalid birthday date detected:',
-                currentUser.birthday
-              );
+              console.warn('Invalid birthday date detected:', currentUser.birthday);
               setProfileValue('birthday', '');
             }
           } catch (e) {
@@ -368,15 +364,11 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         setSensitiveValue('role', currentUser.role);
         setSensitiveValue(
           'salaryDay1',
-          currentUser.salaryDays?.[0] !== undefined
-            ? String(currentUser.salaryDays[0])
-            : ''
+          currentUser.salaryDays?.[0] !== undefined ? String(currentUser.salaryDays[0]) : '',
         );
         setSensitiveValue(
           'salaryDay2',
-          currentUser.salaryDays?.[1] !== undefined
-            ? String(currentUser.salaryDays[1])
-            : ''
+          currentUser.salaryDays?.[1] !== undefined ? String(currentUser.salaryDays[1]) : '',
         );
         setSensitiveValue('characteristics', currentUser.characteristics || '');
       }
@@ -384,6 +376,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   };
 
   const onProfileSubmit = async (data: UpdateProfileFormData) => {
+    if (!user) {
+      return;
+    }
+
     try {
       setServerError('');
       setSuccess('');
@@ -395,9 +391,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       if (!validateProfileForm()) {
         const errorMessages = Object.values(profileErrors).filter(Boolean);
         if (errorMessages.length > 0) {
-          setServerError(
-            `Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`
-          );
+          setServerError(`Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`);
           return;
         }
       }
@@ -422,18 +416,12 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       if (updatedData.birthday) {
         try {
           // eslint-disable-next-line no-console
-          console.log(
-            'Преобразуем дату рождения в ISO формат:',
-            updatedData.birthday
-          );
+          console.log('Преобразуем дату рождения в ISO формат:', updatedData.birthday);
           const birthday = new Date(`${updatedData.birthday}T00:00:00Z`);
           if (!isNaN(birthday.getTime())) {
             updatedData.birthday = birthday.toISOString();
           } else {
-            console.warn(
-              'Invalid birthday date, sending as is:',
-              updatedData.birthday
-            );
+            console.warn('Invalid birthday date, sending as is:', updatedData.birthday);
           }
         } catch (error) {
           console.error('Ошибка при форматировании даты рождения:', error);
@@ -445,7 +433,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       // eslint-disable-next-line no-console
 
       const resultAction = await dispatch(
-        updateUserProfile({ userId, role: user.role, data: updatedData })
+        updateUserProfile({ userId, role: user.role, data: updatedData }),
       );
 
       if (updateUserProfile.fulfilled.match(resultAction)) {
@@ -463,25 +451,15 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           setSensitiveValue('role', currentUser.role);
           setSensitiveValue(
             'salaryDay1',
-            currentUser.salaryDays?.[0] !== undefined
-              ? String(currentUser.salaryDays[0])
-              : ''
+            currentUser.salaryDays?.[0] !== undefined ? String(currentUser.salaryDays[0]) : '',
           );
           setSensitiveValue(
             'salaryDay2',
-            currentUser.salaryDays?.[1] !== undefined
-              ? String(currentUser.salaryDays[1])
-              : ''
+            currentUser.salaryDays?.[1] !== undefined ? String(currentUser.salaryDays[1]) : '',
           );
-          setSensitiveValue(
-            'characteristics',
-            currentUser.characteristics || ''
-          );
+          setSensitiveValue('characteristics', currentUser.characteristics || '');
         }
-      } else if (
-        updateUserProfile.rejected.match(resultAction) &&
-        resultAction.payload
-      ) {
+      } else if (updateUserProfile.rejected.match(resultAction) && resultAction.payload) {
         setServerError(resultAction.payload as string);
       }
     } catch (err) {
@@ -491,6 +469,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   };
 
   const onSensitiveSubmit = async (data: UpdateSensitiveFormData) => {
+    if (!user) {
+      return;
+    }
+
     try {
       setServerError('');
       setSuccess('');
@@ -499,9 +481,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       if (!validateSensitiveForm()) {
         const errorMessages = Object.values(sensitiveErrors).filter(Boolean);
         if (errorMessages.length > 0) {
-          setServerError(
-            `Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`
-          );
+          setServerError(`Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`);
           return;
         }
       }
@@ -528,7 +508,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
       // Отправляем запрос на обновление чувствительных данных
       const resultAction = await dispatch(
-        updateUserSensitiveData({ userId, role: user.role, data: updatedData })
+        updateUserSensitiveData({ userId, role: user.role, data: updatedData }),
       );
 
       if (updateUserSensitiveData.fulfilled.match(resultAction)) {
@@ -551,10 +531,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 const formattedDate = date.toISOString().split('T')[0];
                 setProfileValue('birthday', formattedDate);
               } else {
-                console.warn(
-                  'Invalid birthday date detected:',
-                  currentUser.birthday
-                );
+                console.warn('Invalid birthday date detected:', currentUser.birthday);
                 setProfileValue('birthday', '');
               }
             } catch (e) {
@@ -563,10 +540,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
             }
           }
         }
-      } else if (
-        updateUserSensitiveData.rejected.match(resultAction) &&
-        resultAction.payload
-      ) {
+      } else if (updateUserSensitiveData.rejected.match(resultAction) && resultAction.payload) {
         setServerError(resultAction.payload as string);
       }
     } catch (err) {
@@ -575,14 +549,45 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     }
   };
 
-  if (
-    !user ||
-    (user.role !== Role.ADMIN && user.role !== Role.MANAGER) ||
-    !currentUser
-  ) {
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <p className="text-sm text-red-700">
+              Пользователь не найден или больше недоступен. Возможно, ссылка устарела после
+              пересоздания базы.
+            </p>
+          </div>
+          <Button onClick={() => router.push('/admin/users')}>
+            Вернуться к списку пользователей
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || (user.role !== Role.ADMIN && user.role !== Role.MANAGER) || isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
+            <p className="text-sm text-yellow-700">
+              Данные пользователя недоступны. Обновите список и попробуйте открыть карточку снова.
+            </p>
+          </div>
+          <Button onClick={() => router.push('/admin/users')}>
+            Вернуться к списку пользователей
+          </Button>
+        </div>
       </div>
     );
   }
@@ -592,15 +597,11 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       <div className="px-4 py-6 sm:px-0">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">
-            Редактирование пользователя: {currentUser.firstName}{' '}
-            {currentUser.lastName}
+            Редактирование пользователя: {currentUser.firstName} {currentUser.lastName}
           </h1>
 
           <div className="flex space-x-4">
-            <Button
-              variant="secondary"
-              onClick={() => router.push('/admin/users')}
-            >
+            <Button variant="secondary" onClick={() => router.push('/admin/users')}>
               Назад к списку
             </Button>
             {user?.role === Role.ADMIN && (
@@ -764,9 +765,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                   {serverError}
                 </div>
               )}
-              {success && (
-                <div className="text-green-500 text-sm mt-4">{success}</div>
-              )}
+              {success && <div className="text-green-500 text-sm mt-4">{success}</div>}
 
               <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
                 {currentUser?.isArchived ? (
@@ -776,7 +775,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                       restoreConfirm.confirmAndExecute(
                         userId,
                         'Восстановить пользователя из архива?',
-                        { confirmText: 'Восстановить', variant: 'primary' }
+                        { confirmText: 'Восстановить', variant: 'primary' },
                       )
                     }
                     className="bg-green-600 hover:bg-green-700 text-white"
@@ -791,7 +790,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                       archiveConfirm.confirmAndExecute(
                         userId,
                         'Архивировать пользователя? Он будет скрыт из активных списков. Продолжить?',
-                        { confirmText: 'Архивировать', variant: 'danger' }
+                        { confirmText: 'Архивировать', variant: 'danger' },
                       )
                     }
                     className="border-red-300 text-red-700 hover:bg-red-50"
@@ -905,9 +904,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                   {serverError}
                 </div>
               )}
-              {success && (
-                <div className="text-green-500 text-sm mt-4">{success}</div>
-              )}
+              {success && <div className="text-green-500 text-sm mt-4">{success}</div>}
 
               <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
                 {currentUser?.isArchived ? (
@@ -917,7 +914,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                       restoreConfirm.confirmAndExecute(
                         userId,
                         'Восстановить пользователя из архива?',
-                        { confirmText: 'Восстановить', variant: 'primary' }
+                        { confirmText: 'Восстановить', variant: 'primary' },
                       )
                     }
                     className="bg-green-600 hover:bg-green-700 text-white"
@@ -932,7 +929,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                       archiveConfirm.confirmAndExecute(
                         userId,
                         'Архивировать пользователя? Он будет скрыт из активных списков. Продолжить?',
-                        { confirmText: 'Архивировать', variant: 'danger' }
+                        { confirmText: 'Архивировать', variant: 'danger' },
                       )
                     }
                     className="border-red-300 text-red-700 hover:bg-red-50"

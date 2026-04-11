@@ -29,7 +29,7 @@ const DEFAULT_DATE_TIME_FORMAT: Intl.DateTimeFormatOptions = {
 function withErrorHandling<T, R>(
   formatter: () => R,
   fallback: R,
-  errorMessage: string = 'Ошибка форматирования'
+  errorMessage: string = 'Ошибка форматирования',
 ): R {
   try {
     return formatter();
@@ -49,26 +49,21 @@ function withErrorHandling<T, R>(
 export const formatDate = (
   dateString: string | Date | null | undefined,
   options?: Intl.DateTimeFormatOptions,
-  includeTime: boolean = false
+  includeTime: boolean = false,
 ): string => {
   if (!dateString) return '-';
 
-  const defaultOptions = includeTime
-    ? DEFAULT_DATE_TIME_FORMAT
-    : DEFAULT_DATE_FORMAT;
-  const dateOptions = options
-    ? { ...defaultOptions, ...options }
-    : defaultOptions;
+  const defaultOptions = includeTime ? DEFAULT_DATE_TIME_FORMAT : DEFAULT_DATE_FORMAT;
+  const dateOptions = options ? { ...defaultOptions, ...options } : defaultOptions;
 
   return withErrorHandling(
     () => {
-      const date =
-        dateString instanceof Date ? dateString : new Date(dateString);
+      const date = dateString instanceof Date ? dateString : new Date(dateString);
       if (isNaN(date.getTime())) throw new Error('Invalid date');
       return new Intl.DateTimeFormat(DEFAULT_LOCALE, dateOptions).format(date);
     },
     typeof dateString === 'string' ? dateString : dateString.toString(),
-    'Ошибка при форматировании даты'
+    'Ошибка при форматировании даты',
   );
 };
 
@@ -88,7 +83,7 @@ export interface Label {
 const getLabelFromMapping = <T extends string | number>(
   value: T | null | undefined,
   mappings: Record<string, Label>,
-  defaultLabel: Label
+  defaultLabel: Label,
 ): Label => {
   if (value === null || value === undefined) return defaultLabel;
   return mappings[value.toString()] || defaultLabel;
@@ -109,9 +104,7 @@ const PRIORITY_LABELS: Record<string, Label> = {
  * @param priority - приоритет работы
  * @returns метка с текстом и цветом
  */
-export const getPriorityLabel = (
-  priority: WorkPriority | null | undefined
-): Label => {
+export const getPriorityLabel = (priority: WorkPriority | null | undefined): Label => {
   return getLabelFromMapping(priority, PRIORITY_LABELS, {
     text: 'Неизвестно',
     color: 'gray',
@@ -155,9 +148,7 @@ const STATUS_LABELS: Record<string, Label> = {
  * @param status - статус работы
  * @returns метка с текстом и цветом
  */
-export const getStatusLabel = (
-  status: WorkStatus | null | undefined
-): Label => {
+export const getStatusLabel = (status: WorkStatus | null | undefined): Label => {
   return getLabelFromMapping(status, STATUS_LABELS, {
     text: 'Неизвестно',
     color: 'gray',

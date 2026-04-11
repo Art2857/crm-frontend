@@ -14,11 +14,7 @@ import {
 import { formatDateForDisplay } from '../../../../../utils/date';
 import { toDateObject } from '../../../../../utils/date';
 
-export default function UserHistoryPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function UserHistoryPage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { currentUser, isLoading } = useAppSelector((state) => state.users);
   const dispatch = useAppDispatch();
@@ -32,16 +28,16 @@ export default function UserHistoryPage({
 
   // Функция для ручного обновления данных истории
   const refreshUserHistory = async () => {
+    if (!user) {
+      return;
+    }
+
     try {
       setRefreshing(true);
       await dispatch(fetchUserHistory({ role: user.role, userId }));
     } catch (error) {
       console.error('Ошибка при обновлении истории:', error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Произошла ошибка при обновлении истории'
-      );
+      setError(error instanceof Error ? error.message : 'Произошла ошибка при обновлении истории');
     } finally {
       setRefreshing(false);
     }
@@ -54,7 +50,7 @@ export default function UserHistoryPage({
       return;
     }
 
-    if (user?.role !== Role.ADMIN) {
+    if (!user || user.role !== Role.ADMIN) {
       router.push('/dashboard');
       return;
     }
@@ -71,11 +67,7 @@ export default function UserHistoryPage({
       })
       .catch((error) => {
         console.error('Ошибка при загрузке истории:', error);
-        setError(
-          error instanceof Error
-            ? error.message
-            : 'Произошла ошибка при загрузке истории'
-        );
+        setError(error instanceof Error ? error.message : 'Произошла ошибка при загрузке истории');
         setHasLoaded(true);
       });
 
@@ -92,6 +84,10 @@ export default function UserHistoryPage({
     }
   }, [currentUser]);
 
+  if (!user) {
+    return null;
+  }
+
   // Показываем ошибку в удобочитаемом виде
   if (error) {
     return (
@@ -99,9 +95,7 @@ export default function UserHistoryPage({
         <div className="px-4 py-6 sm:px-0">
           <Card>
             <div className="text-center py-6">
-              <div className="text-red-500 text-lg font-medium mb-2">
-                Ошибка загрузки данных
-              </div>
+              <div className="text-red-500 text-lg font-medium mb-2">Ошибка загрузки данных</div>
               <div className="text-gray-600 mb-4">{error}</div>
               <button
                 onClick={refreshUserHistory}
@@ -122,15 +116,10 @@ export default function UserHistoryPage({
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">
-              История изменений
-            </h1>
+            <h1 className="text-2xl font-semibold text-gray-900">История изменений</h1>
 
             <div className="flex space-x-4">
-              <Button
-                variant="secondary"
-                onClick={() => router.push('/admin/users')}
-              >
+              <Button variant="secondary" onClick={() => router.push('/admin/users')}>
                 Назад к списку
               </Button>
             </div>
@@ -184,10 +173,7 @@ export default function UserHistoryPage({
       const monthDiff = today.getMonth() - birthday.getMonth();
 
       // Если день рождения в этом году еще не наступил
-      if (
-        monthDiff < 0 ||
-        (monthDiff === 0 && today.getDate() < birthday.getDate())
-      ) {
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthday.getDate())) {
         age--;
       }
 
@@ -209,28 +195,17 @@ export default function UserHistoryPage({
       <div className="px-4 py-6 sm:px-0">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">
-            История изменений: {currentUser?.firstName || ''}{' '}
-            {currentUser?.lastName || ''}
+            История изменений: {currentUser?.firstName || ''} {currentUser?.lastName || ''}
           </h1>
 
           <div className="flex space-x-4">
-            <Button
-              variant="primary"
-              onClick={refreshUserHistory}
-              isLoading={refreshing}
-            >
+            <Button variant="primary" onClick={refreshUserHistory} isLoading={refreshing}>
               Обновить историю
             </Button>
-            <Button
-              variant="secondary"
-              onClick={() => router.push('/admin/users')}
-            >
+            <Button variant="secondary" onClick={() => router.push('/admin/users')}>
               Назад к списку
             </Button>
-            <Button
-              variant="secondary"
-              onClick={() => router.push(`/admin/users/${userId}`)}
-            >
+            <Button variant="secondary" onClick={() => router.push(`/admin/users/${userId}`)}>
               Редактировать пользователя
             </Button>
           </div>
@@ -294,9 +269,7 @@ export default function UserHistoryPage({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {historyItem.email}
-                        </div>
+                        <div className="text-sm text-gray-900">{historyItem.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
@@ -319,9 +292,7 @@ export default function UserHistoryPage({
                             // Если день рождения есть, пытаемся его отформатировать
                             if (historyItem.birthday) {
                               try {
-                                birthdayDisplay = formatDateForDisplay(
-                                  historyItem.birthday
-                                );
+                                birthdayDisplay = formatDateForDisplay(historyItem.birthday);
                               } catch (e) {
                                 console.error('Error formatting birthday:', e);
                               }
@@ -330,8 +301,7 @@ export default function UserHistoryPage({
                             // Собираем финальный вывод
                             return (
                               <>
-                                {age ? `${age} лет` : '-'} /{' '}
-                                {birthdayDisplay || '-'}
+                                {age ? `${age} лет` : '-'} / {birthdayDisplay || '-'}
                               </>
                             );
                           })()}
@@ -350,9 +320,7 @@ export default function UserHistoryPage({
                               : 'bg-blue-100 text-blue-800'
                           }`}
                         >
-                          {historyItem.role === Role.ADMIN
-                            ? 'Администратор'
-                            : 'Работник'}
+                          {historyItem.role === Role.ADMIN ? 'Администратор' : 'Работник'}
                         </span>
                       </td>
                     </tr>
@@ -370,7 +338,7 @@ export default function UserHistoryPage({
                       fetchUserHistory({
                         role: user.role,
                         userId: currentUser.id,
-                      })
+                      }),
                     )
                   }
                   className="mt-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"

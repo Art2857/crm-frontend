@@ -12,6 +12,7 @@ export default function CreateDutyPage() {
   const { isLoading, error } = useAppSelector((state) => state.duties);
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const canManageDuties = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
 
   useEffect(() => {
     // Проверка аутентификации и прав администратора
@@ -20,13 +21,17 @@ export default function CreateDutyPage() {
       return;
     }
 
-    if (![Role.ADMIN, Role.MANAGER].includes(user?.role as Role)) {
+    if (!canManageDuties) {
       router.push('/dashboard');
       return;
     }
-  }, [isAuthenticated, router, user]);
+  }, [canManageDuties, isAuthenticated, router]);
 
   const handleSubmit = async (formData: DutyFormData) => {
+    if (!user) {
+      return;
+    }
+
     const dutyData = {
       name: formData.name,
       basePrice: formData.basePrice ? formData.basePrice : null,
@@ -36,9 +41,7 @@ export default function CreateDutyPage() {
       maxValue: formData.maxValue ? formData.maxValue : null,
     };
 
-    const resultAction = await dispatch(
-      createDuty({ role: user.role, data: dutyData })
-    );
+    const resultAction = await dispatch(createDuty({ role: user.role, data: dutyData }));
     if (createDuty.fulfilled.match(resultAction)) {
       router.push('/admin/duties');
     }
@@ -60,9 +63,7 @@ export default function CreateDutyPage() {
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Добавление новой обязанности
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Добавление новой обязанности</h1>
         </div>
 
         <DutyForm

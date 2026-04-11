@@ -33,36 +33,27 @@ export const fetchAllDuties = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-
         return [];
       }
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить обязанности'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить обязанности');
     }
-  }
+  },
 );
 
 export const fetchDutyById = createAsyncThunk(
   'duties/fetchById',
-  async (
-    { role, dutyId }: { role: Role; dutyId: string },
-    { rejectWithValue }
-  ) => {
+  async ({ role, dutyId }: { role: Role; dutyId: string }, { rejectWithValue }) => {
     try {
       const duty = await dutyService.getById(dutyId);
       return duty;
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-
         return null;
       }
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить обязанность'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить обязанность');
     }
-  }
+  },
 );
 
 export const createDuty = createAsyncThunk(
@@ -74,83 +65,63 @@ export const createDuty = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log(
-          'Запрос создания обязанности был отменен, игнорируем ошибку'
-        );
+        console.log('Запрос создания обязанности был отменен, игнорируем ошибку');
         return null;
       }
       return rejectWithValue(error.message || 'Не удалось создать обязанность');
     }
-  }
+  },
 );
 
 export const updateDuty = createAsyncThunk(
   'duties/update',
-  async (
-    { role, id, data }: { role: Role; id: string; data: any },
-    { rejectWithValue }
-  ) => {
+  async ({ role, id, data }: { role: Role; id: string; data: any }, { rejectWithValue }) => {
     try {
       return await dutyService.update(id, data);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log(
-          'Запрос обновления обязанности был отменен, игнорируем ошибку'
-        );
+        console.log('Запрос обновления обязанности был отменен, игнорируем ошибку');
         return null;
       }
-      return rejectWithValue(
-        error.message || 'Не удалось обновить обязанность'
-      );
+      return rejectWithValue(error.message || 'Не удалось обновить обязанность');
     }
-  }
+  },
 );
 
 // Удаление обязанности
 export const deleteDuty = createAsyncThunk(
-    'duties/delete',
-    async (
-        { role, id }: { role: Role; id: string },
-        { rejectWithValue }
-    ) => {
-      try {
-        await dutyService.delete(id);
-        return id;
-      } catch (error: any) {
-        const err = error instanceof Promise ? await error : error;
+  'duties/delete',
+  async ({ role, id }: { role: Role; id: string }, { rejectWithValue }) => {
+    try {
+      await dutyService.delete(id);
+      return id;
+    } catch (error: any) {
+      const err = error instanceof Promise ? await error : error;
 
-        if (err?.message === 'REQUEST_CANCELLED') {
-          return rejectWithValue('REQUEST_CANCELLED');
-        }
-
-        const status =
-            err?.status ??
-            err?.response?.status ??
-            err?.originalStatus;
-
-        const serverMessage =
-            err?.response?.data?.message ??
-            err?.data?.message;
-
-        const apiMessage = err?.message as string | undefined;
-
-        let message =
-            (Array.isArray(serverMessage)
-                ? serverMessage.join(', ')
-                : serverMessage) ||
-            apiMessage ||
-            'Не удалось удалить обязанность';
-
-        if (status === 400) {
-          message = 'Нельзя удалить: обязанность используется в распределениях';
-        }
-
-        return rejectWithValue(message);
+      if (err?.message === 'REQUEST_CANCELLED') {
+        return rejectWithValue('REQUEST_CANCELLED');
       }
-    }
-);
 
+      const status = err?.status ?? err?.response?.status ?? err?.originalStatus;
+
+      const serverMessage = err?.response?.data?.message ?? err?.data?.message;
+
+      const apiMessage = err?.message as string | undefined;
+
+      let message =
+        (Array.isArray(serverMessage) ? serverMessage.join(', ') : serverMessage) ||
+        apiMessage ||
+        'Не удалось удалить обязанность';
+
+      if (status === 400) {
+        message = 'Нельзя удалить: обязанность используется в распределениях';
+      }
+
+      return rejectWithValue(message);
+    }
+  },
+);
 
 // Асинхронные thunks для распределений
 export const fetchAllDistributions = createAsyncThunk(
@@ -164,19 +135,14 @@ export const fetchAllDistributions = createAsyncThunk(
         console.log('Запрос распределений был отменен, игнорируем ошибку');
         return [];
       }
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить распределения'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить распределения');
     }
-  }
+  },
 );
 
 export const fetchWorkDistributions = createAsyncThunk(
   'duties/fetchWorkDistributions',
-  async (
-    { role, workHistoryId }: { role: Role; workHistoryId: string },
-    { rejectWithValue }
-  ) => {
+  async ({ role, workHistoryId }: { role: Role; workHistoryId: string }, { rejectWithValue }) => {
     try {
       const distribution = await dutyService.getDistributionsByWorkHistoryId(workHistoryId);
       // Возвращаем массив с одним элементом или пустой массив
@@ -184,16 +150,12 @@ export const fetchWorkDistributions = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log(
-          'Запрос распределений работы был отменен, игнорируем ошибку'
-        );
+        console.log('Запрос распределений работы был отменен, игнорируем ошибку');
         return [];
       }
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить распределения для работы'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить распределения для работы');
     }
-  }
+  },
 );
 
 export const fetchDistributionById = createAsyncThunk(
@@ -204,16 +166,12 @@ export const fetchDistributionById = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log(
-          'Запрос распределения по ID был отменен, игнорируем ошибку'
-        );
+        console.log('Запрос распределения по ID был отменен, игнорируем ошибку');
         return null;
       }
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить распределение'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить распределение');
     }
-  }
+  },
 );
 
 export const createDistribution = createAsyncThunk(
@@ -228,16 +186,14 @@ export const createDistribution = createAsyncThunk(
       details: any[];
       effectiveDate?: string;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       return await dutyService.createDistribution(data);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log(
-          'Запрос создания распределения был отменен, игнорируем ошибку'
-        );
+        console.log('Запрос создания распределения был отменен, игнорируем ошибку');
         return null;
       }
 
@@ -263,28 +219,21 @@ export const createDistribution = createAsyncThunk(
 
         // Попытка извлечь структурированные данные об ошибке
         const errorDetails = {
-          message:
-            errorData.message ||
-            error.message ||
-            'Не удалось создать распределение',
+          message: errorData.message || error.message || 'Не удалось создать распределение',
           details: errorData.details || [],
           statusCode: errorData.statusCode || error.status || 400,
           isValidationError: !!errorData.validationErrors,
           validationErrors: errorData.errors || {},
-          errorMessages: Array.isArray(errorData.message)
-            ? errorData.message
-            : [errorData.message],
+          errorMessages: Array.isArray(errorData.message) ? errorData.message : [errorData.message],
         };
 
         return rejectWithValue(errorDetails);
       }
 
       // Обычная ошибка
-      return rejectWithValue(
-        error.message || 'Не удалось создать распределение'
-      );
+      return rejectWithValue(error.message || 'Не удалось создать распределение');
     }
-  }
+  },
 );
 
 export const updateDistribution = createAsyncThunk(
@@ -301,7 +250,7 @@ export const updateDistribution = createAsyncThunk(
       details: any[];
       effectiveDate?: string;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       return await dutyService.updateDistribution(workHistoryId, {
@@ -311,9 +260,7 @@ export const updateDistribution = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log(
-          'Запрос обновления распределения был отменен, игнорируем ошибку'
-        );
+        console.log('Запрос обновления распределения был отменен, игнорируем ошибку');
         return null;
       }
 
@@ -339,52 +286,38 @@ export const updateDistribution = createAsyncThunk(
 
         // Попытка извлечь структурированные данные об ошибке
         const errorDetails = {
-          message:
-            errorData.message ||
-            error.message ||
-            'Не удалось обновить распределение',
+          message: errorData.message || error.message || 'Не удалось обновить распределение',
           details: errorData.details || [],
           statusCode: errorData.statusCode || error.status || 400,
           isValidationError: !!errorData.validationErrors,
           validationErrors: errorData.errors || {},
-          errorMessages: Array.isArray(errorData.message)
-            ? errorData.message
-            : [errorData.message],
+          errorMessages: Array.isArray(errorData.message) ? errorData.message : [errorData.message],
         };
 
         return rejectWithValue(errorDetails);
       }
 
       // Обычная ошибка
-      return rejectWithValue(
-        error.message || 'Не удалось обновить распределение'
-      );
+      return rejectWithValue(error.message || 'Не удалось обновить распределение');
     }
-  }
+  },
 );
 
 // Новый thunk для загрузки всех распределений по workId
 export const fetchDistributionsByWorkId = createAsyncThunk(
   'duties/fetchDistributionsByWorkId',
-  async (
-    { role, workId }: { role: Role; workId: string },
-    { rejectWithValue }
-  ) => {
+  async ({ role, workId }: { role: Role; workId: string }, { rejectWithValue }) => {
     try {
       return await dutyService.getDistributionsByWorkId(workId);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log(
-          'Запрос распределений по работе был отменен, игнорируем ошибку'
-        );
+        console.log('Запрос распределений по работе был отменен, игнорируем ошибку');
         return [];
       }
-      return rejectWithValue(
-        error.message || 'Не удалось загрузить распределения для работы'
-      );
+      return rejectWithValue(error.message || 'Не удалось загрузить распределения для работы');
     }
-  }
+  },
 );
 
 // Слайс
@@ -466,11 +399,12 @@ const dutiesSlice = createSlice({
       state.isLoading = false;
       // Игнорируем null результаты от отмененных запросов
       if (action.payload !== null) {
+        const updatedDuty = action.payload;
         state.duties = state.duties.map((duty) =>
-          duty.id === action.payload.id ? action.payload : duty
+          duty.id === updatedDuty.id ? updatedDuty : duty,
         );
-        if (state.currentDuty && state.currentDuty.id === action.payload.id) {
-          state.currentDuty = action.payload;
+        if (state.currentDuty && state.currentDuty.id === updatedDuty.id) {
+          state.currentDuty = updatedDuty;
         }
       }
     });
@@ -509,9 +443,7 @@ const dutiesSlice = createSlice({
 
       // Убедимся, что распределения отсортированы по дате в порядке убывания
       const sortedDistributions = [...action.payload].sort(
-        (a, b) =>
-          new Date(b.workHistory.date).getTime() -
-          new Date(a.workHistory.date).getTime()
+        (a, b) => new Date(b.workHistory.date).getTime() - new Date(a.workHistory.date).getTime(),
       );
 
       state.workDistributions = sortedDistributions;
@@ -559,8 +491,7 @@ const dutiesSlice = createSlice({
         if (
           state.workDistributions &&
           state.workDistributions.length > 0 &&
-          state.workDistributions[0].workHistory.workId ===
-            action.payload.workHistory.workId
+          state.workDistributions[0].workHistory.workId === action.payload.workHistory.workId
         ) {
           // Добавляем новое распределение
           state.workDistributions.push(action.payload);
@@ -568,8 +499,7 @@ const dutiesSlice = createSlice({
           // Сортируем распределения по дате в порядке убывания
           state.workDistributions.sort(
             (a, b) =>
-              new Date(b.workHistory.date).getTime() -
-              new Date(a.workHistory.date).getTime()
+              new Date(b.workHistory.date).getTime() - new Date(a.workHistory.date).getTime(),
           );
         }
       }
@@ -592,25 +522,25 @@ const dutiesSlice = createSlice({
 
       // Игнорируем null результаты от отмененных запросов
       if (action.payload !== null) {
+        const updatedDistribution = action.payload;
         // Если массив распределений загружен
         if (state.workDistributions && state.workDistributions.length > 0) {
           // Находим индекс распределения, которое было обновлено
           const updatedIndex = state.workDistributions.findIndex(
-            (dist) => dist.workHistory.id === action.payload.workHistory.id
+            (dist) => dist.workHistory.id === updatedDistribution.workHistory.id,
           );
 
           if (updatedIndex !== -1) {
             // Заменяем обновленное распределение
-            state.workDistributions[updatedIndex] = action.payload;
+            state.workDistributions[updatedIndex] = updatedDistribution;
           } else {
             // Если не нашли распределение, добавляем новое в начало списка
-            state.workDistributions.unshift(action.payload);
+            state.workDistributions.unshift(updatedDistribution);
           }
 
           // Сортируем распределения по дате в порядке убывания для поддержания порядка
           state.workDistributions.sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
           );
         }
       }
@@ -633,8 +563,7 @@ const dutiesSlice = createSlice({
 
       // Убедимся, что распределения отсортированы по дате в порядке убывания
       const sortedDistributions = [...action.payload].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
 
       state.workDistributions = sortedDistributions;

@@ -85,12 +85,7 @@ export default function PaymentModal({
               onClick={onClose}
               className="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
             >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -110,21 +105,13 @@ export default function PaymentModal({
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <UserIcon className="h-4 w-4 text-blue-500" />
-                  <span className="text-xs font-medium text-gray-600">
-                    Получатель:
-                  </span>
-                  <span className="font-semibold text-gray-900 text-sm">
-                    {payment.userName}
-                  </span>
+                  <span className="text-xs font-medium text-gray-600">Получатель:</span>
+                  <span className="font-semibold text-gray-900 text-sm">{payment.userName}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <BuildingOfficeIcon className="h-4 w-4 text-green-500" />
-                  <span className="text-xs font-medium text-gray-600">
-                    Работа:
-                  </span>
-                  <span className="font-semibold text-gray-900 text-sm">
-                    {payment.workName}
-                  </span>
+                  <span className="text-xs font-medium text-gray-600">Работа:</span>
+                  <span className="font-semibold text-gray-900 text-sm">{payment.workName}</span>
                 </div>
               </div>
             </div>
@@ -139,12 +126,8 @@ export default function PaymentModal({
                 <div className="flex items-center space-x-2">
                   <span className="text-sm">💰</span>
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">
-                      Зарплата
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Влияет на закрытие долга
-                    </p>
+                    <p className="font-medium text-gray-900 text-sm">Зарплата</p>
+                    <p className="text-xs text-gray-500">Влияет на закрытие долга</p>
                   </div>
                 </div>
               </div>
@@ -185,8 +168,7 @@ export default function PaymentModal({
                         <span className="font-medium">
                           {periods
                             .map(
-                              (p) =>
-                                `${formatRussian(p.startDate)} — ${formatRussian(p.endDate)}`
+                              (p) => `${formatRussian(p.startDate)} — ${formatRussian(p.endDate)}`,
                             )
                             .join(', ')}
                         </span>
@@ -213,13 +195,9 @@ export default function PaymentModal({
                 <div className="bg-green-100 p-1 rounded">
                   <CheckCircleIcon className="h-4 w-4 text-green-600" />
                 </div>
-                <h4 className="font-semibold text-green-900 text-sm">
-                  Итоговая сумма выплаты
-                </h4>
+                <h4 className="font-semibold text-green-900 text-sm">Итоговая сумма выплаты</h4>
               </div>
-              <p className="text-xl font-bold text-green-700">
-                {formatCurrency(payment.amount)}
-              </p>
+              <p className="text-xl font-bold text-green-700">{formatCurrency(payment.amount)}</p>
               <p className="text-xs text-gray-600 mt-1">Тип: 💰 Зарплата</p>
             </div>
 

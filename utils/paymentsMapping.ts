@@ -14,9 +14,7 @@ export function parseRuDate(dStr: string): Date {
 
   const parts = dStr.split('.');
   if (parts.length !== 3) {
-    throw new Error(
-      `Invalid Russian date format: ${dStr}. Expected DD.MM.YYYY`
-    );
+    throw new Error(`Invalid Russian date format: ${dStr}. Expected DD.MM.YYYY`);
   }
 
   const [day, month, year] = parts.map(Number);
@@ -27,25 +25,14 @@ export function parseRuDate(dStr: string): Date {
   }
 
   // Проверяем диапазоны
-  if (
-    day < 1 ||
-    day > 31 ||
-    month < 1 ||
-    month > 12 ||
-    year < 1900 ||
-    year > 2100
-  ) {
+  if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > 2100) {
     throw new Error(`Date out of valid range: ${dStr}`);
   }
 
   const date = new Date(year, month - 1, day);
 
   // Проверяем, что дата валидна (например, 32.01.2023 создаст 01.02.2023)
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
     throw new Error(`Invalid date: ${dStr}`);
   }
 

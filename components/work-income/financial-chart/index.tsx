@@ -50,94 +50,86 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
     workCurrency,
     workReleaseDate,
     totalWorkBudget,
-    distributions
+    distributions,
   );
 
-  const {
-    xDomain,
-    containerWidth,
-    ticks,
-    monthSeparators,
-    yDomain,
-    normalizedReleaseDate,
-  } = useMemo(() => {
-    if (chartData.length === 0)
+  const { xDomain, containerWidth, ticks, monthSeparators, yDomain, normalizedReleaseDate } =
+    useMemo(() => {
+      if (chartData.length === 0)
+        return {
+          xDomain: ['auto', 'auto'],
+          containerWidth: '100%',
+          ticks: [],
+          monthSeparators: [],
+          yDomain: ['auto', 'auto'],
+          normalizedReleaseDate: null,
+        };
+
+      const minDate = chartData[0].date;
+      const maxDate = chartData[chartData.length - 1].date;
+
+      const budgetVal = totalWorkBudget !== undefined ? totalWorkBudget : totalIncome;
+
+      let maxY = budgetVal;
+      let minY = 0;
+
+      chartData.forEach((d) => {
+        if (d.incomeValue) {
+          if (d.incomeValue[1] > maxY) maxY = d.incomeValue[1];
+        }
+        if (d.expenseValue) {
+          if (d.expenseValue[1] < minY) minY = d.expenseValue[1];
+        }
+        if (d.plannedExpense !== null && d.plannedExpense < minY) {
+          minY = d.plannedExpense;
+        }
+      });
+
+      const yPadding = (maxY - minY) * 0.1;
+      const finalYDomain = [minY - yPadding, maxY + yPadding];
+
+      const padding = 5 * 24 * 3600 * 1000;
+      const xMin = minDate - padding;
+      const xMax = maxDate + padding;
+
+      const ticksList: number[] = [];
+      const separators: number[] = [];
+      const startD = new Date(xMin);
+      startD.setDate(1);
+      startD.setHours(12, 0, 0, 0);
+
+      while (startD.getTime() <= xMax + padding) {
+        const t = startD.getTime();
+        if (t >= xMin && t <= xMax) {
+          ticksList.push(t);
+        }
+        separators.push(t);
+        startD.setMonth(startD.getMonth() + 1);
+      }
+
+      const days = (xMax - xMin) / (24 * 3600 * 1000);
+      const widthPx = Math.max(0, days * 12);
+
+      let normReleaseDate: number | null = null;
+      if (workReleaseDate) {
+        const r = new Date(workReleaseDate);
+        r.setHours(12, 0, 0, 0);
+        normReleaseDate = r.getTime();
+      }
+
       return {
-        xDomain: ['auto', 'auto'],
-        containerWidth: '100%',
-        ticks: [],
-        monthSeparators: [],
-        yDomain: ['auto', 'auto'],
-        normalizedReleaseDate: null,
+        xDomain: [xMin, xMax],
+        ticks: ticksList,
+        monthSeparators: separators,
+        containerWidth: widthPx,
+        yDomain: finalYDomain,
+        normalizedReleaseDate: normReleaseDate,
       };
-
-    const minDate = chartData[0].date;
-    const maxDate = chartData[chartData.length - 1].date;
-
-    const budgetVal =
-      totalWorkBudget !== undefined ? totalWorkBudget : totalIncome;
-
-    let maxY = budgetVal;
-    let minY = 0;
-
-    chartData.forEach((d) => {
-      if (d.incomeValue) {
-        if (d.incomeValue[1] > maxY) maxY = d.incomeValue[1];
-      }
-      if (d.expenseValue) {
-        if (d.expenseValue[1] < minY) minY = d.expenseValue[1];
-      }
-      if (d.plannedExpense !== null && d.plannedExpense < minY) {
-        minY = d.plannedExpense;
-      }
-    });
-
-    const yPadding = (maxY - minY) * 0.1;
-    const finalYDomain = [minY - yPadding, maxY + yPadding];
-
-    const padding = 5 * 24 * 3600 * 1000;
-    const xMin = minDate - padding;
-    const xMax = maxDate + padding;
-
-    const ticksList: number[] = [];
-    const separators: number[] = [];
-    const startD = new Date(xMin);
-    startD.setDate(1);
-    startD.setHours(12, 0, 0, 0);
-
-    while (startD.getTime() <= xMax + padding) {
-      const t = startD.getTime();
-      if (t >= xMin && t <= xMax) {
-        ticksList.push(t);
-      }
-      separators.push(t);
-      startD.setMonth(startD.getMonth() + 1);
-    }
-
-    const days = (xMax - xMin) / (24 * 3600 * 1000);
-    const widthPx = Math.max(0, days * 12);
-
-    let normReleaseDate = null;
-    if (workReleaseDate) {
-      const r = new Date(workReleaseDate);
-      r.setHours(12, 0, 0, 0);
-      normReleaseDate = r.getTime();
-    }
-
-    return {
-      xDomain: [xMin, xMax],
-      ticks: ticksList,
-      monthSeparators: separators,
-      containerWidth: widthPx,
-      yDomain: finalYDomain,
-      normalizedReleaseDate: normReleaseDate,
-    };
-  }, [chartData, totalWorkBudget, totalIncome, workReleaseDate]);
+    }, [chartData, totalWorkBudget, totalIncome, workReleaseDate]);
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollLeft =
-        scrollContainerRef.current.scrollWidth;
+      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
     }
   }, [chartData, containerWidth]);
 
@@ -160,8 +152,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
     };
   }, []);
 
-  const budgetDisplay =
-    totalWorkBudget !== undefined ? totalWorkBudget : totalIncome;
+  const budgetDisplay = totalWorkBudget !== undefined ? totalWorkBudget : totalIncome;
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden p-4">
@@ -180,31 +171,18 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
           background: #d1d5db; 
         }
       `}</style>
-      <div
-        ref={scrollContainerRef}
-        className="w-full overflow-x-auto pb-2 custom-scrollbar"
-      >
+      <div ref={scrollContainerRef} className="w-full overflow-x-auto pb-2 custom-scrollbar">
         <div
           style={{
             minWidth: '100%',
-            width:
-              typeof containerWidth === 'number'
-                ? `${containerWidth}px`
-                : containerWidth,
+            width: typeof containerWidth === 'number' ? `${containerWidth}px` : containerWidth,
             height: '500px',
           }}
           className="p-4"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart
-              data={chartData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#E5E7EB"
-              />
+            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
               <XAxis
                 xAxisId={0}
                 dataKey="date"
@@ -216,41 +194,22 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                 tickLine={false}
                 interval={0}
               />
-              <XAxis
-                xAxisId={1}
-                dataKey="date"
-                type="number"
-                domain={xDomain}
-                ticks={ticks}
-                hide
-              />
+              <XAxis xAxisId={1} dataKey="date" type="number" domain={xDomain} ticks={ticks} hide />
               <YAxis
                 stroke="#9CA3AF"
                 fontSize={12}
                 domain={yDomain}
-                tickFormatter={(val) =>
-                  Math.abs(val) >= 1000 ? `${val / 1000}k` : `${val}`
-                }
+                tickFormatter={(val) => (Math.abs(val) >= 1000 ? `${val / 1000}k` : `${val}`)}
               />
               <Tooltip
-                content={
-                  <CustomTooltip
-                    workCurrency={workCurrency}
-                    hoveredType={hoveredType}
-                  />
-                }
+                content={<CustomTooltip workCurrency={workCurrency} hoveredType={hoveredType} />}
                 cursor={{ fill: '#F3F4F6', opacity: 0.4 }}
               />
 
               <ReferenceLine y={0} stroke="#6B7280" strokeWidth={1} />
 
               {monthSeparators.map((ts) => (
-                <ReferenceLine
-                  key={ts}
-                  x={ts}
-                  stroke="#E5E7EB"
-                  strokeDasharray="3 3"
-                />
+                <ReferenceLine key={ts} x={ts} stroke="#E5E7EB" strokeDasharray="3 3" />
               ))}
 
               {workReleaseDate && normalizedReleaseDate && (
@@ -269,18 +228,16 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
 
               {/* Фон для зон предупреждений */}
               {(() => {
-                const zones = [];
+                const zones: React.ReactElement[] = [];
                 // Сортировка разделителей на всякий случай
-                const sortedSeparators = [...monthSeparators].sort(
-                  (a, b) => a - b
-                );
+                const sortedSeparators = [...monthSeparators].sort((a, b) => a - b);
 
                 const currentDate = new Date();
                 currentDate.setHours(12, 0, 0, 0);
                 const currentMonthStart = new Date(
                   currentDate.getFullYear(),
                   currentDate.getMonth(),
-                  1
+                  1,
                 );
                 currentMonthStart.setHours(12, 0, 0, 0);
                 const currentMonthTs = currentMonthStart.getTime();
@@ -297,11 +254,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                     if (d.date < start || d.date >= end) return false;
 
                     // Проверка Доход < Бюджет
-                    if (
-                      d.incomeValue &&
-                      d.budget !== undefined &&
-                      d.incomeValue[1] < d.budget
-                    ) {
+                    if (d.incomeValue && d.budget !== undefined && d.incomeValue[1] < d.budget) {
                       return true;
                     }
 
@@ -338,7 +291,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                         x1={start}
                         x2={end}
                         fill="rgba(254, 202, 202, 0.3)"
-                      />
+                      />,
                     );
                   }
                 }
@@ -389,18 +342,20 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
               />
 
               {(() => {
-                const firstPlannedPoint = chartData.find(
-                  (d) => d.plannedExpense !== null
-                );
+                const firstPlannedPoint = chartData.find((d) => d.plannedExpense !== null);
                 if (firstPlannedPoint) {
+                  const plannedExpense = firstPlannedPoint.plannedExpense;
+                  if (plannedExpense === null) {
+                    return null;
+                  }
+
                   // Проверяем, является ли первая точка нулевой
-                  const isFirstPointZero =
-                    firstPlannedPoint.plannedExpense === 0;
+                  const isFirstPointZero = plannedExpense === 0;
 
                   return (
                     <ReferenceDot
                       x={firstPlannedPoint.date}
-                      y={firstPlannedPoint.plannedExpense}
+                      y={plannedExpense}
                       r={0}
                       label={{
                         value: 'Выплаты',
@@ -450,9 +405,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
 
               {monthSeparators.map((ts) => {
                 // Попытка найти точную точку данных или вывести бюджет/план
-                const dataPoint = chartData.find(
-                  (d) => Math.abs(d.date - ts) < 86400000
-                ); // в пределах 1 дня
+                const dataPoint = chartData.find((d) => Math.abs(d.date - ts) < 86400000); // в пределах 1 дня
                 if (!dataPoint) return null;
 
                 const planned = dataPoint.plannedExpense;
@@ -466,10 +419,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                       y={budgetVal}
                       r={0}
                       label={{
-                        value: formatAmountWithCurrency(
-                          budgetVal,
-                          workCurrency
-                        ),
+                        value: formatAmountWithCurrency(budgetVal, workCurrency),
                         position: 'top',
                         fill: 'rgba(5, 150, 105, 0.7)',
                         fontSize: 10,
@@ -484,10 +434,7 @@ const FinancialHistoryChart: React.FC<FinancialHistoryChartProps> = ({
                         y={planned}
                         r={0}
                         label={{
-                          value: formatAmountWithCurrency(
-                            Math.abs(planned),
-                            workCurrency
-                          ),
+                          value: formatAmountWithCurrency(Math.abs(planned), workCurrency),
                           position: 'bottom',
                           fill: '#FCA5A5',
                           fontSize: 10,

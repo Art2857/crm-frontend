@@ -31,9 +31,7 @@ export function useWorksAnalytics(showArchived = false) {
 
       try {
         logger.debug(`Загружаем аналитику работ (архив: ${archived})...`);
-        const analyticsData = await workAnalyticsService.getAnalytics(
-          archived
-        );
+        const analyticsData = await workAnalyticsService.getAnalytics(archived);
         setData(analyticsData);
         logger.debug('Аналитика работ загружена успешно');
       } catch (err) {
@@ -50,7 +48,7 @@ export function useWorksAnalytics(showArchived = false) {
         setIsLoading(false);
       }
     },
-    [user?.role]
+    [user?.role],
   ); // Убираем notification из зависимостей
 
   /**
@@ -60,7 +58,7 @@ export function useWorksAnalytics(showArchived = false) {
     (archived = false) => {
       return loadAnalytics(archived);
     },
-    [loadAnalytics]
+    [loadAnalytics],
   );
 
   // Автоматическая загрузка при монтировании компонента

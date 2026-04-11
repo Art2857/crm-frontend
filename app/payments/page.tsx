@@ -46,12 +46,9 @@ export default function PaymentsPage() {
   const { showError, showSuccess } = useNotification();
 
   // Валюта отображения итогов
-  const [displayCurrency, setDisplayCurrency] =
-    useState<DisplayCurrency>('RUB');
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>('RUB');
 
-  const [activeTab, setActiveTab] = useState<
-    'management' | 'debts' | 'history'
-  >('management');
+  const [activeTab, setActiveTab] = useState<'management' | 'debts' | 'history'>('management');
   const {
     workPeriodDates,
     setWorkPeriodDates,
@@ -75,20 +72,14 @@ export default function PaymentsPage() {
   const [calculationModalOpen, setCalculationModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [customPaymentModalOpen, setCustomPaymentModalOpen] = useState(false);
-  const [selectedCalculation, setSelectedCalculation] =
-    useState<DetailedCalculation | null>(null);
-  const [selectedPayment, setSelectedPayment] =
-    useState<PaymentFormData | null>(null);
+  const [selectedCalculation, setSelectedCalculation] = useState<DetailedCalculation | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentFormData | null>(null);
   const [isUserCalculation, setIsUserCalculation] = useState(false);
-  const [calculationType, setCalculationType] = useState<'work' | 'user'>(
-    'work'
-  );
+  const [calculationType, setCalculationType] = useState<'work' | 'user'>('work');
   const [isDutyCalculation, setIsDutyCalculation] = useState(false);
   const [selectedDutyId, setSelectedDutyId] = useState<string | undefined>();
-  const [
-    calculationModalShowPaymentHistory,
-    setCalculationModalShowPaymentHistory,
-  ] = useState(true);
+  const [calculationModalShowPaymentHistory, setCalculationModalShowPaymentHistory] =
+    useState(true);
 
   // Данные работ с вложенными пользователями (новый формат отображения)
   const {
@@ -110,7 +101,7 @@ export default function PaymentsPage() {
         endDate?: string;
         targetWorkId?: string;
         targetUserId?: string;
-      } = {}
+      } = {},
     ) => {
       setLoading(true);
       try {
@@ -119,7 +110,7 @@ export default function PaymentsPage() {
         setLoading(false);
       }
     },
-    [fetchWorksDataRaw]
+    [fetchWorksDataRaw],
   );
 
   const updateWorksData = useCallback(
@@ -128,7 +119,7 @@ export default function PaymentsPage() {
         endDate?: string;
         targetWorkId?: string;
         targetUserId?: string;
-      } = {}
+      } = {},
     ) => {
       setLoading(true);
       try {
@@ -137,7 +128,7 @@ export default function PaymentsPage() {
         setLoading(false);
       }
     },
-    [updateWorksDataRaw]
+    [updateWorksDataRaw],
   );
 
   // Обработчик показа детального расчета
@@ -172,7 +163,7 @@ export default function PaymentsPage() {
         setLoading(false);
       }
     },
-    [getWorkPeriodDate, user?.role]
+    [getWorkPeriodDate, user?.role],
   );
 
   // Инициализация данных один раз на монтировании
@@ -220,8 +211,7 @@ export default function PaymentsPage() {
       }
     };
     window.addEventListener('close-period', onClosePeriod as any);
-    return () =>
-      window.removeEventListener('close-period', onClosePeriod as any);
+    return () => window.removeEventListener('close-period', onClosePeriod as any);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -232,11 +222,16 @@ export default function PaymentsPage() {
   // Функция для показа общего расчета пользователя по всем работам
   const handleShowUserCalculation = useCallback(
     async (userId: string) => {
+      if (!user?.role) {
+        logger.error('Пользователь не авторизован');
+        return;
+      }
+
       try {
         setLoading(true);
         const endDate = getUserPeriodDate(userId);
         const detailedCalc = await analyticsService.getPaymentsCalculationUser({
-          role: user?.role,
+          role: user.role,
           userId,
           endDate,
         });
@@ -253,7 +248,7 @@ export default function PaymentsPage() {
         setLoading(false);
       }
     },
-    [getUserPeriodDate, user?.role]
+    [getUserPeriodDate, user?.role],
   );
 
   // Обработчик создания выплаты
@@ -263,7 +258,7 @@ export default function PaymentsPage() {
     amount: number,
     userName: string,
     workName: string,
-    calculationDate?: string
+    calculationDate?: string,
   ) => {
     // Устанавливаем данные для PaymentModal
     setSelectedPayment({
@@ -310,11 +305,7 @@ export default function PaymentsPage() {
     setCustomPaymentModalOpen(true);
   };
 
-  const handleWorkPeriodDateChange = async (
-    workId: string,
-    date: string,
-    userId?: string
-  ) => {
+  const handleWorkPeriodDateChange = async (workId: string, date: string, userId?: string) => {
     // Сохраняем предыдущую дату для возможного отката
     const previousDate = getWorkPeriodDate(workId);
 
@@ -354,14 +345,9 @@ export default function PaymentsPage() {
       [userId]: date,
     }));
 
-    const currentUser = usersData.find(
-      (userData) => userData.userId === userId
-    );
+    const currentUser = usersData.find((userData) => userData.userId === userId);
     const previousWorkDates = new Map(
-      (currentUser?.works ?? []).map((work) => [
-        work.workId,
-        getWorkPeriodDate(work.workId),
-      ])
+      (currentUser?.works ?? []).map((work) => [work.workId, getWorkPeriodDate(work.workId)]),
     );
 
     if (currentUser?.works?.length) {
@@ -388,8 +374,7 @@ export default function PaymentsPage() {
         setWorkPeriodDates((prev) => {
           const next = { ...prev };
           for (const work of currentUser.works) {
-            next[work.workId] =
-              previousWorkDates.get(work.workId) ?? previousDate;
+            next[work.workId] = previousWorkDates.get(work.workId) ?? previousDate;
           }
           return next;
         });
@@ -404,23 +389,17 @@ export default function PaymentsPage() {
    * Обновляет данные после успешной выплаты: перезапрашивает данные по работе
    * и, если открыт модал расчёта, обновляет его содержимое.
    */
-  const refreshAfterPayment = async (
-    workId: string,
-    userId: string,
-    dutyId?: string
-  ) => {
+  const refreshAfterPayment = async (workId: string, userId: string, dutyId?: string) => {
     try {
       // Обновляем данные для всех работ пользователя, чтобы не потерять другие работы
       const userData = usersData.find((u) => u.userId === userId);
       if (!userData || !userData.works) return;
 
       // Получаем самую раннюю дату из всех работ пользователя
-      const dates = userData.works.map((work) =>
-        getWorkPeriodDate(work.workId)
-      );
+      const dates = userData.works.map((work) => getWorkPeriodDate(work.workId));
       const earliestDate = dates.reduce(
         (earliest, current) => (current < earliest ? current : earliest),
-        dates[0]
+        dates[0],
       );
 
       // Обновляем все данные, так как API не поддерживает фильтрацию по пользователю
@@ -451,12 +430,10 @@ export default function PaymentsPage() {
         if (!userData || !userData.works) return;
 
         // Получаем самую раннюю дату из всех работ пользователя
-        const dates = userData.works.map((work) =>
-          getWorkPeriodDate(work.workId)
-        );
+        const dates = userData.works.map((work) => getWorkPeriodDate(work.workId));
         const earliestDate = dates.reduce(
           (earliest, current) => (current < earliest ? current : earliest),
-          dates[0]
+          dates[0],
         );
 
         // Обновляем все данные, так как API не поддерживает фильтрацию по пользователю
@@ -471,19 +448,12 @@ export default function PaymentsPage() {
             // то нужно найти эту работу и обновить расчет
             const currentUserData = usersData.find((u) => u.userId === userId);
             if (currentUserData && selectedCalculation.workId) {
-              await handleShowCalculation(
-                userId,
-                selectedCalculation.workId,
-                selectedDutyId
-              );
+              await handleShowCalculation(userId, selectedCalculation.workId, selectedDutyId);
             }
           }
         }
       } catch (err) {
-        console.error(
-          'Не удалось обновить данные после выплаты пользователя',
-          err
-        );
+        console.error('Не удалось обновить данные после выплаты пользователя', err);
       }
 
       // Обновляем данные о задолженностях текущего пользователя
@@ -500,7 +470,7 @@ export default function PaymentsPage() {
       selectedDutyId,
       updateWorksData,
       usersData,
-    ]
+    ],
   );
 
   // Мульти-выплата/закрытие по всем работам из общего расчёта
@@ -557,7 +527,7 @@ export default function PaymentsPage() {
         await refreshAfterPayment(
           selectedPayment.workId,
           selectedPayment.userId,
-          selectedPayment?.dutyId
+          selectedPayment?.dutyId,
         );
       }
 
@@ -611,7 +581,7 @@ export default function PaymentsPage() {
           await handleShowCalculation(
             selectedCalculation.userId,
             selectedCalculation.workId,
-            selectedDutyId
+            selectedDutyId,
           );
         }
       }
@@ -632,12 +602,8 @@ export default function PaymentsPage() {
               <CurrencyDollarIcon className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Система выплат
-              </h1>
-              <p className="text-gray-600">
-                Управление выплатами и задолженностями
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900">Система выплат</h1>
+              <p className="text-gray-600">Управление выплатами и задолженностями</p>
             </div>
           </div>
 
@@ -673,8 +639,7 @@ export default function PaymentsPage() {
         {activeTab === 'management' && (
           <div className="space-y-6">
             {usersData.map((user) => {
-              const userAccrued =
-                user.works?.reduce((s, w) => s + (w.totalAccrued ?? 0), 0) || 0;
+              const userAccrued = user.works?.reduce((s, w) => s + (w.totalAccrued ?? 0), 0) || 0;
               return (
                 <UserCard
                   currency={displayCurrency === 'USD' ? 'USD' : 'RUB'}
@@ -732,11 +697,7 @@ export default function PaymentsPage() {
                                     duty={duty}
                                     index={index}
                                     onShowCalculation={(dutyId) => {
-                                      handleShowCalculation(
-                                        user.userId,
-                                        work.workId,
-                                        dutyId
-                                      );
+                                      handleShowCalculation(user.userId, work.workId, dutyId);
                                     }}
                                   />
                                 ))}
@@ -760,9 +721,7 @@ export default function PaymentsPage() {
           />
         )}
 
-        {activeTab === 'history' && (
-          <PaymentHistoryTab key={user?.id} currentUserId={user?.id} />
-        )}
+        {activeTab === 'history' && <PaymentHistoryTab key={user?.id} currentUserId={user?.id} />}
 
         {/* Модальные окна */}
         <CalculationModal
@@ -775,9 +734,7 @@ export default function PaymentsPage() {
           }}
           calculation={selectedCalculation}
           onCreatePayment={handleCreatePayment}
-          isDebtsView={myDebts.some(
-            (debt) => debt.workId === selectedCalculation?.workId
-          )}
+          isDebtsView={myDebts.some((debt) => debt.workId === selectedCalculation?.workId)}
           calculationDate={
             selectedCalculation
               ? isUserCalculation
@@ -800,9 +757,7 @@ export default function PaymentsPage() {
           payment={selectedPayment}
           paymentDate={
             selectedPayment?.calculationDate ??
-            (selectedCalculation
-              ? getWorkPeriodDate(selectedCalculation.workId)
-              : null)
+            (selectedCalculation ? getWorkPeriodDate(selectedCalculation.workId) : null)
           }
           onSubmit={handlePaymentSubmit}
           periods={selectedCalculation?.periods?.map((p) => ({
@@ -811,9 +766,7 @@ export default function PaymentsPage() {
           }))}
           calculationDate={
             selectedPayment?.calculationDate ??
-            (selectedCalculation
-              ? getWorkPeriodDate(selectedCalculation.workId)
-              : undefined)
+            (selectedCalculation ? getWorkPeriodDate(selectedCalculation.workId) : undefined)
           }
         />
 

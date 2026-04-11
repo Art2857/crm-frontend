@@ -1,7 +1,7 @@
 /**
  * React хук для работы с котировками валют
  * Следует принципам SOLID, DRY, KISS
- * 
+ *
  * Single Responsibility: предоставляет интерфейс для React компонентов
  * DRY: единое место для логики в компонентах
  * KISS: простой API для использования
@@ -37,16 +37,16 @@ interface UseExchangeRatesOptions {
 interface UseExchangeRatesResult {
   // Состояние
   state: ExchangeRateState;
-  
+
   // Методы
   refresh: () => Promise<void>;
   forceUpdate: () => Promise<void>;
   clearCache: () => Promise<void>;
-  
+
   // Утилиты
   isWorkingDay: (date: string | Date) => boolean;
   getLastWorkingDay: () => Date;
-  
+
   // Отладка
   getDebugInfo: () => Promise<any>;
 }
@@ -59,7 +59,7 @@ export function useExchangeRates(options: UseExchangeRatesOptions = {}): UseExch
     currencyCode = 'USD',
     autoUpdate = true,
     updateInterval = 5 * 60 * 1000, // 5 минут
-    enableCache = true
+    enableCache = true,
   } = options;
 
   // Состояние
@@ -68,7 +68,7 @@ export function useExchangeRates(options: UseExchangeRatesOptions = {}): UseExch
     date: null,
     loading: true,
     error: null,
-    lastUpdated: null
+    lastUpdated: null,
   });
 
   // Refs для предотвращения лишних ререндеров
@@ -80,56 +80,61 @@ export function useExchangeRates(options: UseExchangeRatesOptions = {}): UseExch
    */
   const safeSetState = useCallback((newState: Partial<ExchangeRateState>) => {
     if (isMountedRef.current) {
-      setState(prev => ({ ...prev, ...newState }));
+      setState((prev) => ({ ...prev, ...newState }));
     }
   }, []);
 
   /**
    * Загрузка последней котировки
    */
-  const loadLatestRate = useCallback(async (showLoading = true) => {
-    try {
-      if (showLoading) {
-        safeSetState({ loading: true, error: null });
-      }
+  const loadLatestRate = useCallback(
+    async (showLoading = true) => {
+      try {
+        if (showLoading) {
+          safeSetState({ loading: true, error: null });
+        }
 
-      console.log(`🔍 Загружаем последнюю котировку ${currencyCode}`);
-      
-      // Сначала пробуем умное обновление
-      if (autoUpdate && enableCache) {
-        await exchangeRateFacade.smartUpdate(currencyCode);
-      }
-      
-      // Получаем последнюю котировку
-      const rateData = await exchangeRateFacade.getLatestRate(currencyCode);
-      
-      if (rateData) {
+        console.log(`🔍 Загружаем последнюю котировку ${currencyCode}`);
+
+        // Сначала пробуем умное обновление
+        if (autoUpdate && enableCache) {
+          await exchangeRateFacade.smartUpdate(currencyCode);
+        }
+
+        // Получаем последнюю котировку
+        const rateData = await exchangeRateFacade.getLatestRate(currencyCode);
+
+        if (rateData) {
+          safeSetState({
+            rate: rateData.rate,
+            date: rateData.date,
+            loading: false,
+            error: null,
+            lastUpdated: new Date().toISOString(),
+          });
+          console.log(
+            `✅ Котировка ${currencyCode} загружена: ${rateData.rate} на ${rateData.date}`,
+          );
+        } else {
+          safeSetState({
+            rate: null,
+            date: null,
+            loading: false,
+            error: `Котировка ${currencyCode} не найдена`,
+            lastUpdated: null,
+          });
+          console.warn(`⚠️ Котировка ${currencyCode} не найдена`);
+        }
+      } catch (error) {
+        console.error(`❌ Ошибка загрузки котировки ${currencyCode}:`, error);
         safeSetState({
-          rate: rateData.rate,
-          date: rateData.date,
           loading: false,
-          error: null,
-          lastUpdated: new Date().toISOString()
+          error: error instanceof Error ? error.message : 'Неизвестная ошибка',
         });
-        console.log(`✅ Котировка ${currencyCode} загружена: ${rateData.rate} на ${rateData.date}`);
-      } else {
-        safeSetState({
-          rate: null,
-          date: null,
-          loading: false,
-          error: `Котировка ${currencyCode} не найдена`,
-          lastUpdated: null
-        });
-        console.warn(`⚠️ Котировка ${currencyCode} не найдена`);
       }
-    } catch (error) {
-      console.error(`❌ Ошибка загрузки котировки ${currencyCode}:`, error);
-      safeSetState({
-        loading: false,
-        error: error instanceof Error ? error.message : 'Неизвестная ошибка'
-      });
-    }
-  }, [currencyCode, autoUpdate, enableCache, safeSetState]);
+    },
+    [currencyCode, autoUpdate, enableCache, safeSetState],
+  );
 
   /**
    * Принудительное обновление
@@ -138,14 +143,14 @@ export function useExchangeRates(options: UseExchangeRatesOptions = {}): UseExch
     try {
       safeSetState({ loading: true, error: null });
       console.log(`🔄 Принудительное обновление ${currencyCode}`);
-      
+
       await exchangeRateFacade.forceUpdate(currencyCode);
       await loadLatestRate(false);
     } catch (error) {
       console.error(`❌ Ошибка принудительного обновления ${currencyCode}:`, error);
       safeSetState({
         loading: false,
-        error: error instanceof Error ? error.message : 'Ошибка обновления'
+        error: error instanceof Error ? error.message : 'Ошибка обновления',
       });
     }
   }, [currencyCode, loadLatestRate, safeSetState]);
@@ -161,7 +166,7 @@ export function useExchangeRates(options: UseExchangeRatesOptions = {}): UseExch
     } catch (error) {
       console.error('❌ Ошибка очистки кеша:', error);
       safeSetState({
-        error: error instanceof Error ? error.message : 'Ошибка очистки кеша'
+        error: error instanceof Error ? error.message : 'Ошибка очистки кеша',
       });
     }
   }, [loadLatestRate, safeSetState]);
@@ -204,6 +209,8 @@ export function useExchangeRates(options: UseExchangeRatesOptions = {}): UseExch
         }
       };
     }
+
+    return undefined;
   }, [autoUpdate, updateInterval, currencyCode, loadLatestRate]);
 
   /**
@@ -233,7 +240,7 @@ export function useExchangeRates(options: UseExchangeRatesOptions = {}): UseExch
     clearCache,
     isWorkingDay,
     getLastWorkingDay,
-    getDebugInfo
+    getDebugInfo,
   };
 }
 
@@ -248,13 +255,13 @@ export function useUSDRate(): {
   refresh: () => Promise<void>;
 } {
   const { state, refresh } = useExchangeRates({ currencyCode: 'USD' });
-  
+
   return {
     rate: state.rate,
     date: state.date,
     loading: state.loading,
     error: state.error,
-    refresh
+    refresh,
   };
 }
 
@@ -276,13 +283,13 @@ export function useMultipleExchangeRates(currencies: string[] = ['USD', 'EUR']) 
       for (const currency of currencies) {
         try {
           const rateData = await exchangeRateFacade.getLatestRate(currency);
-          
+
           results[currency] = {
             rate: rateData?.rate || null,
             date: rateData?.date || null,
             loading: false,
             error: rateData ? null : `Котировка ${currency} не найдена`,
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
           };
         } catch (err) {
           results[currency] = {
@@ -290,7 +297,7 @@ export function useMultipleExchangeRates(currencies: string[] = ['USD', 'EUR']) 
             date: null,
             loading: false,
             error: err instanceof Error ? err.message : 'Ошибка загрузки',
-            lastUpdated: null
+            lastUpdated: null,
           };
         }
       }
@@ -311,6 +318,6 @@ export function useMultipleExchangeRates(currencies: string[] = ['USD', 'EUR']) 
     rates,
     loading,
     error,
-    refresh: loadAllRates
+    refresh: loadAllRates,
   };
 }

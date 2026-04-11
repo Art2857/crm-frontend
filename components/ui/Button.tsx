@@ -29,7 +29,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       type = 'button',
       ...props
     },
-    ref
+    ref,
   ) => {
     // Базовые классы для всех кнопок
     const baseClasses =
@@ -100,16 +100,12 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading && spinner}
-        {icon && iconPosition === 'left' && !isLoading && (
-          <span className="mr-2">{icon}</span>
-        )}
+        {icon && iconPosition === 'left' && !isLoading && <span className="mr-2">{icon}</span>}
         {children}
-        {icon && iconPosition === 'right' && !isLoading && (
-          <span className="ml-2">{icon}</span>
-        )}
+        {icon && iconPosition === 'right' && !isLoading && <span className="ml-2">{icon}</span>}
       </button>
     );
-  }
+  },
 );
 
 // Добавляем имя для отладки в React DevTools

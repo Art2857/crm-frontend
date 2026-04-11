@@ -7,7 +7,10 @@ import {
   DutyDetail,
 } from '../types/payments';
 import { MyDebt } from '../services/analytics';
-import { getSalaryWorkingDaysInMonth as getWorkingDaysInMonth, getSalaryWorkingDaysInPeriod as getWorkingDaysInPeriod } from './salary-working-days';
+import {
+  getSalaryWorkingDaysInMonth as getWorkingDaysInMonth,
+  getSalaryWorkingDaysInPeriod as getWorkingDaysInPeriod,
+} from './salary-working-days';
 import { toIsoFromRu, parseRuDate } from './paymentsMapping';
 
 // Основная функция находится ниже
@@ -18,12 +21,7 @@ type PaymentType = 'SALARY' | 'ADVANCE' | 'BONUS' | 'EXTRA';
 
 function normalizePaymentType(input: unknown): PaymentType {
   const value = String(input || '').toUpperCase();
-  if (
-    value === 'SALARY' ||
-    value === 'ADVANCE' ||
-    value === 'BONUS' ||
-    value === 'EXTRA'
-  ) {
+  if (value === 'SALARY' || value === 'ADVANCE' || value === 'BONUS' || value === 'EXTRA') {
     return value as PaymentType;
   }
   return 'EXTRA';
@@ -37,8 +35,7 @@ export function buildWorkDetailedCalculation(params: {
   dutyId?: string;
   getWorkPeriodDate: (workId: string) => string;
 }): { calculation: DetailedCalculation; showPaymentHistory: boolean } | null {
-  const { usersData, myDebts, userId, workId, dutyId, getWorkPeriodDate } =
-    params;
+  const { usersData, myDebts, userId, workId, dutyId, getWorkPeriodDate } = params;
 
   let work: {
     workId: string;
@@ -104,19 +101,14 @@ export function buildWorkDetailedCalculation(params: {
     paymentHistoryData = (myDebtData.payments || []).map((payment) => ({
       id: payment.id,
       amount: Number(payment.amount) || 0,
-      type: normalizePaymentType(
-        (payment as any).paymentType || (payment as any).type
-      ),
+      type: normalizePaymentType((payment as any).paymentType || (payment as any).type),
       description: payment.description || '',
       date: (payment as any).paymentDate || (payment as any).date,
       createdAt: payment.createdAt,
     }));
   }
 
-  const totalPaidAmount = paymentHistoryData.reduce(
-    (sum, p) => sum + p.amount,
-    0
-  );
+  const totalPaidAmount = paymentHistoryData.reduce((sum, p) => sum + p.amount, 0);
   const calculationDate = getWorkPeriodDate(workId);
 
   // Подготовка данных периодов
@@ -130,14 +122,8 @@ export function buildWorkDetailedCalculation(params: {
           const startDate = new Date(period.start);
           const endDate = new Date(period.end);
           const daysInPeriod =
-            Math.floor(
-              (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-            ) + 1;
-          const monthDays = new Date(
-            endDate.getFullYear(),
-            endDate.getMonth() + 1,
-            0
-          ).getDate();
+            Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          const monthDays = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
           periods.push({
             startDate: startDate.toISOString().split('T')[0],
             endDate: endDate.toISOString().split('T')[0],
@@ -190,7 +176,7 @@ export function buildWorkDetailedCalculation(params: {
         }));
         const totalAmount = dutiesForPeriod.reduce(
           (s: number, d: any) => s + d.calculatedAmount,
-          0
+          0,
         );
         periods.push({
           startDate: startDate.toISOString().split('T')[0],
@@ -205,7 +191,7 @@ export function buildWorkDetailedCalculation(params: {
   } else if (userWorkEntry && (workEntry as any)?.rawClosureWraps) {
     const salary = Number(work.salary) || 0;
     const closureWrap = (workEntry as any).rawClosureWraps?.find(
-      (cw: any) => cw.closure.userId === userId
+      (cw: any) => cw.closure.userId === userId,
     );
     const userPeriodsSource = closureWrap?.userPeriods;
     userPeriodsSource?.dutiesPeriods?.forEach((p: any) => {
@@ -220,24 +206,26 @@ export function buildWorkDetailedCalculation(params: {
           currencyMap.set(ud.dutyId, cur);
         });
 
-        const dutiesCalc = p.distributionDetails.map((dd: {
-          dutyId: string;
-          price: number | null;
-          percentage: number | null;
-          calculatedValuePeriod?: number;
-          duty?: { name?: string | null };
-        }) => {
-          const price = Number(dd.price) || 0;
-          const perc = Number(dd.percentage) || 0;
-          const monthlyAmount = price + (salary * perc) / 100;
-          return {
-            dutyId: dd.dutyId,
-            dutyName: dd.duty?.name || '-',
-            monthlyAmount,
-            calculatedAmount: Math.round(Number(dd.calculatedValuePeriod) || 0),
-            currency: currencyMap.get(dd.dutyId),
-          };
-        });
+        const dutiesCalc = p.distributionDetails.map(
+          (dd: {
+            dutyId: string;
+            price: number | null;
+            percentage: number | null;
+            calculatedValuePeriod?: number;
+            duty?: { name?: string | null };
+          }) => {
+            const price = Number(dd.price) || 0;
+            const perc = Number(dd.percentage) || 0;
+            const monthlyAmount = price + (salary * perc) / 100;
+            return {
+              dutyId: dd.dutyId,
+              dutyName: dd.duty?.name || '-',
+              monthlyAmount,
+              calculatedAmount: Math.round(Number(dd.calculatedValuePeriod) || 0),
+              currency: currencyMap.get(dd.dutyId),
+            };
+          },
+        );
         const filteredDuties = dutyId
           ? dutiesCalc.filter((d: any) => d.dutyId === dutyId)
           : dutiesCalc;
@@ -250,10 +238,7 @@ export function buildWorkDetailedCalculation(params: {
         // Пропускаем периоды где начало больше или равно концу
         if (startDate.getTime() >= endDate.getTime()) return;
 
-        const totalAmount = filteredDuties.reduce(
-          (s: number, d: any) => s + d.calculatedAmount,
-          0
-        );
+        const totalAmount = filteredDuties.reduce((s: number, d: any) => s + d.calculatedAmount, 0);
         periods.push({
           startDate: toIsoFromRu(p.startDate)!,
           endDate: toIsoFromRu(p.endDate)!,
@@ -292,9 +277,7 @@ export function buildWorkDetailedCalculation(params: {
     if (dutyId) {
       const duty = myDebtData.duties.find((d) => d.id === dutyId);
       if (duty) {
-        totalAccrued =
-          duty.totalAccrued ||
-          periods.reduce((sum, pr) => sum + pr.totalAmount, 0);
+        totalAccrued = duty.totalAccrued || periods.reduce((sum, pr) => sum + pr.totalAmount, 0);
         totalPaid = duty.totalPaid || 0;
         remainingDebt = duty.totalDebt || totalAccrued - totalPaid;
       } else {
@@ -304,8 +287,7 @@ export function buildWorkDetailedCalculation(params: {
       }
     } else {
       totalAccrued =
-        myDebtData.totalAccrued ||
-        periods.reduce((sum, pr) => sum + pr.totalAmount, 0);
+        myDebtData.totalAccrued || periods.reduce((sum, pr) => sum + pr.totalAmount, 0);
       totalPaid = myDebtData.totalPaid || totalPaidAmount;
       remainingDebt = myDebtData.totalDebt || totalAccrued - totalPaid;
     }
@@ -317,9 +299,7 @@ export function buildWorkDetailedCalculation(params: {
 
   let userName = 'Пользователь';
   if (userData) {
-    userName =
-      `${userData.firstName || ''} ${userData.lastName || ''}`.trim() ||
-      'Пользователь';
+    userName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Пользователь';
   }
 
   const calculation: DetailedCalculation = {
@@ -369,7 +349,7 @@ export function buildUserDetailedCalculation(params: {
           ...d,
           workId: work.workId,
           workName: work.workName,
-        }))
+        })),
       );
       if (userWork.paymentHistory && userWork.paymentHistory.length > 0) {
         allPaymentHistory.push(...userWork.paymentHistory);
@@ -424,8 +404,7 @@ export function buildUserDetailedCalculation(params: {
   ];
 
   const userName =
-    `${userData.firstName || ''} ${userData.lastName || ''}`.trim() ||
-    'Пользователь';
+    `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Пользователь';
 
   return {
     userId,

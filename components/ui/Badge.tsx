@@ -1,13 +1,6 @@
 import React from 'react';
 
-export type BadgeColor =
-  | 'gray'
-  | 'red'
-  | 'yellow'
-  | 'green'
-  | 'blue'
-  | 'purple'
-  | 'orange';
+export type BadgeColor = 'gray' | 'red' | 'yellow' | 'green' | 'blue' | 'purple' | 'orange';
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -15,11 +8,7 @@ interface BadgeProps {
   className?: string;
 }
 
-const Badge: React.FC<BadgeProps> = ({
-  children,
-  color = 'gray',
-  className = '',
-}) => {
+const Badge: React.FC<BadgeProps> = ({ children, color = 'gray', className = '' }) => {
   const colorStyles: Record<BadgeColor, string> = {
     gray: 'bg-gray-100 text-gray-800',
     red: 'bg-red-100 text-red-800',

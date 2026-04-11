@@ -100,7 +100,7 @@ export const useDataLoader = <T>({
   // Используем улучшенный обработчик ошибок
   const { handleError } = useErrorHandler(
     'Произошла ошибка при загрузке данных',
-    autoDisplayErrors
+    autoDisplayErrors,
   );
 
   // Используем рефы для отслеживания состояния компонента
@@ -162,7 +162,7 @@ export const useDataLoader = <T>({
         return null;
       }
     },
-    [loadData, handleError, clearError]
+    [loadData, handleError, clearError],
   );
 
   /**

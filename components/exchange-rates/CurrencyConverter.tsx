@@ -34,7 +34,7 @@ const getLastWorkingDay = (): Date => {
   const today = new Date();
 
   // Ищем последний рабочий день от сегодня назад
-  let current = new Date(today);
+  const current = new Date(today);
   for (let i = 0; i < 30; i++) {
     // Расширяем поиск до 30 дней
     if (isWorkingDay(current)) {
@@ -47,9 +47,7 @@ const getLastWorkingDay = (): Date => {
   return today;
 };
 
-const CurrencyConverter = memo(function CurrencyConverter({
-  currencies,
-}: CurrencyConverterProps) {
+const CurrencyConverter = memo(function CurrencyConverter({ currencies }: CurrencyConverterProps) {
   const [fromCurrency, setFromCurrency] = useState<string>('USD');
   const [toCurrency, setToCurrency] = useState<string>('RUB');
   const [amount, setAmount] = useState<string>('100');
@@ -92,7 +90,7 @@ const CurrencyConverter = memo(function CurrencyConverter({
           numAmount,
           fromCurrency,
           toCurrency,
-          selectedDate
+          selectedDate,
         );
 
         setResult(conversion.result);
@@ -114,7 +112,7 @@ const CurrencyConverter = memo(function CurrencyConverter({
         setIsLoading(false);
       }
     },
-    [fromCurrency, selectedDate, toCurrency]
+    [fromCurrency, selectedDate, toCurrency],
   );
 
   const handleSwapCurrencies = () => {
@@ -162,11 +160,13 @@ const CurrencyConverter = memo(function CurrencyConverter({
       }, 250);
 
       return () => clearTimeout(timer);
-    } else {
-      setResult(null);
-      setRate(null);
-      setError(null);
     }
+
+    setResult(null);
+    setRate(null);
+    setError(null);
+
+    return undefined;
   }, [amount, fromCurrency, toCurrency, selectedDate, handleConvert]);
 
   // Мемоизированные функции и значения для оптимизации
@@ -183,23 +183,17 @@ const CurrencyConverter = memo(function CurrencyConverter({
   }, []);
 
   // Мемоизируем обработчики для предотвращения пере-рендеров
-  const handleAmountChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      // Разрешаем только числа и точку
-      if (value === '' || /^\d*\.?\d*$/.test(value)) {
-        setAmount(value);
-      }
-    },
-    []
-  );
+  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Разрешаем только числа и точку
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setAmount(value);
+    }
+  }, []);
 
-  const handleDateChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSelectedDate(e.target.value);
-    },
-    []
-  );
+  const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(e.target.value);
+  }, []);
 
   return (
     <div className="bg-gradient-to-br from-blue-50 via-white to-green-50 border border-gray-200 rounded-xl shadow-lg">
@@ -207,9 +201,7 @@ const CurrencyConverter = memo(function CurrencyConverter({
         <div className="flex flex-col lg:flex-row gap-8 items-center">
           {/* Левая часть - информация о курсе */}
           <div className="flex-1 text-center lg:text-left">
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">
-              Курс доллара США
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">Курс доллара США</h1>
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2 sm:gap-4 mb-4">
               <span className="text-lg text-gray-600">USD/RUB</span>
               {usdToRubRate && (
@@ -217,13 +209,9 @@ const CurrencyConverter = memo(function CurrencyConverter({
                   <span className="text-gray-400 hidden sm:inline">•</span>
                   <div className="flex items-center gap-2">
                     <span className="text-4xl font-bold text-green-600">
-                      {formatCurrencyValue(
-                        usdToRubRate.rate / usdToRubRate.nominal
-                      )}
+                      {formatCurrencyValue(usdToRubRate.rate / usdToRubRate.nominal)}
                     </span>
-                    <span className="text-xl text-green-600 font-medium">
-                      ₽
-                    </span>
+                    <span className="text-xl text-green-600 font-medium">₽</span>
                   </div>
                 </>
               )}
@@ -242,11 +230,7 @@ const CurrencyConverter = memo(function CurrencyConverter({
                         // Если дата в формате DD.MM.YYYY - конвертируем
                         if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
                           const [day, month, year] = dateStr.split('.');
-                          date = new Date(
-                            parseInt(year),
-                            parseInt(month) - 1,
-                            parseInt(day)
-                          );
+                          date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                         } else {
                           // Иначе пробуем обычный парсинг
                           date = new Date(dateStr);
@@ -254,10 +238,7 @@ const CurrencyConverter = memo(function CurrencyConverter({
 
                         // Проверяем валидность даты
                         if (isNaN(date.getTime())) {
-                          console.warn(
-                            'Invalid date in usdToRubRate:',
-                            dateStr
-                          );
+                          console.warn('Invalid date in usdToRubRate:', dateStr);
                           return `Курс за ${getLastWorkingDay().toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })}`;
                         }
 
@@ -327,9 +308,7 @@ const CurrencyConverter = memo(function CurrencyConverter({
                         const input = e.target as HTMLInputElement;
                         const inputDate = new Date(input.value);
                         if (!isWorkingDay(inputDate)) {
-                          input.setCustomValidity(
-                            'Выберите рабочий день (вторник-суббота)'
-                          );
+                          input.setCustomValidity('Выберите рабочий день (вторник-суббота)');
                         } else {
                           input.setCustomValidity('');
                         }
@@ -370,9 +349,7 @@ const CurrencyConverter = memo(function CurrencyConverter({
                 <div className="text-center text-sm text-gray-600">
                   Курс на {selectedDate}
                   {!isWorkingDay(new Date(selectedDate)) && (
-                    <span className="text-orange-500 ml-1">
-                      (выходной, показан ближайший)
-                    </span>
+                    <span className="text-orange-500 ml-1">(выходной, показан ближайший)</span>
                   )}
                   :{' '}
                   <span className="font-medium">

@@ -21,9 +21,7 @@ export default function DutyCard({
   userCurrencyByDuty,
 }: DutyCardProps) {
   const currency =
-    (userCurrencyByDuty?.[duty.dutyId] as CurrencyType) ||
-    (duty.currency as CurrencyType) ||
-    'RUB';
+    (userCurrencyByDuty?.[duty.dutyId] as CurrencyType) || (duty.currency as CurrencyType) || 'RUB';
 
   return (
     <div
@@ -43,9 +41,7 @@ export default function DutyCard({
 
       <div className="flex items-center space-x-4">
         <div className="text-right">
-          <p className="text-lg font-bold text-red-600">
-            {formatCurrency(duty.debt, currency)}
-          </p>
+          <p className="text-lg font-bold text-red-600">{formatCurrency(duty.debt, currency)}</p>
           <p className="text-xs text-gray-500">к выплате</p>
         </div>
 

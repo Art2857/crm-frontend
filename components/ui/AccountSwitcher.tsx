@@ -78,10 +78,7 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
   useEffect(() => {
     // Обработчик клика вне элемента для закрытия
     const handleOutsideClick = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onClose();
       }
     };
@@ -125,7 +122,7 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
           setCredentials({
             user: account.user,
             token: account.token,
-          })
+          }),
         );
 
         // Закрываем меню
@@ -139,10 +136,7 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
     } catch (error) {
       console.error('Ошибка при переключении аккаунта:', error);
 
-      if (
-        error instanceof Error &&
-        error.message.includes('Re-authentication required')
-      ) {
+      if (error instanceof Error && error.message.includes('Re-authentication required')) {
         onClose();
       }
     } finally {
@@ -180,10 +174,7 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
     }, 50);
   };
 
-  const handleKeyDown = (
-    e: KeyboardEvent<HTMLLIElement>,
-    accountId: string
-  ) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLLIElement>, accountId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       handleSwitchAccount(accountId);
@@ -202,16 +193,12 @@ const AccountSwitcherContent: React.FC<AccountSwitcherProps> = ({
       style={{ position: isMobile ? 'relative' : 'absolute' }}
     >
       <div className="py-2 px-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700">
-          Переключение аккаунтов
-        </h3>
+        <h3 className="text-sm font-medium text-gray-700">Переключение аккаунтов</h3>
       </div>
 
       <div className="max-h-72 overflow-y-auto">
         {accounts.length === 0 ? (
-          <p className="text-sm text-gray-500 p-4 text-center">
-            Нет сохраненных аккаунтов
-          </p>
+          <p className="text-sm text-gray-500 p-4 text-center">Нет сохраненных аккаунтов</p>
         ) : (
           <ul className="py-1">
             {accounts.map((account) => (
@@ -344,9 +331,7 @@ const AccountSwitcher: React.FC<AccountSwitcherProps> = (props) => {
         const isClickInside = portalRoot?.contains(target);
         const isClickOnTrigger =
           document.getElementById('account-menu-button')?.contains(target) ||
-          document
-            .getElementById('mobile-account-menu-button')
-            ?.contains(target);
+          document.getElementById('mobile-account-menu-button')?.contains(target);
 
         if (!isClickInside && !isClickOnTrigger) {
           onClose();

@@ -42,7 +42,7 @@ export type ErrorDisplayer = (error: StructuredError) => void;
  */
 export const useErrorHandler = (
   defaultMessage: string = 'Произошла ошибка при выполнении операции',
-  autoDisplay: boolean = false
+  autoDisplay: boolean = false,
 ): {
   handleError: ErrorHandler;
   displayError: ErrorDisplayer;
@@ -112,10 +112,7 @@ export const useErrorHandler = (
           }
 
           // Рекурсивно извлекаем сообщение из вложенной ошибки
-          if (
-            typeof errorWithError.error === 'object' &&
-            errorWithError.error !== null
-          ) {
+          if (typeof errorWithError.error === 'object' && errorWithError.error !== null) {
             return extractErrorMessage(errorWithError.error, errorType);
           }
         }
@@ -173,7 +170,7 @@ export const useErrorHandler = (
           return defaultMessage;
       }
     },
-    [defaultMessage]
+    [defaultMessage],
   );
 
   /**
@@ -185,7 +182,7 @@ export const useErrorHandler = (
         notification.showError(structuredError.message);
       }
     },
-    [notification]
+    [notification],
   );
 
   /**
@@ -221,7 +218,7 @@ export const useErrorHandler = (
 
       return structuredError;
     },
-    [determineErrorType, extractErrorMessage, autoDisplay, displayError]
+    [determineErrorType, extractErrorMessage, autoDisplay, displayError],
   );
 
   return {

@@ -7,9 +7,7 @@ import { getCurrentUser } from '../store/slices/auth';
  * @returns { refreshUserData } - функция для обновления данных пользователя
  */
 export function useAccountSwitcher() {
-  const [lastSwitchedAccountId, setLastSwitchedAccountId] = useState<
-    string | null
-  >(null);
+  const [lastSwitchedAccountId, setLastSwitchedAccountId] = useState<string | null>(null);
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
 
@@ -27,17 +25,11 @@ export function useAccountSwitcher() {
     };
 
     // Добавляем слушатель события
-    window.addEventListener(
-      'accountSwitched',
-      handleAccountSwitch as EventListener
-    );
+    window.addEventListener('accountSwitched', handleAccountSwitch as EventListener);
 
     // Очищаем слушатель при размонтировании
     return () => {
-      window.removeEventListener(
-        'accountSwitched',
-        handleAccountSwitch as EventListener
-      );
+      window.removeEventListener('accountSwitched', handleAccountSwitch as EventListener);
     };
   }, [dispatch]);
 

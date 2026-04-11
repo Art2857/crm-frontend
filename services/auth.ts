@@ -1,5 +1,6 @@
 import {
   AuthResponse,
+  AuthResponseWithUser,
   ChangePasswordDto,
   LoginDto,
   // RegisterDto, // Регистрация отключена
@@ -12,11 +13,13 @@ import { tokenStorage } from './tokenStorage';
 import { sharedRefreshAccessToken } from './tokenRefresh';
 
 export const authService = {
-  login: async (data: LoginDto): Promise<AuthResponse> => {
-    const response = await authApi.post<AuthResponse>(
-      AUTH_ENDPOINTS.login,
-      data
-    );
+  login: async (data: LoginDto): Promise<AuthResponseWithUser> => {
+    const response = await authApi.post<AuthResponse>(AUTH_ENDPOINTS.login, data);
+    const authenticatedUser = response.data.user;
+
+    if (!authenticatedUser) {
+      throw new Error('Сервер не вернул данные пользователя');
+    }
 
     // Сохраняем токены
     tokenStorage.setAccessToken(response.data.access_token);
@@ -32,23 +35,28 @@ export const authService = {
     // Сохраняем аккаунт в менеджере аккаунтов
     if (typeof window !== 'undefined') {
       accountManagerService.saveAccount(
-        response.data.user,
+        authenticatedUser,
         response.data.access_token,
         response.data.refresh_token,
         response.data.access_token_expires_at,
-        response.data.refresh_token_expires_at
+        response.data.refresh_token_expires_at,
       );
     }
 
-    return response.data;
+    return {
+      ...response.data,
+      user: authenticatedUser,
+    };
   },
 
   // Метод для добавления нового аккаунта через логин без замены текущего
-  addAccountLogin: async (data: LoginDto): Promise<AuthResponse> => {
-    const response = await authApi.post<AuthResponse>(
-      AUTH_ENDPOINTS.login,
-      data
-    );
+  addAccountLogin: async (data: LoginDto): Promise<AuthResponseWithUser> => {
+    const response = await authApi.post<AuthResponse>(AUTH_ENDPOINTS.login, data);
+    const authenticatedUser = response.data.user;
+
+    if (!authenticatedUser) {
+      throw new Error('Сервер не вернул данные пользователя');
+    }
 
     // Сохраняем токены и аккаунт в менеджере и делаем его текущим
     tokenStorage.setAccessToken(response.data.access_token);
@@ -63,16 +71,19 @@ export const authService = {
     }
     if (typeof window !== 'undefined') {
       accountManagerService.saveAccount(
-        response.data.user,
+        authenticatedUser,
         response.data.access_token,
         response.data.refresh_token,
         response.data.access_token_expires_at,
         response.data.refresh_token_expires_at,
-        true
+        true,
       );
     }
 
-    return response.data;
+    return {
+      ...response.data,
+      user: authenticatedUser,
+    };
   },
 
   /* Регистрация отключена
@@ -138,11 +149,9 @@ export const authService = {
     const refreshToken = tokenStorage.getRefreshToken();
 
     if (refreshToken) {
-      authApi
-        .post(AUTH_ENDPOINTS.logout, { refreshToken })
-        .catch((error) => {
-          console.error('Ошибка при отзыве refresh токена:', error);
-        });
+      authApi.post(AUTH_ENDPOINTS.logout, { refreshToken }).catch((error) => {
+        console.error('Ошибка при отзыве refresh токена:', error);
+      });
     }
 
     // Удаляем текущий аккаунт из менеджера аккаунтов
@@ -236,7 +245,7 @@ export const authService = {
   changePassword: async (data: ChangePasswordDto): Promise<{ success: boolean }> => {
     const response = await privateApi.post<{ success: boolean }>(
       AUTH_ENDPOINTS.changePassword,
-      data
+      data,
     );
 
     return response.data;
@@ -244,10 +253,7 @@ export const authService = {
 };
 
 // Используем authApi для запросов авторизации вместо publicApi или privateApi
-export const loginUser = async (
-  login: string,
-  password: string
-): Promise<AuthResponse> => {
+export const loginUser = async (login: string, password: string): Promise<AuthResponse> => {
   try {
     const response = await authApi.post<AuthResponse>(AUTH_ENDPOINTS.login, {
       login,
@@ -276,9 +282,7 @@ export const registerUser = async (
 };
 */
 
-export const refreshToken = async (
-  refreshToken: string
-): Promise<AuthResponse> => {
+export const refreshToken = async (refreshToken: string): Promise<AuthResponse> => {
   try {
     const response = await authApi.post<AuthResponse>(AUTH_ENDPOINTS.refresh, {
       refreshToken,

@@ -1,7 +1,7 @@
 /**
  * Утилиты для рабочих дней в контексте ЗАРПЛАТЫ
  * Стандартные рабочие дни: понедельник-пятница
- * 
+ *
  * Принципы: SOLID, DRY, KISS
  * Single Responsibility: только логика рабочих дней для расчета зарплаты
  */
@@ -28,11 +28,7 @@ export function isSalaryWorkingDay(date: Date): boolean {
  * @returns Количество рабочих дней в периоде
  */
 export function getSalaryWorkingDaysInPeriod(startDate: Date, endDate: Date): number {
-  if (
-    isNaN(startDate.getTime()) ||
-    isNaN(endDate.getTime()) ||
-    startDate > endDate
-  ) {
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate > endDate) {
     return 0;
   }
 
@@ -70,11 +66,11 @@ export function getSalaryWorkingDaysInMonth(date: Date): number {
  */
 export function getLastSalaryWorkingDay(): Date {
   const today = new Date();
-  
+
   if (isSalaryWorkingDay(today)) {
     return today;
   }
-  
+
   // Ищем предыдущий рабочий день
   const workingDay = new Date(today);
   for (let i = 1; i <= 7; i++) {
@@ -83,7 +79,7 @@ export function getLastSalaryWorkingDay(): Date {
       return workingDay;
     }
   }
-  
+
   throw new Error('Could not find salary working day within last week');
 }
 
@@ -95,14 +91,14 @@ export function getLastSalaryWorkingDay(): Date {
 export function getNextSalaryWorkingDay(date: Date): Date {
   const nextDay = new Date(date);
   nextDay.setDate(nextDay.getDate() + 1);
-  
+
   for (let i = 1; i <= 7; i++) {
     if (isSalaryWorkingDay(nextDay)) {
       return nextDay;
     }
     nextDay.setDate(nextDay.getDate() + 1);
   }
-  
+
   throw new Error('Could not find salary working day within next week');
 }
 

@@ -37,7 +37,6 @@ class IndexedDBManager {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
 
-
         // Удаляем старую схему если есть
         if (db.objectStoreNames.contains('rates')) {
           db.deleteObjectStore('rates');
@@ -45,7 +44,7 @@ class IndexedDBManager {
 
         // Store для курсов валют с новой схемой
         const ratesStore = db.createObjectStore('rates', {
-          keyPath: ['currencyCode', 'date'] // Composite key для upsert
+          keyPath: ['currencyCode', 'date'], // Composite key для upsert
         });
         ratesStore.createIndex('currencyCode', 'currencyCode', { unique: false });
         ratesStore.createIndex('date', 'date', { unique: false });
@@ -54,12 +53,10 @@ class IndexedDBManager {
         if (!db.objectStoreNames.contains('metadata')) {
           const metadataStore = db.createObjectStore('metadata', {
             keyPath: 'id',
-            autoIncrement: true
+            autoIncrement: true,
           });
           metadataStore.createIndex('key', 'key', { unique: true });
         }
-
-
       };
     });
   }
@@ -88,7 +85,7 @@ class IndexedDBManager {
         ...rate,
         updatedAt: new Date().toISOString(),
         // Если createdAt уже есть, оставляем, иначе устанавливаем текущее время
-        createdAt: rate.createdAt || new Date().toISOString()
+        createdAt: rate.createdAt || new Date().toISOString(),
       };
 
       // put автоматически создаёт или обновляет запись
@@ -97,11 +94,9 @@ class IndexedDBManager {
 
     return new Promise((resolve, reject) => {
       transaction.oncomplete = () => {
-
         resolve();
       };
       transaction.onerror = () => {
-
         reject(transaction.error);
       };
     });
@@ -186,7 +181,10 @@ class IndexedDBManager {
   }
 
   // Умный поиск курса на дату или ближайшую рабочую дату назад
-  async getSmartRateByDate(currencyCode: string, targetDate: string): Promise<CachedExchangeRate | null> {
+  async getSmartRateByDate(
+    currencyCode: string,
+    targetDate: string,
+  ): Promise<CachedExchangeRate | null> {
     const db = await this.ensureDB();
     const transaction = db.transaction(['rates'], 'readonly');
     const store = transaction.objectStore('rates');
@@ -224,7 +222,10 @@ class IndexedDBManager {
   }
 
   // ПОИСК ПО КОНКРЕТНОЙ ДАТЕ (то же самое, но с параметром)
-  async getLatestAvailableRate(currencyCode: string, fromDate?: Date): Promise<CachedExchangeRate | null> {
+  async getLatestAvailableRate(
+    currencyCode: string,
+    fromDate?: Date,
+  ): Promise<CachedExchangeRate | null> {
     // Просто вызываем ту же логику
     return this.getLatestRate(currencyCode);
   }
@@ -233,7 +234,7 @@ class IndexedDBManager {
   async getRatesInRange(
     currencyCode: string,
     fromDate: string,
-    toDate: string
+    toDate: string,
   ): Promise<CachedExchangeRate[]> {
     const db = await this.ensureDB();
     const transaction = db.transaction(['rates'], 'readonly');
@@ -291,7 +292,7 @@ class IndexedDBManager {
         const data: CacheMetadata = {
           key,
           value,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         };
 
         if (existing) {
@@ -447,7 +448,6 @@ class IndexedDBManager {
 
       // Немедленно восстанавливаем
       await this.ensureMetadataIntegrity();
-
     } catch (error) {
       console.error('❌ Ошибка очистки metadata:', error);
       throw error;
@@ -465,7 +465,6 @@ class IndexedDBManager {
       await this.setMetadata('lastSyncDate', oldDate);
 
       console.log('✅ metadata сброшена для принудительного обновления');
-
     } catch (error) {
       console.error('❌ Ошибка принудительного обновления:', error);
       throw error;

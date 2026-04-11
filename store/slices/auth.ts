@@ -23,7 +23,7 @@ export const login = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || 'Не удалось войти');
     }
-  }
+  },
 );
 
 /* Регистрация отключена
@@ -54,11 +54,9 @@ export const getCurrentUser = createAsyncThunk(
     } catch (error: any) {
       // При ошибке получения текущего пользователя, очищаем токен
       // токен будет очищен централизованно через ApiClient/tryRefreshTokens при 401
-      return rejectWithValue(
-        error.message || 'Не удалось получить текущего пользователя'
-      );
+      return rejectWithValue(error.message || 'Не удалось получить текущего пользователя');
     }
-  }
+  },
 );
 
 // Слайс
@@ -73,10 +71,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
     },
-    setCredentials: (
-      state,
-      action: PayloadAction<{ user: User; token: string }>
-    ) => {
+    setCredentials: (state, action: PayloadAction<{ user: User; token: string }>) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;

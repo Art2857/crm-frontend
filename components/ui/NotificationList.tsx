@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-  useNotification,
-  NotificationType,
-} from '../../contexts/NotificationContext';
+import { useNotification, NotificationType } from '../../contexts/NotificationContext';
 
 // Настройки стилей для разных типов уведомлений
 const getNotificationStyles = (type: NotificationType) => {
@@ -93,9 +90,7 @@ const NotificationList: React.FC = () => {
           >
             <div className="p-4">
               <div className="flex items-start">
-                <div className={`flex-shrink-0 ${styles.iconClass}`}>
-                  {styles.icon}
-                </div>
+                <div className={`flex-shrink-0 ${styles.iconClass}`}>{styles.icon}</div>
                 <div className="ml-3 w-0 flex-1 pt-0.5">
                   <p className={`text-sm font-medium ${styles.textClass}`}>
                     {notification.message}
@@ -106,11 +101,7 @@ const NotificationList: React.FC = () => {
                     className="inline-flex text-gray-400 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
                     onClick={() => removeNotification(notification.id)}
                   >
-                    <svg
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path
                         fillRule="evenodd"
                         d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"

@@ -15,7 +15,7 @@ interface ReAuthPopupProps {
     accessToken: string,
     refreshToken: string,
     accessTokenExpiresAt: string,
-    refreshTokenExpiresAt: string
+    refreshTokenExpiresAt: string,
   ) => void;
   onCancel: () => void;
 }
@@ -95,18 +95,14 @@ export const ReAuthPopup: React.FC<ReAuthPopupProps> = ({
         data.access_token,
         data.refresh_token,
         data.access_token_expires_at,
-        data.refresh_token_expires_at
+        data.refresh_token_expires_at,
       );
 
       // Clear form
       setPassword('');
       setError('');
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Ошибка аутентификации. Попробуйте еще раз.'
-      );
+      setError(err instanceof Error ? err.message : 'Ошибка аутентификации. Попробуйте еще раз.');
     } finally {
       setIsLoading(false);
     }

@@ -15,15 +15,14 @@ import { Role } from '../../../../types/user';
 
 export default function EditDutyPage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  const { currentDuty, isLoading, error, distributions } = useAppSelector(
-    (state) => state.duties
-  );
+  const { currentDuty, isLoading, error, distributions } = useAppSelector((state) => state.duties);
   const distributionsCount = distributions?.length ?? 0;
   const dispatch = useAppDispatch();
   const router = useRouter();
   const dutyId = params.id;
   const loadedDutyRef = useRef(false);
   const loadedDistributionsRef = useRef(false);
+  const canManageDuties = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -34,7 +33,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       return;
     }
 
-    if (![Role.ADMIN, Role.MANAGER].includes(user?.role as Role)) {
+    if (!canManageDuties || !user) {
       router.push('/dashboard');
       return;
     }
@@ -50,6 +49,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       loadedDistributionsRef.current = true;
     }
   }, [
+    canManageDuties,
     dispatch,
     isAuthenticated,
     router,
@@ -61,7 +61,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
   ]);
 
   // Промежуточное состояние для формы
-  const [initialData, setInitialData] = useState<DutyFormData | null>(null);
+  const [initialData, setInitialData] = useState<DutyFormData | undefined>(undefined);
 
   useEffect(() => {
     if (currentDuty) {
@@ -77,6 +77,10 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
   }, [currentDuty]);
 
   const handleSubmit = async (formData: DutyFormData) => {
+    if (!user) {
+      return;
+    }
+
     // Функция для безопасного форматирования числовых значений
     const formatNumberValue = (value: string | null): string | null => {
       if (!value || value.trim() === '') return null;
@@ -104,7 +108,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
     };
 
     const resultAction = await dispatch(
-      updateDuty({ role: user.role, id: dutyId, data: dutyData })
+      updateDuty({ role: user.role, id: dutyId, data: dutyData }),
     );
     if (updateDuty.fulfilled.match(resultAction)) {
       router.push('/admin/duties');
@@ -115,12 +119,10 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
     router.push('/admin/duties');
   };
 
-  const isUsed = Boolean(
-    distributions?.some((d) => d.details?.some((dd) => dd.dutyId === dutyId))
-  );
+  const isUsed = Boolean(distributions?.some((d) => d.details?.some((dd) => dd.dutyId === dutyId)));
 
   const handleDelete = async () => {
-    if (!currentDuty) return;
+    if (!currentDuty || !user) return;
     const result = await dispatch(deleteDuty({ role: user.role, id: dutyId }));
     if (deleteDuty.fulfilled.match(result)) {
       router.push('/admin/duties');
@@ -139,9 +141,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Редактирование обязанности
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Редактирование обязанности</h1>
         </div>
 
         <DutyForm

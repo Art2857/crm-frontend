@@ -49,6 +49,7 @@ export default function CreateUserPage() {
   const [serverError, setServerError] = useState<string | ReactNode>('');
   const [success, setSuccess] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const canManageUsers = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
 
   // Менеджер может создавать только работников
   const roleOptions =
@@ -99,9 +100,7 @@ export default function CreateUserPage() {
         required: true,
         minLength: 8,
         validate: (value) =>
-          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
-            value
-          ) ||
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value) ||
           'Пароль должен содержать не менее 8 символов, включая цифры, специальные символы, заглавные и строчные буквы',
       },
       firstName: {
@@ -142,7 +141,7 @@ export default function CreateUserPage() {
       role: {
         required: true,
       },
-    }
+    },
   );
 
   // Генерация случайного пароля
@@ -174,8 +173,7 @@ export default function CreateUserPage() {
       .join('');
 
     // Проверяем, что сгенерированный пароль соответствует всем требованиям
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
       // В случае несоответствия (что маловероятно), генерируем снова
       return generateRandomPassword();
@@ -200,11 +198,11 @@ export default function CreateUserPage() {
       return;
     }
 
-    if (![Role.ADMIN, Role.MANAGER].includes(user?.role as Role)) {
+    if (!canManageUsers) {
       router.push('/dashboard');
       return;
     }
-  }, [isAuthenticated, router, user]);
+  }, [canManageUsers, isAuthenticated, router]);
 
   const onSubmit = async (data: CreateUserFormData) => {
     try {
@@ -215,9 +213,7 @@ export default function CreateUserPage() {
       if (!validateForm()) {
         const errorMessages = Object.values(errors).filter(Boolean);
         if (errorMessages.length > 0) {
-          setServerError(
-            `Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`
-          );
+          setServerError(`Пожалуйста, исправьте ошибки: ${errorMessages.join(', ')}`);
           return;
         }
       }
@@ -228,14 +224,10 @@ export default function CreateUserPage() {
       // Преобразуем дату рождения в формат ISO-8601 DateTime, если она указана
       if (userData.birthday) {
         try {
-          userData.birthday = new Date(
-            `${userData.birthday}T00:00:00Z`
-          ).toISOString();
+          userData.birthday = new Date(`${userData.birthday}T00:00:00Z`).toISOString();
         } catch (e) {
           console.error('Ошибка при форматировании даты:', e);
-          setServerError(
-            'Некорректный формат даты. Используйте формат ГГГГ-ММ-ДД.'
-          );
+          setServerError('Некорректный формат даты. Используйте формат ГГГГ-ММ-ДД.');
           return;
         }
       } else {
@@ -261,10 +253,7 @@ export default function CreateUserPage() {
       if (createUser.fulfilled.match(resultAction)) {
         setSuccess('Пользователь успешно создан');
         resetForm(); // Сбрасываем форму после успешного создания
-      } else if (
-        createUser.rejected.match(resultAction) &&
-        resultAction.payload
-      ) {
+      } else if (createUser.rejected.match(resultAction) && resultAction.payload) {
         // Обработка ошибок валидации и других ошибок
         const errorMessage = resultAction.payload as string;
 
@@ -315,22 +304,19 @@ export default function CreateUserPage() {
                 <>
                   <p className="font-medium mb-2">Ошибки в полях формы:</p>
                   <ul className="list-disc pl-4">
-                    {Object.entries(fieldErrors).map(
-                      ([field, errors], index) => {
-                        // Удаляем дубликаты сообщений
-                        const uniqueErrors = Array.from(new Set(errors));
-                        return (
-                          <li key={index} className="mt-1">
-                            <span className="font-medium">{field}:</span>{' '}
-                            {uniqueErrors.join(', ')}
-                          </li>
-                        );
-                      }
-                    )}
+                    {Object.entries(fieldErrors).map(([field, errors], index) => {
+                      // Удаляем дубликаты сообщений
+                      const uniqueErrors = Array.from(new Set(errors));
+                      return (
+                        <li key={index} className="mt-1">
+                          <span className="font-medium">{field}:</span> {uniqueErrors.join(', ')}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </>
               )}
-            </div>
+            </div>,
           );
         } else {
           // Обычная строковая ошибка
@@ -353,14 +339,9 @@ export default function CreateUserPage() {
     <div className="max-w-7xl mx-auto pt-2 pb-6 sm:px-6 lg:px-8">
       <div className="px-4 pt-0 pb-6 sm:px-0">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Создание пользователя
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Создание пользователя</h1>
 
-          <Button
-            variant="secondary"
-            onClick={() => router.push('/admin/users')}
-          >
+          <Button variant="secondary" onClick={() => router.push('/admin/users')}>
             Назад к списку
           </Button>
         </div>
@@ -470,10 +451,7 @@ export default function CreateUserPage() {
                     }
                   >
                     <div className="flex items-center cursor-help">
-                      <label
-                        htmlFor="password"
-                        className="font-medium text-gray-700"
-                      >
+                      <label htmlFor="password" className="font-medium text-gray-700">
                         Пароль
                         <span aria-hidden="true" className="text-red-500 ml-1">
                           *
@@ -617,11 +595,7 @@ export default function CreateUserPage() {
               )}
 
               <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  isLoading={isLoading}
-                  className="px-6 py-2 text-sm shadow-sm"
-                >
+                <Button type="submit" isLoading={isLoading} className="px-6 py-2 text-sm shadow-sm">
                   Создать пользователя
                 </Button>
               </div>

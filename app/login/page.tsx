@@ -10,6 +10,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 // import Link from 'next/link'; // Регистрация отключена
 import { authService } from '../../services/auth';
+import { privateApi } from '../../services/ApiClient';
 import accountNavigation from '../../utils/accountNavigation';
 
 type LoginFormData = {
@@ -17,14 +18,75 @@ type LoginFormData = {
   password: string;
 };
 
+const UUID_PATH_SEGMENT =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function getRedirectFallback(path: string): string {
+  if (path.startsWith('/works/')) {
+    return '/works';
+  }
+
+  if (path.startsWith('/admin/users/')) {
+    return '/admin/users';
+  }
+
+  if (path.startsWith('/admin/duties/')) {
+    return '/admin/duties';
+  }
+
+  return '/dashboard';
+}
+
+async function resolveRedirectAfterLogin(path: string): Promise<string> {
+  const segments = path.split('/').filter(Boolean);
+
+  if (segments[0] === 'works' && segments.length === 2 && UUID_PATH_SEGMENT.test(segments[1])) {
+    try {
+      await privateApi.get(`/works/${segments[1]}`);
+      return path;
+    } catch {
+      return '/works';
+    }
+  }
+
+  if (
+    segments[0] === 'admin' &&
+    segments[1] === 'users' &&
+    segments[2] &&
+    UUID_PATH_SEGMENT.test(segments[2]) &&
+    (segments.length === 3 || (segments.length === 4 && segments[3] === 'history'))
+  ) {
+    try {
+      await privateApi.get(`/users/${segments[2]}`);
+      return path;
+    } catch {
+      return '/admin/users';
+    }
+  }
+
+  if (
+    segments[0] === 'admin' &&
+    segments[1] === 'duties' &&
+    segments.length === 3 &&
+    UUID_PATH_SEGMENT.test(segments[2])
+  ) {
+    try {
+      await privateApi.get(`/duties/${segments[2]}`);
+      return path;
+    } catch {
+      return '/admin/duties';
+    }
+  }
+
+  return path;
+}
+
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAddMode = searchParams.get('mode') === 'add';
-  const { isLoading, error, isAuthenticated, user } = useAppSelector(
-    (state) => state.auth
-  );
+  const { isLoading, error, isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [serverError, setServerError] = useState('');
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
@@ -86,7 +148,7 @@ export default function LoginPage() {
             setCredentials({
               user: response.user,
               token: response.access_token,
-            })
+            }),
           );
 
           // Загружаем полные данные пользователя
@@ -95,9 +157,7 @@ export default function LoginPage() {
           // После успешного входа перенаправляем на страницу аккаунтов
           router.push('/accounts');
         } catch (error: any) {
-          setServerError(
-            error.response?.data?.message || 'Произошла ошибка при входе'
-          );
+          setServerError(error.response?.data?.message || 'Произошла ошибка при входе');
         }
       } else {
         // Стандартный процесс входа через Redux
@@ -108,9 +168,7 @@ export default function LoginPage() {
           await dispatch(getCurrentUser());
 
           const redirectAfterLogin =
-            typeof window !== 'undefined'
-              ? localStorage.getItem('redirectAfterLogin')
-              : null;
+            typeof window !== 'undefined' ? localStorage.getItem('redirectAfterLogin') : null;
 
           if (
             redirectAfterLogin &&
@@ -118,7 +176,8 @@ export default function LoginPage() {
             redirectAfterLogin !== '/register'
           ) {
             localStorage.removeItem('redirectAfterLogin');
-            router.push(redirectAfterLogin);
+            const resolvedRedirect = await resolveRedirectAfterLogin(redirectAfterLogin);
+            router.push(resolvedRedirect || getRedirectFallback(redirectAfterLogin));
           } else {
             router.push('/dashboard');
           }
@@ -144,9 +203,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-100">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {isAddMode || showBackButton
-            ? 'Вход в новый аккаунт'
-            : 'Вход в систему'}
+          {isAddMode || showBackButton ? 'Вход в новый аккаунт' : 'Вход в систему'}
         </h2>
       </div>
 
@@ -154,12 +211,7 @@ export default function LoginPage() {
         <Card>
           {showBackButton && (
             <div className="mb-4 pb-4 border-b border-gray-200">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBackToAccounts}
-                className="w-full"
-              >
+              <Button variant="outline" size="sm" onClick={handleBackToAccounts} className="w-full">
                 ← Вернуться к управлению аккаунтами
               </Button>
             </div>
@@ -181,8 +233,7 @@ export default function LoginPage() {
                 },
                 pattern: {
                   value: /^[a-zA-Z0-9_.-]+$/,
-                  message:
-                    'Логин может содержать только латинские буквы, цифры и символы _.-',
+                  message: 'Логин может содержать только латинские буквы, цифры и символы _.-',
                 },
               })}
             />

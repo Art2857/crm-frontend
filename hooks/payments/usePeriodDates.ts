@@ -2,19 +2,15 @@ import { useCallback, useState } from 'react';
 import { getCurrentDateISO } from '../../utils/date';
 
 export function usePeriodDates() {
-  const [workPeriodDates, setWorkPeriodDates] = useState<
-    Record<string, string>
-  >({});
-  const [userPeriodDates, setUserPeriodDates] = useState<
-    Record<string, string>
-  >({});
+  const [workPeriodDates, setWorkPeriodDates] = useState<Record<string, string>>({});
+  const [userPeriodDates, setUserPeriodDates] = useState<Record<string, string>>({});
 
   const getWorkPeriodDate = useCallback(
     (workId: string): string => {
       if (workPeriodDates[workId]) return workPeriodDates[workId];
       return getCurrentDateISO();
     },
-    [workPeriodDates]
+    [workPeriodDates],
   );
 
   const getUserPeriodDate = useCallback(
@@ -22,7 +18,7 @@ export function usePeriodDates() {
       if (userPeriodDates[userId]) return userPeriodDates[userId];
       return getCurrentDateISO();
     },
-    [userPeriodDates]
+    [userPeriodDates],
   );
 
   return {

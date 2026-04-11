@@ -87,11 +87,7 @@ export function useCurrencyConversion(options?: UseCurrencyConversionOptions) {
    * - округляет результат до целого
    */
   const convert = useCallback(
-    (
-      amount: number,
-      fromCurrency: 'RUB' | 'USD',
-      toCurrency: 'RUB' | 'USD'
-    ): number => {
+    (amount: number, fromCurrency: 'RUB' | 'USD', toCurrency: 'RUB' | 'USD'): number => {
       if (fromCurrency === toCurrency) {
         return amount;
       }
@@ -110,7 +106,7 @@ export function useCurrencyConversion(options?: UseCurrencyConversionOptions) {
 
       return amount;
     },
-    [state.rate]
+    [state.rate],
   );
 
   /**
@@ -123,11 +119,7 @@ export function useCurrencyConversion(options?: UseCurrencyConversionOptions) {
    * загружен ли курс (например, для отображения скелетона или плейсхолдера)
    */
   const convertSync = useCallback(
-    (
-      amount: number,
-      fromCurrency: 'RUB' | 'USD',
-      toCurrency: 'RUB' | 'USD'
-    ): number | null => {
+    (amount: number, fromCurrency: 'RUB' | 'USD', toCurrency: 'RUB' | 'USD'): number | null => {
       if (fromCurrency === toCurrency) {
         return amount;
       }
@@ -146,7 +138,7 @@ export function useCurrencyConversion(options?: UseCurrencyConversionOptions) {
 
       return amount;
     },
-    [state.rate]
+    [state.rate],
   );
 
   /**
@@ -157,7 +149,7 @@ export function useCurrencyConversion(options?: UseCurrencyConversionOptions) {
     (amount: number, fromCurrency: 'RUB' | 'USD'): number => {
       return convert(amount, fromCurrency, 'RUB');
     },
-    [convert]
+    [convert],
   );
 
   /**
@@ -168,7 +160,7 @@ export function useCurrencyConversion(options?: UseCurrencyConversionOptions) {
     (amount: number, fromCurrency: 'RUB' | 'USD'): number => {
       return convert(amount, fromCurrency, 'USD');
     },
-    [convert]
+    [convert],
   );
 
   return {

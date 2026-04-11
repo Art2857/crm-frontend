@@ -24,7 +24,7 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
 
   // Обновление состояния
   const updateState = useCallback((updates: Partial<WorkIncomeState>) => {
-    setState(prev => ({ ...prev, ...updates }));
+    setState((prev) => ({ ...prev, ...updates }));
   }, []);
 
   // Очистка сообщений
@@ -43,33 +43,36 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
   }, [workId, autoLoad, autoLoadStats]);
 
   // Загрузка списка доходов
-  const loadWorkIncomes = useCallback(async (filters?: WorkIncomeFilters) => {
-    if (!workId) return;
+  const loadWorkIncomes = useCallback(
+    async (filters?: WorkIncomeFilters) => {
+      if (!workId) return;
 
-    try {
-      updateState({ isLoading: true, error: null });
+      try {
+        updateState({ isLoading: true, error: null });
 
-      const mergedFilters = {
-        ...DEFAULT_WORK_INCOME_FILTERS,
-        ...state.filters,
-        ...filters,
-        workId,
-      };
+        const mergedFilters = {
+          ...DEFAULT_WORK_INCOME_FILTERS,
+          ...state.filters,
+          ...filters,
+          workId,
+        };
 
-      const incomes = await workIncomeService.getWorkIncomesByWorkId(workId);
-      
-      updateState({
-        incomes,
-        filters: mergedFilters,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      updateState({
-        error: error.message || 'Ошибка при загрузке доходов',
-        isLoading: false,
-      });
-    }
-  }, [workId, state.filters, updateState]);
+        const incomes = await workIncomeService.getWorkIncomesByWorkId(workId);
+
+        updateState({
+          incomes,
+          filters: mergedFilters,
+          isLoading: false,
+        });
+      } catch (error: any) {
+        updateState({
+          error: error.message || 'Ошибка при загрузке доходов',
+          isLoading: false,
+        });
+      }
+    },
+    [workId, state.filters, updateState],
+  );
 
   // Загрузка статистики
   const loadStats = useCallback(async () => {
@@ -85,140 +88,154 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
   }, [workId, updateState]);
 
   // Создание нового дохода
-  const createIncome = useCallback(async (data: CreateWorkIncomeRequest): Promise<WorkIncome | null> => {
-    try {
-      updateState({ isSubmitting: true, error: null });
+  const createIncome = useCallback(
+    async (data: CreateWorkIncomeRequest): Promise<WorkIncome | null> => {
+      try {
+        updateState({ isSubmitting: true, error: null });
 
-      // Валидация
-      const validationErrors = workIncomeService.validateCreateData(data);
-      if (validationErrors.length > 0) {
-        throw new Error(validationErrors.join(', '));
+        // Валидация
+        const validationErrors = workIncomeService.validateCreateData(data);
+        if (validationErrors.length > 0) {
+          throw new Error(validationErrors.join(', '));
+        }
+
+        const newIncome = await workIncomeService.createWorkIncome(data);
+
+        // Обновляем список - используем функциональное обновление
+        setState((prevState) => ({
+          ...prevState,
+          incomes: [newIncome, ...prevState.incomes],
+          isSubmitting: false,
+          successMessage: 'Запись о доходе успешно создана',
+          error: null,
+        }));
+
+        // Обновляем статистику
+        if (workId) {
+          loadStats();
+        }
+
+        return newIncome;
+      } catch (error: any) {
+        updateState({
+          error: error.message || 'Ошибка при создании записи о доходе',
+          isSubmitting: false,
+        });
+        return null;
       }
-
-      const newIncome = await workIncomeService.createWorkIncome(data);
-
-      // Обновляем список - используем функциональное обновление
-      setState(prevState => ({
-        ...prevState,
-        incomes: [newIncome, ...prevState.incomes],
-        isSubmitting: false,
-        successMessage: 'Запись о доходе успешно создана',
-        error: null,
-      }));
-
-      // Обновляем статистику
-      if (workId) {
-        loadStats();
-      }
-
-      return newIncome;
-    } catch (error: any) {
-      updateState({
-        error: error.message || 'Ошибка при создании записи о доходе',
-        isSubmitting: false,
-      });
-      return null;
-    }
-  }, [workId, loadStats, setState]);
+    },
+    [workId, loadStats, setState],
+  );
 
   // Обновление дохода
-  const updateIncome = useCallback(async (id: string, data: UpdateWorkIncomeRequest): Promise<WorkIncome | null> => {
-    try {
-      updateState({ isSubmitting: true, error: null });
+  const updateIncome = useCallback(
+    async (id: string, data: UpdateWorkIncomeRequest): Promise<WorkIncome | null> => {
+      try {
+        updateState({ isSubmitting: true, error: null });
 
-      // Валидация
-      const validationErrors = workIncomeService.validateUpdateData(data);
-      if (validationErrors.length > 0) {
-        throw new Error(validationErrors.join(', '));
+        // Валидация
+        const validationErrors = workIncomeService.validateUpdateData(data);
+        if (validationErrors.length > 0) {
+          throw new Error(validationErrors.join(', '));
+        }
+
+        const updatedIncome = await workIncomeService.updateWorkIncome(id, data);
+
+        // Обновляем список - используем функциональное обновление
+        setState((prevState) => ({
+          ...prevState,
+          incomes: prevState.incomes.map((income) => (income.id === id ? updatedIncome : income)),
+          selectedIncome:
+            prevState.selectedIncome?.id === id ? updatedIncome : prevState.selectedIncome,
+          isSubmitting: false,
+          successMessage: 'Запись о доходе успешно обновлена',
+          error: null,
+        }));
+
+        // Обновляем статистику
+        if (workId) {
+          loadStats();
+        }
+
+        return updatedIncome;
+      } catch (error: any) {
+        updateState({
+          error: error.message || 'Ошибка при обновлении записи о доходе',
+          isSubmitting: false,
+        });
+        return null;
       }
-
-      const updatedIncome = await workIncomeService.updateWorkIncome(id, data);
-
-      // Обновляем список - используем функциональное обновление
-      setState(prevState => ({
-        ...prevState,
-        incomes: prevState.incomes.map(income =>
-          income.id === id ? updatedIncome : income
-        ),
-        selectedIncome: prevState.selectedIncome?.id === id ? updatedIncome : prevState.selectedIncome,
-        isSubmitting: false,
-        successMessage: 'Запись о доходе успешно обновлена',
-        error: null,
-      }));
-
-      // Обновляем статистику
-      if (workId) {
-        loadStats();
-      }
-
-      return updatedIncome;
-    } catch (error: any) {
-      updateState({
-        error: error.message || 'Ошибка при обновлении записи о доходе',
-        isSubmitting: false,
-      });
-      return null;
-    }
-  }, [workId, loadStats, updateState, setState]);
+    },
+    [workId, loadStats, updateState, setState],
+  );
 
   // Удаление дохода
-  const deleteIncome = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      updateState({ isSubmitting: true, error: null });
+  const deleteIncome = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        updateState({ isSubmitting: true, error: null });
 
-      await workIncomeService.deleteWorkIncome(id);
+        await workIncomeService.deleteWorkIncome(id);
 
-      // Обновляем список - используем функциональное обновление
-      setState(prevState => ({
-        ...prevState,
-        incomes: prevState.incomes.filter(income => income.id !== id),
-        selectedIncome: prevState.selectedIncome?.id === id ? null : prevState.selectedIncome,
-        isSubmitting: false,
-        successMessage: 'Запись о доходе успешно удалена',
-        error: null,
-      }));
+        // Обновляем список - используем функциональное обновление
+        setState((prevState) => ({
+          ...prevState,
+          incomes: prevState.incomes.filter((income) => income.id !== id),
+          selectedIncome: prevState.selectedIncome?.id === id ? null : prevState.selectedIncome,
+          isSubmitting: false,
+          successMessage: 'Запись о доходе успешно удалена',
+          error: null,
+        }));
 
-      // Обновляем статистику
-      if (workId) {
-        loadStats();
+        // Обновляем статистику
+        if (workId) {
+          loadStats();
+        }
+
+        return true;
+      } catch (error: any) {
+        updateState({
+          error: error.message || 'Ошибка при удалении записи о доходе',
+          isSubmitting: false,
+        });
+        return false;
       }
-
-      return true;
-    } catch (error: any) {
-      updateState({
-        error: error.message || 'Ошибка при удалении записи о доходе',
-        isSubmitting: false,
-      });
-      return false;
-    }
-  }, [workId, loadStats, updateState, setState]);
+    },
+    [workId, loadStats, updateState, setState],
+  );
 
   // Выбор дохода
-  const selectIncome = useCallback((income: WorkIncome | null) => {
-    updateState({ selectedIncome: income });
-  }, [updateState]);
+  const selectIncome = useCallback(
+    (income: WorkIncome | null) => {
+      updateState({ selectedIncome: income });
+    },
+    [updateState],
+  );
 
   // Получение дохода по ID
-  const getIncomeById = useCallback(async (id: string): Promise<WorkIncome | null> => {
-    try {
-      updateState({ isLoading: true, error: null });
+  const getIncomeById = useCallback(
+    async (id: string): Promise<WorkIncome | null> => {
+      try {
+        updateState({ isLoading: true, error: null });
 
-      const income = await workIncomeService.getWorkIncomeById(id);
+        const income = await workIncomeService.getWorkIncomeById(id);
 
-      updateState({
-        selectedIncome: income,
-        isLoading: false,
-      });
+        updateState({
+          selectedIncome: income,
+          isLoading: false,
+        });
 
-      return income;
-    } catch (error: any) {
-      updateState({
-        error: error.message || 'Ошибка при загрузке записи о доходе',
-        isLoading: false,
-      });
-      return null;
-    }
-  }, [updateState]);
+        return income;
+      } catch (error: any) {
+        updateState({
+          error: error.message || 'Ошибка при загрузке записи о доходе',
+          isLoading: false,
+        });
+        return null;
+      }
+    },
+    [updateState],
+  );
 
   // Обновление курсов валют
   const refreshCurrencyConversions = useCallback(async (): Promise<boolean> => {
@@ -248,10 +265,13 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
   }, [workId, loadWorkIncomes, updateState]);
 
   // Обновление фильтров
-  const updateFilters = useCallback((newFilters: Partial<WorkIncomeFilters>) => {
-    const updatedFilters = { ...state.filters, ...newFilters };
-    updateState({ filters: updatedFilters });
-  }, [state.filters, updateState]);
+  const updateFilters = useCallback(
+    (newFilters: Partial<WorkIncomeFilters>) => {
+      const updatedFilters = { ...state.filters, ...newFilters };
+      updateState({ filters: updatedFilters });
+    },
+    [state.filters, updateState],
+  );
 
   // Сброс фильтров
   const resetFilters = useCallback(() => {
@@ -267,9 +287,12 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
     return workIncomeService.formatDate(dateString);
   }, []);
 
-  const formatExchangeRate = useCallback((rate: number, fromCurrency: 'RUB' | 'USD', toCurrency: 'RUB' | 'USD') => {
-    return workIncomeService.formatExchangeRate(rate, fromCurrency, toCurrency);
-  }, []);
+  const formatExchangeRate = useCallback(
+    (rate: number, fromCurrency: 'RUB' | 'USD', toCurrency: 'RUB' | 'USD') => {
+      return workIncomeService.formatExchangeRate(rate, fromCurrency, toCurrency);
+    },
+    [],
+  );
 
   // Получение текущей даты
   const getCurrentDate = useCallback(() => {
@@ -279,16 +302,16 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
   // Вычисляемые значения
   const totalIncomes = state.incomes.length;
   const totalAmountRub = state.incomes
-    .filter(income => income.currency === 'RUB')
+    .filter((income) => income.currency === 'RUB')
     .reduce((sum, income) => sum + income.amount, 0);
   const totalAmountUsd = state.incomes
-    .filter(income => income.currency === 'USD')
+    .filter((income) => income.currency === 'USD')
     .reduce((sum, income) => sum + income.amount, 0);
 
   return {
     // Состояние
     ...state,
-    
+
     // Вычисляемые значения
     totalIncomes,
     totalAmountRub,

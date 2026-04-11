@@ -24,9 +24,9 @@ export function decodeJWT(token: string): any {
         Array.prototype.map
           .call(
             atob(normalized),
-            (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2),
           )
-          .join('')
+          .join(''),
       );
     };
 

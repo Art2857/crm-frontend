@@ -2,7 +2,7 @@
  * Провайдер данных от ЦБ РФ
  * Реализует интерфейс IExchangeRateProvider
  * Следует принципам SOLID, DRY, KISS
- * 
+ *
  * Single Responsibility: только получение данных от API ЦБ
  * Open/Closed: легко расширяется новыми методами API
  * Liskov Substitution: реализует интерфейс IExchangeRateProvider
@@ -41,12 +41,12 @@ const CBR_CONFIG = {
   baseUrl: 'https://www.cbr-xml-daily.ru',
   endpoints: {
     daily: '/daily_json.js',
-    archive: '/archive/{year}/{month:02d}/{day:02d}/daily_json.js'
+    archive: '/archive/{year}/{month:02d}/{day:02d}/daily_json.js',
   },
   supportedCurrencies: ['USD', 'EUR', 'CNY', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD'],
   timeout: 10000,
   retryAttempts: 3,
-  retryDelay: 1000
+  retryDelay: 1000,
 } as const;
 
 /**
@@ -72,7 +72,10 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
   /**
    * Получает котировки за диапазон дат
    */
-  async fetchRatesRange(startDate: ExchangeRateDate, endDate: ExchangeRateDate): Promise<IExchangeRate[]> {
+  async fetchRatesRange(
+    startDate: ExchangeRateDate,
+    endDate: ExchangeRateDate,
+  ): Promise<IExchangeRate[]> {
     const allRates: IExchangeRate[] = [];
     let currentDate = startDate;
 
@@ -83,7 +86,7 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
       } catch (error) {
         console.warn(`⚠️ Пропускаем ${currentDate.value} из-за ошибки:`, error);
       }
-      
+
       currentDate = currentDate.addDays(1);
     }
 
@@ -108,11 +111,7 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
 
     // Если дата сегодняшняя, используем текущий endpoint
     const today = new Date();
-    if (
-      year === today.getFullYear() &&
-      month === today.getMonth() + 1 &&
-      day === today.getDate()
-    ) {
+    if (year === today.getFullYear() && month === today.getMonth() + 1 && day === today.getDate()) {
       return `${CBR_CONFIG.baseUrl}${CBR_CONFIG.endpoints.daily}`;
     }
 
@@ -134,16 +133,16 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
     for (let attempt = 1; attempt <= CBR_CONFIG.retryAttempts; attempt++) {
       try {
         console.log(`📡 Попытка ${attempt}/${CBR_CONFIG.retryAttempts}: ${url}`);
-        
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), CBR_CONFIG.timeout);
 
         const response = await fetch(url, {
           signal: controller.signal,
           headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+          },
         });
 
         clearTimeout(timeoutId);
@@ -152,10 +151,9 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = await response.json() as ICBRApiResponse;
+        const data = (await response.json()) as ICBRApiResponse;
         console.log(`✅ Данные получены от ЦБ (попытка ${attempt})`);
         return data;
-
       } catch (error) {
         lastError = error as Error;
         console.warn(`⚠️ Попытка ${attempt} неудачна:`, error);
@@ -174,7 +172,10 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
   /**
    * Парсит ответ от API ЦБ
    */
-  private parseApiResponse(data: ICBRApiResponse, requestedDate: ExchangeRateDate): IExchangeRate[] {
+  private parseApiResponse(
+    data: ICBRApiResponse,
+    requestedDate: ExchangeRateDate,
+  ): IExchangeRate[] {
     const rates: IExchangeRate[] = [];
     const apiDate = this.parseApiDate(data.Date);
     const now = new Date().toISOString();
@@ -192,7 +193,7 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
         nominal: currencyData.Nominal,
         date: apiDate,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
       };
 
       rates.push(rate);
@@ -227,7 +228,7 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash).toString(36);
@@ -237,7 +238,7 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
    * Утилита для задержки
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -251,8 +252,8 @@ export class CBRExchangeRateProvider implements IExchangeRateProvider {
       config: {
         timeout: CBR_CONFIG.timeout,
         retryAttempts: CBR_CONFIG.retryAttempts,
-        retryDelay: CBR_CONFIG.retryDelay
-      }
+        retryDelay: CBR_CONFIG.retryDelay,
+      },
     };
   }
 }

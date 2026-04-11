@@ -18,20 +18,14 @@ export default function PaymentHistoryFilters({
   onFiltersChange,
   onClearFilters,
 }: PaymentHistoryFiltersProps) {
-  const hasActiveFilters =
-    filters.paymentType || filters.startDate || filters.endDate;
+  const hasActiveFilters = filters.paymentType || filters.startDate || filters.endDate;
 
   return (
     <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium text-gray-900">Фильтры</h3>
         {hasActiveFilters && (
-          <Button
-            onClick={onClearFilters}
-            variant="outline"
-            size="sm"
-            className="text-gray-600"
-          >
+          <Button onClick={onClearFilters} variant="outline" size="sm" className="text-gray-600">
             <XMarkIcon className="h-4 w-4 mr-1" />
             Очистить
           </Button>
@@ -41,16 +35,12 @@ export default function PaymentHistoryFilters({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Тип выплаты */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Тип выплаты
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Тип выплаты</label>
           <Select
             value={filters.paymentType || ''}
             onChange={(e) =>
               onFiltersChange({
-                paymentType: e.target.value
-                  ? (e.target.value as PaymentType)
-                  : undefined,
+                paymentType: e.target.value ? (e.target.value as PaymentType) : undefined,
               })
             }
             options={[
@@ -66,9 +56,7 @@ export default function PaymentHistoryFilters({
 
         {/* Начальная дата */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Дата с
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Дата с</label>
           <Input
             type="date"
             value={filters.startDate || ''}
@@ -83,9 +71,7 @@ export default function PaymentHistoryFilters({
 
         {/* Конечная дата */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Дата до
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Дата до</label>
           <Input
             type="date"
             value={filters.endDate || ''}
@@ -102,9 +88,7 @@ export default function PaymentHistoryFilters({
       {/* Размер страницы */}
       <div className="mt-4 pt-4 border-t border-gray-200">
         <div className="flex items-center space-x-4">
-          <label className="text-sm font-medium text-gray-700">
-            Записей на странице:
-          </label>
+          <label className="text-sm font-medium text-gray-700">Записей на странице:</label>
           <Select
             value={filters.limit?.toString() || '20'}
             onChange={(e) =>

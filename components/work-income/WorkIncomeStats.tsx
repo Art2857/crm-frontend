@@ -8,10 +8,7 @@ interface WorkIncomeStatsProps {
   isLoading?: boolean;
 }
 
-const WorkIncomeStats: React.FC<WorkIncomeStatsProps> = ({
-  stats,
-  isLoading = false,
-}) => {
+const WorkIncomeStats: React.FC<WorkIncomeStatsProps> = ({ stats, isLoading = false }) => {
   const formatAmount = (amount: number, currency: 'RUB' | 'USD') => {
     const symbol = currency === 'RUB' ? '₽' : '$';
     return (
@@ -46,15 +43,11 @@ const WorkIncomeStats: React.FC<WorkIncomeStatsProps> = ({
       <div className="px-5 py-3 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Анализ доходности
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900">Анализ доходности</h3>
             <p className="text-xs text-gray-500">Аналитика по поступлениям</p>
           </div>
           <div className="text-right text-xs text-gray-500">
-            <div className="font-medium">
-              {stats.workingDaysTotal} рабочих дней
-            </div>
+            <div className="font-medium">{stats.workingDaysTotal} рабочих дней</div>
             <div>из {stats.totalDays} дней</div>
           </div>
         </div>
@@ -75,11 +68,7 @@ const WorkIncomeStats: React.FC<WorkIncomeStatsProps> = ({
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg
-                    className="w-4 h-4 text-green-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
                     <path
                       fillRule="evenodd"
@@ -89,9 +78,7 @@ const WorkIncomeStats: React.FC<WorkIncomeStatsProps> = ({
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">
-                    В рублях
-                  </div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">В рублях</div>
                   <div className="text-xl font-bold text-gray-900">
                     {formatAmount(stats.avgSalaryRub, 'RUB')}
                   </div>
@@ -103,11 +90,7 @@ const WorkIncomeStats: React.FC<WorkIncomeStatsProps> = ({
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg
-                    className="w-4 h-4 text-blue-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
                     <path
                       fillRule="evenodd"
@@ -117,9 +100,7 @@ const WorkIncomeStats: React.FC<WorkIncomeStatsProps> = ({
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">
-                    В долларах
-                  </div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">В долларах</div>
                   <div className="text-xl font-bold text-gray-900">
                     {formatAmount(stats.avgSalaryUsd, 'USD')}
                   </div>
@@ -142,9 +123,7 @@ const WorkIncomeStats: React.FC<WorkIncomeStatsProps> = ({
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">
-                    Рубли
-                  </div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">Рубли</div>
                   <div className="text-lg font-bold text-green-600">
                     {formatAmount(stats.totalRub, 'RUB')}
                   </div>
@@ -158,9 +137,7 @@ const WorkIncomeStats: React.FC<WorkIncomeStatsProps> = ({
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">
-                    Доллары
-                  </div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">Доллары</div>
                   <div className="text-lg font-bold text-blue-600">
                     {formatAmount(stats.totalUsd, 'USD')}
                   </div>

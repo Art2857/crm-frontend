@@ -33,8 +33,8 @@ export default function Pagination({
     // Всегда показываем первую страницу
     pages.push(1);
 
-    let start = Math.max(2, currentPage - delta);
-    let end = Math.min(totalPages - 1, currentPage + delta);
+    const start = Math.max(2, currentPage - delta);
+    const end = Math.min(totalPages - 1, currentPage + delta);
 
     // Добавляем многоточие после первой страницы если нужно
     if (start > 2) {

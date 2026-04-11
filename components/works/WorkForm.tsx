@@ -20,9 +20,7 @@ interface WorkFormProps {
   workId: string;
   formData: UpdateWorkDto;
   users: User[];
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
   onArchiveAction?: () => void;
@@ -71,21 +69,16 @@ const WorkForm: React.FC<WorkFormProps> = ({
     formData.name.trim().length > 0 &&
     formData.responsibleUserId &&
     (typeof formData.salary === 'number' ||
-      (typeof formData.salary === 'string' &&
-        !isNaN(parseFloat(formData.salary))));
+      (typeof formData.salary === 'string' && !isNaN(parseFloat(formData.salary))));
 
   // Получаем числовое значение зарплаты для предварительного просмотра
   const salaryValue =
-    typeof formData.salary === 'string'
-      ? parseFloat(formData.salary) || 0
-      : formData.salary || 0;
+    typeof formData.salary === 'string' ? parseFloat(formData.salary) || 0 : formData.salary || 0;
 
   const [selectedCurrency, setSelectedCurrency] = useState<string>(
-    () => formData.currency || 'RUB'
+    () => formData.currency || 'RUB',
   );
-  const [convertedBudget, setConvertedBudget] = useState<number>(
-    salaryValue || 0
-  );
+  const [convertedBudget, setConvertedBudget] = useState<number>(salaryValue || 0);
   const [isConverting, setIsConverting] = useState<boolean>(false);
   const [convertError, setConvertError] = useState<string | null>(null);
 
@@ -127,10 +120,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
               <div className="space-y-4">
                 <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                     <svg
                       className="w-4 h-4 inline mr-1 text-gray-500"
                       fill="none"
@@ -156,9 +146,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     className="w-full focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     placeholder="Введите название работы"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Краткое и понятное название проекта
-                  </p>
+                  <p className="mt-1 text-xs text-gray-500">Краткое и понятное название проекта</p>
                 </div>
 
                 <div>
@@ -264,10 +252,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
               </h3>
 
               <div>
-                <label
-                  htmlFor="salary"
-                  className="block text-sm font-medium text-primary-700 mb-2"
-                >
+                <label htmlFor="salary" className="block text-sm font-medium text-primary-700 mb-2">
                   Общий бюджет
                 </label>
                 <div className="relative">
@@ -289,33 +274,22 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     </span>
                   </div>
                 </div>
-                <p className="mt-1 text-xs text-primary-600">
-                  Общая сумма, выделенная на проект
-                </p>
+                <p className="mt-1 text-xs text-primary-600">Общая сумма, выделенная на проект</p>
 
                 {salaryValue > 0 && (
                   <div className="mt-3 p-3 bg-white rounded border border-primary-200">
-                    <div className="text-xs text-primary-600 mb-1">
-                      Форматированная сумма:
-                    </div>
+                    <div className="text-xs text-primary-600 mb-1">Форматированная сумма:</div>
                     <div className="text-xs text-primary-600 mb-1 flex items-center justify-between">
                       <span>({selectedCurrency})</span>
                       {isConverting && (
-                        <span className="text-[11px] text-primary-500">
-                          Конвертация
-                        </span>
+                        <span className="text-[11px] text-primary-500">Конвертация</span>
                       )}
                     </div>
                     <div className="text-lg font-semibold text-primary-800">
-                      {formatAmountWithCurrency(
-                        convertedBudget,
-                        selectedCurrency as 'RUB' | 'USD'
-                      )}
+                      {formatAmountWithCurrency(convertedBudget, selectedCurrency as 'RUB' | 'USD')}
                     </div>
                     {convertError && (
-                      <div className="mt-2 text-[11px] text-red-600">
-                        {convertError}
-                      </div>
+                      <div className="mt-2 text-[11px] text-red-600">{convertError}</div>
                     )}
                   </div>
                 )}
@@ -338,14 +312,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-blue-800">
-                  Информация
-                </span>
+                <span className="text-sm font-medium text-blue-800">Информация</span>
               </div>
               <p className="text-xs text-blue-700">
-                После сохранения изменений все участники проекта получат
-                уведомление об обновлении. Распределение обязанностей можно
-                настроить в соответствующем разделе.
+                После сохранения изменений все участники проекта получат уведомление об обновлении.
+                Распределение обязанностей можно настроить в соответствующем разделе.
               </p>
             </div>
           </div>
@@ -368,9 +339,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
           {onArchiveAction && archiveActionLabel && (
             <Button
               type="button"
-              variant={
-                archiveActionVariant === 'restore' ? 'primary' : 'danger'
-              }
+              variant={archiveActionVariant === 'restore' ? 'primary' : 'danger'}
               onClick={onArchiveAction}
               disabled={isLoading}
               className={`px-6 py-2 flex items-center ${
@@ -379,12 +348,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                   : 'bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl'
               }`}
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {archiveActionVariant === 'restore' ? (
                   <path
                     strokeLinecap="round"
@@ -411,12 +375,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
             disabled={isLoading}
             className="px-6 py-2 flex items-center"
           >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -432,12 +391,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
             disabled={isLoading || !isFormValid}
             className="px-6 py-2 flex items-center bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800"
           >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

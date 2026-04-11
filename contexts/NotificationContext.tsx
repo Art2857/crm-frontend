@@ -1,11 +1,4 @@
-import React, {
-  createContext,
-  useState,
-  useContext,
-  useCallback,
-  useMemo,
-  ReactNode,
-} from 'react';
+import React, { createContext, useState, useContext, useCallback, useMemo, ReactNode } from 'react';
 
 // Типы уведомлений
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
@@ -27,25 +20,18 @@ interface NotificationContextProps {
 }
 
 // Создаем контекст
-const NotificationContext = createContext<NotificationContextProps | undefined>(
-  undefined
-);
+const NotificationContext = createContext<NotificationContextProps | undefined>(undefined);
 
 // Генерация уникального ID
-const generateId = () =>
-  `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 // Provider компонент
-export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   // Удаление уведомления по ID
   const removeNotification = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
-    );
+    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
   }, []);
 
   // Добавление нового уведомления
@@ -64,7 +50,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
       return id;
     },
-    [removeNotification]
+    [removeNotification],
   );
 
   // Очистка всех уведомлений
@@ -79,23 +65,17 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
       removeNotification,
       clearAll,
     }),
-    [notifications, addNotification, removeNotification, clearAll]
+    [notifications, addNotification, removeNotification, clearAll],
   );
 
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
+  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 };
 
 // Хук для использования контекста
 export const useNotification = () => {
   const context = useContext(NotificationContext);
   if (context === undefined) {
-    throw new Error(
-      'useNotification must be used within a NotificationProvider'
-    );
+    throw new Error('useNotification must be used within a NotificationProvider');
   }
 
   const { addNotification } = context;
@@ -105,7 +85,7 @@ export const useNotification = () => {
     (message: string, duration = 3000) => {
       return addNotification({ type: 'success', message, duration });
     },
-    [addNotification]
+    [addNotification],
   );
 
   const showError = useCallback(
@@ -175,21 +155,21 @@ export const useNotification = () => {
         duration,
       });
     },
-    [addNotification]
+    [addNotification],
   );
 
   const showInfo = useCallback(
     (message: string, duration = 3000) => {
       return addNotification({ type: 'info', message, duration });
     },
-    [addNotification]
+    [addNotification],
   );
 
   const showWarning = useCallback(
     (message: string, duration = 4000) => {
       return addNotification({ type: 'warning', message, duration });
     },
-    [addNotification]
+    [addNotification],
   );
 
   return useMemo(
@@ -200,6 +180,6 @@ export const useNotification = () => {
       showInfo,
       showWarning,
     }),
-    [context, showSuccess, showError, showInfo, showWarning]
+    [context, showSuccess, showError, showInfo, showWarning],
   );
 };

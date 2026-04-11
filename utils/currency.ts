@@ -13,7 +13,7 @@
 function formatNumber(
   value: number | null | undefined,
   decimals: number = 0,
-  useComma: boolean = true
+  useComma: boolean = true,
 ): string {
   // Обработка null/undefined и NaN
   if (value === null || value === undefined || isNaN(Number(value))) {
@@ -56,7 +56,7 @@ function formatNumber(
  */
 export function formatCurrency(
   value: number | string | null | undefined,
-  showDecimals = true
+  showDecimals = true,
 ): string {
   try {
     // Если передана строка, преобразуем в число
@@ -89,7 +89,7 @@ export function formatCurrency(
  */
 export function formatPercentage(
   value: number | string | null | undefined,
-  showDecimals = true
+  showDecimals = true,
 ): string {
   try {
     // Преобразуем строковое значение в число
@@ -110,19 +110,11 @@ export function formatPercentage(
         : numValue;
 
     // Проверка на NaN после преобразования
-    if (
-      valueToFormat !== null &&
-      valueToFormat !== undefined &&
-      isNaN(Number(valueToFormat))
-    ) {
+    if (valueToFormat !== null && valueToFormat !== undefined && isNaN(Number(valueToFormat))) {
       return '0%';
     }
 
-    const formattedValue = formatNumber(
-      valueToFormat,
-      showDecimals ? 4 : 0,
-      true
-    );
+    const formattedValue = formatNumber(valueToFormat, showDecimals ? 4 : 0, true);
     return `${formattedValue}%`;
   } catch (error) {
     console.error('Ошибка при форматировании процента:', error);
@@ -133,7 +125,7 @@ export function formatPercentage(
 export function formatAmountWithCurrency(
   value: number | null | undefined,
   currency: 'RUB' | 'USD',
-  isConfidential?: boolean
+  isConfidential?: boolean,
 ): string {
   if (isConfidential === true) {
     return '***';
@@ -166,7 +158,7 @@ export function formatAmountWithCurrency(
 export function formatPayment(
   price: number | null | undefined,
   percentage: number | null | undefined,
-  calculatedValue: number | null | undefined
+  calculatedValue: number | null | undefined,
 ): string {
   try {
     if (price === null && percentage === null) return 'Остаточная';
@@ -206,7 +198,7 @@ export function formatPaymentWithCurrency(
   price: number | null | undefined,
   percentage: number | null | undefined,
   calculatedValue: number | null | undefined,
-  currency: 'RUB' | 'USD'
+  currency: 'RUB' | 'USD',
 ): string {
   try {
     if (price === null && percentage === null) return 'Остаточная';

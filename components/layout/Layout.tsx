@@ -69,10 +69,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       // Проверяем, был ли клик вне мобильного меню
-      if (
-        !target.closest('.mobile-menu') &&
-        !target.closest('button[aria-expanded]')
-      ) {
+      if (!target.closest('.mobile-menu') && !target.closest('button[aria-expanded]')) {
         setIsMobileMenuOpen(false);
       }
     };
@@ -94,10 +91,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <Link
-                  href="/dashboard"
-                  className="text-xl font-bold text-primary-600"
-                >
+                <Link href="/dashboard" className="text-xl font-bold text-primary-600">
                   CRM Система
                 </Link>
               </div>
@@ -149,12 +143,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     onClick={handleLogout}
                   >
                     <span className="sr-only">Выйти</span>
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -194,9 +183,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* Мобильное меню */}
-        <div
-          className={`${isMobileMenuOpen ? 'block' : 'hidden'} sm:hidden mobile-menu`}
-        >
+        <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} sm:hidden mobile-menu`}>
           <div className="pt-2 pb-3 space-y-1">
             {navigation
               .filter((item) => item.visible)

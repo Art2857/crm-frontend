@@ -58,7 +58,7 @@ export class ApiError extends Error {
       errorMessages?: string[];
       originalError?: any;
       originalData?: any;
-    }
+    },
   ) {
     super(message);
     this.name = 'ApiError';
@@ -78,12 +78,7 @@ interface RequestMap {
 }
 
 // Sanitize data before sending to prevent XSS
-const RAW_STRING_FIELDS = new Set([
-  'password',
-  'currentPassword',
-  'newPassword',
-  'refreshToken',
-]);
+const RAW_STRING_FIELDS = new Set(['password', 'currentPassword', 'newPassword', 'refreshToken']);
 
 const sanitizeRequestData = (data: any): any => {
   if (!data) return data;
@@ -216,16 +211,10 @@ export class ApiClient {
       async (config) => {
         // Пробрасываем выбранный пользователем часовой пояс
         try {
-          const tz =
-            typeof window !== 'undefined'
-              ? localStorage.getItem('app.timezone')
-              : null;
+          const tz = typeof window !== 'undefined' ? localStorage.getItem('app.timezone') : null;
           if (tz && config.headers) {
             (config.headers as any)['X-User-Timezone'] = tz;
-          } else if (
-            config.headers &&
-            !(config.headers as any)['X-User-Timezone']
-          ) {
+          } else if (config.headers && !(config.headers as any)['X-User-Timezone']) {
             (config.headers as any)['X-User-Timezone'] =
               Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
           }
@@ -236,8 +225,7 @@ export class ApiClient {
           // Автообновление истёкшего токена
           try {
             if (token && isJwtExpired(token)) {
-              if (isDevelopment)
-                logger.info('🔄 Access token expired, trying to refresh');
+              if (isDevelopment) logger.info('🔄 Access token expired, trying to refresh');
               const refreshed = await this.tryRefreshTokens();
               if (refreshed) {
                 token = refreshed;
@@ -248,8 +236,7 @@ export class ApiClient {
             }
           } catch (e) {
             // Если рефреш не удался — дадим 401 обработать ниже
-            if (isDevelopment)
-              logger.warn('⚠️ Token refresh failed before request', e);
+            if (isDevelopment) logger.warn('⚠️ Token refresh failed before request', e);
             // Синхронизируем локальную переменную токена после возможной очистки
             token = this.getAuthToken();
           }
@@ -259,14 +246,9 @@ export class ApiClient {
               logger.debug('🔐 Добавляем токен в заголовок для:', config.url);
             }
           } else {
-            logger.warn(
-              '⚠️ Токен не найден для авторизованного запроса, блокируем:',
-              config.url
-            );
+            logger.warn('⚠️ Токен не найден для авторизованного запроса, блокируем:', config.url);
             this.handleUnauthorized();
-            return Promise.reject(
-              new axios.Cancel('No auth token available')
-            );
+            return Promise.reject(new axios.Cancel('No auth token available'));
           }
         }
 
@@ -283,10 +265,7 @@ export class ApiClient {
 
           // Отменяем предыдущий запрос с таким же ключом
           if (this.pendingRequests[requestKey]) {
-            logger.debug(
-              '🔄 Отменяем предыдущий дублированный запрос:',
-              requestKey
-            );
+            logger.debug('🔄 Отменяем предыдущий дублированный запрос:', requestKey);
             this.cancelPendingRequest(requestKey);
           }
 
@@ -298,7 +277,7 @@ export class ApiClient {
 
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     // Перехватчик ответов для обработки ошибок
@@ -318,11 +297,7 @@ export class ApiClient {
       },
       async (error: any) => {
         // Удаляем запрос из списка ожидающих в случае ошибки (для non-GET)
-        if (
-          error.config &&
-          error.config.method &&
-          error.config.method.toUpperCase() !== 'GET'
-        ) {
+        if (error.config && error.config.method && error.config.method.toUpperCase() !== 'GET') {
           const requestKey = this.getRequestKey(error.config);
           delete this.pendingRequests[requestKey];
         }
@@ -336,16 +311,14 @@ export class ApiClient {
         // Попытка авто-рефреша по факту 401
         if (error.response?.status === 401 && this.options.requiresAuth) {
           try {
-            if (isDevelopment)
-              logger.info('🔄 Got 401, trying to refresh and retry');
+            if (isDevelopment) logger.info('🔄 Got 401, trying to refresh and retry');
             const newToken = await this.tryRefreshTokens();
             if (newToken && error.config?.headers) {
               error.config.headers.Authorization = `Bearer ${newToken}`;
               return this.axiosInstance.request(error.config);
             }
           } catch (refreshErr) {
-            if (isDevelopment)
-              logger.warn('❌ Refresh on 401 failed', refreshErr);
+            if (isDevelopment) logger.warn('❌ Refresh on 401 failed', refreshErr);
           }
           // Если обновить не удалось — выполняем централизованный выход
           this.handleUnauthorized();
@@ -365,7 +338,7 @@ export class ApiClient {
         }
 
         return Promise.reject(await this.handleError(error as AxiosError));
-      }
+      },
     );
   }
 
@@ -467,7 +440,7 @@ export class ApiClient {
         {
           isNetworkError: true,
           originalError: error,
-        }
+        },
       );
     }
 
@@ -493,13 +466,10 @@ export class ApiClient {
 
       // Если превышен лимит запросов
       if (status === 429) {
-        return new ApiError(
-          'Слишком много запросов. Пожалуйста, попробуйте позже.',
-          {
-            status,
-            originalError: error,
-          }
-        );
+        return new ApiError('Слишком много запросов. Пожалуйста, попробуйте позже.', {
+          status,
+          originalError: error,
+        });
       }
 
       // Обработка ошибок валидации (чаще всего код 400)
@@ -520,7 +490,7 @@ export class ApiClient {
           }
 
           // Проверяем на наличие объекта errors с детализированными ошибками валидации
-          if ('errors' in data && typeof data.errors === 'object') {
+          if ('errors' in data && typeof data.errors === 'object' && data.errors !== null) {
             for (const [field, messages] of Object.entries(data.errors)) {
               if (Array.isArray(messages)) {
                 errors[field] = Array.from(new Set(messages)); // Удаляем дубликаты
@@ -533,11 +503,10 @@ export class ApiClient {
           // Проверяем на наличие валидационных ошибок напрямую в объекте
           if (
             'validationErrors' in data &&
-            typeof data.validationErrors === 'object'
+            typeof data.validationErrors === 'object' &&
+            data.validationErrors !== null
           ) {
-            for (const [field, messages] of Object.entries(
-              data.validationErrors
-            )) {
+            for (const [field, messages] of Object.entries(data.validationErrors)) {
               if (Array.isArray(messages)) {
                 errors[field] = Array.from(new Set(messages)); // Удаляем дубликаты
               } else if (typeof messages === 'string') {
@@ -565,9 +534,7 @@ export class ApiClient {
         }
 
         errorMessage =
-          typeof data === 'string'
-            ? data
-            : 'Проверьте введённые данные и попробуйте снова';
+          typeof data === 'string' ? data : 'Проверьте введённые данные и попробуйте снова';
       } else if (status === 403) {
         if (
           typeof data === 'object' &&
@@ -583,13 +550,8 @@ export class ApiClient {
         errorMessage = 'Запрашиваемый ресурс не найден';
       } else if (status === 500) {
         errorMessage = 'Внутренняя ошибка сервера. Попробуйте позже';
-      } else if (
-        typeof data === 'object' &&
-        data !== null &&
-        'message' in data
-      ) {
-        errorMessage =
-          typeof data.message === 'string' ? data.message : errorMessage;
+      } else if (typeof data === 'object' && data !== null && 'message' in data) {
+        errorMessage = typeof data.message === 'string' ? data.message : errorMessage;
       } else if (typeof data === 'string') {
         errorMessage = data;
       }
@@ -602,13 +564,10 @@ export class ApiClient {
     } else if (error.request) {
       // Запрос был сделан, но ответ не получен
       logger.error('Запрос сделан, но ответ не получен:', error.request);
-      return new ApiError(
-        'Сервер не отвечает. Проверьте подключение к интернету.',
-        {
-          isNetworkError: true,
-          originalError: error,
-        }
-      );
+      return new ApiError('Сервер не отвечает. Проверьте подключение к интернету.', {
+        isNetworkError: true,
+        originalError: error,
+      });
     } else {
       // Что-то еще пошло не так
       logger.error('Неизвестная ошибка при настройке запроса:', error.message);
@@ -625,10 +584,7 @@ export class ApiClient {
   private getAuthToken(): string | null {
     const token = tokenStorage.getAccessToken();
     if (process.env.NODE_ENV !== 'production') {
-      logger.debug(
-        '🔑 Получение токена:',
-        token ? 'токен найден' : 'токен отсутствует'
-      );
+      logger.debug('🔑 Получение токена:', token ? 'токен найден' : 'токен отсутствует');
     }
     return token;
   }
@@ -656,10 +612,7 @@ export class ApiClient {
     return responseData as T;
   }
 
-  public async get<T>(
-    url: string,
-    config?: AxiosRequestConfig
-  ): Promise<AxiosResponse<T>> {
+  public async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     try {
       const response = await this.axiosInstance.get<T>(url, config);
       return {
@@ -674,7 +627,7 @@ export class ApiClient {
   public async post<T>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<AxiosResponse<T>> {
     try {
       const response = await this.axiosInstance.post<T>(url, data, config);
@@ -690,7 +643,7 @@ export class ApiClient {
   public async put<T>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<AxiosResponse<T>> {
     try {
       const response = await this.axiosInstance.put<T>(url, data, config);
@@ -706,7 +659,7 @@ export class ApiClient {
   public async patch<T>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<AxiosResponse<T>> {
     try {
       const response = await this.axiosInstance.patch<T>(url, data, config);
@@ -719,10 +672,7 @@ export class ApiClient {
     }
   }
 
-  public async delete<T>(
-    url: string,
-    config?: AxiosRequestConfig
-  ): Promise<AxiosResponse<T>> {
+  public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     try {
       const response = await this.axiosInstance.delete<T>(url, config);
       return {

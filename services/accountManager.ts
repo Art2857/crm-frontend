@@ -83,9 +83,7 @@ const getLastUsedTimestamp = (account: SavedAccount): number => {
 
 const mergeAccounts = (primary: SavedAccount, secondary: SavedAccount): SavedAccount => {
   const freshestAccount =
-    getLastUsedTimestamp(primary) >= getLastUsedTimestamp(secondary)
-      ? primary
-      : secondary;
+    getLastUsedTimestamp(primary) >= getLastUsedTimestamp(secondary) ? primary : secondary;
   const oldestAccount = freshestAccount === primary ? secondary : primary;
   const canonicalId =
     getCanonicalAccountId(freshestAccount) ||
@@ -139,9 +137,7 @@ const normalizeSavedAccount = (rawAccount: unknown): NormalizedAccountResult => 
   }
 
   const normalizedLogin =
-    normalizeTextValue(account.user.login) ||
-    normalizeTextValue(account.user.email) ||
-    canonicalId;
+    normalizeTextValue(account.user.login) || normalizeTextValue(account.user.email) || canonicalId;
   const normalizedAccount: SavedAccount = {
     id: canonicalId,
     user: {
@@ -150,8 +146,7 @@ const normalizeSavedAccount = (rawAccount: unknown): NormalizedAccountResult => 
       login: normalizedLogin,
     },
     token: typeof account.token === 'string' ? account.token : '',
-    refreshToken:
-      typeof account.refreshToken === 'string' ? account.refreshToken : '',
+    refreshToken: typeof account.refreshToken === 'string' ? account.refreshToken : '',
     accessTokenExpiresAt:
       typeof account.accessTokenExpiresAt === 'string'
         ? account.accessTokenExpiresAt
@@ -160,10 +155,7 @@ const normalizeSavedAccount = (rawAccount: unknown): NormalizedAccountResult => 
       typeof account.refreshTokenExpiresAt === 'string'
         ? account.refreshTokenExpiresAt
         : EXPIRED_AT_FALLBACK,
-    lastUsed:
-      typeof account.lastUsed === 'string'
-        ? account.lastUsed
-        : new Date(0).toISOString(),
+    lastUsed: typeof account.lastUsed === 'string' ? account.lastUsed : new Date(0).toISOString(),
   };
 
   const changed =
@@ -180,7 +172,7 @@ const normalizeSavedAccount = (rawAccount: unknown): NormalizedAccountResult => 
 
 const dedupeAccounts = (
   accounts: SavedAccount[],
-  currentAccountId: string | null
+  currentAccountId: string | null,
 ): {
   accounts: SavedAccount[];
   currentAccountId: string | null;
@@ -192,7 +184,7 @@ const dedupeAccounts = (
 
   for (const account of accounts) {
     const existingIndex = dedupedAccounts.findIndex((savedAccount) =>
-      areAccountsEquivalent(savedAccount, account)
+      areAccountsEquivalent(savedAccount, account),
     );
 
     if (existingIndex < 0) {
@@ -231,10 +223,7 @@ const dedupeAccounts = (
   };
 };
 
-const persistAccounts = (
-  accounts: SavedAccount[],
-  currentAccountId: string | null
-): void => {
+const persistAccounts = (accounts: SavedAccount[], currentAccountId: string | null): void => {
   if (typeof window === 'undefined') return;
 
   localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
@@ -292,7 +281,7 @@ export const accountManagerService = {
     refreshToken?: string,
     accessTokenExpiresAt?: string,
     refreshTokenExpiresAt?: string,
-    setAsCurrent: boolean = true
+    setAsCurrent: boolean = true,
   ): SavedAccount {
     if (!user) {
       console.error('Attempts to save account with undefined user');
@@ -313,23 +302,18 @@ export const accountManagerService = {
       lastUsed: new Date().toISOString(),
     };
 
-    const matchingAccountIndices = accounts.reduce(
-      (indices: number[], savedAccount, index) => {
-        if (areAccountsEquivalent(savedAccount, account)) {
-          indices.push(index);
-        }
-        return indices;
-      },
-      []
-    );
+    const matchingAccountIndices = accounts.reduce((indices: number[], savedAccount, index) => {
+      if (areAccountsEquivalent(savedAccount, account)) {
+        indices.push(index);
+      }
+      return indices;
+    }, []);
 
     let nextAccounts = [...accounts];
 
     if (matchingAccountIndices.length > 0) {
       const firstMatchingIndex = matchingAccountIndices[0];
-      nextAccounts = nextAccounts.filter(
-        (_, index) => !matchingAccountIndices.includes(index)
-      );
+      nextAccounts = nextAccounts.filter((_, index) => !matchingAccountIndices.includes(index));
       nextAccounts.splice(firstMatchingIndex, 0, account);
     } else {
       nextAccounts.push(account);
@@ -337,12 +321,9 @@ export const accountManagerService = {
 
     const deduped = dedupeAccounts(
       nextAccounts,
-      setAsCurrent ? account.id : this.getCurrentAccountId()
+      setAsCurrent ? account.id : this.getCurrentAccountId(),
     );
-    persistAccounts(
-      deduped.accounts,
-      setAsCurrent ? account.id : deduped.currentAccountId
-    );
+    persistAccounts(deduped.accounts, setAsCurrent ? account.id : deduped.currentAccountId);
 
     // Устанавливаем текущий аккаунт только если это требуется
     if (setAsCurrent) {
@@ -360,20 +341,17 @@ export const accountManagerService = {
       ...user,
       login: normalizeTextValue(user.login) || normalizeTextValue(user.email) || user.id,
     };
-    const matchingAccountIndices = accounts.reduce(
-      (indices: number[], savedAccount, index) => {
-        if (
-          areAccountsEquivalent(savedAccount, {
-            id: user.id,
-            user: normalizedUser,
-          })
-        ) {
-          indices.push(index);
-        }
-        return indices;
-      },
-      []
-    );
+    const matchingAccountIndices = accounts.reduce((indices: number[], savedAccount, index) => {
+      if (
+        areAccountsEquivalent(savedAccount, {
+          id: user.id,
+          user: normalizedUser,
+        })
+      ) {
+        indices.push(index);
+      }
+      return indices;
+    }, []);
 
     if (matchingAccountIndices.length === 0) {
       return;
@@ -471,7 +449,7 @@ export const accountManagerService = {
           const event = new CustomEvent('refreshTokenExpired', {
             detail: {
               login: account.user.login,
-              accountId: account.id
+              accountId: account.id,
             },
           });
           window.dispatchEvent(event);
@@ -493,7 +471,7 @@ export const accountManagerService = {
             response.refresh_token,
             response.access_token_expires_at,
             response.refresh_token_expires_at,
-            true
+            true,
           );
 
           // Dispatch account switched event
@@ -512,7 +490,7 @@ export const accountManagerService = {
             const event = new CustomEvent('refreshTokenExpired', {
               detail: {
                 login: account.user.login,
-                accountId: account.id
+                accountId: account.id,
               },
             });
             window.dispatchEvent(event);

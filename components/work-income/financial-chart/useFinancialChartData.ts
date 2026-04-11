@@ -9,16 +9,16 @@ export const useFinancialChartData = (
   workCurrency: 'RUB' | 'USD',
   workReleaseDate?: string | null,
   totalWorkBudget?: number,
-  distributions?: DistributionWithDetails[]
+  distributions?: DistributionWithDetails[],
 ) => {
   const sortedDistributions = useMemo(() => {
     if (!distributions) return [];
     return [...distributions].sort((a, b) => {
       const dateA = new Date(
-        a.workHistory?.effectiveDate || a.workHistory?.date || a.createdAt
+        a.workHistory?.effectiveDate || a.workHistory?.date || a.createdAt,
       ).getTime();
       const dateB = new Date(
-        b.workHistory?.effectiveDate || b.workHistory?.date || b.createdAt
+        b.workHistory?.effectiveDate || b.workHistory?.date || b.createdAt,
       ).getTime();
       return dateA - dateB;
     });
@@ -29,9 +29,7 @@ export const useFinancialChartData = (
       let activeDist: DistributionWithDetails | null = null;
       for (const dist of sortedDistributions) {
         const distTime = new Date(
-          dist.workHistory?.effectiveDate ||
-            dist.workHistory?.date ||
-            dist.createdAt
+          dist.workHistory?.effectiveDate || dist.workHistory?.date || dist.createdAt,
         ).getTime();
         if (distTime <= timestamp) {
           activeDist = dist;
@@ -132,9 +130,7 @@ export const useFinancialChartData = (
     if (sortedDistributions.length > 0) {
       const firstDist = sortedDistributions[0];
       const firstDistTs = new Date(
-        firstDist.workHistory?.effectiveDate ||
-          firstDist.workHistory?.date ||
-          firstDist.createdAt
+        firstDist.workHistory?.effectiveDate || firstDist.workHistory?.date || firstDist.createdAt,
       ).getTime();
       if (firstDistTs < minTs) minTs = firstDistTs;
     }
@@ -153,7 +149,7 @@ export const useFinancialChartData = (
     // Контрольные точки
     const distributionCheckpoints = sortedDistributions.map((d) => {
       const t = new Date(
-        d.workHistory?.effectiveDate || d.workHistory?.date || d.createdAt
+        d.workHistory?.effectiveDate || d.workHistory?.date || d.createdAt,
       ).getTime();
       return {
         type: 'checkpoint',
@@ -196,9 +192,7 @@ export const useFinancialChartData = (
     distributionCheckpoints.forEach((p) => allUniqueTimestamps.add(p.date));
     monthCheckpoints.forEach((p) => allUniqueTimestamps.add(p.date));
 
-    const sortedTimestamps = Array.from(allUniqueTimestamps).sort(
-      (a, b) => a - b
-    );
+    const sortedTimestamps = Array.from(allUniqueTimestamps).sort((a, b) => a - b);
 
     // Отслеживание текущего месяца для сброса накопления
     let currentMonthKey = '';
@@ -206,8 +200,7 @@ export const useFinancialChartData = (
     let currentIncomeAcc = 0;
     let currentExpenseAcc = 0;
 
-    const finalBudget =
-      totalWorkBudget !== undefined ? totalWorkBudget : tIncome;
+    const finalBudget = totalWorkBudget !== undefined ? totalWorkBudget : tIncome;
 
     const data = sortedTimestamps
       .map((t) => {
@@ -215,11 +208,11 @@ export const useFinancialChartData = (
         const eventData = eventsByDate.get(t);
 
         // Значения по умолчанию
-        let incVal = null;
-        let expVal = null;
+        let incVal: [number, number] | null = null;
+        let expVal: [number, number] | null = null;
         let incomeItems: any[] = [];
         let expenseItems: any[] = [];
-        let isoDate = eventData?.isoDate || new Date(t).toISOString();
+        const isoDate = eventData?.isoDate || new Date(t).toISOString();
 
         const dateObj = new Date(t);
         const monthKey = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
@@ -260,8 +253,7 @@ export const useFinancialChartData = (
           type: eventData ? 'event' : 'checkpoint',
           incomeValue: incVal,
           expenseValue: expVal,
-          plannedExpense:
-            planned > 0 ? -planned : sortedDistributions.length > 0 ? 0 : null,
+          plannedExpense: planned > 0 ? -planned : sortedDistributions.length > 0 ? 0 : null,
           incomeItems: incomeItems.length ? incomeItems : null,
           expenseItems: expenseItems.length ? expenseItems : null,
           accAfter: acc,
@@ -270,21 +262,11 @@ export const useFinancialChartData = (
       })
       .filter(
         (d) =>
-          d.incomeValue ||
-          d.expenseValue ||
-          d.plannedExpense !== null ||
-          d.type === 'checkpoint'
+          d.incomeValue || d.expenseValue || d.plannedExpense !== null || d.type === 'checkpoint',
       );
 
     return { chartData: data, totalIncome: tIncome };
-  }, [
-    incomes,
-    payments,
-    workCurrency,
-    sortedDistributions,
-    workReleaseDate,
-    totalWorkBudget,
-  ]);
+  }, [incomes, payments, workCurrency, sortedDistributions, workReleaseDate, totalWorkBudget]);
 
   return { chartData, totalIncome };
 };

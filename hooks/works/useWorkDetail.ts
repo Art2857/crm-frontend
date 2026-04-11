@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../store';
-import {
-  fetchWorkById,
-  archiveWork,
-  restoreWork,
-} from '../../store/slices/works';
+import { fetchWorkById, archiveWork, restoreWork } from '../../store/slices/works';
 import { fetchAllUsers } from '../../store/slices/users';
 import { fetchAllDuties } from '../../store/slices/duties';
 import { useDataLoader } from '../useDataLoader';
@@ -32,24 +28,18 @@ export function useWorkDetail(id: string) {
 
   const [workHistory, setWorkHistory] = useState<WorkHistory[] | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
-  const [responsibleUserData, setResponsibleUserData] = useState<User | null>(
-    null
-  );
+  const [responsibleUserData, setResponsibleUserData] = useState<User | null>(null);
 
   const loadAllData = useCallback(async () => {
+    if (!user?.role) {
+      throw new Error('Пользователь не аутентифицирован');
+    }
+
     try {
-      const work = await dispatch(
-        fetchWorkById({ role: user.role, workId: id })
-      ).unwrap();
-      if (
-        user?.role === 'ADMIN' ||
-        user?.role === 'MANAGER' ||
-        user?.role === 'WORKER'
-      ) {
+      const work = await dispatch(fetchWorkById({ role: user.role, workId: id })).unwrap();
+      if (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'WORKER') {
         await Promise.all([
-          dispatch(
-            fetchAllUsers({ role: user.role, archivingStatus: 'actual' })
-          ).unwrap(),
+          dispatch(fetchAllUsers({ role: user.role, archivingStatus: 'actual' })).unwrap(),
           dispatch(fetchAllDuties({ role: user.role })).unwrap(),
         ]);
       } else {
@@ -73,7 +63,7 @@ export function useWorkDetail(id: string) {
 
   const initialWorkData = useMemo(() => {
     if (!workData) return undefined;
-    
+
     // Преобразуем дату в формат YYYY-MM-DD для input type="date"
     let releaseDateFormatted = '';
     if (workData.releaseDate) {
@@ -83,7 +73,7 @@ export function useWorkDetail(id: string) {
         releaseDateFormatted = formatDateToISO(dateObj);
       }
     }
-    
+
     return {
       name: workData.name,
       responsibleUserId: workData.responsibleUserId,
@@ -171,9 +161,7 @@ export function useWorkDetail(id: string) {
     if (!responsibleUser && workData && workData.responsibleUserId) {
       const fetchResponsibleUser = async () => {
         try {
-          const response = await privateApi.get<User>(
-            `/users/${workData.responsibleUserId}`
-          );
+          const response = await privateApi.get<User>(`/users/${workData.responsibleUserId}`);
           setResponsibleUserData(response.data);
         } catch (error) {
           // тихо
@@ -192,12 +180,12 @@ export function useWorkDetail(id: string) {
         percentage: string | null;
         currency: 'RUB' | 'USD';
       }>,
-      effectiveDate?: string
+      effectiveDate?: string,
     ) => {
       // Разрешаем пустой список для обнуления распределения
       dutiesManagementHook.createDistribution(duties, effectiveDate);
     },
-    [dutiesManagementHook.createDistribution]
+    [dutiesManagementHook.createDistribution],
   );
 
   const handleFormSubmit = useCallback(
@@ -213,11 +201,7 @@ export function useWorkDetail(id: string) {
         // отобразится формой
       }
     },
-    [
-      workManagementHook.handleSubmit,
-      reloadWorkData,
-      dutiesManagementHook.forceReload,
-    ]
+    [workManagementHook.handleSubmit, reloadWorkData, dutiesManagementHook.forceReload],
   );
 
   const canEditWork = useMemo(() => {
@@ -256,45 +240,37 @@ export function useWorkDetail(id: string) {
   const showOnlyCurrentUserDuties = useMemo(() => {
     if (!user || !workData) return true;
     return (
-      user.role !== 'ADMIN' &&
-      user.role !== 'MANAGER' &&
-      user.role !== 'WORKER' &&
-      !isResponsible
+      user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'WORKER' && !isResponsible
     );
   }, [user, workData, isResponsible]);
 
-  const loadDutiesHistory = useCallback(async (reload = false) => {
-    setIsLoadingHistory(true);
-    try {
-      const historyData = await workService.getHistory(id);
-      setWorkHistory(historyData);
-      if (reload) {
-        await dutiesManagementHook.forceReload();
+  const loadDutiesHistory = useCallback(
+    async (reload = false) => {
+      setIsLoadingHistory(true);
+      try {
+        const historyData = await workService.getHistory(id);
+        setWorkHistory(historyData);
+        if (reload) {
+          await dutiesManagementHook.forceReload();
+        }
+      } catch (error) {
+        notification.showError('Ошибка при загрузке истории обязанностей');
+      } finally {
+        setIsLoadingHistory(false);
       }
-    } catch (error) {
-      notification.showError('Ошибка при загрузке истории обязанностей');
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, [id, notification, dutiesManagementHook.forceReload]);
+    },
+    [id, notification, dutiesManagementHook.forceReload],
+  );
 
   const responsibleName = useMemo(() => {
     if (responsibleUser) {
       const lastName = responsibleUser.lastName || '';
       const firstName = responsibleUser.firstName || '';
-      return (
-        `${lastName} ${firstName}`.trim() ||
-        responsibleUser.email ||
-        'Пользователь'
-      );
+      return `${lastName} ${firstName}`.trim() || responsibleUser.email || 'Пользователь';
     } else if (responsibleUserData) {
       const lastName = responsibleUserData.lastName || '';
       const firstName = responsibleUserData.firstName || '';
-      return (
-        `${lastName} ${firstName}`.trim() ||
-        responsibleUserData.email ||
-        'Пользователь'
-      );
+      return `${lastName} ${firstName}`.trim() || responsibleUserData.email || 'Пользователь';
     }
     return 'Не назначен';
   }, [responsibleUser, responsibleUserData]);

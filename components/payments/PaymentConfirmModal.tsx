@@ -5,11 +5,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { formatCurrency, CurrencyType } from '../../utils/payments';
 import { useDateManager } from '../../hooks/useDateManager';
-import {
-  ExclamationTriangleIcon,
-  BanknotesIcon,
-  CalendarIcon,
-} from '@heroicons/react/24/outline';
+import { ExclamationTriangleIcon, BanknotesIcon, CalendarIcon } from '@heroicons/react/24/outline';
 
 interface PaymentConfirmModalProps {
   isOpen: boolean;
@@ -46,9 +42,7 @@ export default function PaymentConfirmModal({
     .join(', ');
 
   const formattedWorks = workNames.join(', ');
-  const formattedCalculationDate = calculationDate
-    ? formatRussian(calculationDate)
-    : null;
+  const formattedCalculationDate = calculationDate ? formatRussian(calculationDate) : null;
 
   const handleConfirm = () => {
     onConfirm();
@@ -136,17 +130,13 @@ export default function PaymentConfirmModal({
             <Button
               onClick={handleConfirm}
               className={`px-5 py-2 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all ${
-                hasPayment
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
+                hasPayment ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
               }`}
             >
               {hasPayment ? (
                 <>
                   <BanknotesIcon className="h-4 w-4 mr-2" />
-                  {isBulk
-                    ? 'Выплатить/закрыть по всем работам'
-                    : 'Выплатить и закрыть'}
+                  {isBulk ? 'Выплатить/закрыть по всем работам' : 'Выплатить и закрыть'}
                 </>
               ) : (
                 <>

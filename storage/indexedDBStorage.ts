@@ -2,7 +2,7 @@
  * IndexedDB хранилище для котировок валют
  * Реализует интерфейс IExchangeRateStorage
  * Следует принципам SOLID, DRY, KISS
- * 
+ *
  * Single Responsibility: только хранение и получение котировок
  * Open/Closed: легко расширяется новыми операциями
  * Liskov Substitution: реализует интерфейс IExchangeRateStorage
@@ -10,7 +10,11 @@
  * Dependency Inversion: зависит от интерфейсов
  */
 
-import { IExchangeRateStorage, IExchangeRate, IExchangeRateCacheStats } from '../services/exchangeRateService';
+import {
+  IExchangeRateStorage,
+  IExchangeRate,
+  IExchangeRateCacheStats,
+} from '../services/exchangeRateService';
 import { ExchangeRateDate, ExchangeRateDates } from '../utils/exchangeRateDate';
 
 /**
@@ -21,8 +25,8 @@ const DB_CONFIG = {
   version: 3,
   stores: {
     rates: 'exchange_rates',
-    metadata: 'metadata'
-  }
+    metadata: 'metadata',
+  },
 } as const;
 
 /**
@@ -31,7 +35,7 @@ const DB_CONFIG = {
 const METADATA_KEYS = {
   lastUpdate: 'lastUpdate',
   lastSync: 'lastSyncDate',
-  version: 'version'
+  version: 'version',
 } as const;
 
 /**
@@ -52,7 +56,7 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
    */
   private async initialize(): Promise<void> {
     if (this.isInitialized) return;
-    
+
     if (this.initPromise) {
       return this.initPromise;
     }
@@ -75,11 +79,11 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        
+
         // Создаем хранилище котировок с составным ключом [currencyCode, date]
         if (!db.objectStoreNames.contains(DB_CONFIG.stores.rates)) {
           const ratesStore = db.createObjectStore(DB_CONFIG.stores.rates, {
-            keyPath: ['currencyCode', 'date']
+            keyPath: ['currencyCode', 'date'],
           });
           ratesStore.createIndex('currencyCode', 'currencyCode', { unique: false });
           ratesStore.createIndex('date', 'date', { unique: false });
@@ -89,7 +93,7 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
         // Создаем хранилище метаданных
         if (!db.objectStoreNames.contains(DB_CONFIG.stores.metadata)) {
           db.createObjectStore(DB_CONFIG.stores.metadata, {
-            keyPath: 'key'
+            keyPath: 'key',
           });
         }
 
@@ -105,7 +109,7 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
    */
   async getRate(currencyCode: string, date: string): Promise<IExchangeRate | null> {
     await this.ensureInitialized();
-    
+
     const exchangeDate = ExchangeRateDates.fromString(date);
     const key: RateKey = [currencyCode, exchangeDate.value];
 
@@ -132,13 +136,16 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
     await this.ensureInitialized();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DB_CONFIG.stores.rates, DB_CONFIG.stores.metadata], 'readwrite');
+      const transaction = this.db!.transaction(
+        [DB_CONFIG.stores.rates, DB_CONFIG.stores.metadata],
+        'readwrite',
+      );
       const ratesStore = transaction.objectStore(DB_CONFIG.stores.rates);
       const metaStore = transaction.objectStore(DB_CONFIG.stores.metadata);
 
       // Сохраняем котировку
       const rateRequest = ratesStore.put(rate);
-      
+
       // Обновляем метаданные
       const now = new Date().toISOString();
       metaStore.put({ key: METADATA_KEYS.lastUpdate, value: now });
@@ -158,7 +165,11 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
   /**
    * Получает котировки валюты в диапазоне дат
    */
-  async getRatesInRange(currencyCode: string, startDate: string, endDate: string): Promise<IExchangeRate[]> {
+  async getRatesInRange(
+    currencyCode: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<IExchangeRate[]> {
     await this.ensureInitialized();
 
     const start = ExchangeRateDates.fromString(startDate);
@@ -172,18 +183,18 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
 
       request.onsuccess = () => {
         const allRates = request.result as IExchangeRate[];
-        const filteredRates = allRates.filter(rate => {
+        const filteredRates = allRates.filter((rate) => {
           const rateDate = ExchangeRateDates.fromString(rate.date);
           return !rateDate.isBefore(start) && !rateDate.isAfter(end);
         });
-        
+
         // Сортируем по дате (новые сначала)
         filteredRates.sort((a, b) => {
           const dateA = ExchangeRateDates.fromString(a.date);
           const dateB = ExchangeRateDates.fromString(b.date);
           return dateB.toDate().getTime() - dateA.toDate().getTime();
         });
-        
+
         resolve(filteredRates);
       };
 
@@ -208,14 +219,14 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
 
       request.onsuccess = () => {
         const rates = request.result as IExchangeRate[];
-        
+
         // Сортируем по дате (новые сначала)
         rates.sort((a, b) => {
           const dateA = ExchangeRateDates.fromString(a.date);
           const dateB = ExchangeRateDates.fromString(b.date);
           return dateB.toDate().getTime() - dateA.toDate().getTime();
         });
-        
+
         resolve(rates);
       };
 
@@ -233,7 +244,10 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
     await this.ensureInitialized();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DB_CONFIG.stores.rates, DB_CONFIG.stores.metadata], 'readonly');
+      const transaction = this.db!.transaction(
+        [DB_CONFIG.stores.rates, DB_CONFIG.stores.metadata],
+        'readonly',
+      );
       const ratesStore = transaction.objectStore(DB_CONFIG.stores.rates);
       const metaStore = transaction.objectStore(DB_CONFIG.stores.metadata);
 
@@ -258,12 +272,12 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
         completed++;
         if (completed === 2) {
           try {
-            const currencies = Array.from(new Set(allRatesResult.map(r => r.currencyCode)));
-            const dates = allRatesResult.map(r => ExchangeRateDates.fromString(r.date));
-            
+            const currencies = Array.from(new Set(allRatesResult.map((r) => r.currencyCode)));
+            const dates = allRatesResult.map((r) => ExchangeRateDates.fromString(r.date));
+
             let earliest = '';
             let latest = '';
-            
+
             if (dates.length > 0) {
               const sortedDates = ExchangeRateDates.sortAscending(dates);
               earliest = sortedDates[0].value;
@@ -274,7 +288,7 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
               totalRates: allRatesResult.length,
               currencies,
               dateRange: { earliest, latest },
-              lastUpdate: lastUpdateResult?.value || null
+              lastUpdate: lastUpdateResult?.value || null,
             });
           } catch (error) {
             reject(error);
@@ -296,7 +310,10 @@ export class IndexedDBExchangeRateStorage implements IExchangeRateStorage {
     await this.ensureInitialized();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DB_CONFIG.stores.rates, DB_CONFIG.stores.metadata], 'readwrite');
+      const transaction = this.db!.transaction(
+        [DB_CONFIG.stores.rates, DB_CONFIG.stores.metadata],
+        'readwrite',
+      );
       const ratesStore = transaction.objectStore(DB_CONFIG.stores.rates);
       const metaStore = transaction.objectStore(DB_CONFIG.stores.metadata);
 
