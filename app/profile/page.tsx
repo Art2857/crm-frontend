@@ -5,6 +5,7 @@ import { useAppSelector, useAppDispatch } from '../../store';
 import { useRouter } from 'next/navigation';
 import Layout from '../../components/layout/Layout';
 import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 import TimezoneSelector from '../../components/ui/TimezoneSelector';
 import { UpdateProfileDto, UserStatus } from '../../types/user';
 import { updateUserProfile } from '../../store/slices/users';
@@ -16,6 +17,7 @@ import { useTimezone } from '../../contexts/TimezoneContext';
 import Avatar from '../../components/profile/Avatar';
 import { authService } from '../../services/auth';
 import { getTimezoneDisplayLabel } from '../../utils/timezones';
+import { validatePasswordStrength } from '../../utils/password';
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -169,8 +171,9 @@ export default function ProfilePage() {
           setIsSaving(false);
           return;
         }
-        if (passwordForm.newPassword.length < 8) {
-          notification.showError('Новый пароль должен содержать минимум 8 символов');
+        const passwordValidationResult = validatePasswordStrength(passwordForm.newPassword);
+        if (passwordValidationResult !== true) {
+          notification.showError(passwordValidationResult);
           setIsSaving(false);
           return;
         }
@@ -582,41 +585,36 @@ export default function ProfilePage() {
                         Смена пароля (необязательно)
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-2">Текущий пароль</label>
-                          <input
-                            type="password"
-                            value={passwordForm.currentPassword}
-                            onChange={handlePasswordChange}
-                            name="currentPassword"
-                            className="w-full px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-red-500 transition-all duration-200 placeholder-gray-400"
-                            placeholder="••••••••"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-2">Новый пароль</label>
-                          <input
-                            type="password"
-                            value={passwordForm.newPassword}
-                            onChange={handlePasswordChange}
-                            name="newPassword"
-                            className="w-full px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-red-500 transition-all duration-200 placeholder-gray-400"
-                            placeholder="••••••••"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-2">
-                            Подтвердите пароль
-                          </label>
-                          <input
-                            type="password"
-                            value={passwordForm.confirmPassword}
-                            onChange={handlePasswordChange}
-                            name="confirmPassword"
-                            className="w-full px-4 py-3 bg-gray-50 border-0 rounded-lg focus:bg-white focus:ring-2 focus:ring-red-500 transition-all duration-200 placeholder-gray-400"
-                            placeholder="••••••••"
-                          />
-                        </div>
+                        <Input
+                          label="Текущий пароль"
+                          type="password"
+                          value={passwordForm.currentPassword}
+                          onChange={handlePasswordChange}
+                          name="currentPassword"
+                          className="focus:ring-red-500"
+                          placeholder="••••••••"
+                          fullWidth
+                        />
+                        <Input
+                          label="Новый пароль"
+                          type="password"
+                          value={passwordForm.newPassword}
+                          onChange={handlePasswordChange}
+                          name="newPassword"
+                          className="focus:ring-red-500"
+                          placeholder="••••••••"
+                          fullWidth
+                        />
+                        <Input
+                          label="Подтвердите пароль"
+                          type="password"
+                          value={passwordForm.confirmPassword}
+                          onChange={handlePasswordChange}
+                          name="confirmPassword"
+                          className="focus:ring-red-500"
+                          placeholder="••••••••"
+                          fullWidth
+                        />
                       </div>
                     </div>
 

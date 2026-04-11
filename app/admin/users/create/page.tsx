@@ -11,6 +11,11 @@ import Select from '../../../../components/ui/Select';
 import Tooltip from '../../../../components/ui/Tooltip';
 import { Role } from '../../../../types/user';
 import { createUser } from '../../../../store/slices/users';
+import {
+  generateStrongPassword,
+  PASSWORD_REQUIREMENTS,
+  validatePasswordStrength,
+} from '../../../../utils/password';
 
 // Опции для выбора дней зарплаты (1..28 — чтобы одинаково работать для всех месяцев)
 const salaryDayOptions = [
@@ -48,7 +53,6 @@ export default function CreateUserPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | ReactNode>('');
   const [success, setSuccess] = useState('');
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const canManageUsers = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
 
   // Менеджер может создавать только работников
@@ -99,9 +103,7 @@ export default function CreateUserPage() {
       password: {
         required: true,
         minLength: 8,
-        validate: (value) =>
-          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value) ||
-          'Пароль должен содержать не менее 8 символов, включая цифры, специальные символы, заглавные и строчные буквы',
+        validate: (value) => validatePasswordStrength(value),
       },
       firstName: {
         required: true,
@@ -146,49 +148,7 @@ export default function CreateUserPage() {
 
   // Генерация случайного пароля
   const generateRandomPassword = () => {
-    // Используем специальные наборы символов для разных типов
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const numbers = '0123456789';
-    const symbols = '@$!%*?&';
-
-    // Создаем пароль, содержащий минимум по одному символу каждого типа
-    let password = '';
-    password += randomChar(lowercase);
-    password += randomChar(uppercase);
-    password += randomChar(numbers);
-    password += randomChar(symbols);
-
-    // Дополняем пароль до необходимой длины
-    const remainingLength = 8 - password.length;
-    const allChars = lowercase + uppercase + numbers + symbols;
-    for (let i = 0; i < remainingLength; i++) {
-      password += randomChar(allChars);
-    }
-
-    // Перемешиваем символы для большей случайности
-    password = password
-      .split('')
-      .sort(() => 0.5 - Math.random())
-      .join('');
-
-    // Проверяем, что сгенерированный пароль соответствует всем требованиям
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordRegex.test(password)) {
-      // В случае несоответствия (что маловероятно), генерируем снова
-      return generateRandomPassword();
-    }
-
-    // Устанавливаем сгенерированный пароль в форму
-    setValue('password', password);
-
-    // Делаем пароль видимым
-    setIsPasswordVisible(true);
-  };
-
-  // Функция для переключения видимости пароля
-  const togglePasswordVisibility = () => {
-    setIsPasswordVisible(!isPasswordVisible);
+    setValue('password', generateStrongPassword());
   };
 
   useEffect(() => {
@@ -441,11 +401,9 @@ export default function CreateUserPage() {
                           Требования к паролю:
                         </p>
                         <ul className="list-disc list-inside text-[10px] space-y-0.5 text-gray-200">
-                          <li>Минимум 8 символов</li>
-                          <li>Заглавные буквы (A-Z)</li>
-                          <li>Строчные буквы (a-z)</li>
-                          <li>Цифры (0-9)</li>
-                          <li>Спец. символы (@$!%*?&)</li>
+                          {PASSWORD_REQUIREMENTS.map((requirement) => (
+                            <li key={requirement}>{requirement}</li>
+                          ))}
                         </ul>
                       </div>
                     }
@@ -480,7 +438,7 @@ export default function CreateUserPage() {
                       id="password"
                       name="password"
                       required
-                      type={isPasswordVisible ? 'text' : 'password'}
+                      type="password"
                       fullWidth
                       autoComplete="new-password"
                       placeholder="Минимум 8 знаков"
@@ -491,15 +449,6 @@ export default function CreateUserPage() {
                     />
                   </div>
                   <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={togglePasswordVisibility}
-                      className="whitespace-nowrap h-[38px] px-3 text-xs"
-                    >
-                      {isPasswordVisible ? 'Скрыть' : 'Показать'}
-                    </Button>
                     <Button
                       type="button"
                       variant="secondary"
@@ -606,8 +555,3 @@ export default function CreateUserPage() {
     </div>
   );
 }
-
-// Генерация случайного символа из строки
-const randomChar = (str: string): string => {
-  return str.charAt(Math.floor(Math.random() * str.length));
-};

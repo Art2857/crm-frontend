@@ -36,6 +36,36 @@ interface GetAllUsersParams {
   orderDirection?: 'asc' | 'desc';
 }
 
+type CreateUserResponse = User | AuthResponse;
+
+function isDirectUserResponse(value: unknown): value is User {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    'login' in value &&
+    'role' in value
+  );
+}
+
+function extractCreatedUser(data: CreateUserResponse): User {
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'user' in data &&
+    typeof data.user === 'object' &&
+    data.user !== null
+  ) {
+    return data.user as User;
+  }
+
+  if (isDirectUserResponse(data)) {
+    return data;
+  }
+
+  throw new Error('Сервер вернул неожиданный формат созданного пользователя');
+}
+
 export const userService = {
   // Получение списка всех пользователей (только для админа)
   getAll: async (getAllUsersParams: GetAllUsersParams): Promise<User[]> => {
@@ -215,14 +245,8 @@ export const userService = {
   createUser: async (data: CreateUserDto): Promise<User> => {
     try {
       // Если есть токен, используем приватный клиент, чтобы пробросить Authorization
-      const response = await privateApi.post<AuthResponse>(AUTH_ENDPOINTS.register, data);
-      const createdUser = response.data.user;
-
-      if (!createdUser) {
-        throw new Error('Сервер не вернул созданного пользователя');
-      }
-
-      return createdUser;
+      const response = await privateApi.post<CreateUserResponse>(AUTH_ENDPOINTS.register, data);
+      return extractCreatedUser(response.data);
     } catch (error: any) {
       // Подробное логирование для отладки
       logger.error('Ошибка при создании пользователя:', {
@@ -233,6 +257,24 @@ export const userService = {
         validationErrors: error.validationErrors,
         originalData: error.originalData,
       });
+
+      const isStructuredApiError =
+        typeof error === 'object' &&
+        error !== null &&
+        ('status' in error ||
+          'isValidationError' in error ||
+          'response' in error ||
+          'isNetworkError' in error);
+
+      if (!isStructuredApiError && error instanceof Error) {
+        throw error;
+      }
+
+      if (error.isNetworkError) {
+        throw new Error(
+          error.message || 'Нет ответа от сервера. Проверьте подключение к интернету.',
+        );
+      }
 
       // Проверяем есть ли ответ от сервера
       // ApiError имеет свойство status, если ответ получен
@@ -302,8 +344,12 @@ export const userService = {
 
       // Особые случаи ошибок
       if (status === 409) {
-        // Конфликт - обычно, пользователь с таким email уже существует
-        throw new Error(`Пользователь с указанным email уже существует.`);
+        const conflictMessage =
+          typeof responseData?.message === 'string'
+            ? responseData.message
+            : 'Пользователь с таким логином или email уже существует.';
+
+        throw new Error(conflictMessage);
       } else if (status === 500) {
         // Внутренняя ошибка сервера - более информативное сообщение
         const errorMessage =
