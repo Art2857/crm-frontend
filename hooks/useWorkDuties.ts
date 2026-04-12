@@ -7,6 +7,7 @@ import {
 } from '../store/slices/duties';
 import { workService } from '../services/work';
 import { Role } from '../types/user';
+import { getLatestDistribution } from '../utils/distributions';
 
 interface UseWorkDutiesProps {
   workId: string;
@@ -132,11 +133,7 @@ export const useWorkDuties = ({ workId, workSalary, role }: UseWorkDutiesProps) 
 
   // Получаем последнее (текущее) распределение
   const getCurrentDistribution = useCallback(() => {
-    if (!workDistributions || workDistributions.length === 0) return null;
-
-    return [...workDistributions].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )[0];
+    return getLatestDistribution(workDistributions);
   }, [workDistributions]);
 
   // Создание или обновление распределения обязанностей

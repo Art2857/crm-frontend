@@ -843,7 +843,6 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                       <input
                         type="number"
                         step="0.01"
-                        min="0"
                         className={`mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${convertingIndex === index ? 'opacity-50' : ''}`}
                         placeholder="Цена"
                         value={item.price}
@@ -880,7 +879,6 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                     <input
                       type="number"
                       step="1"
-                      min="0"
                       max="100"
                       className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       placeholder="Процент"
@@ -892,8 +890,8 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                         if (e.target.value !== '') {
                           const value = Number(e.target.value);
                           if (!isNaN(value)) {
-                            // Всегда сохраняем как целое число (проценты)
-                            const bounded = Math.max(0, Math.min(100, value));
+                            // Разрешаем отрицательные проценты, но сохраняем верхнюю границу 100%.
+                            const bounded = Math.min(100, value);
                             handleChange(index, 'percentage', toIntString(bounded));
                           }
                         }
@@ -1137,7 +1135,7 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
                     className={`h-2.5 rounded-full ${getProgressColor(totalPercentage)}`}
-                    style={{ width: `${Math.min(totalPercentage, 100)}%` }}
+                    style={{ width: `${Math.max(0, Math.min(totalPercentage, 100))}%` }}
                   ></div>
                 </div>
                 {totalPercentage > 100 && (
