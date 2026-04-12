@@ -20,6 +20,7 @@ import {
 import { useConfirmation } from '../../../../hooks/useConfirmation';
 import { privateApi } from '../../../../services/ApiClient';
 import { useNotification } from '../../../../contexts/NotificationContext';
+import { normalizeBirthday } from '../../../../utils/birthday';
 
 // Опции для выбора дней зарплаты (1..28)
 const salaryDayOptions = [
@@ -56,6 +57,16 @@ type UpdateSensitiveFormData = {
   salaryDay1?: string;
   salaryDay2?: string;
   characteristics?: string;
+};
+
+const formatBirthdayForInput = (birthday?: string | null): string => {
+  const normalizedBirthday = normalizeBirthday(birthday);
+  if (!normalizedBirthday) {
+    return '';
+  }
+
+  const date = new Date(normalizedBirthday);
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
 };
 
 export default function EditUserPage({ params }: { params: { id: string } }) {
@@ -279,28 +290,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         typeof currentUser.birthday,
       );
 
-      if (currentUser.birthday) {
-        try {
-          const date = new Date(currentUser.birthday);
-          // Check if date is valid before using toISOString()
-          if (!isNaN(date.getTime())) {
-            const formattedDate = date.toISOString().split('T')[0];
-            // eslint-disable-next-line no-console
-
-            setProfileValue('birthday', formattedDate);
-          } else {
-            console.warn('Invalid birthday date detected:', currentUser.birthday);
-            setProfileValue('birthday', '');
-          }
-        } catch (e) {
-          console.error('Error formatting birthday date:', e);
-          setProfileValue('birthday', '');
-        }
-      } else {
-        // eslint-disable-next-line no-console
-
-        setProfileValue('birthday', '');
-      }
+      setProfileValue('birthday', formatBirthdayForInput(currentUser.birthday));
 
       setProfileValue('timezone', currentUser.timezone || '');
       setProfileValue('workStart', currentUser.workStart || '');
@@ -341,22 +331,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         setProfileValue('lastName', currentUser.lastName || '');
         setProfileValue('middleName', currentUser.middleName || '');
 
-        if (currentUser.birthday) {
-          try {
-            const date = new Date(currentUser.birthday);
-            // Check if date is valid before using toISOString()
-            if (!isNaN(date.getTime())) {
-              const formattedDate = date.toISOString().split('T')[0];
-              setProfileValue('birthday', formattedDate);
-            } else {
-              console.warn('Invalid birthday date detected:', currentUser.birthday);
-              setProfileValue('birthday', '');
-            }
-          } catch (e) {
-            console.error('Error formatting birthday date:', e);
-            setProfileValue('birthday', '');
-          }
-        }
+        setProfileValue('birthday', formatBirthdayForInput(currentUser.birthday));
       } else {
         // Перезаполняем форму конфиденциальных данных исходными данными
         setSensitiveValue('login', currentUser.login);
@@ -523,22 +498,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           setProfileValue('lastName', currentUser.lastName || '');
           setProfileValue('middleName', currentUser.middleName || '');
 
-          if (currentUser.birthday) {
-            try {
-              const date = new Date(currentUser.birthday);
-              // Check if date is valid before using toISOString()
-              if (!isNaN(date.getTime())) {
-                const formattedDate = date.toISOString().split('T')[0];
-                setProfileValue('birthday', formattedDate);
-              } else {
-                console.warn('Invalid birthday date detected:', currentUser.birthday);
-                setProfileValue('birthday', '');
-              }
-            } catch (e) {
-              console.error('Error formatting birthday date:', e);
-              setProfileValue('birthday', '');
-            }
-          }
+          setProfileValue('birthday', formatBirthdayForInput(currentUser.birthday));
         }
       } else if (updateUserSensitiveData.rejected.match(resultAction) && resultAction.payload) {
         setServerError(resultAction.payload as string);

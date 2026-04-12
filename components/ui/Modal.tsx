@@ -13,6 +13,7 @@ interface ModalProps {
   };
   className?: string;
   closeOnBackdropClick?: boolean;
+  unstyled?: boolean;
 }
 
 // Функция для управления классом body, который блокирует прокрутку
@@ -63,6 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
   position,
   className = '',
   closeOnBackdropClick = true,
+  unstyled = false,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const isInitialRender = useRef(true);
@@ -170,6 +172,8 @@ export const Modal: React.FC<ModalProps> = ({
   // Если модальное окно закрыто или еще не смонтировано, ничего не рендерим
   if (!isOpen || !isMounted) return null;
 
+  const modalSurfaceClassName = unstyled ? className : `bg-white rounded-md shadow-lg ${className}`;
+
   const modalContent = (
     <>
       {/* Тёмный фон за модальным окном */}
@@ -186,7 +190,7 @@ export const Modal: React.FC<ModalProps> = ({
       {position ? (
         <div
           ref={modalRef}
-          className={`bg-white rounded-md shadow-lg ${className}`}
+          className={modalSurfaceClassName}
           style={modalStyle}
           onClick={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
@@ -198,7 +202,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           <div
             ref={modalRef}
-            className={`bg-white rounded-md shadow-lg ${className}`}
+            className={modalSurfaceClassName}
             onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}

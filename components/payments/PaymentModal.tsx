@@ -67,10 +67,15 @@ export default function PaymentModal({
   if (!payment) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="p-0 max-w-lg mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh]">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      unstyled
+      className="overflow-hidden rounded-2xl bg-transparent shadow-none"
+    >
+      <div className="w-[min(760px,92vw)] overflow-hidden rounded-2xl bg-gradient-to-r from-green-600 to-blue-600 shadow-2xl">
         {/* Стильный заголовок с градиентом */}
-        <div className="bg-gradient-to-r from-green-600 to-blue-600 p-4 text-white">
+        <div className="p-4 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="bg-white/20 p-2 rounded-lg">
@@ -98,7 +103,7 @@ export default function PaymentModal({
         </div>
 
         {/* Форма */}
-        <div className="p-4 overflow-y-auto max-h-[75vh]">
+        <div className="modal-scrollbar max-h-[calc(88vh-84px)] overflow-y-auto bg-white p-5 pr-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Информация о получателе */}
             <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-3 border border-gray-200">

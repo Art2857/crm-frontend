@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import Select from '../ui/Select';
 import CurrencySwitch from '../ui/CurrencySwitch';
 import TextArea from '../ui/TextArea';
 import {
@@ -210,10 +209,15 @@ export default function CustomPaymentModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="p-0 max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] overflow-y-auto">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      unstyled
+      className="overflow-hidden rounded-2xl bg-transparent shadow-none"
+    >
+      <div className="w-[min(600px,92vw)] overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 shadow-2xl">
         {/* Стильный заголовок с градиентом */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
+        <div className="p-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="bg-white/20 p-2 rounded-lg">
@@ -241,124 +245,171 @@ export default function CustomPaymentModal({
         </div>
 
         {/* Форма */}
-        <div className="p-6">
+        <div className="modal-scrollbar max-h-[calc(88vh-96px)] overflow-y-auto bg-white px-5 py-4 pr-4">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Работа */}
-            <div className="space-y-2">
-              <label className="flex items-center text-sm font-semibold text-gray-700">
-                <BuildingOfficeIcon className="h-4 w-4 mr-2 text-blue-500" />
+            <div className="grid items-start gap-2 md:grid-cols-[110px_minmax(0,1fr)] md:gap-3">
+              <label className="flex items-center pt-2.5 text-sm font-semibold text-gray-700">
+                <BuildingOfficeIcon className="mr-2 h-4 w-4 text-blue-500" />
                 Работа
               </label>
-              <div className="relative">
-                <Select
-                  value={selectedWorkId}
-                  onChange={(e) => {
-                    setSelectedWorkId(e.target.value);
-                    setSelectedUserId('');
-                    setErrors((prev) => {
-                      const { work, ...rest } = prev;
-                      return rest;
-                    });
-                  }}
-                  error={errors.work}
-                  options={[
-                    { value: '', label: 'Выберите работу...' },
-                    ...works.map((work) => ({
-                      value: work.id,
-                      label: work.name,
-                    })),
-                  ]}
-                  className="pl-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                  fullWidth
-                  required
-                />
+              <div className="min-w-0">
+                <div className="relative">
+                  <select
+                    value={selectedWorkId}
+                    onChange={(e) => {
+                      setSelectedWorkId(e.target.value);
+                      setSelectedUserId('');
+                      setErrors((prev) => {
+                        const { work, ...rest } = prev;
+                        return rest;
+                      });
+                    }}
+                    className={`w-full appearance-none rounded-xl border-2 bg-gray-50 px-4 py-3 pr-10 text-base text-gray-900 transition-all focus:outline-none focus:ring-2 focus:ring-blue-200 ${
+                      errors.work
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:border-blue-500'
+                    }`}
+                    required
+                  >
+                    <option value="">Выберите работу...</option>
+                    {works.map((work) => (
+                      <option key={work.id} value={work.id}>
+                        {work.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                {errors.work && <p className="mt-1 text-xs text-red-600">{errors.work}</p>}
               </div>
             </div>
 
             {/* Получатель */}
             {selectedWorkId && (
-              <div className="space-y-2">
-                <label className="flex items-center text-sm font-semibold text-gray-700">
-                  <UserIcon className="h-4 w-4 mr-2 text-purple-500" />
-                  Получатель выплаты
+              <div className="grid items-start gap-2 md:grid-cols-[110px_minmax(0,1fr)] md:gap-3">
+                <label className="flex items-center pt-2.5 text-sm font-semibold text-gray-700">
+                  <UserIcon className="mr-2 h-4 w-4 text-purple-500" />
+                  Получатель
                 </label>
-                <div className="relative">
-                  <Select
-                    value={selectedUserId}
-                    onChange={(e) => {
-                      setSelectedUserId(e.target.value);
-                      setErrors((prev) => {
-                        const { user, ...rest } = prev;
-                        return rest;
-                      });
-                    }}
-                    error={errors.user}
-                    options={[
-                      { value: '', label: 'Выберите получателя...' },
-                      ...executers.map((user) => ({
-                        value: user.id,
-                        label: buildExecuterLabel(user),
-                      })),
-                    ]}
-                    className="pl-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
-                    fullWidth
-                    required
-                  />
-                </div>
-
-                {selectedUser && (
-                  <div className="flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50 px-4 py-3">
-                    <Avatar user={selectedUser} size="small" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900">
-                        {`${selectedUser.firstName || ''} ${selectedUser.lastName || ''}`.trim() ||
-                          selectedUser.email ||
-                          selectedUser.login}
-                      </p>
-                      <p className="truncate text-xs text-gray-500">
-                        {selectedUser.email || selectedUser.login}
-                      </p>
+                <div className="min-w-0">
+                  <div className="relative">
+                    <select
+                      value={selectedUserId}
+                      onChange={(e) => {
+                        setSelectedUserId(e.target.value);
+                        setErrors((prev) => {
+                          const { user, ...rest } = prev;
+                          return rest;
+                        });
+                      }}
+                      className={`w-full appearance-none rounded-xl border-2 bg-gray-50 px-4 py-3 pr-10 text-base text-gray-900 transition-all focus:outline-none focus:ring-2 focus:ring-purple-200 ${
+                        errors.user
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:border-purple-500'
+                      }`}
+                      required
+                    >
+                      <option value="">Выберите получателя...</option>
+                      {executers.map((executer) => (
+                        <option key={executer.id} value={executer.id}>
+                          {buildExecuterLabel(executer)}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
                     </div>
                   </div>
-                )}
+                  {errors.user && <p className="mt-1 text-xs text-red-600">{errors.user}</p>}
+
+                  {selectedUser && (
+                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50 px-4 py-3">
+                      <Avatar user={selectedUser} size="small" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {`${selectedUser.firstName || ''} ${selectedUser.lastName || ''}`.trim() ||
+                            selectedUser.email ||
+                            selectedUser.login}
+                        </p>
+                        <p className="truncate text-xs text-gray-500">
+                          {selectedUser.email || selectedUser.login}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Сумма */}
             {selectedUserId && (
-              <div className="space-y-2">
+              <div className="grid items-start gap-2 md:grid-cols-[110px_minmax(0,1fr)] md:gap-3">
                 <label
                   htmlFor="customAmount"
-                  className="flex items-center text-sm font-semibold text-gray-700"
+                  className="flex items-center pt-2.5 text-sm font-semibold text-gray-700"
                 >
-                  <CurrencyDollarIcon className="h-4 w-4 mr-2 text-green-500" />
-                  Сумма выплаты
+                  <CurrencyDollarIcon className="mr-2 h-4 w-4 text-green-500" />
+                  Сумма
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-lg">{currency === 'USD' ? '$' : '₽'}</span>
+                <div className="min-w-0">
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                      <span className="text-lg text-gray-500">
+                        {currency === 'USD' ? '$' : '₽'}
+                      </span>
+                    </div>
+                    <input
+                      id="customAmount"
+                      type="number"
+                      value={amount}
+                      onChange={(e) => {
+                        setAmount(e.target.value);
+                        setErrors((prev) => {
+                          const { amount, ...rest } = prev;
+                          return rest;
+                        });
+                      }}
+                      placeholder="0"
+                      className={`w-full rounded-xl border-2 bg-gray-50 py-3 pl-8 pr-24 text-lg text-gray-900 transition-all focus:outline-none focus:ring-2 focus:ring-green-200 ${
+                        errors.amount
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:border-green-500'
+                      }`}
+                      required
+                    />
+                    <div className="absolute inset-y-0 right-2 flex items-center">
+                      <CurrencySwitch
+                        value={currency}
+                        onChange={setCurrency}
+                        size="sm"
+                        className="border-gray-200 bg-white shadow-sm"
+                      />
+                    </div>
                   </div>
-                  <Input
-                    id="customAmount"
-                    type="number"
-                    value={amount}
-                    onChange={(e) => {
-                      setAmount(e.target.value);
-                      setErrors((prev) => {
-                        const { amount, ...rest } = prev;
-                        return rest;
-                      });
-                    }}
-                    error={errors.amount}
-                    placeholder="0"
-                    className="pl-8 pr-4 py-3 text-lg rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all w-full"
-                    required
-                  />
-                  <div className="absolute inset-y-0 right-2 flex items-center">
-                    <CurrencySwitch value={currency} onChange={setCurrency} size="sm" />
-                  </div>
+                  {errors.amount && <p className="mt-1 text-xs text-red-600">{errors.amount}</p>}
                 </div>
-                {/* TODO: показать долг, когда будет API */}
               </div>
             )}
 

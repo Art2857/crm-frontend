@@ -72,6 +72,7 @@ export default function ResponsibleWorkGroup({
 
   // Если все работы в группе скрыты — totals тоже скрыты
   const allConfidential = group.works.every((w) => w.isConfidential === true);
+  const showFinancialAnalytics = !allConfidential;
 
   // Сортируем работы внутри группы по доходу
   const sortedWorks = [...group.works].sort((a, b) => b.income - a.income);
@@ -144,37 +145,34 @@ export default function ResponsibleWorkGroup({
                   <BuildingOfficeIcon className="h-4 w-4" />
                   <span>Работ: {group.totals.worksCount}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <ArchiveBoxIcon className="h-4 w-4" />
-                  <span>{showArchived ? 'Архивные работы' : 'Активные работы'}</span>
-                </div>
               </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-            <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-              {summaryMetrics.map((metric) => (
-                <div
-                  key={metric.key}
-                  className="min-w-0 rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100"
-                >
-                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-gray-500">
-                    {metric.label}
+            {showFinancialAnalytics && (
+              <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+                {summaryMetrics.map((metric) => (
+                  <div key={metric.key} className="min-w-0 px-4 py-3">
+                    <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-gray-500">
+                      {metric.label}
+                    </div>
+                    <div
+                      className={`mt-1 text-base sm:text-lg font-semibold truncate ${metric.valueClass}`}
+                    >
+                      {formatAmountWithCurrency(metric.value, totalsCurrency)}
+                    </div>
                   </div>
-                  <div
-                    className={`mt-1 text-base sm:text-lg font-semibold truncate ${metric.valueClass}`}
-                  >
-                    {formatAmountWithCurrency(metric.value, totalsCurrency, allConfidential)}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             <div className="flex flex-row items-center justify-between gap-3 xl:flex-col xl:justify-center">
-              <div onClick={(e) => e.stopPropagation()}>
-                <CurrencySwitch value={totalsCurrency} onChange={setTotalsCurrency} size="sm" />
-              </div>
+              {showFinancialAnalytics && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <CurrencySwitch value={totalsCurrency} onChange={setTotalsCurrency} size="sm" />
+                </div>
+              )}
 
               <button
                 type="button"
@@ -182,12 +180,12 @@ export default function ResponsibleWorkGroup({
                   e.stopPropagation();
                   onToggle();
                 }}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-all duration-200 hover:bg-gray-50"
               >
                 {isExpanded ? (
-                  <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+                  <ChevronDownIcon className="h-5 w-5" />
                 ) : (
-                  <ChevronRightIcon className="h-5 w-5 text-gray-500" />
+                  <ChevronRightIcon className="h-5 w-5" />
                 )}
               </button>
             </div>
@@ -206,9 +204,6 @@ export default function ResponsibleWorkGroup({
                 <div className="flex items-center justify-between mb-3">
                   <div className="min-w-0">
                     <div className="font-medium text-gray-900">{work.name}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Ответственный: {work.responsibleUserName || group.responsibleUserName}
-                    </div>
                   </div>
                   <button
                     onClick={() => onViewWork(work.id)}
@@ -224,44 +219,75 @@ export default function ResponsibleWorkGroup({
                     </svg>
                   </button>
                 </div>
-                <div className="space-y-3 mb-4">
-                  {/* Финансовые карточки для мобильного */}
-                  <div className="grid grid-cols-1 gap-2">
-                    {/* Доход */}
-                    <div
-                      className={`flex items-center justify-between ${
-                        work.isConfidential
-                          ? 'bg-gray-50 border-gray-200'
-                          : work.income >= 0
-                            ? 'bg-emerald-50 border-emerald-200'
-                            : 'bg-red-50 border-red-200'
-                      } border rounded-lg p-3`}
-                    >
-                      <div className="flex items-center space-x-2">
+                {work.isConfidential !== true && (
+                  <div className="mb-4 space-y-3">
+                    <div className="grid grid-cols-1 gap-2">
+                      <div
+                        className={`flex items-center justify-between ${
+                          work.income >= 0
+                            ? 'border-emerald-200 bg-emerald-50'
+                            : 'border-red-200 bg-red-50'
+                        } rounded-lg border p-3`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className={`flex h-6 w-6 items-center justify-center rounded-md ${
+                              work.income >= 0 ? 'bg-emerald-500' : 'bg-red-500'
+                            }`}
+                          >
+                            {work.income >= 0 ? (
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          <span
+                            className={`text-sm font-medium ${
+                              work.income >= 0 ? 'text-emerald-700' : 'text-red-700'
+                            }`}
+                          >
+                            Доход
+                          </span>
+                        </div>
                         <div
-                          className={`w-6 h-6 ${
-                            work.isConfidential
-                              ? 'bg-gray-400'
-                              : work.income >= 0
-                                ? 'bg-emerald-500'
-                                : 'bg-red-500'
-                          } rounded-md flex items-center justify-center`}
+                          className={`font-semibold ${
+                            work.income >= 0 ? 'text-emerald-800' : 'text-red-800'
+                          }`}
                         >
-                          {work.income >= 0 ? (
-                            <svg
-                              className="w-3 h-3 text-white"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                              />
-                            </svg>
-                          ) : (
+                          {formatAmountWithCurrency(
+                            work.originalIncome ?? Number(work.income || 0),
+                            work.currency === 'USD' ? 'USD' : 'RUB',
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 p-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-rose-500">
                             <svg
                               className="w-3 h-3 text-white"
                               fill="none"
@@ -275,98 +301,48 @@ export default function ResponsibleWorkGroup({
                                 d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
                               />
                             </svg>
-                          )}
+                          </div>
+                          <span className="text-sm font-medium text-rose-700">Расходы</span>
                         </div>
-                        <span
-                          className={`text-sm font-medium ${
-                            work.isConfidential
-                              ? 'text-gray-500'
-                              : work.income >= 0
-                                ? 'text-emerald-700'
-                                : 'text-red-700'
-                          }`}
-                        >
-                          Доход
-                        </span>
-                      </div>
-                      <div
-                        className={`font-semibold ${
-                          work.isConfidential
-                            ? 'text-gray-500'
-                            : work.income >= 0
-                              ? 'text-emerald-800'
-                              : 'text-red-800'
-                        }`}
-                      >
-                        {formatAmountWithCurrency(
-                          work.originalIncome ?? Number(work.income || 0),
-                          work.currency === 'USD' ? 'USD' : 'RUB',
-                          work.isConfidential,
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Расходы */}
-                    <div className="flex items-center justify-between bg-rose-50 border border-rose-200 rounded-lg p-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-rose-500 rounded-md flex items-center justify-center">
-                          <svg
-                            className="w-3 h-3 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                            />
-                          </svg>
-                        </div>
-                        <span className="text-sm font-medium text-rose-700">Расходы</span>
-                      </div>
-                      <div className="font-semibold text-rose-800">
-                        {formatAmountWithCurrency(
-                          work.originalExpenses ?? Number(work.expenses || 0),
-                          work.currency === 'USD' ? 'USD' : 'RUB',
-                          work.isConfidential,
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Зарплата */}
-                    <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center">
-                          <svg
-                            className="w-3 h-3 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                            />
-                          </svg>
-                        </div>
-                        <span className="text-sm font-medium text-blue-700">Зарплата</span>
-                      </div>
-                      <div className="flex items-center gap-2 font-semibold text-blue-800">
-                        <span>
+                        <div className="font-semibold text-rose-800">
                           {formatAmountWithCurrency(
-                            work.originalSalary ?? Number(work.salary || 0),
+                            work.originalExpenses ?? Number(work.expenses || 0),
                             work.currency === 'USD' ? 'USD' : 'RUB',
-                            work.isConfidential,
                           )}
-                        </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500">
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                              />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-blue-700">Зарплата</span>
+                        </div>
+                        <div className="flex items-center gap-2 font-semibold text-blue-800">
+                          <span>
+                            {formatAmountWithCurrency(
+                              work.originalSalary ?? Number(work.salary || 0),
+                              work.currency === 'USD' ? 'USD' : 'RUB',
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
@@ -376,9 +352,13 @@ export default function ResponsibleWorkGroup({
               <thead className="bg-gray-100">
                 <tr>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">Работа</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Доход</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Расходы</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">Зарплата</th>
+                  {showFinancialAnalytics && (
+                    <>
+                      <th className="text-right py-3 px-4 font-medium text-gray-700">Доход</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-700">Расходы</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-700">Зарплата</th>
+                    </>
+                  )}
                   <th className="text-center py-3 px-4 font-medium text-gray-700 w-12"></th>
                 </tr>
               </thead>
@@ -390,41 +370,55 @@ export default function ResponsibleWorkGroup({
                   >
                     <td className="py-3 px-4">
                       <div className="font-medium text-gray-900">{work.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Ответственный: {work.responsibleUserName || group.responsibleUserName}
-                      </div>
                     </td>
-                    <td
-                      className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : work.income >= 0 ? 'text-emerald-600' : 'text-red-900'}`}
-                    >
-                      {formatAmountWithCurrency(
-                        work.originalIncome ?? Number(work.income || 0),
-                        work.currency === 'USD' ? 'USD' : 'RUB',
-                        work.isConfidential,
-                      )}
-                    </td>
-                    <td
-                      className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : 'text-red-900'}`}
-                    >
-                      {formatAmountWithCurrency(
-                        work.originalExpenses ?? Number(work.expenses || 0),
-                        work.currency === 'USD' ? 'USD' : 'RUB',
-                        work.isConfidential,
-                      )}
-                    </td>
-                    <td
-                      className={`py-3 px-4 text-right font-medium ${work.isConfidential ? 'text-gray-400' : 'text-blue-700'}`}
-                    >
-                      <div className="inline-flex items-center gap-3 justify-end">
-                        <span>
-                          {formatAmountWithCurrency(
-                            work.originalSalary ?? Number(work.salary || 0),
-                            work.currency === 'USD' ? 'USD' : 'RUB',
-                            work.isConfidential,
-                          )}
-                        </span>
-                      </div>
-                    </td>
+                    {showFinancialAnalytics && (
+                      <>
+                        <td
+                          className={`py-3 px-4 text-right font-medium ${
+                            work.isConfidential === true
+                              ? 'text-transparent'
+                              : work.income >= 0
+                                ? 'text-emerald-600'
+                                : 'text-red-900'
+                          }`}
+                        >
+                          {work.isConfidential === true
+                            ? ''
+                            : formatAmountWithCurrency(
+                                work.originalIncome ?? Number(work.income || 0),
+                                work.currency === 'USD' ? 'USD' : 'RUB',
+                              )}
+                        </td>
+                        <td
+                          className={`py-3 px-4 text-right font-medium ${
+                            work.isConfidential === true ? 'text-transparent' : 'text-red-900'
+                          }`}
+                        >
+                          {work.isConfidential === true
+                            ? ''
+                            : formatAmountWithCurrency(
+                                work.originalExpenses ?? Number(work.expenses || 0),
+                                work.currency === 'USD' ? 'USD' : 'RUB',
+                              )}
+                        </td>
+                        <td
+                          className={`py-3 px-4 text-right font-medium ${
+                            work.isConfidential === true ? 'text-transparent' : 'text-blue-700'
+                          }`}
+                        >
+                          <div className="inline-flex items-center gap-3 justify-end">
+                            <span>
+                              {work.isConfidential === true
+                                ? ''
+                                : formatAmountWithCurrency(
+                                    work.originalSalary ?? Number(work.salary || 0),
+                                    work.currency === 'USD' ? 'USD' : 'RUB',
+                                  )}
+                            </span>
+                          </div>
+                        </td>
+                      </>
+                    )}
                     <td className="py-3 px-4 text-center w-12">
                       <button
                         onClick={() => onViewWork(work.id)}

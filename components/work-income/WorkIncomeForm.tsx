@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { BanknotesIcon, CalendarDaysIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import Button from '../ui/Button';
 import {
   WorkIncome,
@@ -31,6 +32,7 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEditing = !!income;
+  const selectedCurrency = CURRENCY_OPTIONS.find((option) => option.value === formData.currency);
 
   // Инициализация формы при редактировании
   useEffect(() => {
@@ -131,62 +133,78 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Сумма */}
-      <div>
-        <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-          Сумма поступления *
-        </label>
-        <div className="relative">
-          <input
-            type="number"
-            id="amount"
-            value={formData.amount}
-            onChange={(e) => handleChange('amount', e.target.value)}
-            step="0.01"
-            min="0"
-            max="1000000000"
-            placeholder="Введите сумму"
-            className={`block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
-              errors.amount
-                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                : 'border-gray-300'
-            }`}
-            disabled={isSubmitting}
-          />
-        </div>
-        {errors.amount && <p className="mt-1 text-sm text-red-600">{errors.amount}</p>}
-      </div>
-
-      {/* Валюта */}
-      <div>
-        <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-2">
-          Валюта *
-        </label>
-        <select
-          id="currency"
-          value={formData.currency}
-          onChange={(e) => handleChange('currency', e.target.value as 'RUB' | 'USD')}
-          className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
-            errors.currency
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-300'
-          }`}
-          disabled={isSubmitting}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid items-start gap-2 md:grid-cols-[110px_minmax(0,1fr)] md:gap-3">
+        <label
+          htmlFor="amount"
+          className="flex items-center pt-2.5 text-sm font-semibold text-gray-700"
         >
-          {CURRENCY_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label} ({option.symbol})
-            </option>
-          ))}
-        </select>
-        {errors.currency && <p className="mt-1 text-sm text-red-600">{errors.currency}</p>}
+          <BanknotesIcon className="mr-2 h-4 w-4 text-emerald-500" />
+          Сумма
+        </label>
+        <div className="min-w-0">
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <span className="text-lg text-gray-500">{selectedCurrency?.symbol || '₽'}</span>
+            </div>
+            <input
+              type="number"
+              id="amount"
+              value={formData.amount}
+              onChange={(e) => handleChange('amount', e.target.value)}
+              step="0.01"
+              min="0"
+              max="1000000000"
+              placeholder="Введите сумму"
+              className={`w-full rounded-xl border-2 bg-gray-50 py-3 pl-8 pr-24 text-lg text-gray-900 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-200 ${
+                errors.amount || errors.currency
+                  ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                  : 'border-gray-200 focus:border-emerald-500'
+              }`}
+              disabled={isSubmitting}
+            />
+            <div className="absolute inset-y-0 right-2 flex items-center">
+              <div className="inline-flex select-none items-stretch overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
+                <button
+                  type="button"
+                  className={`flex items-center justify-center px-2 text-[11px] transition-colors ${
+                    formData.currency === 'RUB'
+                      ? 'bg-primary-200 text-black'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                  onClick={() => handleChange('currency', 'RUB')}
+                  disabled={isSubmitting}
+                >
+                  RUB
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center justify-center px-2 text-[11px] transition-colors ${
+                    formData.currency === 'USD'
+                      ? 'bg-primary-200 text-black'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                  onClick={() => handleChange('currency', 'USD')}
+                  disabled={isSubmitting}
+                >
+                  USD
+                </button>
+              </div>
+            </div>
+          </div>
+          {(errors.amount || errors.currency) && (
+            <p className="mt-1 text-sm text-red-600">{errors.amount || errors.currency}</p>
+          )}
+        </div>
       </div>
 
-      {/* Дата поступления */}
-      <div>
-        <label htmlFor="receivedDate" className="block text-sm font-medium text-gray-700 mb-2">
-          Дата поступления *
+      <div className="space-y-2">
+        <label
+          htmlFor="receivedDate"
+          className="flex items-center text-sm font-semibold text-gray-700"
+        >
+          <CalendarDaysIcon className="mr-2 h-4 w-4 text-indigo-500" />
+          Дата поступления
         </label>
         <input
           type="date"
@@ -194,19 +212,22 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
           value={formData.receivedDate}
           onChange={(e) => handleChange('receivedDate', e.target.value)}
           max={getCurrentDateISO()}
-          className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
+          className={`w-full rounded-lg border-2 bg-white px-3 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
             errors.receivedDate
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-300'
+              ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+              : 'border-gray-200 focus:border-indigo-500'
           }`}
           disabled={isSubmitting}
         />
-        {errors.receivedDate && <p className="mt-1 text-sm text-red-600">{errors.receivedDate}</p>}
+        {errors.receivedDate && <p className="text-sm text-red-600">{errors.receivedDate}</p>}
       </div>
 
-      {/* Описание */}
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="space-y-2">
+        <label
+          htmlFor="description"
+          className="flex items-center text-sm font-semibold text-gray-700"
+        >
+          <DocumentTextIcon className="mr-2 h-4 w-4 text-sky-500" />
           Описание
         </label>
         <textarea
@@ -216,14 +237,14 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
           rows={3}
           maxLength={500}
           placeholder="Опишите поступление средств (необязательно)"
-          className={`block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
+          className={`w-full resize-none rounded-lg border-2 bg-white px-3 py-2.5 text-sm placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-sky-200 ${
             errors.description
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-300'
+              ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+              : 'border-gray-200 focus:border-sky-500'
           }`}
           disabled={isSubmitting}
         />
-        <div className="mt-1 flex justify-between items-center">
+        <div className="flex items-center justify-between">
           {errors.description ? (
             <p className="text-sm text-red-600">{errors.description}</p>
           ) : (
@@ -233,13 +254,23 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
         </div>
       </div>
 
-      {/* Кнопки */}
-      <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Отменить
+      <div className="flex justify-end space-x-3 border-t border-gray-100 pt-4">
+        <Button
+          type="button"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-600 transition-all hover:bg-gray-200"
+        >
+          Отмена
         </Button>
-        <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {isEditing ? 'Сохранить изменения' : 'Добавить запись'}
+        <Button
+          type="submit"
+          isLoading={isSubmitting}
+          disabled={isSubmitting}
+          className="rounded-lg bg-gradient-to-r from-emerald-600 to-blue-600 px-6 py-2 font-semibold text-white shadow-lg transition-all hover:from-emerald-700 hover:to-blue-700 hover:shadow-xl"
+        >
+          <BanknotesIcon className="mr-2 h-4 w-4" />
+          {isEditing ? 'Сохранить изменения' : 'Добавить поступление'}
         </Button>
       </div>
     </form>

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import Button from '../ui/Button';
 import { DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
-import { formatDateForDisplay } from '../../utils/date';
+import { formatDateForDisplay, formatDateToISO } from '../../utils/date';
 import { formatAmountWithCurrency } from '../../utils/currency';
 import { WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
@@ -105,10 +105,15 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   // Состояние для редактирования effectiveDate
   const [editingEffectiveDate, setEditingEffectiveDate] = useState<string | null>(null);
   const [tempDate, setTempDate] = useState<string>('');
+  const [distributionDateValues, setDistributionDateValues] = useState<Record<string, string>>({});
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
   // Состояние для управления сворачиванием/разворачиванием групп
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  React.useEffect(() => {
+    setDistributionDateValues({});
+  }, [distributions]);
 
   // Функции для управления сворачиванием/разворачиванием
   const toggleGroupExpansion = (groupKey: string) => {
@@ -350,17 +355,34 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     setTempDate('');
   };
 
-  const saveEffectiveDate = async (distribution: DistributionWithDetails) => {
-    if (!tempDate) return;
+  const getDateInputValue = (value?: string | null) => {
+    return formatDateToISO(value);
+  };
+
+  const saveEffectiveDate = async (distribution: DistributionWithDetails, nextDate: string) => {
+    const distributionId = distribution.workHistory.id;
+    const currentDate = getDateInputValue(distribution.workHistory.effectiveDate);
+
+    setDistributionDateValues((prev) => ({
+      ...prev,
+      [distributionId]: nextDate,
+    }));
+
+    if (!nextDate) {
+      setDistributionDateValues((prev) => ({
+        ...prev,
+        [distributionId]: currentDate,
+      }));
+      return;
+    }
+
+    if (nextDate === currentDate) return;
 
     setIsUpdating(true);
     try {
-      await workService.updateWorkHistory(distribution.workHistory.id, {
-        effectiveDate: tempDate,
+      await workService.updateWorkHistory(distributionId, {
+        effectiveDate: nextDate,
       });
-
-      setEditingEffectiveDate(null);
-      setTempDate('');
 
       // Вызываем callback для обновления данных
       if (onUpdate) {
@@ -368,6 +390,10 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
       }
     } catch (error) {
       console.error('Ошибка при обновлении даты вступления в силу:', error);
+      setDistributionDateValues((prev) => ({
+        ...prev,
+        [distributionId]: currentDate,
+      }));
     } finally {
       setIsUpdating(false);
     }
@@ -428,12 +454,12 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
         </div>
 
         {/* Ключевая информация */}
-        <div className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100">
+        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-green-600 text-lg">📅</span>
+              <span className="text-gray-500 text-lg">📅</span>
               <div>
-                <div className="text-sm text-green-700 font-medium">Вступило в силу</div>
+                <div className="text-sm font-medium text-gray-600">Вступило в силу</div>
                 <div className="flex items-center gap-2">
                   {editingEffectiveDate === workHistoryItem.id ? (
                     <div className="flex items-center gap-2">
@@ -441,7 +467,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                         type="date"
                         value={tempDate}
                         onChange={(e) => setTempDate(e.target.value)}
-                        className="text-sm border border-green-300 rounded-md px-2 py-1 focus:ring-green-500 focus:border-green-500"
+                        className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:ring-gray-400 focus:border-gray-400"
                         disabled={isUpdating}
                       />
                       <Button
@@ -449,7 +475,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                         variant="primary"
                         onClick={() => saveEffectiveDateWorkHistory(workHistoryItem)}
                         disabled={isUpdating || !tempDate}
-                        className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700"
+                        className="text-xs px-2 py-1 bg-gray-900 hover:bg-gray-800"
                       >
                         ✓
                       </Button>
@@ -465,7 +491,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-xl font-bold text-green-800">
+                      <span className="text-xl font-bold text-gray-900">
                         {workHistoryItem.effectiveDate
                           ? formatDateForDisplay(workHistoryItem.effectiveDate)
                           : 'Не указано'}
@@ -480,7 +506,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                               workHistoryItem.effectiveDate,
                             )
                           }
-                          className="text-xs px-2 py-1 border-green-300 text-green-700 hover:bg-green-50"
+                          className="text-xs px-2 py-1 border-gray-300 text-gray-700 hover:bg-gray-100"
                           title="Редактировать дату вступления в силу"
                         >
                           ✏️
@@ -555,6 +581,17 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
     const prevDistribution = getNextDistributionItem();
     const differences = getDifferences(distribution, prevDistribution);
+    const responsibleUser = distribution.workHistory.responsibleUserId
+      ? usersMap[distribution.workHistory.responsibleUserId]
+      : null;
+    const responsibleUserName = responsibleUser
+      ? `${responsibleUser.lastName || ''} ${responsibleUser.firstName || ''}`.trim() ||
+        responsibleUser.email ||
+        'Не указан'
+      : '';
+    const distributionEffectiveDate =
+      distributionDateValues[distribution.workHistory.id] ??
+      getDateInputValue(distribution.workHistory.effectiveDate);
 
     // Фильтруем детали: для WORKER (isConfidential) показываем только его обязанности
     const filteredDetails =
@@ -564,111 +601,49 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
 
     return (
       <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-        {/* Главный заголовок с типом изменения */}
-        <div className="px-6 py-4 bg-green-50 border-b border-green-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 text-sm font-medium">👥</span>
-                </div>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900">Распределение обязанностей</h4>
-                <p className="text-sm text-green-600 font-medium">
-                  {distribution.workHistory.name}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Зарплата</div>
-              <div className="text-lg font-semibold text-gray-900">
+        <div className="border-b border-gray-200 bg-white px-6 py-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-500">Зарплата:</span>
+              <span className="font-semibold text-gray-900">
                 {formatAmountWithCurrency(
                   Number(distribution.workHistory.salary || 0),
                   (distribution.workHistory.currency as 'RUB' | 'USD') || workCurrency || 'RUB',
                   isConfidential,
                 )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Ключевая информация */}
-        <div className="px-6 py-4 bg-gradient-to-r from-emerald-50 to-green-50 border-b border-emerald-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-emerald-600 text-lg">📅</span>
-              <div>
-                <div className="text-sm text-emerald-700 font-medium">Вступило в силу</div>
-                <div className="flex items-center gap-2">
-                  {editingEffectiveDate === distribution.workHistory.id ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="date"
-                        value={tempDate}
-                        onChange={(e) => setTempDate(e.target.value)}
-                        className="text-sm border border-emerald-300 rounded-md px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500"
-                        disabled={isUpdating}
-                      />
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        onClick={() => saveEffectiveDate(distribution)}
-                        disabled={isUpdating || !tempDate}
-                        className="text-xs px-2 py-1 bg-emerald-600 hover:bg-emerald-700"
-                      >
-                        ✓
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={cancelEditingEffectiveDate}
-                        disabled={isUpdating}
-                        className="text-xs px-2 py-1"
-                      >
-                        ✕
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl font-bold text-emerald-800">
-                        {distribution.workHistory.effectiveDate
-                          ? formatDateForDisplay(distribution.workHistory.effectiveDate)
-                          : 'Не указано'}
-                      </span>
-                      {canEdit && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            startEditingEffectiveDate(
-                              distribution.workHistory.id,
-                              distribution.workHistory.effectiveDate,
-                            )
-                          }
-                          className="text-xs px-2 py-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                          title="Редактировать дату вступления в силу"
-                        >
-                          ✏️
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+              </span>
             </div>
 
-            {/* Ответственный */}
-            {distribution.workHistory.responsibleUserId &&
-              usersMap[distribution.workHistory.responsibleUserId] && (
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">Ответственный</div>
-                  <div className="text-sm font-medium text-gray-900">
-                    {`${usersMap[distribution.workHistory.responsibleUserId].lastName || ''} ${usersMap[distribution.workHistory.responsibleUserId].firstName || ''}`.trim() ||
-                      usersMap[distribution.workHistory.responsibleUserId].email}
-                  </div>
-                </div>
+            {responsibleUser && (
+              <div className="min-w-0 flex items-center gap-2 text-sm">
+                <span className="text-gray-500">Ответственный:</span>
+                <span
+                  className="max-w-[220px] truncate font-semibold text-gray-900"
+                  title={responsibleUserName || undefined}
+                >
+                  {responsibleUserName}
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-gray-500">Вступило в силу:</span>
+              {canEdit ? (
+                <input
+                  type="date"
+                  value={distributionEffectiveDate}
+                  onChange={(e) => saveEffectiveDate(distribution, e.target.value)}
+                  className="min-w-[180px] rounded-lg border-0 bg-gray-100 px-4 py-3 text-sm font-medium text-gray-900 transition-all duration-200 focus:bg-white focus:ring-2 focus:ring-primary-500"
+                  disabled={isUpdating}
+                />
+              ) : (
+                <span className="font-semibold text-gray-900">
+                  {distribution.workHistory.effectiveDate
+                    ? formatDateForDisplay(distribution.workHistory.effectiveDate)
+                    : 'Не указано'}
+                </span>
               )}
+            </div>
           </div>
         </div>
 
@@ -858,18 +833,18 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             groupedHistory.map((group, groupIndex) => (
               <div key={group.date} className="relative">
                 {/* Улучшенный заголовок группы */}
-                <div className="sticky top-0 z-10 bg-white border border-emerald-200 rounded-lg px-6 py-4 mb-6 shadow-sm">
+                <div className="sticky top-0 z-10 bg-white border border-gray-200 rounded-lg px-6 py-4 mb-6 shadow-sm">
                   <div className="flex items-center space-x-3">
                     <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                        <span className="text-emerald-600 text-sm font-medium">📅</span>
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        <span className="text-gray-600 text-sm font-medium">📅</span>
                       </div>
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-emerald-800">
+                      <h4 className="text-lg font-bold text-gray-900">
                         Вступили в силу: {group.formattedDate}
                       </h4>
-                      <p className="text-sm text-emerald-600">
+                      <p className="text-sm text-gray-600">
                         {group.items.length}{' '}
                         {group.items.length === 1
                           ? 'изменение'

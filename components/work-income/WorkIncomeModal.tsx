@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import {
   WorkIncome,
   CreateWorkIncomeRequest,
@@ -8,6 +9,7 @@ import {
 } from '../../types/work-income';
 import WorkIncomeForm from './WorkIncomeForm';
 import Notification from '../ui/Notification';
+import Modal from '../ui/Modal';
 
 interface WorkIncomeModalProps {
   isOpen: boolean;
@@ -37,88 +39,69 @@ const WorkIncomeModal: React.FC<WorkIncomeModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        {/* Overlay */}
-        <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-          onClick={onClose}
-        ></div>
-
-        {/* Modal Panel */}
-        <div className="inline-block align-bottom bg-white rounded-lg shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          {/* Header */}
-          <div className="bg-white px-6 py-4 border-b border-gray-200 rounded-t-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="bg-primary-100 rounded-lg p-2 mr-3">
-                  <svg
-                    className="w-6 h-6 text-primary-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {isEditing ? 'Редактировать запись о доходе' : 'Добавить запись о доходе'}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {isEditing
-                      ? 'Измените данные о поступлении средств'
-                      : 'Добавьте информацию о поступлении средств по работе'}
-                  </p>
-                </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      unstyled
+      className="overflow-hidden rounded-2xl bg-transparent shadow-none"
+    >
+      <div className="w-[min(600px,92vw)] overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-blue-600 shadow-2xl">
+        <div className="p-4 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="rounded-lg bg-white/20 p-2">
+                <ArrowTrendingUpIcon className="h-5 w-5" />
               </div>
-              <button
-                onClick={onClose}
-                disabled={isSubmitting}
-                className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-full p-1 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+              <div>
+                <h3 className="text-lg font-bold">
+                  {isEditing ? 'Редактирование поступления' : 'Добавление поступления'}
+                </h3>
+                <p className="text-xs text-emerald-100">
+                  {isEditing
+                    ? 'Обновите данные о поступивших средствах'
+                    : 'Зафиксируйте новое поступление по работе'}
+                </p>
+              </div>
             </div>
-          </div>
-
-          {/* Content */}
-          <div className="bg-white px-6 py-4">
-            {/* Уведомления внутри модального окна */}
-            {(error || successMessage) && (
-              <div className="mb-4">
-                <Notification
-                  successMessage={successMessage || ''}
-                  errorMessage={error || ''}
-                  onClearSuccess={onClearMessages || (() => {})}
-                  onClearError={onClearMessages || (() => {})}
+            <button
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="rounded-lg p-1 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
                 />
-              </div>
-            )}
-
-            <WorkIncomeForm
-              workId={workId}
-              income={income}
-              isSubmitting={isSubmitting}
-              onSubmit={onSubmit}
-              onCancel={onClose}
-            />
+              </svg>
+            </button>
           </div>
         </div>
+
+        <div className="modal-scrollbar max-h-[calc(88vh-84px)] overflow-y-auto bg-white p-4 pr-4">
+          {(error || successMessage) && (
+            <div className="mb-4">
+              <Notification
+                successMessage={successMessage || ''}
+                errorMessage={error || ''}
+                onClearSuccess={onClearMessages || (() => {})}
+                onClearError={onClearMessages || (() => {})}
+              />
+            </div>
+          )}
+
+          <WorkIncomeForm
+            workId={workId}
+            income={income}
+            isSubmitting={isSubmitting}
+            onSubmit={onSubmit}
+            onCancel={onClose}
+          />
+        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

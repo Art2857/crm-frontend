@@ -5,6 +5,7 @@ import Layout from '../../components/layout/Layout';
 import { useDashboard } from '../../hooks/dashboard/useDashboard';
 import UserSummaryCard from '../../components/dashboard/UserSummaryCard';
 import { formatDateToISO } from '../../utils/date';
+import { normalizeBirthday } from '../../utils/birthday';
 import WorkDutiesTable from '../../components/dashboard/WorkDutiesTable';
 import PaymentHistoryTab from '../../components/payments/PaymentHistoryTab';
 import { BriefcaseIcon, BanknotesIcon } from '@heroicons/react/24/outline';
@@ -13,6 +14,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'works' | 'history'>('works');
   const { user, data, isLoading, fullName, age, formatSalaryDay, formatReleaseDate } =
     useDashboard();
+  const birthday = normalizeBirthday(user?.birthday);
 
   // Показываем загрузку, если нет пользователя или данные загружаются
   if (!user || isLoading) {
@@ -30,7 +32,6 @@ export default function DashboardPage() {
     return (
       <Layout>
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 border-b pb-4">Ваша панель</h1>
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-10 text-center">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
@@ -54,16 +55,14 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto pb-8 pt-2 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Ваша панель</h1>
-
-        <div className="mb-10">
+      <div className="max-w-7xl mx-auto px-4 pb-8 pt-6 sm:px-6 lg:px-8">
+        <div className="mb-8">
           <UserSummaryCard
             fullName={fullName}
             login={user.login}
             salary={data.salary}
             salaryDayText={formatSalaryDay(user.salaryDays)}
-            birthdayText={formatDateToISO(user.birthday) || undefined}
+            birthdayText={birthday ? formatDateToISO(birthday) || undefined : undefined}
             ageText={age ? `${age} лет` : undefined}
           />
         </div>

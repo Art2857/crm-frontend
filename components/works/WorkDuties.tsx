@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
 import { formatDateForDisplay } from '../../utils/date';
-import { formatPaymentWithCurrency } from '../../utils/currency';
+import { formatAmountWithCurrency, formatPaymentWithCurrency } from '../../utils/currency';
 import { useUsersMap } from '../../hooks/shared/useUsersMap';
 
 interface WorkDutiesProps {
@@ -47,6 +47,39 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
 
     return latestDistribution.details;
   }, [latestDistribution, showOnlyCurrentUser, currentUserId]);
+
+  const totalsByCurrency = useMemo(() => {
+    return filteredDetails.reduce(
+      (accumulator, detail) => {
+        const detailCurrency = detail.currency || detail.duty.currency;
+        const numericCalculatedValue = detail.calculatedValue
+          ? parseFloat(detail.calculatedValue)
+          : Number.NaN;
+
+        if (Number.isNaN(numericCalculatedValue)) {
+          return accumulator;
+        }
+
+        accumulator[detailCurrency] += numericCalculatedValue;
+        return accumulator;
+      },
+      { RUB: 0, USD: 0 } as Record<'RUB' | 'USD', number>,
+    );
+  }, [filteredDetails]);
+
+  const totalsSummary = useMemo(() => {
+    const segments: string[] = [];
+
+    if (totalsByCurrency.RUB > 0) {
+      segments.push(formatAmountWithCurrency(totalsByCurrency.RUB, 'RUB'));
+    }
+
+    if (totalsByCurrency.USD > 0) {
+      segments.push(formatAmountWithCurrency(totalsByCurrency.USD, 'USD'));
+    }
+
+    return segments.join(' + ');
+  }, [totalsByCurrency]);
 
   if (!latestDistribution) {
     return (
@@ -206,6 +239,17 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
                   </tr>
                 );
               })}
+              <tr className="bg-gray-50">
+                <td
+                  colSpan={2}
+                  className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900"
+                >
+                  Расходы на обслуживание проекта
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                  {totalsSummary || '0 ₽'}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

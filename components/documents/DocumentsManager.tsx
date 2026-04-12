@@ -1,29 +1,26 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Download, Eye, File, FileImage, FileText, Plus, Trash2 } from 'lucide-react';
+
+import { useNotification } from '../../contexts/NotificationContext';
+import { useConfirmation } from '../../hooks/useConfirmation';
+import { formatDateForDisplay } from '../../utils/date';
+import { documentsService, UserDocument } from '../../services/documents';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Modal from '../ui/Modal';
-import { useNotification } from '../../contexts/NotificationContext';
-import { documentsService, UserDocument } from '../../services/documents';
-import { Eye, Download, Trash, X } from 'lucide-react';
-import { useConfirmation } from '../../hooks/useConfirmation';
-import { useDocumentsStaging } from '../../contexts/DocumentsStagingContext';
 
 type Mode = 'user' | 'work';
 
-interface Props {
+interface DocumentsManagerProps {
   mode: Mode;
   entityId: string;
-  label?: string;
-  // Если true, добавления/удаления выполняются локально и применяются только при коммите
-  deferred?: boolean;
-  // Регистрирует обработчики, чтобы родитель мог закоммитить или отменить отложенные изменения
-  onRegisterDeferredHandlers?: (handlers: {
-    commit: () => Promise<void>;
-    discard: () => void;
-    hasPending: () => boolean;
-  }) => void;
+  title?: string;
+  description?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  canManage?: boolean;
 }
 
 const ACCEPT_TYPES = [
@@ -42,43 +39,106 @@ const WORD_DOCUMENT_TYPES = new Set([
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
+const PDF_DOCUMENT_TYPES = new Set(['application/pdf']);
 
 function isWordDocument(mimeType?: string | null): boolean {
   return mimeType !== undefined && mimeType !== null ? WORD_DOCUMENT_TYPES.has(mimeType) : false;
 }
 
-export default function DocumentsManager({ mode, entityId, label = 'Документы' }: Props) {
+function isPdfDocument(mimeType?: string | null): boolean {
+  return mimeType !== undefined && mimeType !== null ? PDF_DOCUMENT_TYPES.has(mimeType) : false;
+}
+
+function isImageDocument(mimeType?: string | null): boolean {
+  return typeof mimeType === 'string' ? mimeType.startsWith('image/') : false;
+}
+
+function formatFileSize(size: number): string {
+  if (size < 1024) {
+    return `${size} Б`;
+  }
+
+  const units = ['КБ', 'МБ', 'ГБ'];
+  let value = size / 1024;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: value >= 10 ? 0 : 1,
+    maximumFractionDigits: 1,
+  }).format(value)} ${units[unitIndex]}`;
+}
+
+function getDefaultDocumentName(fileName: string): string {
+  const segments = fileName.split('.');
+  if (segments.length === 1) {
+    return fileName;
+  }
+
+  segments.pop();
+  return segments.join('.');
+}
+
+function getDocumentPresentation(mimeType?: string | null) {
+  if (isImageDocument(mimeType)) {
+    return {
+      icon: FileImage,
+      iconClassName: 'text-emerald-600',
+      containerClassName: 'bg-emerald-50 ring-1 ring-emerald-100',
+      badgeLabel: 'Изображение',
+      badgeClassName: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+    };
+  }
+
+  if (isPdfDocument(mimeType)) {
+    return {
+      icon: FileText,
+      iconClassName: 'text-rose-600',
+      containerClassName: 'bg-rose-50 ring-1 ring-rose-100',
+      badgeLabel: 'PDF',
+      badgeClassName: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
+    };
+  }
+
+  if (isWordDocument(mimeType)) {
+    return {
+      icon: FileText,
+      iconClassName: 'text-blue-600',
+      containerClassName: 'bg-blue-50 ring-1 ring-blue-100',
+      badgeLabel: 'Word',
+      badgeClassName: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
+    };
+  }
+
+  return {
+    icon: File,
+    iconClassName: 'text-gray-600',
+    containerClassName: 'bg-gray-100 ring-1 ring-gray-200',
+    badgeLabel: 'Файл',
+    badgeClassName: 'bg-gray-100 text-gray-700 ring-1 ring-gray-200',
+  };
+}
+
+export default function DocumentsManager({
+  mode,
+  entityId,
+  title = 'Документы',
+  description = 'Управляйте документами и файлами, связанными с этой сущностью.',
+  emptyTitle = 'Документов пока нет',
+  emptyDescription = 'Добавьте первый документ, чтобы он появился в списке.',
+  canManage = true,
+}: DocumentsManagerProps) {
   const notification = useNotification();
-  const staging = useDocumentsStaging();
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [addName, setAddName] = useState('');
   const [addFile, setAddFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState<UserDocument | null>(null);
-  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
-
-  // Состояние отложенного режима (локальное накопление изменений)
-  const [pendingAdds, setPendingAdds] = useState<
-    Array<{ tempId: string; name: string; file: File }>
-  >([]);
-  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
-  const committingRef = useRef(false);
-
-  const deleteConfirm = useConfirmation<string>(async (id: string) => {
-    try {
-      await documentsService.delete(id);
-      notification.showSuccess('Документ удален');
-      setIsDownloadOpen(false);
-      await fetchDocs();
-    } catch (err: any) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to delete document', err);
-      const msg = err?.originalData?.message || err?.message || 'Не удалось удалить документ';
-      notification.showError(msg, 8000);
-    }
-  });
 
   const fetchDocs = useCallback(async () => {
     try {
@@ -89,8 +149,6 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
           : await documentsService.listForWork(entityId);
       setDocuments(list);
     } catch (err: any) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load documents', err);
       const msg = err?.originalData?.message || err?.message || 'Не удалось загрузить документы';
       notification.showError(msg, 8000);
     } finally {
@@ -102,21 +160,123 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
     void fetchDocs();
   }, [fetchDocs]);
 
-  const onOpenAdd = () => {
+  const previewDocument = useCallback(
+    async (doc: UserDocument) => {
+      let previewWindow: Window | null = null;
+
+      try {
+        if (isWordDocument(doc.mimeType)) {
+          previewWindow = window.open('', '_blank');
+          if (!previewWindow) {
+            notification.showError('Разрешите открытие новой вкладки для предпросмотра документа');
+            return;
+          }
+
+          previewWindow.document.write(
+            '<div style="font-family: Arial, sans-serif; padding: 16px;">Загрузка документа...</div>',
+          );
+
+          const html = await documentsService.getPreviewHtml(doc.id);
+          previewWindow.document.open();
+          previewWindow.document.write(html);
+          previewWindow.document.close();
+          return;
+        }
+
+        const { url } = await documentsService.getPreviewUrl(doc.id);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } catch (err: any) {
+        if (previewWindow && !previewWindow.closed) {
+          previewWindow.close();
+        }
+
+        const msg =
+          err?.originalData?.message ||
+          err?.message ||
+          'Не удалось получить ссылку на предпросмотр';
+        notification.showError(msg, 8000);
+      }
+    },
+    [notification],
+  );
+
+  const downloadDocument = useCallback(
+    async (doc: UserDocument) => {
+      try {
+        const { url, filename } = await documentsService.getDownloadUrl(doc.id);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename || doc.originalName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (err: any) {
+        const msg = err?.originalData?.message || err?.message || 'Не удалось скачать документ';
+        notification.showError(msg, 8000);
+      }
+    },
+    [notification],
+  );
+
+  const downloadAllDocuments = useCallback(async () => {
+    try {
+      const blob =
+        mode === 'user'
+          ? await documentsService.downloadUserZip(entityId)
+          : await documentsService.downloadWorkZip(entityId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${mode}-${entityId}-documents.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      const msg =
+        err?.originalData?.message || err?.message || 'Не удалось скачать архив документов';
+      notification.showError(msg, 8000);
+    }
+  }, [entityId, mode, notification]);
+
+  const deleteConfirm = useConfirmation<UserDocument>(async (doc) => {
+    try {
+      await documentsService.delete(doc.id);
+      notification.showSuccess('Документ удален');
+      await fetchDocs();
+    } catch (err: any) {
+      const msg = err?.originalData?.message || err?.message || 'Не удалось удалить документ';
+      notification.showError(msg, 8000);
+    }
+  });
+
+  const openAddModal = useCallback(() => {
     setAddName('');
     setAddFile(null);
     setIsAddOpen(true);
-  };
+  }, []);
 
-  const onSaveAdd = async () => {
+  const closeAddModal = useCallback(() => {
+    if (saving) {
+      return;
+    }
+
+    setIsAddOpen(false);
+    setAddName('');
+    setAddFile(null);
+  }, [saving]);
+
+  const saveDocument = useCallback(async () => {
     if (!addFile) {
       notification.showError('Пожалуйста, выберите файл');
       return;
     }
+
     if (addName.trim().length === 0) {
       notification.showError('Пожалуйста, укажите название документа');
       return;
     }
+
     if (!ACCEPT_TYPES.includes(addFile.type)) {
       notification.showError('Недопустимый тип файла');
       return;
@@ -124,21 +284,7 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
 
     try {
       setSaving(true);
-      const isDeferred =
-        staging.isDeferred && staging.mode === mode && staging.entityId === entityId;
-      if (isDeferred) {
-        setPendingAdds((prev) => [
-          ...prev,
-          {
-            tempId: `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-            name: addName.trim(),
-            file: addFile,
-          },
-        ]);
-        setIsAddOpen(false);
-        notification.showSuccess('Документ добавлен в черновик изменений');
-        return;
-      }
+
       if (mode === 'user') {
         await documentsService.uploadForUser({
           userId: entityId,
@@ -152,374 +298,224 @@ export default function DocumentsManager({ mode, entityId, label = 'Докуме
           file: addFile,
         });
       }
-      setIsAddOpen(false);
+
       notification.showSuccess('Документ успешно загружен');
+      closeAddModal();
       await fetchDocs();
     } catch (err: any) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to upload document', err);
       const msg = err?.originalData?.message || err?.message || 'Не удалось загрузить документ';
       notification.showError(msg, 8000);
     } finally {
       setSaving(false);
     }
-  };
+  }, [addFile, addName, closeAddModal, entityId, fetchDocs, mode, notification]);
 
-  const onClickDoc = (doc: any) => {
-    setSelectedDoc(doc);
-    setIsDownloadOpen(true);
-  };
-
-  const onDownload = async () => {
-    if (!selectedDoc) return;
-    try {
-      if ((selectedDoc as any).__pending) {
-        const local: any = selectedDoc as any;
-        const url = URL.createObjectURL(local.file);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = local.name || local.file?.name || 'document';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        setIsDownloadOpen(false);
-        return;
-      }
-      const { url, filename } = await documentsService.getDownloadUrl(selectedDoc.id);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename || selectedDoc.originalName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setIsDownloadOpen(false);
-    } catch (err: any) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to get download URL', err);
-      const msg =
-        err?.originalData?.message || err?.message || 'Не удалось получить ссылку на файл';
-      notification.showError(msg, 8000);
+  const documentsCountLabel = useMemo(() => {
+    const count = documents.length;
+    if (count === 1) {
+      return '1 документ';
     }
-  };
-
-  const onPreview = async () => {
-    if (!selectedDoc) return;
-    let previewWindow: Window | null = null;
-
-    try {
-      if ((selectedDoc as any).__pending) {
-        const local: any = selectedDoc as any;
-        const url = URL.createObjectURL(local.file);
-        window.open(url, '_blank', 'noopener,noreferrer');
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-        setIsDownloadOpen(false);
-        return;
-      }
-      if (isWordDocument(selectedDoc.mimeType)) {
-        previewWindow = window.open('', '_blank');
-        if (!previewWindow) {
-          notification.showError('Разрешите открытие новой вкладки для предпросмотра документа');
-          return;
-        }
-
-        previewWindow.document.write(
-          '<div style="font-family: Arial, sans-serif; padding: 16px;">Загрузка документа...</div>',
-        );
-
-        const html = await documentsService.getPreviewHtml(selectedDoc.id);
-        previewWindow.document.open();
-        previewWindow.document.write(html);
-        previewWindow.document.close();
-        setIsDownloadOpen(false);
-        return;
-      }
-
-      const { url } = await documentsService.getPreviewUrl(selectedDoc.id);
-      window.open(url, '_blank', 'noopener,noreferrer');
-      setIsDownloadOpen(false);
-    } catch (err: any) {
-      if (previewWindow && !previewWindow.closed) {
-        previewWindow.close();
-      }
-      // eslint-disable-next-line no-console
-      console.error('Failed to get preview URL', err);
-      const msg =
-        err?.originalData?.message || err?.message || 'Не удалось получить ссылку на предпросмотр';
-      notification.showError(msg, 8000);
+    if (count >= 2 && count <= 4) {
+      return `${count} документа`;
     }
-  };
-
-  const onDownloadAll = async () => {
-    try {
-      const blob =
-        mode === 'user'
-          ? await documentsService.downloadUserZip(entityId)
-          : await documentsService.downloadWorkZip(entityId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${mode}-${entityId}-documents.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err: any) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to download all documents (zip)', err);
-      const msg =
-        err?.originalData?.message || err?.message || 'Не удалось скачать архив документов';
-      notification.showError(msg, 8000);
-    }
-  };
-
-  const AddButton = useMemo(() => {
-    return (
-      <Button
-        type="button"
-        onClick={onOpenAdd}
-        variant="outline"
-        size="sm"
-        className="px-2 py-1 min-h-[32px] min-w-[32px]"
-      >
-        Добавить документ
-      </Button>
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const isDeferred = staging.isDeferred && staging.mode === mode && staging.entityId === entityId;
-  const stagedKept = useMemo(
-    () => (isDeferred ? documents.filter((d) => !pendingDeletes.has(d.id)) : documents),
-    [documents, pendingDeletes, isDeferred],
-  );
-  const stagedPending = useMemo(
-    () => (isDeferred ? pendingAdds.map((p) => ({ ...p, __pending: true as const })) : []),
-    [pendingAdds, isDeferred],
-  );
-  const displayDocs = useMemo<any[]>(
-    () => (isDeferred ? [...stagedKept, ...stagedPending] : (documents as any)),
-    [isDeferred, stagedKept, stagedPending, documents],
-  );
-  const hasDocuments = !loading && displayDocs.length > 0;
-  // Регистрируем в родителе обработчики коммита/отмены отложенных изменений через контекст
-  useEffect(() => {
-    if (!(staging.isDeferred && staging.mode === mode && staging.entityId === entityId)) return;
-    if (!staging.registerHandlers) return;
-    const commit = async () => {
-      if (committingRef.current) return;
-      committingRef.current = true;
-      try {
-        for (const p of pendingAdds) {
-          if (mode === 'user') {
-            await documentsService.uploadForUser({
-              userId: entityId,
-              name: p.name,
-              file: p.file,
-            });
-          } else {
-            await documentsService.uploadForWork({
-              workId: entityId,
-              name: p.name,
-              file: p.file,
-            });
-          }
-        }
-        for (const id of Array.from(pendingDeletes)) {
-          await documentsService.delete(id);
-        }
-        setPendingAdds([]);
-        setPendingDeletes(new Set());
-        await fetchDocs();
-      } finally {
-        committingRef.current = false;
-      }
-    };
-    const discard = () => {
-      setPendingAdds([]);
-      setPendingDeletes(new Set());
-      fetchDocs();
-    };
-    const hasPending = () => pendingAdds.length > 0 || pendingDeletes.size > 0;
-    staging.registerHandlers({ commit, discard, hasPending });
-  }, [
-    fetchDocs,
-    staging,
-    staging.isDeferred,
-    staging.mode,
-    staging.entityId,
-    mode,
-    entityId,
-    pendingAdds,
-    pendingDeletes,
-  ]);
+    return `${count} документов`;
+  }, [documents.length]);
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-        <div className="flex items-center gap-2">
-          {hasDocuments && (
-            <Button
-              type="button"
-              onClick={onDownloadAll}
-              variant="outline"
-              size="sm"
-              aria-label="Скачать все документы"
-              title="Скачать все документы"
-              className="px-2 py-1 min-h-[32px] min-w-[32px]"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
+    <div className="space-y-5">
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-gradient-to-r from-white via-gray-50 to-white shadow-sm">
+        <div className="border-b border-gray-100 px-6 py-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="mb-2 flex flex-wrap items-center gap-3">
+                <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+                <span className="inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700 ring-1 ring-primary-100">
+                  {documentsCountLabel}
+                </span>
+              </div>
+              <p className="max-w-3xl text-sm text-gray-500">{description}</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {documents.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={downloadAllDocuments}
+                  className="border-gray-200 bg-white/90"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Скачать все
+                </Button>
+              )}
+              {canManage && (
+                <Button
+                  type="button"
+                  onClick={openAddModal}
+                  className="bg-gradient-to-r from-primary-600 to-primary-700 shadow-sm hover:from-primary-700 hover:to-primary-800"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Добавить документ
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-5">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16 text-sm text-gray-500">
+              <div className="mb-4 h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-primary-600"></div>
+              Загрузка документов...
+            </div>
+          ) : documents.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-white/70 px-6 py-14 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+                <File className="h-8 w-8" />
+              </div>
+              <h4 className="text-lg font-semibold text-gray-900">{emptyTitle}</h4>
+              <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500">{emptyDescription}</p>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+              <div className="divide-y divide-gray-100">
+                {documents.map((doc) => {
+                  const presentation = getDocumentPresentation(doc.mimeType);
+                  const Icon = presentation.icon;
+
+                  return (
+                    <div
+                      key={doc.id}
+                      className="flex flex-col gap-4 px-5 py-4 transition-colors duration-200 hover:bg-gray-50/80 lg:flex-row lg:items-center lg:justify-between"
+                    >
+                      <div className="flex min-w-0 items-start gap-4">
+                        <div
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${presentation.containerClassName}`}
+                        >
+                          <Icon className={`h-6 w-6 ${presentation.iconClassName}`} />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="mb-1 flex flex-wrap items-center gap-2">
+                            <span className="truncate text-sm font-semibold text-gray-900">
+                              {doc.name}
+                            </span>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${presentation.badgeClassName}`}
+                            >
+                              {presentation.badgeLabel}
+                            </span>
+                          </div>
+                          <div className="truncate text-sm text-gray-500">{doc.originalName}</div>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+                            <span>Добавлен: {formatDateForDisplay(doc.createdAt, true)}</span>
+                            <span>Размер: {formatFileSize(doc.size)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void previewDocument(doc)}
+                          className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Открыть
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void downloadDocument(doc)}
+                          className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Скачать
+                        </Button>
+                        {canManage && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              deleteConfirm.confirmAndExecute(doc, 'Удалить этот документ?', {
+                                confirmText: 'Удалить',
+                                variant: 'danger',
+                              })
+                            }
+                            className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Удалить
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
-          {AddButton}
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-sm text-gray-500">Загрузка документов…</div>
-      ) : displayDocs.length === 0 ? (
-        <div className="text-sm text-gray-500">Документов пока нет</div>
-      ) : (
-        <div className="text-sm text-gray-900 mt-1">
-          {displayDocs.map((doc, idx) => (
-            <React.Fragment key={doc.id}>
-              <button
-                type="button"
-                className="text-primary-600 hover:underline"
-                onClick={() => onClickDoc(doc)}
-                title={doc.originalName}
-              >
-                {doc.name}
-              </button>
-              {idx < displayDocs.length - 1 && <span className="mx-1 text-gray-400">,</span>}
-            </React.Fragment>
-          ))}
-        </div>
-      )}
+      <Modal isOpen={isAddOpen} onClose={closeAddModal}>
+        <div className="w-[520px] max-w-[92vw] p-6">
+          <div className="mb-5">
+            <h3 className="text-xl font-semibold text-gray-900">Добавить документ</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Загрузите файл и укажите понятное название, по которому его будет легко найти в
+              списке.
+            </p>
+          </div>
 
-      {/* Добавить файл */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)}>
-        <div className="w-[420px] max-w-[90vw] p-4">
-          <h3 className="text-lg font-semibold mb-4">Добавить документ</h3>
-          <div className="space-y-4">
+          <div className="space-y-5">
             <Input
               id="docName"
               name="docName"
               label="Название документа"
               fullWidth
               value={addName}
-              onChange={(e: any) => setAddName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAddName(e.target.value)}
+              placeholder="Например: Договор, Техническое задание, Акт"
             />
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Файл</label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Файл</label>
               <input
                 type="file"
                 accept={ACCEPT_ATTR}
-                onChange={(e) => setAddFile(e.target.files?.[0] || null)}
-                className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-md file:rounded-r-none file:border-0 file:text-sm file:bg-primary-100 file:text-black file:hover:bg-blue-200 file:transition file:duration-200"
+                onChange={(e) => {
+                  const nextFile = e.target.files?.[0] || null;
+                  setAddFile(nextFile);
+                  if (nextFile && addName.trim() === '') {
+                    setAddName(getDefaultDocumentName(nextFile.name));
+                  }
+                }}
+                className="block w-full cursor-pointer rounded-xl border border-gray-300 bg-gray-50 text-sm text-gray-900 file:mr-4 file:border-0 file:border-r file:border-gray-200 file:bg-primary-100 file:px-4 file:py-3 file:text-sm file:font-medium file:text-gray-900 hover:file:bg-primary-200"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-gray-500">
                 Допустимые типы: PNG, JPEG, JPG, GIF, WEBP, PDF, DOC, DOCX
               </p>
             </div>
-          </div>
 
-          <div className="flex justify-end gap-2 mt-6">
-            <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
-              Отмена
-            </Button>
-            <Button type="button" onClick={onSaveAdd} isLoading={saving}>
-              Сохранить
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Модуль действия документа */}
-      <Modal isOpen={isDownloadOpen} onClose={() => setIsDownloadOpen(false)}>
-        <div className="relative w-[380px] max-w-[90vw] p-4">
-          {/* Крестик */}
-          <button
-            type="button"
-            onClick={() => setIsDownloadOpen(false)}
-            className="absolute right-3 top-3 inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            aria-label="Закрыть"
-            title="Закрыть"
-          >
-            <X className="w-4 h-4" />
-          </button>
-
-          <h3 className="text-lg font-semibold mb-4 pr-6">Документ</h3>
-
-          <div className="text-sm mb-4">
-            <div className="text-gray-500">Название</div>
-            <div className="font-medium">{selectedDoc?.name}</div>
-            {selectedDoc?.originalName && (
-              <div className="mt-2">
-                <div className="text-gray-500">Оригинальное имя</div>
-                <div className="text-gray-700 break-all">{selectedDoc.originalName}</div>
+            {addFile && (
+              <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm">
+                <div className="font-medium text-gray-900">{addFile.name}</div>
+                <div className="mt-1 text-xs text-gray-500">{formatFileSize(addFile.size)}</div>
               </div>
             )}
           </div>
 
-          <div className="flex justify-end gap-2">
-            {/* Удалить */}
-            <Button
-              type="button"
-              onClick={() => {
-                if (!selectedDoc) return;
-                if ((selectedDoc as any).__pending) {
-                  setPendingAdds((prev) =>
-                    prev.filter((p) => p.tempId !== (selectedDoc as any).tempId),
-                  );
-                  setIsDownloadOpen(false);
-                } else if (
-                  staging.isDeferred &&
-                  staging.mode === mode &&
-                  staging.entityId === entityId
-                ) {
-                  setPendingDeletes(
-                    (prev) => new Set([...Array.from(prev), (selectedDoc as any).id]),
-                  );
-                  setIsDownloadOpen(false);
-                } else {
-                  deleteConfirm.confirmAndExecute(
-                    (selectedDoc as any).id,
-                    'Удалить этот документ?',
-                    { variant: 'danger' },
-                  );
-                }
-              }}
-              className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-red-50 border !border-red-300 !text-gray-700 hover:!text-white hover:!bg-red-500"
-              aria-label="Удалить документ"
-              title="Удалить"
-            >
-              <Trash className="w-4 h-4" />
+          <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5">
+            <Button type="button" variant="outline" onClick={closeAddModal} disabled={saving}>
+              Отмена
             </Button>
-
-            {/* Предпросмотр */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onPreview}
-              className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-green-50 !border-green-300 hover:!bg-green-500 hover:!text-white"
-              aria-label="Предпросмотр документа"
-              title="Предпросмотр"
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
-
-            {/* Скачать */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onDownload}
-              className="px-2 py-2 min-h-[32px] min-w-[32px] !bg-blue-50 !border-blue-300 hover:!bg-blue-500 hover:!text-white"
-              aria-label="Скачать документ"
-              title="Скачать"
-            >
-              <Download className="w-4 h-4" />
+            <Button type="button" onClick={() => void saveDocument()} isLoading={saving}>
+              Сохранить документ
             </Button>
           </div>
         </div>

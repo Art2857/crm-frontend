@@ -5,10 +5,6 @@ import {
   UpdateWorkIncomeRequest,
   WorkIncomeFilters,
   WorkIncomeListResponse,
-  WorkIncomeStats,
-  WorkIncomeApiResponse,
-  WorkIncomeListApiResponse,
-  WorkIncomeStatsApiResponse,
 } from '../types/work-income';
 import { getCurrentDateISO } from '../utils/date';
 
@@ -49,14 +45,6 @@ class WorkIncomeService {
   }
 
   /**
-   * Получить статистику по доходам работы
-   */
-  async getWorkIncomeStats(workId: string): Promise<WorkIncomeStats> {
-    const response = await this.api.get<WorkIncomeStats>(`/work-income/work/${workId}/stats`);
-    return response.data;
-  }
-
-  /**
    * Обновить запись о доходе
    */
   async updateWorkIncome(id: string, data: UpdateWorkIncomeRequest): Promise<WorkIncome> {
@@ -69,16 +57,6 @@ class WorkIncomeService {
    */
   async deleteWorkIncome(id: string): Promise<void> {
     await this.api.delete(`/work-income/${id}`);
-  }
-
-  /**
-   * Обновить курсы валют для всех записей о доходах работы
-   */
-  async refreshCurrencyConversions(workId: string): Promise<{ message: string }> {
-    const response = await this.api.post<{ message: string }>(
-      `/work-income/work/${workId}/refresh-conversions`,
-    );
-    return response.data;
   }
 
   /**

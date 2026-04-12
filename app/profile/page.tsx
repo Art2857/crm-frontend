@@ -21,6 +21,7 @@ import { userService } from '../../services/user';
 import { getTimezoneDisplayLabel } from '../../utils/timezones';
 import { validatePasswordStrength } from '../../utils/password';
 import { AvatarCropArea } from '../../utils/avatarUpload';
+import { normalizeBirthday } from '../../utils/birthday';
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -104,6 +105,7 @@ export default function ProfilePage() {
     }
 
     if (user) {
+      const normalizedBirthday = normalizeBirthday(user.birthday);
       setValue('login', user.login || '');
       setValue('email', user.email || '');
       setValue('firstName', user.firstName || '');
@@ -111,8 +113,8 @@ export default function ProfilePage() {
       setValue('middleName', user.middleName || '');
 
       try {
-        if (user.birthday) {
-          const dateObj = dateManager.parseDate(user.birthday);
+        if (normalizedBirthday) {
+          const dateObj = dateManager.parseDate(normalizedBirthday);
           if (dateObj) {
             setValue('birthday', dateManager.formatISO(dateObj));
           } else {
@@ -413,6 +415,7 @@ export default function ProfilePage() {
   const calculateAge = (birthdayString: string | null): number | null => {
     return dateManager.calculateAge(birthdayString);
   };
+  const birthday = normalizeBirthday(user.birthday);
 
   const getStatusLabel = (status: UserStatus): string => {
     switch (status) {
@@ -429,7 +432,7 @@ export default function ProfilePage() {
     }
   };
 
-  const age = calculateAge(user.birthday);
+  const age = calculateAge(birthday);
 
   return (
     <Layout>
@@ -469,12 +472,6 @@ export default function ProfilePage() {
                     onRemove={isEditing && user.avatarUrl ? handleAvatarRemove : undefined}
                     className="shadow-lg"
                   />
-                  {isEditing && (
-                    <p className="max-w-[220px] text-xs leading-5 text-primary-100">
-                      Нажмите на аватарку, чтобы выбрать новое изображение, или удалите текущую
-                      через кнопку на ней.
-                    </p>
-                  )}
                 </div>
               </div>
               <div className="text-white flex-1">
@@ -773,7 +770,7 @@ export default function ProfilePage() {
                   <div>
                     <div className="text-sm font-medium text-gray-500 mb-2">Дата рождения</div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {user.birthday ? formatRussian(user.birthday) : 'Не указана'}
+                      {birthday ? formatRussian(birthday) : 'Не указана'}
                     </div>
                   </div>
                   <div>

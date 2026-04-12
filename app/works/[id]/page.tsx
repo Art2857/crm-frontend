@@ -7,11 +7,11 @@ import Button from '../../../components/ui/Button';
 import Notification from '../../../components/ui/Notification';
 import WorkDetails from '../../../components/works/WorkDetails';
 import WorkForm from '../../../components/works/WorkForm';
-import type { DocumentsDeferredHandlers } from '../../../contexts/DocumentsStagingContext';
 import WorkDuties from '../../../components/works/WorkDuties';
 import WorkDutiesForm from '../../../components/works/WorkDutiesForm';
 import WorkDutiesHistory from '../../../components/works/WorkDutiesHistory';
 import WorkIncomeManagement from '../../../components/work-income/WorkIncomeManagement';
+import DocumentsManager from '../../../components/documents/DocumentsManager';
 import { formatAmountWithCurrency } from '../../../utils/currency';
 import { formatDateForDisplay } from '../../../utils/date';
 import { useWorkDetail } from '../../../hooks/works/useWorkDetail';
@@ -49,41 +49,20 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     handleArchiveWork,
     handleRestoreWork,
   } = useWorkDetail(id);
-  const docsHandlersRef = React.useRef<DocumentsDeferredHandlers | null>(null);
-  // Флаг для коммита документов после успешного сохранения формы
-  const shouldCommitDocsRef = React.useRef(false);
-  const handleWorkFormSubmit = async (e: React.FormEvent) => {
-    // Помечаем, что после успешного сохранения формы нужно закоммитить документы
-    shouldCommitDocsRef.current = true;
-    await handleFormSubmit(e);
-  };
-  // Коммитим отложенные документы, когда isEditing меняется с true на false после сохранения
-  React.useEffect(() => {
-    if (!isEditing && shouldCommitDocsRef.current) {
-      (async () => {
-        try {
-          await docsHandlersRef.current?.commit?.();
-        } catch (e) {
-          // Игнорируем ошибки коммита здесь; статус сохранения формы уже показан в UI
-        } finally {
-          shouldCommitDocsRef.current = false;
-        }
-      })();
-    }
-  }, [isEditing]);
 
   const salaryCurrency: 'RUB' | 'USD' = workData?.currency === 'USD' ? 'USD' : 'RUB';
   const displaySalary = Number(workData?.salary || 0);
   const isSalaryConfidential = (workData as any)?.isConfidential === true;
   const isWorkerNotResponsible = user?.role === 'WORKER' && !isResponsible;
-  const defaultTab: 'duties' | 'dutiesHistory' | 'income' = isWorkerNotResponsible
+  const canAccessDocuments = user?.role === 'ADMIN' || isResponsible;
+  const defaultTab: 'duties' | 'dutiesHistory' | 'income' | 'documents' = isWorkerNotResponsible
     ? 'duties'
     : 'income';
 
   // Состояние для табов
-  const [activeTab, setActiveTab] = React.useState<'duties' | 'dutiesHistory' | 'income'>(
-    defaultTab,
-  );
+  const [activeTab, setActiveTab] = React.useState<
+    'duties' | 'dutiesHistory' | 'income' | 'documents'
+  >(defaultTab);
 
   // Отслеживаем, какие табы уже были посещены (для ленивой инициализации)
   const [visitedTabs, setVisitedTabs] = React.useState<Set<string>>(() => new Set([defaultTab]));
@@ -95,10 +74,16 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
   }, [activeTab]);
 
   React.useEffect(() => {
-    if (isWorkerNotResponsible && activeTab !== 'duties') {
+    if (isWorkerNotResponsible && (activeTab === 'income' || activeTab === 'dutiesHistory')) {
       setActiveTab('duties');
     }
   }, [activeTab, isWorkerNotResponsible]);
+
+  React.useEffect(() => {
+    if (!canAccessDocuments && activeTab === 'documents') {
+      setActiveTab(defaultTab);
+    }
+  }, [activeTab, canAccessDocuments, defaultTab]);
 
   // Загрузка истории обязанностей при первом переключении на таб
   React.useEffect(() => {
@@ -163,6 +148,26 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     );
   }
 
+  const workMetaItems = [
+    !isSalaryConfidential
+      ? {
+          key: 'budget',
+          label: 'Общий бюджет',
+          value: formatAmountWithCurrency(displaySalary, salaryCurrency),
+        }
+      : null,
+    {
+      key: 'releaseDate',
+      label: 'Дата выхода',
+      value: workData.releaseDate ? formatDateForDisplay(workData.releaseDate) : 'Не указана',
+    },
+    {
+      key: 'responsible',
+      label: 'Ответственный',
+      value: responsibleName,
+    },
+  ].filter((item): item is { key: string; label: string; value: string } => item !== null);
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -219,29 +224,14 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-600 lg:ml-auto">
-                  <span>
-                    Общий бюджет:{' '}
-                    <span className="text-gray-900">
-                      {formatAmountWithCurrency(
-                        displaySalary,
-                        salaryCurrency,
-                        isSalaryConfidential,
-                      )}
-                    </span>
-                  </span>
-                  <span className="text-gray-300">|</span>
-                  <span>
-                    Дата выхода:{' '}
-                    <span className="text-gray-900">
-                      {workData.releaseDate
-                        ? formatDateForDisplay(workData.releaseDate)
-                        : 'Не указана'}
-                    </span>
-                  </span>
-                  <span className="text-gray-300">|</span>
-                  <span>
-                    Ответственный: <span className="text-gray-900">{responsibleName}</span>
-                  </span>
+                  {workMetaItems.map((item, index) => (
+                    <React.Fragment key={item.key}>
+                      {index > 0 && <span className="text-gray-300">|</span>}
+                      <span>
+                        {item.label}: <span className="text-gray-900">{item.value}</span>
+                      </span>
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
             </div>
@@ -312,19 +302,13 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     ID: {workData.id}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600">Измените основные параметры работы</p>
               </div>
               <WorkForm
-                onRegisterDocsHandlers={(h) => (docsHandlersRef.current = h)}
-                workId={id}
                 formData={formData}
                 users={users}
                 onChange={handleChange}
-                onSubmit={handleWorkFormSubmit}
+                onSubmit={handleFormSubmit}
                 onCancel={() => {
-                  try {
-                    docsHandlersRef.current?.discard?.();
-                  } catch (e) {}
                   setIsEditing(false);
                 }}
                 onArchiveAction={workData.isArchived ? handleRestoreWork : handleArchiveWork}
@@ -420,6 +404,33 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                         />
                       </svg>
                       История обязанностей
+                    </div>
+                  </button>
+                )}
+                {canAccessDocuments && (
+                  <button
+                    onClick={() => setActiveTab('documents')}
+                    className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
+                      activeTab === 'documents'
+                        ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 7V3m10 4V3m-9 8h8m-8 4h5m5 4H6a2 2 0 01-2-2V7a2 2 0 012-2h2l1 1h6l1-1h2a2 2 0 012 2v10a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      Документы
                     </div>
                   </button>
                 )}
@@ -539,12 +550,20 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
 
               <div style={{ display: activeTab === 'income' ? 'block' : 'none' }}>
                 {!visitedTabs.has('income') ? null : (
-                  <WorkIncomeManagement
-                    workId={id}
-                    canEdit={canEdit}
-                    workCurrency={salaryCurrency}
-                    workSalary={displaySalary}
-                    distributions={distributions}
+                  <WorkIncomeManagement workId={id} canEdit={canEdit} />
+                )}
+              </div>
+
+              <div style={{ display: activeTab === 'documents' ? 'block' : 'none' }}>
+                {!canAccessDocuments || !visitedTabs.has('documents') ? null : (
+                  <DocumentsManager
+                    mode="work"
+                    entityId={id}
+                    canManage={canAccessDocuments}
+                    title="Документы работы"
+                    description="Храните договоры, ТЗ, акты и другие файлы проекта в одном месте."
+                    emptyTitle="Документы пока не добавлены"
+                    emptyDescription="Загрузите первый документ, чтобы он появился в списке и был доступен команде."
                   />
                 )}
               </div>

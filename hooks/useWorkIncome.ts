@@ -5,7 +5,6 @@ import {
   CreateWorkIncomeRequest,
   UpdateWorkIncomeRequest,
   WorkIncomeFilters,
-  WorkIncomeStats,
   WorkIncomeState,
   INITIAL_WORK_INCOME_STATE,
   DEFAULT_WORK_INCOME_FILTERS,
@@ -14,11 +13,10 @@ import {
 interface UseWorkIncomeOptions {
   workId?: string;
   autoLoad?: boolean;
-  autoLoadStats?: boolean;
 }
 
 export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
-  const { workId, autoLoad = false, autoLoadStats = false } = options;
+  const { workId, autoLoad = false } = options;
 
   const [state, setState] = useState<WorkIncomeState>(INITIAL_WORK_INCOME_STATE);
 
@@ -37,10 +35,7 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
     if (autoLoad && workId) {
       loadWorkIncomes();
     }
-    if (autoLoadStats && workId) {
-      loadStats();
-    }
-  }, [workId, autoLoad, autoLoadStats]);
+  }, [workId, autoLoad]);
 
   // Загрузка списка доходов
   const loadWorkIncomes = useCallback(
@@ -74,19 +69,6 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
     [workId, state.filters, updateState],
   );
 
-  // Загрузка статистики
-  const loadStats = useCallback(async () => {
-    if (!workId) return;
-
-    try {
-      const stats = await workIncomeService.getWorkIncomeStats(workId);
-      updateState({ stats });
-    } catch (error: any) {
-      console.error('Error loading stats:', error);
-      // Не показываем ошибку для статистики в UI
-    }
-  }, [workId, updateState]);
-
   // Создание нового дохода
   const createIncome = useCallback(
     async (data: CreateWorkIncomeRequest): Promise<WorkIncome | null> => {
@@ -110,11 +92,6 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
           error: null,
         }));
 
-        // Обновляем статистику
-        if (workId) {
-          loadStats();
-        }
-
         return newIncome;
       } catch (error: any) {
         updateState({
@@ -124,7 +101,7 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
         return null;
       }
     },
-    [workId, loadStats, setState],
+    [setState, updateState],
   );
 
   // Обновление дохода
@@ -152,11 +129,6 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
           error: null,
         }));
 
-        // Обновляем статистику
-        if (workId) {
-          loadStats();
-        }
-
         return updatedIncome;
       } catch (error: any) {
         updateState({
@@ -166,7 +138,7 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
         return null;
       }
     },
-    [workId, loadStats, updateState, setState],
+    [updateState, setState],
   );
 
   // Удаление дохода
@@ -187,11 +159,6 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
           error: null,
         }));
 
-        // Обновляем статистику
-        if (workId) {
-          loadStats();
-        }
-
         return true;
       } catch (error: any) {
         updateState({
@@ -201,7 +168,7 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
         return false;
       }
     },
-    [workId, loadStats, updateState, setState],
+    [updateState, setState],
   );
 
   // Выбор дохода
@@ -236,33 +203,6 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
     },
     [updateState],
   );
-
-  // Обновление курсов валют
-  const refreshCurrencyConversions = useCallback(async (): Promise<boolean> => {
-    if (!workId) return false;
-
-    try {
-      updateState({ isLoading: true, error: null });
-
-      await workIncomeService.refreshCurrencyConversions(workId);
-
-      // Перезагружаем данные
-      await loadWorkIncomes();
-
-      updateState({
-        successMessage: 'Курсы валют успешно обновлены',
-        isLoading: false,
-      });
-
-      return true;
-    } catch (error: any) {
-      updateState({
-        error: error.message || 'Ошибка при обновлении курсов валют',
-        isLoading: false,
-      });
-      return false;
-    }
-  }, [workId, loadWorkIncomes, updateState]);
 
   // Обновление фильтров
   const updateFilters = useCallback(
@@ -319,13 +259,11 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
 
     // Действия
     loadWorkIncomes,
-    loadStats,
     createIncome,
     updateIncome,
     deleteIncome,
     selectIncome,
     getIncomeById,
-    refreshCurrencyConversions,
     updateFilters,
     resetFilters,
     clearMessages,

@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchDashboardData } from '../../store/slices/dashboard';
 import { formatCurrency } from '../../utils/currency';
 import { formatDateForDisplay } from '../../utils/date';
+import { normalizeBirthday } from '../../utils/birthday';
 import { User } from '../../types/user';
 import { logger } from '../../utils/logger';
 
@@ -43,9 +44,10 @@ export function useDashboard() {
   };
 
   const calculateAge = (birthday: string | null): number | null => {
-    if (!birthday) return null;
+    const normalizedBirthday = normalizeBirthday(birthday);
+    if (!normalizedBirthday) return null;
     // Нормализуем дату рождения без времени для корректного возраста
-    const birth = new Date(birthday);
+    const birth = new Date(normalizedBirthday);
     if (isNaN(birth.getTime())) return null;
     const today = new Date();
     let age = today.getFullYear() - birth.getFullYear();

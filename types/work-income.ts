@@ -46,17 +46,6 @@ export interface WorkIncomeListResponse {
   totalPages: number;
 }
 
-export interface WorkIncomeStats {
-  totalRub: number;
-  totalUsd: number;
-  avgSalaryRub: number; // Средняя ЗП в рублях с учетом коэффициентов рабочих дней
-  avgSalaryUsd: number; // Средняя ЗП в долларах с учетом коэффициентов рабочих дней
-  lastIncomeDate?: string; // YYYY-MM-DD format
-  workingDaysTotal: number; // Общее количество рабочих дней в периоде
-  totalDays: number; // Общее количество дней в периоде (включая выходные)
-  releaseDate?: string; // Дата выхода на работу YYYY-MM-DD format
-}
-
 export interface CurrencyOption {
   value: 'RUB' | 'USD';
   label: string;
@@ -120,7 +109,6 @@ export interface WorkIncomeState {
   incomes: WorkIncome[];
   selectedIncome: WorkIncome | null;
   filters: WorkIncomeFilters;
-  stats: WorkIncomeStats | null;
   isLoading: boolean;
   isSubmitting: boolean;
   error: string | null;
@@ -131,7 +119,6 @@ export const INITIAL_WORK_INCOME_STATE: WorkIncomeState = {
   incomes: [],
   selectedIncome: null,
   filters: DEFAULT_WORK_INCOME_FILTERS,
-  stats: null,
   isLoading: false,
   isSubmitting: false,
   error: null,
@@ -175,32 +162,4 @@ export interface WorkIncomeListApiResponse {
   data?: WorkIncomeListResponse;
   message?: string;
   errors?: string[];
-}
-
-export interface WorkIncomeStatsApiResponse {
-  success: boolean;
-  data?: WorkIncomeStats;
-  message?: string;
-}
-
-// Типы для аналитики
-
-export interface WorkIncomeAnalytics {
-  monthlyTotals: {
-    month: string; // YYYY-MM
-    totalRub: number;
-    totalUsd: number;
-    recordsCount: number;
-  }[];
-  currencyDistribution: {
-    currency: WorkIncomeCurrency;
-    total: number;
-    percentage: number;
-  }[];
-  averageIncomeByMonth: number;
-  totalIncomeThisYear: {
-    rub: number;
-    usd: number;
-  };
-  growthRate: number; // Процент роста по сравнению с предыдущим периодом
 }

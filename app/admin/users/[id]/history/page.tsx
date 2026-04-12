@@ -13,6 +13,7 @@ import {
 } from '../../../../../store/slices/users';
 import { formatDateForDisplay } from '../../../../../utils/date';
 import { toDateObject } from '../../../../../utils/date';
+import { normalizeBirthday } from '../../../../../utils/birthday';
 
 export default function UserHistoryPage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -158,12 +159,13 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
 
   // Вычисление возраста на основе даты рождения
   const calculateAge = (birthdayString: string | null): number | null => {
-    if (!birthdayString) return null;
+    const normalizedBirthday = normalizeBirthday(birthdayString);
+    if (!normalizedBirthday) return null;
 
     // Попытка преобразовать дату с использованием toDateObject
-    const birthday = toDateObject(birthdayString);
+    const birthday = toDateObject(normalizedBirthday);
     if (!birthday) {
-      console.warn('Failed to parse birthday:', birthdayString);
+      console.warn('Failed to parse birthday:', normalizedBirthday);
       return null;
     }
 
@@ -288,11 +290,12 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
                             // Проверяем и форматируем информацию о возрасте и дате рождения
                             const age = calculateAge(historyItem.birthday);
                             let birthdayDisplay = '';
+                            const normalizedBirthday = normalizeBirthday(historyItem.birthday);
 
                             // Если день рождения есть, пытаемся его отформатировать
-                            if (historyItem.birthday) {
+                            if (normalizedBirthday) {
                               try {
-                                birthdayDisplay = formatDateForDisplay(historyItem.birthday);
+                                birthdayDisplay = formatDateForDisplay(normalizedBirthday);
                               } catch (e) {
                                 console.error('Error formatting birthday:', e);
                               }

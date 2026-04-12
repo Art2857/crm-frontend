@@ -24,6 +24,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isAdmin = user?.role === Role.ADMIN;
   const isManager = user?.role === Role.MANAGER;
 
+  const isNavItemActive = useCallback(
+    (href: string) => {
+      if (!pathname) {
+        return false;
+      }
+
+      if (href === '/dashboard') {
+        return pathname === href;
+      }
+
+      return pathname === href || pathname.startsWith(`${href}/`);
+    },
+    [pathname],
+  );
+
   // Мемоизируем обработчик выхода из системы
   const handleLogout = useCallback(async () => {
     // Спрашиваем подтверждение выхода
@@ -99,15 +114,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 {navigation
                   .filter((item) => item.visible)
-                  .map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
+                  .map((item) => {
+                    const isActive = isNavItemActive(item.href);
+
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'border-primary-500 text-primary-600'
+                            : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                        }`}
+                      >
+                        {item.name}
+                      </Link>
+                    );
+                  })}
               </div>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -176,15 +199,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="pt-2 pb-3 space-y-1">
             {navigation
               .filter((item) => item.visible)
-              .map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
-                >
-                  {item.name}
-                </Link>
-              ))}
+              .map((item) => {
+                const isActive = isNavItemActive(item.href);
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium transition-colors ${
+                      isActive
+                        ? 'border-primary-500 bg-primary-50 text-primary-700'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <Link

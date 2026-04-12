@@ -75,6 +75,33 @@
   overscroll-behavior: contain;
 }
 
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
+  scrollbar-gutter: stable;
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 10px 0;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.28);
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: content-box;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.42);
+  background-clip: content-box;
+}
+
 /* Стили для меню аккаунтов */
 .account-menu-button {
   /* Для корректной работы тапа на мобильных устройствах */
