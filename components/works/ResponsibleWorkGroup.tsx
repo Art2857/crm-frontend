@@ -1,8 +1,15 @@
 'use client';
 
 import React from 'react';
+import {
+  ArchiveBoxIcon,
+  BuildingOfficeIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/24/outline';
 import { WorkAnalyticsByResponsible } from '../../types/workAnalytics';
 import { formatAmountWithCurrency } from '../../utils/currency';
+import Avatar from '../profile/Avatar';
 import Card from '../ui/Card';
 import CurrencySwitch from '../ui/CurrencySwitch';
 
@@ -22,6 +29,19 @@ export default function ResponsibleWorkGroup({
   showArchived = false,
 }: ResponsibleWorkGroupProps) {
   const [totalsCurrency, setTotalsCurrency] = React.useState<'RUB' | 'USD'>('RUB');
+  const responsibleNameParts = React.useMemo(
+    () => group.responsibleUserName.split(' ').filter((part) => part.length > 0),
+    [group.responsibleUserName],
+  );
+  const avatarUser = React.useMemo(
+    () => ({
+      firstName: responsibleNameParts[0] ?? group.responsibleUserName,
+      lastName: responsibleNameParts.slice(1).join(' '),
+      email: null,
+      avatarUrl: group.responsibleUserAvatarUrl,
+    }),
+    [group.responsibleUserAvatarUrl, group.responsibleUserName, responsibleNameParts],
+  );
 
   // Сохраняем выбор валюты в localStorage
   React.useEffect(() => {
@@ -55,191 +75,103 @@ export default function ResponsibleWorkGroup({
 
   // Сортируем работы внутри группы по доходу
   const sortedWorks = [...group.works].sort((a, b) => b.income - a.income);
+  const summaryMetrics = [
+    {
+      key: 'income',
+      label: 'Прибыль',
+      value: totalsDisplay.totalIncome,
+      valueClass: allConfidential
+        ? 'text-gray-500'
+        : group.totals.totalIncome >= 0
+          ? 'text-emerald-700'
+          : 'text-rose-700',
+    },
+    {
+      key: 'expenses',
+      label: 'Расходы',
+      value: totalsDisplay.totalExpenses,
+      valueClass: allConfidential ? 'text-gray-500' : 'text-rose-700',
+    },
+    {
+      key: 'salary',
+      label: 'Бюджет',
+      value: totalsDisplay.totalSalary,
+      valueClass: allConfidential ? 'text-gray-500' : 'text-blue-700',
+    },
+  ] as const;
 
   return (
     <Card
-      className="overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300"
+      className="overflow-hidden border-0 bg-gradient-to-r from-white via-gray-50 to-white shadow-lg transition-all duration-300 hover:shadow-xl"
       bodyClassName="p-0"
     >
-      {/* Заголовок группы */}
-      <div
-        className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 cursor-pointer hover:from-gray-100 hover:to-gray-200 transition-colors"
-        onClick={onToggle}
-      >
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-              <span className="text-white font-bold text-lg">
-                {group.responsibleUserName
-                  .split(' ')
-                  .map((word) => word[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2)}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
-                {group.responsibleUserName}
-              </h3>
-              <p className="text-gray-600 text-sm sm:text-base">
-                {group.totals.worksCount} работ(ы)
-                {showArchived && <span className="ml-2 text-orange-600">(Архив)</span>}
-              </p>
+      <div className="relative cursor-pointer p-6" onClick={onToggle}>
+        <div
+          className={`absolute left-0 right-0 top-0 h-1 bg-gradient-to-r ${
+            showArchived
+              ? 'from-slate-400 via-gray-400 to-slate-500'
+              : 'from-blue-400 via-indigo-400 to-purple-400'
+          }`}
+        />
+
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 items-center space-x-4">
+            <Avatar
+              user={avatarUser}
+              size="medium"
+              className={
+                showArchived
+                  ? '!h-20 !w-20 !rounded-2xl ring-2 ring-slate-200 shadow-lg'
+                  : '!h-20 !w-20 !rounded-2xl ring-2 ring-blue-200 shadow-lg'
+              }
+            />
+
+            <div className="min-w-0 flex-1">
+              <div className="mb-2 flex flex-wrap items-center gap-3">
+                <h3 className="truncate text-xl font-bold text-gray-900">
+                  {group.responsibleUserName}
+                </h3>
+                {showArchived && (
+                  <div className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
+                    <ArchiveBoxIcon className="h-4 w-4" />
+                    <span>Архив</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+                <div className="flex items-center gap-1">
+                  <BuildingOfficeIcon className="h-4 w-4" />
+                  <span>Работ: {group.totals.worksCount}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <ArchiveBoxIcon className="h-4 w-4" />
+                  <span>{showArchived ? 'Архивные работы' : 'Активные работы'}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
-            {/* Финансовые карточки */}
-            <div className="flex flex-col sm:flex-row gap-3 flex-1">
-              {/* Прибыль */}
-              <div
-                className={`group relative overflow-hidden ${
-                  group.totals.totalIncome >= 0
-                    ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200'
-                    : 'bg-gradient-to-br from-red-50 to-red-100 border-red-200'
-                } border rounded-xl p-4 transition-all duration-300 hover:shadow-md hover:scale-105 min-w-0 flex-1`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-10 h-10 ${
-                        group.totals.totalIncome >= 0
-                          ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
-                          : 'bg-gradient-to-br from-red-500 to-red-600'
-                      } rounded-lg flex items-center justify-center shadow-sm`}
-                    >
-                      {group.totals.totalIncome >= 0 ? (
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <div
-                        className={`text-sm font-medium ${
-                          group.totals.totalIncome >= 0 ? 'text-emerald-700' : 'text-red-700'
-                        } truncate`}
-                      >
-                        Прибыль
-                      </div>
-                      <div
-                        className={`text-lg sm:text-xl font-bold ${
-                          group.totals.totalIncome >= 0 ? 'text-emerald-800' : 'text-red-800'
-                        } truncate`}
-                      >
-                        {formatAmountWithCurrency(
-                          totalsDisplay.totalIncome,
-                          totalsCurrency,
-                          allConfidential,
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+              {summaryMetrics.map((metric) => (
                 <div
-                  className={`absolute inset-0 bg-gradient-to-r ${
-                    group.totals.totalIncome >= 0
-                      ? 'from-emerald-500/0 to-emerald-500/5'
-                      : 'from-red-500/0 to-red-500/5'
-                  } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                ></div>
-              </div>
-
-              {/* Расходы */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-rose-50 to-rose-100 border border-rose-200 rounded-xl p-4 transition-all duration-300 hover:shadow-md hover:scale-105 min-w-0 flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-rose-600 rounded-lg flex items-center justify-center shadow-sm">
-                      <svg
-                        className="w-5 h-5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                        />
-                      </svg>
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-rose-700 truncate">Расходы</div>
-                      <div className="text-lg sm:text-xl font-bold text-rose-800 truncate">
-                        {formatAmountWithCurrency(
-                          totalsDisplay.totalExpenses,
-                          totalsCurrency,
-                          allConfidential,
-                        )}
-                      </div>
-                    </div>
+                  key={metric.key}
+                  className="min-w-0 rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100"
+                >
+                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-gray-500">
+                    {metric.label}
+                  </div>
+                  <div
+                    className={`mt-1 text-base sm:text-lg font-semibold truncate ${metric.valueClass}`}
+                  >
+                    {formatAmountWithCurrency(metric.value, totalsCurrency, allConfidential)}
                   </div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-rose-500/0 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
-
-              {/* Бюджет */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4 transition-all duration-300 hover:shadow-md hover:scale-105 min-w-0 flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                      <svg
-                        className="w-5 h-5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                        />
-                      </svg>
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-blue-700 truncate">Бюджет</div>
-                      <div className="text-lg sm:text-xl font-bold text-blue-800 truncate">
-                        {formatAmountWithCurrency(
-                          totalsDisplay.totalSalary,
-                          totalsCurrency,
-                          allConfidential,
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
+              ))}
             </div>
 
-            <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0">
+            <div className="flex flex-row items-center justify-between gap-3 xl:flex-col xl:justify-center">
               <div onClick={(e) => e.stopPropagation()}>
                 <CurrencySwitch value={totalsCurrency} onChange={setTotalsCurrency} size="sm" />
               </div>
@@ -250,33 +182,21 @@ export default function ResponsibleWorkGroup({
                   e.stopPropagation();
                   onToggle();
                 }}
-                className={`transform transition-all duration-300 ${
-                  isExpanded ? 'rotate-180' : ''
-                } flex justify-center items-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-gray-50`}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md"
               >
-                <svg
-                  className="w-5 h-5 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                {isExpanded ? (
+                  <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronRightIcon className="h-5 w-5 text-gray-500" />
+                )}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Детали группы */}
       {isExpanded && (
-        <div className="border-t border-gray-200 bg-white">
-          {/* Мобильное отображение */}
+        <div className="border-t border-gray-100 bg-gray-50/50">
           <div className="block space-y-4 p-4 sm:hidden">
             {sortedWorks.map((work) => (
               <div
@@ -451,7 +371,6 @@ export default function ResponsibleWorkGroup({
             ))}
           </div>
 
-          {/* Десктопное отображение */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="min-w-full">
               <thead className="bg-gray-100">

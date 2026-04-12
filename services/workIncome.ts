@@ -10,6 +10,7 @@ import {
   WorkIncomeListApiResponse,
   WorkIncomeStatsApiResponse,
 } from '../types/work-income';
+import { getCurrentDateISO } from '../utils/date';
 
 class WorkIncomeService {
   private api = privateApi;
@@ -245,7 +246,7 @@ class WorkIncomeService {
    * Получить текущую дату в формате YYYY-MM-DD
    */
   getCurrentDate(): string {
-    return new Date().toISOString().split('T')[0];
+    return getCurrentDateISO();
   }
 
   /**

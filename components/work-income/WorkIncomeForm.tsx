@@ -10,6 +10,7 @@ import {
   CURRENCY_OPTIONS,
   EMPTY_WORK_INCOME_FORM,
 } from '../../types/work-income';
+import { getCurrentDateISO } from '../../utils/date';
 
 interface WorkIncomeFormProps {
   workId: string;
@@ -44,7 +45,7 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
       // Устанавливаем текущую дату по умолчанию при создании
       setFormData({
         ...EMPTY_WORK_INCOME_FORM,
-        receivedDate: new Date().toISOString().split('T')[0],
+        receivedDate: getCurrentDateISO(),
       });
     }
   }, [income]);
@@ -91,7 +92,7 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
       const date = new Date(formData.receivedDate);
       if (isNaN(date.getTime())) {
         newErrors.receivedDate = 'Некорректная дата';
-      } else if (date > new Date()) {
+      } else if (formData.receivedDate > getCurrentDateISO()) {
         newErrors.receivedDate = 'Дата не может быть в будущем';
       }
     }
@@ -127,10 +128,6 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
         workId,
       } as CreateWorkIncomeRequest);
     }
-  };
-
-  const getCurrentDate = () => {
-    return new Date().toISOString().split('T')[0];
   };
 
   return (
@@ -196,7 +193,7 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
           id="receivedDate"
           value={formData.receivedDate}
           onChange={(e) => handleChange('receivedDate', e.target.value)}
-          max={getCurrentDate()}
+          max={getCurrentDateISO()}
           className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
             errors.receivedDate
               ? 'border-red-300 focus:ring-red-500 focus:border-red-500'

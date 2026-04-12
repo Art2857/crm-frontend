@@ -33,7 +33,10 @@ export default function WorkCard({
   const paidForDisplay = work.paidAmount || 0;
   return (
     <div className="group">
-      <Card className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md">
+      <Card
+        className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md"
+        bodyClassName="p-0"
+      >
         <div className="p-4 cursor-pointer" onClick={() => onToggleExpanded(work.workId)}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -54,7 +57,8 @@ export default function WorkCard({
                 </h4>
                 {work.lastClosureDate && (
                   <p className="text-sm text-gray-500">
-                    Последнее закрытие: {formatRussian(work.lastClosureDate) || 'Неизвестная дата'}
+                    Дата закрытия периода:{' '}
+                    {formatRussian(work.lastClosureDate) || 'Неизвестная дата'}
                   </p>
                 )}
               </div>
@@ -65,8 +69,6 @@ export default function WorkCard({
                 totalAccrued={accrued}
                 totalPaid={paidForDisplay}
                 remainingDebt={work.totalDebt}
-                overpaidAmount={work.overpaidAmount}
-                isPaymentDue={work.isPaymentDue}
                 currency={currency}
               />
 

@@ -1,22 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Button from '../../components/ui/Button';
-import { CurrencyDollarIcon, BanknotesIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAppSelector } from '../../store';
 
-// Импорт новых компонентов
-import PaymentStatistics from '../../components/payments/PaymentStatistics';
 import PaymentTabs from '../../components/payments/PaymentTabs';
 import MyDebtsTab from '../../components/payments/MyDebtsTab';
 import PaymentHistoryTab from '../../components/payments/PaymentHistoryTab';
 import CalculationModal from '../../components/payments/CalculationModal';
 import PaymentModal from '../../components/payments/PaymentModal';
 import CustomPaymentModal from '../../components/payments/CustomPaymentModal';
+import PaymentsManagementToolbar from '../../components/payments/PaymentsManagementToolbar';
 import UserCard from '../../components/payments/UserCard';
 import WorkCard from '../../components/payments/WorkCard';
 import DutyCard from '../../components/payments/DutyCard';
-import UserPeriodSelector from '../../components/payments/UserPeriodSelector';
 
 // Импорт типов и данных
 import {
@@ -35,9 +31,8 @@ import {
 import { PaymentType } from '../../types/payment';
 import { useNotification } from '../../contexts/NotificationContext';
 import { logger } from '../../utils/logger';
-import { formatDateToISO } from '../../utils/date';
+import { formatDateToISO, getCurrentDateISO } from '../../utils/date';
 import { usePaymentsData } from '../../hooks/payments/usePaymentsData';
-import { usePeriodDates } from '../../hooks/payments/usePeriodDates';
 import { DisplayCurrency } from '../../hooks/useCurrencyConversion';
 
 export default function PaymentsPage() {
@@ -47,16 +42,9 @@ export default function PaymentsPage() {
 
   // Валюта отображения итогов
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>('RUB');
+  const [managementPeriodDate, setManagementPeriodDate] = useState(getCurrentDateISO());
 
   const [activeTab, setActiveTab] = useState<'management' | 'debts' | 'history'>('management');
-  const {
-    workPeriodDates,
-    setWorkPeriodDates,
-    userPeriodDates,
-    setUserPeriodDates,
-    getWorkPeriodDate,
-    getUserPeriodDate,
-  } = usePeriodDates();
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [expandedWorks, setExpandedWorks] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
@@ -84,16 +72,24 @@ export default function PaymentsPage() {
   // Данные работ с вложенными пользователями (новый формат отображения)
   const {
     usersData,
-    setUsersData,
     myDebts,
-    setMyDebts,
-    responsibleUsersSummary,
     fetchWorksData: fetchWorksDataRaw,
     updateWorksData: updateWorksDataRaw,
     fetchMyDebtsData: fetchMyDebtsDataRaw,
   } = usePaymentsData();
 
   // summary берём из хука
+
+  const globalMinCalculationDate = useMemo(() => {
+    const closureDates = usersData
+      .flatMap((userData) => userData.works ?? [])
+      .map((work) => work.lastClosureDate)
+      .filter((date): date is string => Boolean(date))
+      .map((date) => formatDateToISO(date))
+      .sort();
+
+    return closureDates.at(-1);
+  }, [usersData]);
 
   const fetchWorksData = useCallback(
     async (
@@ -141,12 +137,11 @@ export default function PaymentsPage() {
 
       try {
         setLoading(true);
-        const endDate = getWorkPeriodDate(workId);
         const calc = await analyticsService.getPaymentsCalculation({
           role: user.role,
           userId,
           workId,
-          endDate,
+          endDate: managementPeriodDate,
           dutyId,
         });
 
@@ -163,7 +158,7 @@ export default function PaymentsPage() {
         setLoading(false);
       }
     },
-    [getWorkPeriodDate, user?.role],
+    [managementPeriodDate, user?.role],
   );
 
   // Инициализация данных один раз на монтировании
@@ -217,8 +212,6 @@ export default function PaymentsPage() {
 
   // Загрузка данных о задолженностях текущего пользователя теперь в хуке usePaymentsData
 
-  // getWorkPeriodDate/getUserPeriodDate предоставлены хуком usePeriodDates
-
   // Функция для показа общего расчета пользователя по всем работам
   const handleShowUserCalculation = useCallback(
     async (userId: string) => {
@@ -229,11 +222,10 @@ export default function PaymentsPage() {
 
       try {
         setLoading(true);
-        const endDate = getUserPeriodDate(userId);
         const detailedCalc = await analyticsService.getPaymentsCalculationUser({
           role: user.role,
           userId,
-          endDate,
+          endDate: managementPeriodDate,
         });
         setSelectedCalculation(detailedCalc);
         setIsUserCalculation(true);
@@ -248,7 +240,7 @@ export default function PaymentsPage() {
         setLoading(false);
       }
     },
-    [getUserPeriodDate, user?.role],
+    [managementPeriodDate, user?.role],
   );
 
   // Обработчик создания выплаты
@@ -260,6 +252,8 @@ export default function PaymentsPage() {
     workName: string,
     calculationDate?: string,
   ) => {
+    const userAvatarUrl = usersData.find((entry) => entry.userId === userId)?.avatarUrl ?? null;
+
     // Устанавливаем данные для PaymentModal
     setSelectedPayment({
       userId,
@@ -267,6 +261,7 @@ export default function PaymentsPage() {
       amount,
       userName,
       workName,
+      avatarUrl: userAvatarUrl,
       calculationDate,
     });
     setPaymentModalOpen(true);
@@ -305,81 +300,16 @@ export default function PaymentsPage() {
     setCustomPaymentModalOpen(true);
   };
 
-  const handleWorkPeriodDateChange = async (workId: string, date: string, userId?: string) => {
-    // Сохраняем предыдущую дату для возможного отката
-    const previousDate = getWorkPeriodDate(workId);
-
-    // Обновляем UI сразу (optimistic)
-    setWorkPeriodDates((prev) => ({
-      ...prev,
-      [workId]: date,
-    }));
-
-    // Пытаемся получить свежие данные
-    try {
-      await updateWorksData({
-        endDate: date,
-        targetWorkId: workId,
-        targetUserId: userId,
-      });
-    } catch (err: any) {
-      // Откатываем дату назад
-      setWorkPeriodDates((prev) => ({
-        ...prev,
-        [workId]: previousDate,
-      }));
-
-      const message = err?.message || 'Ошибка при получении данных';
-      showError(message);
-    }
-  };
-
-  const handleUserPeriodDateChange = async (userId: string, date: string) => {
-    // Сохраняем предыдущую дату для возможного отката
-    const previousDate = getUserPeriodDate(userId);
+  const handleManagementPeriodDateChange = async (date: string) => {
+    const previousDate = managementPeriodDate;
     if (previousDate === date) return;
 
-    // Обновляем UI сразу (optimistic)
-    setUserPeriodDates((prev) => ({
-      ...prev,
-      [userId]: date,
-    }));
+    setManagementPeriodDate(date);
 
-    const currentUser = usersData.find((userData) => userData.userId === userId);
-    const previousWorkDates = new Map(
-      (currentUser?.works ?? []).map((work) => [work.workId, getWorkPeriodDate(work.workId)]),
-    );
-
-    if (currentUser?.works?.length) {
-      setWorkPeriodDates((prev) => {
-        const next = { ...prev };
-        for (const work of currentUser.works) {
-          next[work.workId] = date;
-        }
-        return next;
-      });
-    }
-
-    // Пытаемся получить свежие данные
     try {
-      await updateWorksData({ endDate: date, targetUserId: userId });
+      await updateWorksData({ endDate: date });
     } catch (err: any) {
-      // Откатываем дату назад
-      setUserPeriodDates((prev) => ({
-        ...prev,
-        [userId]: previousDate,
-      }));
-
-      if (currentUser?.works?.length) {
-        setWorkPeriodDates((prev) => {
-          const next = { ...prev };
-          for (const work of currentUser.works) {
-            next[work.workId] = previousWorkDates.get(work.workId) ?? previousDate;
-          }
-          return next;
-        });
-      }
-
+      setManagementPeriodDate(previousDate);
       const message = err?.message || 'Ошибка при получении данных';
       showError(message);
     }
@@ -391,19 +321,7 @@ export default function PaymentsPage() {
    */
   const refreshAfterPayment = async (workId: string, userId: string, dutyId?: string) => {
     try {
-      // Обновляем данные для всех работ пользователя, чтобы не потерять другие работы
-      const userData = usersData.find((u) => u.userId === userId);
-      if (!userData || !userData.works) return;
-
-      // Получаем самую раннюю дату из всех работ пользователя
-      const dates = userData.works.map((work) => getWorkPeriodDate(work.workId));
-      const earliestDate = dates.reduce(
-        (earliest, current) => (current < earliest ? current : earliest),
-        dates[0],
-      );
-
-      // Обновляем все данные, так как API не поддерживает фильтрацию по пользователю
-      await fetchWorksData({ endDate: earliestDate });
+      await fetchWorksData({ endDate: managementPeriodDate });
 
       // Если модальное окно детального расчёта открыто – обновим данные в нём
       if (calculationModalOpen) {
@@ -425,19 +343,7 @@ export default function PaymentsPage() {
   const refreshAfterUserPayment = useCallback(
     async (userId: string) => {
       try {
-        // Обновляем данные для всех работ пользователя
-        const userData = usersData.find((u) => u.userId === userId);
-        if (!userData || !userData.works) return;
-
-        // Получаем самую раннюю дату из всех работ пользователя
-        const dates = userData.works.map((work) => getWorkPeriodDate(work.workId));
-        const earliestDate = dates.reduce(
-          (earliest, current) => (current < earliest ? current : earliest),
-          dates[0],
-        );
-
-        // Обновляем все данные, так как API не поддерживает фильтрацию по пользователю
-        await updateWorksData({ endDate: earliestDate, targetUserId: userId });
+        await updateWorksData({ endDate: managementPeriodDate, targetUserId: userId });
 
         // Если модальное окно детального расчёта открыто – обновим данные в нём
         if (calculationModalOpen && selectedCalculation) {
@@ -463,9 +369,9 @@ export default function PaymentsPage() {
       calculationModalOpen,
       calculationType,
       fetchMyDebtsDataRaw,
-      getWorkPeriodDate,
       handleShowCalculation,
       handleShowUserCalculation,
+      managementPeriodDate,
       selectedCalculation,
       selectedDutyId,
       updateWorksData,
@@ -481,12 +387,11 @@ export default function PaymentsPage() {
       const userId = selectedCalculation.userId;
       const userData = usersData.find((u) => u.userId === userId);
       if (!userData) return;
-      const endDate = getUserPeriodDate(userId);
       const items = userData.works.map((w) => ({
         workId: w.workId,
         userId,
         amount: Math.max(w.totalDebt || 0, 0),
-        paymentDate: endDate,
+        paymentDate: managementPeriodDate,
         description: `Мультивыплата по общему расчету (${w.workName})`,
       }));
       await bulkCreateAndClose({ items }).unwrap();
@@ -502,8 +407,8 @@ export default function PaymentsPage() {
     }
   }, [
     bulkCreateAndClose,
-    getUserPeriodDate,
     isUserCalculation,
+    managementPeriodDate,
     refreshAfterUserPayment,
     selectedCalculation,
     showError,
@@ -595,49 +500,25 @@ export default function PaymentsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Заголовок страницы */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <div className="flex items-center space-x-3 mb-4 lg:mb-0">
-            <div className="bg-blue-600 p-3 rounded-xl">
-              <CurrencyDollarIcon className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Система выплат</h1>
-              <p className="text-gray-600">Управление выплатами и задолженностями</p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            {/* Кнопка создания произвольной выплаты */}
-            <Button
-              onClick={handleCreateCustomPayment}
-              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-3 px-6 py-4 text-lg font-medium shadow-sm border"
-            >
-              <BanknotesIcon className="h-6 w-6" />
-              <span>Создать выплату</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Статистика */}
-        <PaymentStatistics
-          responsibleUsers={responsibleUsersSummary}
-          myDebts={myDebts}
-          displayCurrency={displayCurrency}
-          onCurrencyChange={setDisplayCurrency}
-        />
-
         {/* Навигация по вкладкам */}
         <PaymentTabs
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          responsibleUsers={responsibleUsersSummary}
+          responsibleUsers={usersData}
           myDebts={myDebts}
         />
 
         {/* Содержимое вкладок */}
         {activeTab === 'management' && (
           <div className="space-y-6">
+            <PaymentsManagementToolbar
+              selectedDate={managementPeriodDate}
+              minDate={globalMinCalculationDate}
+              isLoading={loading}
+              onCalculate={handleManagementPeriodDateChange}
+              onCreatePayment={handleCreateCustomPayment}
+            />
+
             {usersData.map((user) => {
               const userAccrued = user.works?.reduce((s, w) => s + (w.totalAccrued ?? 0), 0) || 0;
               return (
@@ -653,21 +534,6 @@ export default function PaymentsPage() {
                   accruedOverride={userAccrued}
                 >
                   <div className="space-y-4">
-                    {/* Дата расчетного периода для пользователя */}
-                    <UserPeriodSelector
-                      userId={user.userId}
-                      selectedDate={getUserPeriodDate(user.userId)}
-                      onDateSet={handleUserPeriodDateChange}
-                      minDate={
-                        user.works
-                          ?.map((w) => w.lastClosureDate)
-                          .filter(Boolean)
-                          .map((date) => formatDateToISO(date))
-                          .sort()
-                          .pop() || undefined
-                      }
-                    />
-
                     {user.works?.map((work) => (
                       <WorkCard
                         currency={displayCurrency === 'USD' ? 'USD' : 'RUB'}
@@ -680,9 +546,6 @@ export default function PaymentsPage() {
                         }}
                       >
                         <div className="space-y-4">
-                          {/* Дата расчетного периода */}
-                          {/* Убрали выбор даты на уровне работы — дата задаётся только в пользователе */}
-
                           {/* Обязанности пользователя */}
                           <div>
                             <h5 className="text-sm font-semibold text-gray-700 mb-2">
@@ -735,13 +598,7 @@ export default function PaymentsPage() {
           calculation={selectedCalculation}
           onCreatePayment={handleCreatePayment}
           isDebtsView={myDebts.some((debt) => debt.workId === selectedCalculation?.workId)}
-          calculationDate={
-            selectedCalculation
-              ? isUserCalculation
-                ? getUserPeriodDate(selectedCalculation.userId)
-                : getWorkPeriodDate(selectedCalculation.workId)
-              : undefined
-          }
+          calculationDate={selectedCalculation ? managementPeriodDate : undefined}
           isUserCalculation={isUserCalculation}
           showPaymentHistory={calculationModalShowPaymentHistory}
           onBulkPayAllWorks={handleBulkPayAllWorks}
@@ -756,8 +613,7 @@ export default function PaymentsPage() {
           }}
           payment={selectedPayment}
           paymentDate={
-            selectedPayment?.calculationDate ??
-            (selectedCalculation ? getWorkPeriodDate(selectedCalculation.workId) : null)
+            selectedPayment?.calculationDate ?? (selectedCalculation ? managementPeriodDate : null)
           }
           onSubmit={handlePaymentSubmit}
           periods={selectedCalculation?.periods?.map((p) => ({
@@ -766,7 +622,7 @@ export default function PaymentsPage() {
           }))}
           calculationDate={
             selectedPayment?.calculationDate ??
-            (selectedCalculation ? getWorkPeriodDate(selectedCalculation.workId) : undefined)
+            (selectedCalculation ? managementPeriodDate : undefined)
           }
         />
 

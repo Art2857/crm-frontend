@@ -56,7 +56,6 @@ const eslintConfig = [
     files: [
       'contexts/ReAuthContext.tsx',
       'contexts/TimezoneContext.tsx',
-      'hooks/useAccountSwitcher.ts',
       'hooks/useExchangeRates.ts',
       'hooks/useWorkDuties.ts',
       'hooks/useWorkIncome.ts',

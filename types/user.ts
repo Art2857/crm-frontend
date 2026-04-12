@@ -28,6 +28,7 @@ export interface User {
   status?: UserStatus;
   preferences?: string | null;
   characteristics?: string | null;
+  avatarUrl?: string | null;
   isArchived?: boolean;
   archivedAt?: string | null;
   createdAt: string;

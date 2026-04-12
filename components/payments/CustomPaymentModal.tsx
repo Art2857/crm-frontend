@@ -21,7 +21,8 @@ import { workService } from '../../services/work';
 import { workExecuterService } from '../../services/workExecuter';
 import { getClosureDate } from '../../services/payment';
 import { useAppSelector } from '../../store';
-import { getCurrentDateISO, shiftDateISOByDays } from '../../utils/date';
+import { getCurrentDateISO } from '../../utils/date';
+import Avatar from '../profile/Avatar';
 
 interface CustomPaymentModalProps {
   isOpen: boolean;
@@ -30,6 +31,19 @@ interface CustomPaymentModalProps {
   defaultWorkId?: string;
   defaultUserId?: string;
   defaultAmount?: number;
+}
+
+function buildExecuterLabel(user: User): string {
+  const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  const secondary = [user.login, user.email].find(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0,
+  );
+
+  if (name && secondary) {
+    return `${name} (${secondary})`;
+  }
+
+  return name || secondary || user.id;
 }
 
 export default function CustomPaymentModal({
@@ -91,23 +105,44 @@ export default function CustomPaymentModal({
     }
   }, [selectedWorkId]);
 
-  // Загрузка даты закрытия при выборе работы и получателя
+  // Загрузка текущей даты закрытия периода при выборе работы/получателя
+  // и при повторном открытии модалки с уже выбранными значениями.
   useEffect(() => {
-    if (selectedWorkId && selectedUserId) {
-      (async () => {
+    if (!isOpen) {
+      return;
+    }
+
+    if (!selectedWorkId || !selectedUserId) {
+      setMinPaymentDate(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
         const closureDate = await getClosureDate(selectedWorkId, selectedUserId);
-        const minAllowedPaymentDate = closureDate ? shiftDateISOByDays(closureDate, 1) : null;
+        if (cancelled) return;
+
+        const minAllowedPaymentDate = closureDate;
         setMinPaymentDate(minAllowedPaymentDate);
         setPaymentDate((currentPaymentDate) =>
           minAllowedPaymentDate && currentPaymentDate < minAllowedPaymentDate
             ? minAllowedPaymentDate
             : currentPaymentDate,
         );
-      })();
-    } else {
-      setMinPaymentDate(null);
-    }
-  }, [selectedWorkId, selectedUserId]);
+      } catch (e) {
+        console.error('Не удалось загрузить дату закрытия периода', e);
+        if (!cancelled) {
+          setMinPaymentDate(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, selectedWorkId, selectedUserId]);
 
   // При открытии модалки заполняем поля значениями по умолчанию
   useEffect(() => {
@@ -116,7 +151,6 @@ export default function CustomPaymentModal({
       if (defaultUserId) setSelectedUserId(defaultUserId);
       if (defaultAmount !== undefined) setAmount(String(defaultAmount));
       setPaymentDate(getCurrentDateISO());
-      setMinPaymentDate(null);
     }
   }, [isOpen, defaultWorkId, defaultUserId, defaultAmount]);
 
@@ -263,7 +297,7 @@ export default function CustomPaymentModal({
                       { value: '', label: 'Выберите получателя...' },
                       ...executers.map((user) => ({
                         value: user.id,
-                        label: `${user.firstName || ''} ${user.lastName || ''} (${user.login})`,
+                        label: buildExecuterLabel(user),
                       })),
                     ]}
                     className="pl-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
@@ -271,6 +305,22 @@ export default function CustomPaymentModal({
                     required
                   />
                 </div>
+
+                {selectedUser && (
+                  <div className="flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50 px-4 py-3">
+                    <Avatar user={selectedUser} size="small" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {`${selectedUser.firstName || ''} ${selectedUser.lastName || ''}`.trim() ||
+                          selectedUser.email ||
+                          selectedUser.login}
+                      </p>
+                      <p className="truncate text-xs text-gray-500">
+                        {selectedUser.email || selectedUser.login}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

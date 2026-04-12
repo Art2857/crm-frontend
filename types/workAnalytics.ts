@@ -10,6 +10,7 @@ export interface WorkAnalytics {
   name: string;
   responsibleUserId: string;
   responsibleUserName: string;
+  responsibleUserAvatarUrl: string | null;
   currency?: 'RUB' | 'USD';
   salary: number;
   releaseDate: string | null;
@@ -34,6 +35,7 @@ export interface WorkAnalytics {
 export interface WorkAnalyticsByResponsible {
   responsibleUserId: string;
   responsibleUserName: string;
+  responsibleUserAvatarUrl: string | null;
   works: WorkAnalytics[];
   totals: {
     totalSalary: number;

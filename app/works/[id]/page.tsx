@@ -76,18 +76,29 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
   const displaySalary = Number(workData?.salary || 0);
   const isSalaryConfidential = (workData as any)?.isConfidential === true;
   const isWorkerNotResponsible = user?.role === 'WORKER' && !isResponsible;
+  const defaultTab: 'duties' | 'dutiesHistory' | 'income' = isWorkerNotResponsible
+    ? 'duties'
+    : 'income';
 
   // Состояние для табов
-  const [activeTab, setActiveTab] = React.useState<'duties' | 'dutiesHistory' | 'income'>('duties');
+  const [activeTab, setActiveTab] = React.useState<'duties' | 'dutiesHistory' | 'income'>(
+    defaultTab,
+  );
 
   // Отслеживаем, какие табы уже были посещены (для ленивой инициализации)
-  const [visitedTabs, setVisitedTabs] = React.useState<Set<string>>(() => new Set(['duties']));
+  const [visitedTabs, setVisitedTabs] = React.useState<Set<string>>(() => new Set([defaultTab]));
   React.useEffect(() => {
     setVisitedTabs((prev) => {
       if (prev.has(activeTab)) return prev;
       return new Set(prev).add(activeTab);
     });
   }, [activeTab]);
+
+  React.useEffect(() => {
+    if (isWorkerNotResponsible && activeTab !== 'duties') {
+      setActiveTab('duties');
+    }
+  }, [activeTab, isWorkerNotResponsible]);
 
   // Загрузка истории обязанностей при первом переключении на таб
   React.useEffect(() => {
@@ -333,6 +344,33 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
             {/* Табы */}
             <div className="border-b border-gray-200">
               <div className="flex">
+                {!isWorkerNotResponsible && (
+                  <button
+                    onClick={() => setActiveTab('income')}
+                    className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
+                      activeTab === 'income'
+                        ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                        />
+                      </svg>
+                      История поступлений
+                    </div>
+                  </button>
+                )}
                 <button
                   onClick={() => setActiveTab('duties')}
                   className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
@@ -382,33 +420,6 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                         />
                       </svg>
                       История обязанностей
-                    </div>
-                  </button>
-                )}
-                {!isWorkerNotResponsible && (
-                  <button
-                    onClick={() => setActiveTab('income')}
-                    className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-all duration-200 ${
-                      activeTab === 'income'
-                        ? 'border-b-2 border-primary-600 text-primary-600 bg-primary-50'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                        />
-                      </svg>
-                      История поступлений
                     </div>
                   </button>
                 )}

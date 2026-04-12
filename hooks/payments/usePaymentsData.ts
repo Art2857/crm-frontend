@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { analyticsService, MyDebt } from '../../services/analytics';
 import { logger } from '../../utils/logger';
 import { useNotification } from '../../contexts/NotificationContext';
 import { ResponsibleUser } from '../../types/payments';
 import { useAppSelector } from '../../store';
+import { getCurrentDateISO } from '../../utils/date';
 
 interface LoadParams {
   endDate?: string;
@@ -35,19 +36,86 @@ function buildUserTotalsFromWorks(works: ResponsibleUser['works']) {
     (sum, work) => sum + ((work.totalAccrued || 0) - (work.paidAmount || 0)),
     0,
   );
-  const remainingDebt = works.reduce(
-    (sum, work) => sum + Math.max((work.totalAccrued || 0) - (work.paidAmount || 0), 0),
-    0,
-  );
-  const overpaidAmount = works.reduce((sum, work) => sum + (work.overpaidAmount || 0), 0);
+  const remainingDebt = totalDebt;
 
   return {
     totalAccrued,
     totalPaid,
     totalDebt,
     remainingDebt,
-    overpaidAmount,
   };
+}
+
+function parseIsoDateToUtc(date: string): Date {
+  const [year, month, day] = date.split('-').map(Number);
+  return new Date(Date.UTC(year, (month || 1) - 1, day || 1));
+}
+
+function buildClampedDateUtc(year: number, month: number, day: number): Date {
+  const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(year, month, Math.min(day, lastDayOfMonth)));
+}
+
+function getNextSalaryDate(user: ResponsibleUser, referenceDateIso: string): Date {
+  const referenceDate = parseIsoDateToUtc(referenceDateIso);
+  const salaryDays = user.salaryDays.length > 0 ? user.salaryDays : [1];
+
+  let nextSalaryDate: Date | null = null;
+
+  for (let monthOffset = 0; monthOffset <= 1; monthOffset++) {
+    const year = referenceDate.getUTCFullYear();
+    const month = referenceDate.getUTCMonth() + monthOffset;
+
+    for (const salaryDay of salaryDays) {
+      const candidate = buildClampedDateUtc(year, month, salaryDay);
+      if (candidate <= referenceDate) {
+        continue;
+      }
+
+      if (nextSalaryDate === null || candidate < nextSalaryDate) {
+        nextSalaryDate = candidate;
+      }
+    }
+  }
+
+  return (
+    nextSalaryDate ??
+    buildClampedDateUtc(referenceDate.getUTCFullYear(), referenceDate.getUTCMonth() + 1, 1)
+  );
+}
+
+function compareUsersForPayments(
+  left: ResponsibleUser,
+  right: ResponsibleUser,
+  referenceDateIso: string,
+) {
+  const leftRequiresAttention = left.requiresAttention === true ? 1 : 0;
+  const rightRequiresAttention = right.requiresAttention === true ? 1 : 0;
+
+  if (leftRequiresAttention !== rightRequiresAttention) {
+    return rightRequiresAttention - leftRequiresAttention;
+  }
+
+  if (left.remainingDebt !== right.remainingDebt) {
+    return right.remainingDebt - left.remainingDebt;
+  }
+
+  const leftNextSalaryDate = getNextSalaryDate(left, referenceDateIso);
+  const rightNextSalaryDate = getNextSalaryDate(right, referenceDateIso);
+
+  if (leftNextSalaryDate.getTime() !== rightNextSalaryDate.getTime()) {
+    return leftNextSalaryDate.getTime() - rightNextSalaryDate.getTime();
+  }
+
+  const leftName = `${left.firstName || ''} ${left.lastName || ''}`.trim();
+  const rightName = `${right.firstName || ''} ${right.lastName || ''}`.trim();
+  return leftName.localeCompare(rightName, 'ru');
+}
+
+function sortUsersForPayments(users: ResponsibleUser[], referenceDateIso: string) {
+  return users
+    .slice()
+    .sort((left, right) => compareUsersForPayments(left, right, referenceDateIso));
 }
 
 export function usePaymentsData() {
@@ -64,6 +132,7 @@ export function usePaymentsData() {
       }
 
       const { endDate, targetWorkId, targetUserId } = data;
+      const referenceDateIso = endDate ?? getCurrentDateISO();
 
       const mappedUsers = await analyticsService.getPaymentsManagement(
         user.role,
@@ -72,14 +141,7 @@ export function usePaymentsData() {
         targetUserId,
       );
 
-      const sortByName = (arr: ResponsibleUser[]) =>
-        arr.slice().sort((a, b) => {
-          const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim();
-          const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim();
-          return nameA.localeCompare(nameB, 'ru');
-        });
-
-      return sortByName(mappedUsers);
+      return sortUsersForPayments(mappedUsers, referenceDateIso);
     },
     [user?.role],
   );
@@ -127,7 +189,10 @@ export function usePaymentsData() {
           (mappedUser) => !prev.some((existingUser) => existingUser.userId === mappedUser.userId),
         );
 
-        return [...nextUsers, ...newUsers];
+        return sortUsersForPayments(
+          [...nextUsers, ...newUsers],
+          data.endDate ?? getCurrentDateISO(),
+        );
       });
     },
     [getWorksData],
@@ -136,14 +201,12 @@ export function usePaymentsData() {
   const fetchMyDebtsData = useCallback(async () => {
     try {
       const myDebtsData = await analyticsService.getMyDebts();
-      setMyDebts(myDebtsData.debts as unknown as MyDebt[]);
+      setMyDebts(myDebtsData.debts);
     } catch (error) {
       logger.error('Ошибка загрузки моих задолженностей:', error);
       showError('Не удалось загрузить данные о задолженностях');
     }
   }, [showError]);
-
-  const responsibleUsersSummary = useMemo(() => usersData, [usersData]);
 
   return {
     // state
@@ -151,7 +214,6 @@ export function usePaymentsData() {
     setUsersData,
     myDebts,
     setMyDebts,
-    responsibleUsersSummary,
     // actions
     fetchWorksData,
     updateWorksData,

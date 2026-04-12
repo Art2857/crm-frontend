@@ -7,6 +7,7 @@ import { Role } from '../../types/user';
 import { logout } from '../../store/slices/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useModal } from '../../contexts/ModalContext';
+import Avatar from '../profile/Avatar';
 
 interface LayoutProps {
   children: ReactNode;
@@ -117,19 +118,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     className="flex items-center space-x-2 p-1 rounded-full text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
                   >
                     <span className="sr-only">Профиль</span>
-                    <svg
-                      className="h-6 w-6 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
+                    {user && <Avatar user={user} size="tiny" className="shadow-sm" />}
                     <span className="text-sm font-medium hidden sm:block">
                       {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
                         user?.email ||
@@ -202,21 +191,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               href="/profile"
               className="flex items-center px-4 hover:bg-gray-50 transition-colors py-2"
             >
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-10 w-10 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </div>
+              <div className="flex-shrink-0">{user && <Avatar user={user} size="small" />}</div>
               <div className="ml-3">
                 <div className="text-base font-medium text-gray-800">
                   {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||

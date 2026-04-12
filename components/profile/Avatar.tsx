@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { CameraIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { User } from '../../types/user';
 import { useNotification } from '../../contexts/NotificationContext';
+import { AVATAR_ACCEPT_ATTRIBUTE, validateAvatarFileCandidate } from '../../utils/avatarUpload';
 
 interface AvatarProps {
-  user: User;
-  size?: 'small' | 'medium' | 'large';
+  user: Pick<User, 'firstName' | 'lastName' | 'email' | 'avatarUrl'>;
+  size?: 'tiny' | 'small' | 'medium' | 'large' | 'xlarge';
   editable?: boolean;
   onAvatarChange?: (file: File) => void;
+  onRemove?: () => void;
+  className?: string;
 }
 
 const Avatar: React.FC<AvatarProps> = ({
@@ -16,16 +20,25 @@ const Avatar: React.FC<AvatarProps> = ({
   size = 'medium',
   editable = false,
   onAvatarChange,
+  onRemove,
+  className = '',
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const notification = useNotification();
 
   const sizeClasses = {
-    small: 'w-12 h-12',
-    medium: 'w-20 h-20',
-    large: 'w-24 h-24',
+    tiny: 'h-8 w-8 text-xs',
+    small: 'h-10 w-10 text-sm',
+    medium: 'h-16 w-16 text-lg',
+    large: 'h-24 w-24 text-2xl',
+    xlarge: 'h-32 w-32 text-3xl',
   };
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [user.avatarUrl]);
 
   const getInitials = () => {
     const firstName = user.firstName?.charAt(0)?.toUpperCase() || '';
@@ -37,19 +50,15 @@ const Avatar: React.FC<AvatarProps> = ({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Проверяем тип файла
-    if (!file.type.startsWith('image/')) {
-      notification.showError('Пожалуйста, выберите изображение');
-      return;
-    }
-
-    // Проверяем размер файла (максимум 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      notification.showError('Размер изображения не должен превышать 5MB');
+    const validationError = validateAvatarFileCandidate(file);
+    if (validationError) {
+      notification.showError(validationError);
+      event.target.value = '';
       return;
     }
 
     onAvatarChange?.(file);
+    event.target.value = '';
   };
 
   const handleClick = () => {
@@ -58,45 +67,66 @@ const Avatar: React.FC<AvatarProps> = ({
     }
   };
 
+  const hasAvatarImage = Boolean(user.avatarUrl) && !imageFailed;
+  const initials = getInitials();
+  const alt = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Аватар';
+
   return (
-    <div
-      className={`relative ${sizeClasses[size]} rounded-full overflow-hidden ${
-        editable ? 'cursor-pointer' : ''
-      }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={handleClick}
-    >
-      {/* TODO: В будущем добавить поддержку загрузки аватара */}
-      <div className="w-full h-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-lg">
-        {getInitials()}
+    <div className="relative inline-flex shrink-0">
+      <div
+        className={`relative shrink-0 overflow-hidden rounded-full ${sizeClasses[size]} ${className} ${
+          editable ? 'cursor-pointer transition-transform duration-200 hover:scale-[1.02]' : ''
+        }`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={handleClick}
+      >
+        {hasAvatarImage ? (
+          // Presigned avatar URLs may come from dynamic object-storage hosts, so we avoid next/image restrictions here.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={user.avatarUrl ?? undefined}
+            alt={alt}
+            className="block h-full w-full object-cover"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-500 via-primary-600 to-primary-700 font-bold text-white">
+            {initials}
+          </div>
+        )}
+
+        {editable && (
+          <div
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/45 text-white transition-opacity ${
+              isHovered ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <CameraIcon className="h-5 w-5" />
+            <span className="text-[11px] font-medium">Изменить</span>
+          </div>
+        )}
       </div>
 
-      {/* Оверлей для редактирования */}
-      {editable && isHovered && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-        </div>
+      {editable && onRemove && user.avatarUrl && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove();
+          }}
+          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-white bg-white text-red-500 shadow-md transition-colors hover:bg-red-50"
+          aria-label="Удалить аватар"
+        >
+          <TrashIcon className="h-4 w-4" />
+        </button>
       )}
 
       {editable && (
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept={AVATAR_ACCEPT_ATTRIBUTE}
           onChange={handleFileChange}
           className="hidden"
         />

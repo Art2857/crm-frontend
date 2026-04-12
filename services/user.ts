@@ -11,6 +11,7 @@ import { AuthResponse } from '../types/auth';
 import { toDateObject } from '../utils/date';
 import { logger } from '../utils/logger';
 import { accountManagerService } from './accountManager';
+import { AvatarCropArea } from '../utils/avatarUpload';
 
 // Интерфейс для создания пользователя
 interface CreateUserDto {
@@ -367,6 +368,47 @@ export const userService = {
       }
 
       // Для всех других случаев
+      throw error;
+    }
+  },
+
+  uploadAvatar: async (id: string, file: File, cropArea: AvatarCropArea): Promise<User> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('cropX', String(cropArea.x));
+      formData.append('cropY', String(cropArea.y));
+      formData.append('cropWidth', String(cropArea.width));
+      formData.append('cropHeight', String(cropArea.height));
+
+      const response = await privateApi.post<User>(USERS_ENDPOINTS.avatar(id), formData, {
+        headers: ApiClient.getNoCacheHeaders(),
+      });
+
+      if (typeof window !== 'undefined') {
+        accountManagerService.updateAccountUser(response.data);
+      }
+
+      return response.data;
+    } catch (error) {
+      logger.error(`Ошибка при загрузке аватара пользователя ${id}:`, error);
+      throw error;
+    }
+  },
+
+  removeAvatar: async (id: string): Promise<User> => {
+    try {
+      const response = await privateApi.delete<User>(USERS_ENDPOINTS.avatar(id), {
+        headers: ApiClient.getNoCacheHeaders(),
+      });
+
+      if (typeof window !== 'undefined') {
+        accountManagerService.updateAccountUser(response.data);
+      }
+
+      return response.data;
+    } catch (error) {
+      logger.error(`Ошибка при удалении аватара пользователя ${id}:`, error);
       throw error;
     }
   },

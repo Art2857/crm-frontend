@@ -38,6 +38,7 @@ interface ResponsibleUserDto {
   id: string;
   firstName: string | null;
   lastName: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface MyDebt {
@@ -88,6 +89,7 @@ export const analyticsService = {
         firstName: string | null;
         lastName: string | null;
         email: string;
+        avatarUrl?: string | null;
         salaryDays?: number[];
         totals: {
           totalAccrued: number;
@@ -95,7 +97,6 @@ export const analyticsService = {
           totalDebt: number;
           remainingDebt: number;
           isPaymentDue: boolean;
-          overpaidAmount?: number;
           requiresAttention?: boolean;
         };
         works: Array<{
@@ -104,7 +105,6 @@ export const analyticsService = {
           salary: number;
           lastClosureDate: string | null;
           totals: { accrued: number; paid: number; debt: number };
-          overpaidAmount?: number;
           requiresAttention?: boolean;
           duties: Array<{
             dutyId: string;
@@ -131,7 +131,6 @@ export const analyticsService = {
         }));
         // Use backend aggregated RUB totals to avoid extra per-work calls
         const totalAccruedRub = w.totals.accrued;
-        const overpaidAmount = w.overpaidAmount ?? Math.max(w.totals.paid - totalAccruedRub, 0);
         const requiresAttention = w.requiresAttention || false;
         return {
           workId: w.workId,
@@ -140,7 +139,6 @@ export const analyticsService = {
           totalDebt: w.totals.debt,
           paidAmount: w.totals.paid,
           totalAccrued: totalAccruedRub,
-          overpaidAmount,
           requiresAttention,
           isPaymentDue: w.totals.debt > 0,
           lastClosureDate: w.lastClosureDate,
@@ -151,6 +149,7 @@ export const analyticsService = {
               firstName: u.firstName || '',
               lastName: u.lastName || '',
               email: u.email,
+              avatarUrl: u.avatarUrl,
               totalDebt: w.totals.debt,
               isPaymentDue: w.totals.debt > 0,
               lastClosureDate: w.lastClosureDate,
@@ -172,13 +171,12 @@ export const analyticsService = {
         firstName: u.firstName || '',
         lastName: u.lastName || '',
         email: u.email,
+        avatarUrl: u.avatarUrl,
         salaryDays: u.salaryDays ?? [15],
         works,
         totalDebt: u.totals.totalDebt,
         totalAccrued: u.totals.totalAccrued,
         totalPaid: u.totals.totalPaid,
-        overpaidAmount:
-          u.totals.overpaidAmount ?? works.reduce((s, w) => s + (w.overpaidAmount || 0), 0),
         remainingDebt: u.totals.remainingDebt,
         isPaymentDue: u.totals.isPaymentDue,
         requiresAttention: requiresAttentionUser,

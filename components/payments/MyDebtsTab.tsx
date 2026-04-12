@@ -5,10 +5,11 @@ import Link from 'next/link';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { formatCurrency, CurrencyType } from '../../utils/payments';
-import { CheckCircleIcon, UserIcon, CalendarIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, CalendarIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { MyDebt } from '../../services/analytics';
 import type { DutyDebt } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
+import Avatar from '../profile/Avatar';
 
 interface MyDebtsTabProps {
   myDebts: MyDebt[];
@@ -50,6 +51,15 @@ export default function MyDebtsTab({ myDebts, currentUserId, onShowCalculation }
                     debt.isPaymentDue ? 'bg-red-400 animate-pulse' : 'bg-green-400'
                   }`}
                 />
+                <Avatar
+                  user={{
+                    firstName: debt.responsibleUser.firstName,
+                    lastName: debt.responsibleUser.lastName,
+                    email: null,
+                    avatarUrl: debt.responsibleUser.avatarUrl,
+                  }}
+                  size="small"
+                />
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">
                     <Link href={`/works/${debt.workId}`} className="hover:underline">
@@ -57,7 +67,6 @@ export default function MyDebtsTab({ myDebts, currentUserId, onShowCalculation }
                     </Link>
                   </h3>
                   <div className="flex items-center space-x-2 text-sm text-gray-500">
-                    <UserIcon className="h-4 w-4" />
                     <span>
                       Ответственный: {debt.responsibleUser.firstName || ''}{' '}
                       {debt.responsibleUser.lastName || ''}
@@ -78,7 +87,7 @@ export default function MyDebtsTab({ myDebts, currentUserId, onShowCalculation }
               <div className="flex items-center space-x-2 mb-4 text-sm text-gray-600">
                 <CalendarIcon className="h-4 w-4" />
                 <span>
-                  Последнее закрытие: {formatRussian(debt.lastClosureDate) || 'Неизвестная дата'}
+                  Дата закрытия периода: {formatRussian(debt.lastClosureDate) || 'Неизвестная дата'}
                 </span>
               </div>
             )}

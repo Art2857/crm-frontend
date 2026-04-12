@@ -1,28 +1,14 @@
 import { privateApi } from './ApiClient';
-import { PAYMENTS_ENDPOINTS, ANALYTICS_ENDPOINTS } from './endpoints';
+import { PAYMENTS_ENDPOINTS } from './endpoints';
 import {
   PaymentResponse,
   PaymentHistory,
-  MyDebts,
-  MyPayments,
   MakePaymentDto,
   PaymentHistoryDto,
   CreatePaymentAndCloseDto,
   CreatePaymentAndCloseResponseDto,
 } from '../types/payment';
 import { logger } from '../utils/logger';
-
-/**
- * Получает задолженности по выплатам (для ответственных)
- */
-// Прежний fetchPaymentDebts был завязан на отсутствующий /payments/debts —
-// при необходимости следует использовать аналитику; удалено из экспорта.
-
-/**
- * Рассчитывает выплату для конкретного сотрудника
- */
-// Прежний calculatePayment был завязан на отсутствующий /payments/calculate —
-// при необходимости перенести на аналитику и реализовать на бэке; удалено из экспорта.
 
 /**
  * Производит выплату сотруднику
@@ -65,66 +51,6 @@ export const fetchPaymentHistory = async (params?: PaymentHistoryDto): Promise<P
 };
 
 /**
- * Получает задолженности текущего пользователя (что ему должны)
- */
-export const fetchMyDebts = async (): Promise<MyDebts> => {
-  try {
-    const response = await privateApi.get<MyDebts>(ANALYTICS_ENDPOINTS.myDebts);
-    return response.data;
-  } catch (error) {
-    logger.error('Error fetching my debts:', error);
-    throw error;
-  }
-};
-
-/**
- * Получает статистику выплат пользователя
- */
-export const fetchMyPayments = async (): Promise<MyPayments> => {
-  try {
-    // Бэкенд не предоставляет /payments/my-payments. Используем /payments/history и агрегируем на клиенте
-    const response = await privateApi.get<PaymentHistory>(PAYMENTS_ENDPOINTS.history);
-    const history = response.data;
-
-    // Статистика: суммарно отправлено/получено и текущий месяц
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const totalSent = 0;
-    let totalReceived = 0;
-    const currentMonthSent = 0;
-    let currentMonthReceived = 0;
-
-    for (const p of history.payments) {
-      const paymentDate = new Date(p.paymentDate);
-      const isCurrentMonth =
-        paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
-
-      // Если текущий пользователь является отправителем/получателем — сервер уже отфильтровал релевантные записи
-      // Определим направление по наличию from/to относительно userId недоступно здесь → считаем все платежи как «актуальные»
-      // Разделить «отправлено/получено» корректно без userId нельзя — поэтому считаем суммарно в totalReceived
-      // и используем totalSent = 0. При необходимости можно передать роль через отдельную ручку
-      totalReceived += p.amount;
-      if (isCurrentMonth) currentMonthReceived += p.amount;
-    }
-
-    return {
-      statistics: {
-        totalSent,
-        totalReceived,
-        currentMonthSent,
-        currentMonthReceived,
-      },
-      recentPayments: history.payments.slice(0, 10),
-    };
-  } catch (error) {
-    logger.error('Error fetching my payments:', error);
-    throw error;
-  }
-};
-
-/**
  * Удаляет выплату (отменяет ошибочную выплату)
  */
 export const deletePayment = async (paymentId: string): Promise<void> => {
@@ -158,7 +84,7 @@ export const createPaymentAndClose = async (
 };
 
 /**
- * Получает последний закрытый день для пары работа+пользователь
+ * Получает текущую дату закрытия периода для пары работа+пользователь
  */
 export const getClosureDate = async (workId: string, userId: string): Promise<string | null> => {
   try {
@@ -175,7 +101,7 @@ export const getClosureDate = async (workId: string, userId: string): Promise<st
 export const closePeriod = async (params: {
   workId: string;
   userId: string;
-  closureDate: string; // YYYY-MM-DD — дата «расчёт до»
+  closureDate: string; // YYYY-MM-DD — дата «расчёт до» и новая дата закрытия периода
 }) => {
   const { data } = await privateApi.post(`${PAYMENTS_ENDPOINTS.base}/close-period`, {
     workId: params.workId,

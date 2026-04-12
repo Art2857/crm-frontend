@@ -10,7 +10,6 @@ import {
   BanknotesIcon,
   CurrencyDollarIcon,
   DocumentTextIcon,
-  UserIcon,
   BuildingOfficeIcon,
   CheckCircleIcon,
   InformationCircleIcon,
@@ -18,6 +17,7 @@ import {
 import { PaymentFormData, PaymentModalData } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
 import { getCurrentDateISO } from '../../utils/date';
+import Avatar from '../profile/Avatar';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -102,16 +102,26 @@ export default function PaymentModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Информация о получателе */}
             <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-3 border border-gray-200">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <UserIcon className="h-4 w-4 text-blue-500" />
-                  <span className="text-xs font-medium text-gray-600">Получатель:</span>
-                  <span className="font-semibold text-gray-900 text-sm">{payment.userName}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <BuildingOfficeIcon className="h-4 w-4 text-green-500" />
-                  <span className="text-xs font-medium text-gray-600">Работа:</span>
-                  <span className="font-semibold text-gray-900 text-sm">{payment.workName}</span>
+              <div className="flex items-center gap-3">
+                <Avatar
+                  user={{
+                    firstName: payment.userName.split(' ')[0] || '',
+                    lastName: payment.userName.split(' ').slice(1).join(' ') || '',
+                    email: null,
+                    avatarUrl: payment.avatarUrl,
+                  }}
+                  size="small"
+                />
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-medium text-gray-600">Получатель:</span>
+                    <span className="font-semibold text-gray-900 text-sm">{payment.userName}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <BuildingOfficeIcon className="h-4 w-4 text-green-500" />
+                    <span className="text-xs font-medium text-gray-600">Работа:</span>
+                    <span className="font-semibold text-gray-900 text-sm">{payment.workName}</span>
+                  </div>
                 </div>
               </div>
             </div>

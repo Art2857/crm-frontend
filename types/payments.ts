@@ -26,7 +26,6 @@ export interface WorkDetail {
   totalDebt: number;
   paidAmount: number;
   totalAccrued?: number;
-  overpaidAmount?: number; // сверхурочные (переплата)
   isPaymentDue: boolean;
   lastClosureDate: string | null;
   requiresAttention?: boolean; // индикатор «требует внимания» по правилам зарплаты
@@ -40,12 +39,12 @@ export interface ResponsibleUser {
   firstName: string;
   lastName: string;
   email: string;
+  avatarUrl?: string | null;
   salaryDays: number[];
   works: WorkDetail[];
   totalDebt: number;
   totalAccrued: number;
   totalPaid: number;
-  overpaidAmount?: number; // переплата по пользователю (сумма сверхурочных по работам)
   remainingDebt: number;
   isPaymentDue: boolean;
   requiresAttention?: boolean; // есть хотя бы одна работа, требующая внимания
@@ -150,6 +149,7 @@ export interface PaymentFormData {
   amount: number;
   userName: string;
   workName: string;
+  avatarUrl?: string | null;
   calculationDate?: string; // Дата расчета "до", по которую выполняется выплата/закрытие
 }
 
@@ -178,6 +178,7 @@ export interface UserWorkDebt {
   firstName: string;
   lastName: string;
   email: string;
+  avatarUrl?: string | null;
   totalDebt: number;
   totalAccrued?: number;
   totalPaid?: number;

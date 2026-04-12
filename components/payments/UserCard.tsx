@@ -4,18 +4,17 @@ import React from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import {
-  UserIcon,
   ExclamationTriangleIcon,
   CalendarIcon,
   BuildingOfficeIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   EyeIcon,
-  IdentificationIcon,
 } from '@heroicons/react/24/outline';
 import { ResponsibleUser } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
 import FinancialSummary from './FinancialSummary';
+import Avatar from '../profile/Avatar';
 
 interface UserCardProps {
   user: ResponsibleUser;
@@ -39,7 +38,10 @@ export default function UserCard({
   const { formatRussian } = useDateManager();
   return (
     <div className="relative">
-      <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-r from-white via-gray-50 to-white">
+      <Card
+        className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-r from-white via-gray-50 to-white"
+        bodyClassName="p-0"
+      >
         <div className="p-6 cursor-pointer relative" onClick={() => onToggleExpanded(user.userId)}>
           {/* Декоративная линия сверху */}
           <div
@@ -53,15 +55,15 @@ export default function UserCard({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {/* Аватар пользователя */}
-              <div
-                className={`relative p-4 rounded-2xl shadow-lg ${
-                  user.requiresAttention
-                    ? 'bg-gradient-to-br from-red-100 to-orange-100'
-                    : 'bg-gradient-to-br from-blue-100 to-indigo-100'
-                }`}
-              >
-                <UserIcon
-                  className={`h-7 w-7 ${user.requiresAttention ? 'text-red-600' : 'text-blue-600'}`}
+              <div className="relative">
+                <Avatar
+                  user={user}
+                  size="medium"
+                  className={
+                    user.requiresAttention
+                      ? '!h-20 !w-20 !rounded-2xl ring-2 ring-red-200 shadow-lg'
+                      : '!h-20 !w-20 !rounded-2xl ring-2 ring-blue-200 shadow-lg'
+                  }
                 />
                 {user.requiresAttention && (
                   <div className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center">
@@ -82,10 +84,6 @@ export default function UserCard({
                       <span>Требует внимания</span>
                     </div>
                   )}
-                </div>
-                <div className="inline-flex items-center gap-1.5 text-gray-600 font-medium">
-                  <IdentificationIcon className="h-5 w-5 shrink-0 text-gray-600" />
-                  <span className="leading-none">{user.login}</span>
                 </div>
                 <div className="flex items-center space-x-4 mt-2">
                   <div className="flex items-center space-x-1 text-sm text-gray-500">
@@ -113,8 +111,6 @@ export default function UserCard({
                 }
                 totalPaid={user.totalPaid}
                 remainingDebt={user.remainingDebt}
-                overpaidAmount={user.overpaidAmount}
-                isPaymentDue={user.isPaymentDue}
                 currency={currency}
               />
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { useRouter } from 'next/navigation';
 import Layout from '../../components/layout/Layout';
@@ -15,9 +15,12 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { getCurrentUser } from '../../store/slices/auth';
 import { useTimezone } from '../../contexts/TimezoneContext';
 import Avatar from '../../components/profile/Avatar';
+import AvatarCropModal from '../../components/profile/AvatarCropModal';
 import { authService } from '../../services/auth';
+import { userService } from '../../services/user';
 import { getTimezoneDisplayLabel } from '../../utils/timezones';
 import { validatePasswordStrength } from '../../utils/password';
+import { AvatarCropArea } from '../../utils/avatarUpload';
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -32,6 +35,9 @@ export default function ProfilePage() {
   const [status, setStatus] = useState<UserStatus>(UserStatus.WORKING);
   const [preferencesText, setPreferencesText] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarCropImage, setAvatarCropImage] = useState<string | null>(null);
+  const [isAvatarSubmitting, setIsAvatarSubmitting] = useState(false);
 
   // Состояние для смены пароля
   const [passwordForm, setPasswordForm] = useState({
@@ -132,6 +138,82 @@ export default function ProfilePage() {
       }
     }
   }, [dateManager, isAuthenticated, router, setValue, user]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarCropImage) {
+        URL.revokeObjectURL(avatarCropImage);
+      }
+    };
+  }, [avatarCropImage]);
+
+  const clearAvatarCropState = useCallback(() => {
+    setAvatarFile(null);
+    setAvatarCropImage((currentImage) => {
+      if (currentImage) {
+        URL.revokeObjectURL(currentImage);
+      }
+      return null;
+    });
+  }, []);
+
+  const handleAvatarSelected = useCallback(
+    (file: File) => {
+      setAvatarFile(file);
+      setAvatarCropImage((currentImage) => {
+        if (currentImage) {
+          URL.revokeObjectURL(currentImage);
+        }
+        return URL.createObjectURL(file);
+      });
+    },
+    [setAvatarFile, setAvatarCropImage],
+  );
+
+  const handleAvatarCropClose = useCallback(() => {
+    clearAvatarCropState();
+  }, [clearAvatarCropState]);
+
+  const handleAvatarSave = useCallback(
+    async (cropArea: AvatarCropArea) => {
+      if (!user || !avatarFile) {
+        notification.showError('Не удалось подготовить файл аватарки');
+        return;
+      }
+
+      setIsAvatarSubmitting(true);
+      try {
+        await userService.uploadAvatar(user.id, avatarFile, cropArea);
+        await dispatch(getCurrentUser()).unwrap();
+        notification.showSuccess('Аватарка успешно обновлена');
+        clearAvatarCropState();
+      } catch (error: any) {
+        notification.showError(error?.message || 'Не удалось обновить аватарку');
+      } finally {
+        setIsAvatarSubmitting(false);
+      }
+    },
+    [avatarFile, clearAvatarCropState, dispatch, notification, user],
+  );
+
+  const handleAvatarRemove = useCallback(async () => {
+    if (!user) {
+      notification.showError('Пользователь не авторизован');
+      return;
+    }
+
+    setIsAvatarSubmitting(true);
+    try {
+      await userService.removeAvatar(user.id);
+      await dispatch(getCurrentUser()).unwrap();
+      notification.showSuccess('Аватарка удалена');
+      clearAvatarCropState();
+    } catch (error: any) {
+      notification.showError(error?.message || 'Не удалось удалить аватарку');
+    } finally {
+      setIsAvatarSubmitting(false);
+    }
+  }, [clearAvatarCropState, dispatch, notification, user]);
 
   const onSubmit = async (data: UpdateProfileDto) => {
     setIsSaving(true);
@@ -296,6 +378,7 @@ export default function ProfilePage() {
 
   const handleCancel = () => {
     setIsEditing(false);
+    clearAvatarCropState();
     // Сбрасываем пароли
     setPasswordForm({
       currentPassword: '',
@@ -377,7 +460,22 @@ export default function ProfilePage() {
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-8">
             <div className="flex flex-col sm:flex-row sm:items-center">
               <div className="mb-4 sm:mb-0 sm:mr-6">
-                <Avatar user={user} size="large" />
+                <div className="space-y-3">
+                  <Avatar
+                    user={user}
+                    size="large"
+                    editable={isEditing && !isAvatarSubmitting}
+                    onAvatarChange={handleAvatarSelected}
+                    onRemove={isEditing && user.avatarUrl ? handleAvatarRemove : undefined}
+                    className="shadow-lg"
+                  />
+                  {isEditing && (
+                    <p className="max-w-[220px] text-xs leading-5 text-primary-100">
+                      Нажмите на аватарку, чтобы выбрать новое изображение, или удалите текущую
+                      через кнопку на ней.
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="text-white flex-1">
                 <h2 className="text-2xl font-bold mb-2">{fullName}</h2>
@@ -719,6 +817,13 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      <AvatarCropModal
+        isOpen={avatarCropImage !== null}
+        imageSrc={avatarCropImage}
+        isSubmitting={isAvatarSubmitting}
+        onClose={handleAvatarCropClose}
+        onConfirm={handleAvatarSave}
+      />
     </Layout>
   );
 }

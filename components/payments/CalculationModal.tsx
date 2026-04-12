@@ -154,11 +154,11 @@ export default function CalculationModal({
     setConfirmModalOpen(true);
   }, []);
 
-  const isDateBeforeClosure = useMemo(() => {
+  const isDateBeforeClosureDate = useMemo(() => {
     if (!calculation || !calculationDate) return false;
     const closure = calculation.lastClosureDate;
     if (!closure) return false;
-    return formatDateToISO(calculationDate) <= formatDateToISO(closure);
+    return formatDateToISO(calculationDate) < formatDateToISO(closure);
   }, [calculation, calculationDate]);
 
   if (!calculation) return null;
@@ -235,10 +235,26 @@ export default function CalculationModal({
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-red-600 font-medium">
-                      {isDebtsView ? 'Мне должны' : 'К доплате'}
+                    <p
+                      className={`text-sm font-medium ${
+                        displayValues.remainingDebt > 0
+                          ? 'text-red-600'
+                          : displayValues.remainingDebt < 0
+                            ? 'text-emerald-600'
+                            : 'text-gray-600'
+                      }`}
+                    >
+                      {isDebtsView ? 'Мне должны' : 'Остаток'}
                     </p>
-                    <p className="text-2xl font-bold text-red-900">
+                    <p
+                      className={`text-2xl font-bold ${
+                        displayValues.remainingDebt > 0
+                          ? 'text-red-900'
+                          : displayValues.remainingDebt < 0
+                            ? 'text-emerald-900'
+                            : 'text-gray-900'
+                      }`}
+                    >
                       {formatCurrency(displayValues.remainingDebt, displayCurrency)}
                     </p>
                   </div>
@@ -249,7 +265,7 @@ export default function CalculationModal({
               <div className="flex gap-3">
                 {calculation.lastClosureDate && (
                   <div className="bg-blue-50 rounded-md px-3 py-2 flex-1 text-center border border-blue-200">
-                    <p className="text-xs text-blue-600 font-medium">Последнее закрытие</p>
+                    <p className="text-xs text-blue-600 font-medium">Дата закрытия периода</p>
                     <p className="text-sm font-semibold text-blue-800">
                       {formatRussian(calculation.lastClosureDate) || 'Неизвестная дата'}
                     </p>
@@ -411,10 +427,26 @@ export default function CalculationModal({
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-red-600 font-medium">
-                      {isDebtsView ? 'Мне должны' : 'К доплате'}
+                    <p
+                      className={`text-sm font-medium ${
+                        displayValues.remainingDebt > 0
+                          ? 'text-red-600'
+                          : displayValues.remainingDebt < 0
+                            ? 'text-emerald-600'
+                            : 'text-gray-600'
+                      }`}
+                    >
+                      {isDebtsView ? 'Мне должны' : 'Остаток'}
                     </p>
-                    <p className="text-2xl font-bold text-red-900">
+                    <p
+                      className={`text-2xl font-bold ${
+                        displayValues.remainingDebt > 0
+                          ? 'text-red-900'
+                          : displayValues.remainingDebt < 0
+                            ? 'text-emerald-900'
+                            : 'text-gray-900'
+                      }`}
+                    >
                       {formatCurrency(displayValues.remainingDebt, displayCurrency)}
                     </p>
                   </div>
@@ -426,7 +458,7 @@ export default function CalculationModal({
                     <div className="flex justify-center gap-6 text-sm">
                       {calculation.lastClosureDate && (
                         <div className="text-center">
-                          <span className="text-blue-600 font-medium">Последнее закрытие: </span>
+                          <span className="text-blue-600 font-medium">Дата закрытия периода: </span>
                           <span className="text-blue-800 font-semibold">
                             {formatRussian(calculation.lastClosureDate) || 'Неизвестная дата'}
                           </span>
@@ -705,19 +737,19 @@ export default function CalculationModal({
               {/* Кнопки создания выплаты */}
               {!isDebtsView && !isUserCalculation && (
                 <div className="flex flex-col items-center gap-3">
-                  {isDateBeforeClosure && (
+                  {isDateBeforeClosureDate && (
                     <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
                       <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
                       <span>
-                        На выбранную дату ({formatRussian(calculationDate)}) новых начислений уже
-                        нет, потому что период закрыт по{' '}
-                        {formatRussian(calculation.lastClosureDate)}. Выберите более позднюю дату.
+                        На выбранную дату ({formatRussian(calculationDate)}) новых начислений нет:
+                        текущая дата закрытия периода — {formatRussian(calculation.lastClosureDate)}
+                        . Выберите дату не раньше этой границы.
                       </span>
                     </div>
                   )}
                   {calculation.remainingDebt > 0 ? (
                     <Button
-                      disabled={isDateBeforeClosure}
+                      disabled={isDateBeforeClosureDate}
                       onClick={() => {
                         onCreatePayment(
                           calculation.userId,
@@ -735,7 +767,7 @@ export default function CalculationModal({
                     </Button>
                   ) : (
                     <Button
-                      disabled={isDateBeforeClosure}
+                      disabled={isDateBeforeClosureDate}
                       onClick={() => {
                         openConfirmModal(() => {
                           const ev = new CustomEvent('close-period', {
@@ -765,19 +797,19 @@ export default function CalculationModal({
                       мульти-выплату/закрытие периодов одним действием.
                     </p>
                   </div>
-                  {isDateBeforeClosure && (
+                  {isDateBeforeClosureDate && (
                     <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 w-full">
                       <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
                       <span>
-                        На выбранную дату ({formatRussian(calculationDate)}) новых начислений уже
-                        нет, потому что период закрыт по{' '}
-                        {formatRussian(calculation.lastClosureDate)}. Выберите более позднюю дату.
+                        На выбранную дату ({formatRussian(calculationDate)}) новых начислений нет:
+                        текущая дата закрытия периода — {formatRussian(calculation.lastClosureDate)}
+                        . Выберите дату не раньше этой границы.
                       </span>
                     </div>
                   )}
                   {onBulkPayAllWorks && (
                     <Button
-                      disabled={isDateBeforeClosure}
+                      disabled={isDateBeforeClosureDate}
                       onClick={() => openConfirmModal(onBulkPayAllWorks)}
                       className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -817,7 +849,6 @@ export default function CalculationModal({
           workNames={confirmModalWorkNames}
           calculationDate={calculationDate}
           isBulk={isUserCalculation}
-          hasOverpayment={displayValues.actualTotalPaid > displayValues.totalAccrued}
         />
       )}
     </>
