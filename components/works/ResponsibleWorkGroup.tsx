@@ -199,17 +199,26 @@ export default function ResponsibleWorkGroup({
             {sortedWorks.map((work) => (
               <div
                 key={work.id}
-                className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
+                role="button"
+                tabIndex={0}
+                onClick={() => onViewWork(work.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onViewWork(work.id);
+                  }
+                }}
+                className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="min-w-0">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
                     <div className="font-medium text-gray-900">{work.name}</div>
                   </div>
-                  <button
-                    onClick={() => onViewWork(work.id)}
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-all duration-200 ml-2 flex-shrink-0"
+                  <span
+                    className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-gray-400"
+                    aria-hidden
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -217,7 +226,7 @@ export default function ResponsibleWorkGroup({
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
-                  </button>
+                  </span>
                 </div>
                 {work.isConfidential !== true && (
                   <div className="mb-4 space-y-3">
@@ -359,14 +368,28 @@ export default function ResponsibleWorkGroup({
                       <th className="text-right py-3 px-4 font-medium text-gray-700">Зарплата</th>
                     </>
                   )}
-                  <th className="text-center py-3 px-4 font-medium text-gray-700 w-12"></th>
+                  <th
+                    className="w-12 py-3 px-2 text-center font-medium text-gray-700"
+                    aria-label="Перейти"
+                  >
+                    <span className="sr-only">Переход</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {sortedWorks.map((work, index) => (
                   <tr
                     key={work.id}
-                    className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onViewWork(work.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onViewWork(work.id);
+                      }
+                    }}
+                    className={`cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500`}
                   >
                     <td className="py-3 px-4">
                       <div className="font-medium text-gray-900">{work.name}</div>
@@ -419,13 +442,13 @@ export default function ResponsibleWorkGroup({
                         </td>
                       </>
                     )}
-                    <td className="py-3 px-4 text-center w-12">
-                      <button
-                        onClick={() => onViewWork(work.id)}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-all duration-200"
+                    <td className="w-12 py-3 px-2 text-center">
+                      <span
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-400"
+                        aria-hidden
                       >
                         <svg
-                          className="w-4 h-4"
+                          className="h-4 w-4"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -437,7 +460,7 @@ export default function ResponsibleWorkGroup({
                             d="M9 5l7 7-7 7"
                           />
                         </svg>
-                      </button>
+                      </span>
                     </td>
                   </tr>
                 ))}
