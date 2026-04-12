@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { dutyService } from '../../services/duty';
 import { Duty, Distribution, DistributionWithDetails } from '../../types/duty';
 import { Role } from '../../types/user';
+import { sortDistributionsByActuality } from '../../utils/distributions';
 
 interface DutiesState {
   duties: Duty[];
@@ -440,13 +441,7 @@ const dutiesSlice = createSlice({
     });
     builder.addCase(fetchWorkDistributions.fulfilled, (state, action) => {
       state.isLoading = false;
-
-      // Убедимся, что распределения отсортированы по дате в порядке убывания
-      const sortedDistributions = [...action.payload].sort(
-        (a, b) => new Date(b.workHistory.date).getTime() - new Date(a.workHistory.date).getTime(),
-      );
-
-      state.workDistributions = sortedDistributions;
+      state.workDistributions = sortDistributionsByActuality(action.payload);
     });
     builder.addCase(fetchWorkDistributions.rejected, (state, action) => {
       state.isLoading = false;
@@ -495,12 +490,7 @@ const dutiesSlice = createSlice({
         ) {
           // Добавляем новое распределение
           state.workDistributions.push(action.payload);
-
-          // Сортируем распределения по дате в порядке убывания
-          state.workDistributions.sort(
-            (a, b) =>
-              new Date(b.workHistory.date).getTime() - new Date(a.workHistory.date).getTime(),
-          );
+          state.workDistributions = sortDistributionsByActuality(state.workDistributions);
         }
       }
     });
@@ -538,10 +528,7 @@ const dutiesSlice = createSlice({
             state.workDistributions.unshift(updatedDistribution);
           }
 
-          // Сортируем распределения по дате в порядке убывания для поддержания порядка
-          state.workDistributions.sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          );
+          state.workDistributions = sortDistributionsByActuality(state.workDistributions);
         }
       }
     });
@@ -560,13 +547,7 @@ const dutiesSlice = createSlice({
     });
     builder.addCase(fetchDistributionsByWorkId.fulfilled, (state, action) => {
       state.isLoading = false;
-
-      // Убедимся, что распределения отсортированы по дате в порядке убывания
-      const sortedDistributions = [...action.payload].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-
-      state.workDistributions = sortedDistributions;
+      state.workDistributions = sortDistributionsByActuality(action.payload);
     });
     builder.addCase(fetchDistributionsByWorkId.rejected, (state, action) => {
       state.isLoading = false;

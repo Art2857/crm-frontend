@@ -14,6 +14,7 @@ import WorkIncomeManagement from '../../../components/work-income/WorkIncomeMana
 import DocumentsManager from '../../../components/documents/DocumentsManager';
 import { formatAmountWithCurrency } from '../../../utils/currency';
 import { formatDateForDisplay } from '../../../utils/date';
+import { getLatestDistribution } from '../../../utils/distributions';
 import { useWorkDetail } from '../../../hooks/works/useWorkDetail';
 
 export default function WorkDetailPage({ params }: { params: { id: string } }) {
@@ -503,7 +504,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                       workSalary={workData.salary}
                       workCurrency={salaryCurrency}
                       releaseDate={workData.releaseDate}
-                      currentDistribution={distributions.length > 0 ? distributions[0] : null}
+                      currentDistribution={getLatestDistribution(distributions)}
                       distributions={distributions}
                       isLoading={false}
                     />

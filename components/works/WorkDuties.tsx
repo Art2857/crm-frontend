@@ -4,6 +4,7 @@ import { User } from '../../types/user';
 import { formatDateForDisplay } from '../../utils/date';
 import { formatAmountWithCurrency, formatPaymentWithCurrency } from '../../utils/currency';
 import { useUsersMap } from '../../hooks/shared/useUsersMap';
+import { getLatestDistribution } from '../../utils/distributions';
 
 interface WorkDutiesProps {
   distributions: DistributionWithDetails[] | null;
@@ -33,8 +34,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   // Получаем последнее распределение (самое актуальное)
   // Всегда берём первое (самое свежее) - даже если оно пустое (обнулено при архивации)
   const latestDistribution = useMemo<DistributionWithDetails | undefined>(() => {
-    if (!distributions || distributions.length === 0) return undefined;
-    return distributions[0];
+    return getLatestDistribution(distributions) ?? undefined;
   }, [distributions]);
 
   // Фильтруем детали распределения по текущему пользователю, если нужно

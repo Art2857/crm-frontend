@@ -15,6 +15,7 @@ import { privateApi } from '../../services/ApiClient';
 import { logger } from '../../utils/logger';
 import { User } from '../../types/user';
 import { toDateObject, formatDateToISO } from '../../utils/date';
+import { getLatestDistribution } from '../../utils/distributions';
 
 export function useWorkDetail(id: string) {
   const router = useRouter();
@@ -222,9 +223,9 @@ export function useWorkDetail(id: string) {
     if (user.role === 'WORKER') {
       const isResponsibleForWork = workData.responsibleUserId === user.id;
       // Проверяем, есть ли пользователь в последнем (актуальном) распределении обязанностей
-      const latestDist = dutiesManagementHook.distributions?.[0];
+      const latestDist = getLatestDistribution(dutiesManagementHook.distributions);
       const isParticipant =
-        latestDist?.details.some((detail) => detail.userId === user.id) ?? false;
+        latestDist?.details.some((detail) => detail.user.id === user.id) ?? false;
 
       return isResponsibleForWork || isParticipant;
     }
