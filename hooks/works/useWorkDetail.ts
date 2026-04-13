@@ -15,7 +15,7 @@ import { privateApi } from '../../services/ApiClient';
 import { logger } from '../../utils/logger';
 import { User } from '../../types/user';
 import { toDateObject, formatDateToISO } from '../../utils/date';
-import { getLatestDistribution } from '../../utils/distributions';
+import { getDistributionByWorkHistoryId } from '../../utils/distributions';
 
 export function useWorkDetail(id: string) {
   const router = useRouter();
@@ -173,7 +173,7 @@ export function useWorkDetail(id: string) {
   }, [responsibleUser, workData]);
 
   const handleDutiesSubmit = useCallback(
-    (
+    async (
       duties: Array<{
         dutyId: string;
         userId: string;
@@ -184,9 +184,15 @@ export function useWorkDetail(id: string) {
       effectiveDate?: string,
     ) => {
       // Разрешаем пустой список для обнуления распределения
-      dutiesManagementHook.createDistribution(duties, effectiveDate);
+      const result = await dutiesManagementHook.createDistribution(duties, effectiveDate);
+
+      if (result !== null) {
+        await reloadWorkData();
+      }
+
+      return result;
     },
-    [dutiesManagementHook.createDistribution],
+    [dutiesManagementHook.createDistribution, reloadWorkData],
   );
 
   const handleFormSubmit = useCallback(
@@ -222,8 +228,12 @@ export function useWorkDetail(id: string) {
 
     if (user.role === 'WORKER') {
       const isResponsibleForWork = workData.responsibleUserId === user.id;
+      const latestWorkHistoryId = workData.history?.[0]?.id;
       // Проверяем, есть ли пользователь в последнем (актуальном) распределении обязанностей
-      const latestDist = getLatestDistribution(dutiesManagementHook.distributions);
+      const latestDist = getDistributionByWorkHistoryId(
+        dutiesManagementHook.distributions,
+        latestWorkHistoryId,
+      );
       const isParticipant =
         latestDist?.details.some((detail) => detail.user.id === user.id) ?? false;
 

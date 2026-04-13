@@ -14,7 +14,7 @@ import WorkIncomeManagement from '../../../components/work-income/WorkIncomeMana
 import DocumentsManager from '../../../components/documents/DocumentsManager';
 import { formatAmountWithCurrency } from '../../../utils/currency';
 import { formatDateForDisplay } from '../../../utils/date';
-import { getLatestDistribution } from '../../../utils/distributions';
+import { getDistributionByWorkHistoryId } from '../../../utils/distributions';
 import { useWorkDetail } from '../../../hooks/works/useWorkDetail';
 
 export default function WorkDetailPage({ params }: { params: { id: string } }) {
@@ -56,6 +56,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
   const isSalaryConfidential = (workData as any)?.isConfidential === true;
   const isWorkerNotResponsible = user?.role === 'WORKER' && !isResponsible;
   const canAccessDocuments = user?.role === 'ADMIN' || isResponsible;
+  const currentWorkHistoryId = workData?.history?.[0]?.id;
   const defaultTab: 'duties' | 'dutiesHistory' | 'income' | 'documents' = isWorkerNotResponsible
     ? 'duties'
     : 'income';
@@ -504,7 +505,10 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                       workSalary={workData.salary}
                       workCurrency={salaryCurrency}
                       releaseDate={workData.releaseDate}
-                      currentDistribution={getLatestDistribution(distributions)}
+                      currentDistribution={getDistributionByWorkHistoryId(
+                        distributions,
+                        currentWorkHistoryId,
+                      )}
                       distributions={distributions}
                       isLoading={false}
                     />
@@ -514,6 +518,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     distributions={distributions}
                     users={users}
                     workSalary={workData.salary}
+                    currentWorkHistoryId={currentWorkHistoryId}
                     currentUserId={user?.id}
                     showOnlyCurrentUser={showOnlyCurrentUserDuties}
                     canEdit={canDistributeDuties && !isEditingDuties}
