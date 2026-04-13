@@ -57,6 +57,13 @@ export interface WorkHistory {
   details?: DistributionDetail[]; // Соответствие бэкенду
 }
 
+export interface WorkArchiveStatus {
+  canArchive: boolean;
+  reasons: string[];
+  activeAssignmentsCount: number;
+  unpaidDutyDebtsCount: number;
+}
+
 /**
  * Расширенная модель работы
  */

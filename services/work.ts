@@ -1,4 +1,11 @@
-import { Work, CreateWorkDto, UpdateWorkDto, WorkHistory, WorkWithHistory } from '../types/work';
+import {
+  Work,
+  CreateWorkDto,
+  UpdateWorkDto,
+  WorkHistory,
+  WorkWithHistory,
+  WorkArchiveStatus,
+} from '../types/work';
 import { privateApi } from './ApiClient';
 import { WORKS_ENDPOINTS, WORK_HISTORY_ENDPOINTS } from './endpoints';
 import { workAnalyticsService } from './workAnalytics';
@@ -68,6 +75,16 @@ export const workService = {
       return response.data;
     } catch (error) {
       logger.error(`Error archiving work ${id}:`, error);
+      throw error;
+    }
+  },
+
+  getArchiveStatus: async (id: string): Promise<WorkArchiveStatus> => {
+    try {
+      const response = await privateApi.get<WorkArchiveStatus>(WORKS_ENDPOINTS.archiveStatus(id));
+      return response.data;
+    } catch (error) {
+      logger.error(`Error fetching archive status for work ${id}:`, error);
       throw error;
     }
   },

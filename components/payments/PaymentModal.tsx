@@ -3,12 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
-import Input from '../ui/Input';
 import TextArea from '../ui/TextArea';
 import { formatCurrency } from '../../utils/payments';
 import {
   BanknotesIcon,
-  CurrencyDollarIcon,
   DocumentTextIcon,
   BuildingOfficeIcon,
   CheckCircleIcon,
@@ -16,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { PaymentFormData, PaymentModalData } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
-import { getCurrentDateISO } from '../../utils/date';
+import { formatDateToISO, shiftDateISOByDays } from '../../utils/date';
 import Avatar from '../profile/Avatar';
 
 interface PaymentModalProps {
@@ -25,7 +23,7 @@ interface PaymentModalProps {
   payment: PaymentFormData | null;
   paymentDate: string | null;
   onSubmit: (data: PaymentModalData) => void;
-  periods?: Array<{ startDate: string; endDate: string }>;
+  periods?: Array<{ startDate: string; endDate: string; days: number }>;
   calculationDate?: string;
 }
 
@@ -54,15 +52,20 @@ export default function PaymentModal({
     const defaultDescription = `Зарплата по работе ${payment.workName}`;
 
     const finalDescription = description.trim() || defaultDescription;
-    const date = paymentDate || getCurrentDateISO();
 
     onSubmit({
       amount: payment.amount,
       type: 'SALARY',
       description: finalDescription,
-      date,
     });
   };
+
+  const formatPeriodEnd = (startDate: string, endDate: string) =>
+    formatRussian(
+      formatDateToISO(startDate) < formatDateToISO(endDate)
+        ? shiftDateISOByDays(endDate, -1)
+        : formatDateToISO(endDate),
+    );
 
   if (!payment) return null;
 
@@ -183,7 +186,8 @@ export default function PaymentModal({
                         <span className="font-medium">
                           {periods
                             .map(
-                              (p) => `${formatRussian(p.startDate)} — ${formatRussian(p.endDate)}`,
+                              (p) =>
+                                `${formatRussian(p.startDate)} — ${formatPeriodEnd(p.startDate, p.endDate)}`,
                             )
                             .join(', ')}
                         </span>
@@ -193,10 +197,20 @@ export default function PaymentModal({
                     <span className="font-semibold">{payment.workName}</span>
                     {calculationDate && (
                       <>
-                        <span> с закрытием периодов до </span>
+                        <span> с закрытием периодов по дате </span>
                         <span className="font-semibold text-blue-700">
                           {formatRussian(calculationDate)}
                         </span>
+                        <span> (сама дата не оплачивается)</span>
+                      </>
+                    )}
+                    {paymentDate && (
+                      <>
+                        <span> Выплата будет создана датой </span>
+                        <span className="font-semibold text-emerald-700">
+                          {formatRussian(paymentDate)}
+                        </span>
+                        .
                       </>
                     )}
                   </p>

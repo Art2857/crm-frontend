@@ -41,7 +41,9 @@ export default function PaymentsManagementToolbar({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3 text-blue-800">
             <CalendarIcon className="h-5 w-5 flex-shrink-0 text-blue-600" />
-            <span className="text-sm font-medium">Расчет задолженности до даты:</span>
+            <span className="text-sm font-medium">
+              Расчет задолженности до даты (дата не включается):
+            </span>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -80,7 +82,7 @@ export default function PaymentsManagementToolbar({
         <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
           <ExclamationTriangleIcon className="h-4 w-4 flex-shrink-0" />
           <span>
-            Дата не может быть раньше текущей даты закрытия периода хотя бы по одной работе
+            Дата не может быть раньше текущей первой незакрытой даты хотя бы по одной работе
           </span>
         </div>
       )}

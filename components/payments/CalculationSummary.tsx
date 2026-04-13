@@ -77,7 +77,7 @@ export default function CalculationSummary({
             {calculationDate && (
               <div className="text-center">
                 <CalendarIcon className="h-4 w-4 inline mr-1 text-green-600" />
-                <span className="text-green-600 font-medium">Расчет до: </span>
+                <span className="text-green-600 font-medium">Расчет до (дата не включается):</span>
                 <span className="text-green-800 font-semibold">
                   {formatRussian(calculationDate) || 'Неизвестная дата'}
                 </span>

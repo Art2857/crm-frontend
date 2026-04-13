@@ -15,7 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { DetailedCalculation } from '../../types/payments';
 import { useDateManager } from '../../hooks/useDateManager';
-import { formatDateToISO } from '../../utils/date';
+import { formatDateToISO, shiftDateISOByDays } from '../../utils/date';
 import CurrencySwitch from '../ui/CurrencySwitch';
 import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
 import PaymentConfirmModal from './PaymentConfirmModal';
@@ -37,6 +37,7 @@ interface CalculationModalProps {
   isUserCalculation?: boolean; // Флаг для общего расчета пользователя
   showPaymentHistory?: boolean; // Нужно ли показать раздел выплат
   onBulkPayAllWorks?: () => void;
+  paymentDate?: string;
   initialCurrency?: CurrencyType;
 }
 
@@ -50,6 +51,7 @@ export default function CalculationModal({
   isUserCalculation = false,
   showPaymentHistory = true,
   onBulkPayAllWorks,
+  paymentDate,
   initialCurrency,
 }: CalculationModalProps) {
   // Hooks must be called unconditionally
@@ -146,8 +148,15 @@ export default function CalculationModal({
     return calculation.periods.map((p) => ({
       startDate: p.startDate,
       endDate: p.endDate,
+      days: p.days,
     }));
   }, [calculation]);
+
+  const getDisplayPeriodEnd = useCallback((startDate: string, endDate: string) => {
+    return formatDateToISO(startDate) < formatDateToISO(endDate)
+      ? shiftDateISOByDays(endDate, -1)
+      : formatDateToISO(endDate);
+  }, []);
 
   const openConfirmModal = useCallback((action: () => void) => {
     setConfirmAction(() => action);
@@ -276,7 +285,7 @@ export default function CalculationModal({
                   <div className="bg-green-50 rounded-md px-3 py-2 flex-1 text-center border border-green-200">
                     <p className="text-xs text-green-600 font-medium">
                       <CalendarIcon className="h-3 w-3 inline mr-1" />
-                      Расчет до
+                      Расчет до (дата не включается)
                     </p>
                     <p className="text-sm font-semibold text-green-800">
                       {formatRussian(calculationDate) || 'Неизвестная дата'}
@@ -301,7 +310,8 @@ export default function CalculationModal({
                         <h5 className="font-medium text-gray-900">
                           Период {index + 1}:{' '}
                           {formatRussian(period.startDate) || 'Неизвестная дата'} -{' '}
-                          {formatRussian(period.endDate) || 'Неизвестная дата'}
+                          {formatRussian(getDisplayPeriodEnd(period.startDate, period.endDate)) ||
+                            'Неизвестная дата'}
                         </h5>
                         <Badge className="bg-blue-100 text-blue-800">
                           {period.days} из {period.monthDays} рабочих дней
@@ -467,7 +477,9 @@ export default function CalculationModal({
                       {calculationDate && (
                         <div className="text-center">
                           <CalendarIcon className="h-4 w-4 inline mr-1 text-green-600" />
-                          <span className="text-green-600 font-medium">Расчет до: </span>
+                          <span className="text-green-600 font-medium">
+                            Расчет до (дата не включается):
+                          </span>
                           <span className="text-green-800 font-semibold">
                             {formatRussian(calculationDate) || 'Неизвестная дата'}
                           </span>
@@ -491,8 +503,6 @@ export default function CalculationModal({
                     {calculation.periods.map((period, index) => {
                       const periodStartLocalDateString =
                         formatRussian(period.startDate) || 'Неизвестная дата';
-                      const periodEndLocalDateString =
-                        formatRussian(period.endDate) || 'Неизвестная дата';
 
                       return (
                         <div
@@ -503,7 +513,11 @@ export default function CalculationModal({
                             <h5 className="font-medium text-gray-900">
                               <span> Период {index + 1} </span>
                               <span> {periodStartLocalDateString} </span>-
-                              <span> {periodEndLocalDateString} </span>
+                              <span>
+                                {formatRussian(
+                                  getDisplayPeriodEnd(period.startDate, period.endDate),
+                                )}
+                              </span>
                             </h5>
                             <Badge className="bg-blue-100 text-blue-800">
                               {period.days || 0} из {period.monthDays || 0} рабочих дней
@@ -848,6 +862,7 @@ export default function CalculationModal({
           periods={confirmModalPeriods}
           workNames={confirmModalWorkNames}
           calculationDate={calculationDate}
+          paymentDate={paymentDate}
           isBulk={isUserCalculation}
         />
       )}

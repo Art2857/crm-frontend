@@ -49,6 +49,9 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     users,
     handleArchiveWork,
     handleRestoreWork,
+    canManageArchive,
+    archiveStatus,
+    isLoadingArchiveStatus,
   } = useWorkDetail(id);
 
   const salaryCurrency: 'RUB' | 'USD' = workData?.currency === 'USD' ? 'USD' : 'RUB';
@@ -313,9 +316,32 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                 onCancel={() => {
                   setIsEditing(false);
                 }}
-                onArchiveAction={workData.isArchived ? handleRestoreWork : handleArchiveWork}
-                archiveActionLabel={workData.isArchived ? 'Восстановить' : 'Архивировать'}
+                onArchiveAction={
+                  canManageArchive
+                    ? workData.isArchived
+                      ? handleRestoreWork
+                      : handleArchiveWork
+                    : undefined
+                }
+                archiveActionLabel={
+                  canManageArchive
+                    ? workData.isArchived
+                      ? 'Восстановить'
+                      : 'Архивировать'
+                    : undefined
+                }
                 archiveActionVariant={workData.isArchived ? 'restore' : 'archive'}
+                archiveActionDisabled={
+                  !workData.isArchived &&
+                  (isLoadingArchiveStatus || archiveStatus?.canArchive === false)
+                }
+                archiveActionReasons={
+                  !workData.isArchived
+                    ? isLoadingArchiveStatus
+                      ? ['Проверяем условия архивирования...']
+                      : archiveStatus?.reasons || []
+                    : []
+                }
                 isLoading={isLoading}
               />
             </div>

@@ -31,7 +31,7 @@ import {
 import { PaymentType } from '../../types/payment';
 import { useNotification } from '../../contexts/NotificationContext';
 import { logger } from '../../utils/logger';
-import { formatDateToISO, getCurrentDateISO } from '../../utils/date';
+import { formatDateToISO, getCurrentDateISO, shiftDateISOByDays } from '../../utils/date';
 import { usePaymentsData } from '../../hooks/payments/usePaymentsData';
 import { DisplayCurrency } from '../../hooks/useCurrencyConversion';
 
@@ -68,6 +68,11 @@ export default function PaymentsPage() {
   const [selectedDutyId, setSelectedDutyId] = useState<string | undefined>();
   const [calculationModalShowPaymentHistory, setCalculationModalShowPaymentHistory] =
     useState(true);
+
+  const getClosingPaymentDate = useCallback(
+    (calculationDate: string) => shiftDateISOByDays(calculationDate, -1),
+    [],
+  );
 
   // Данные работ с вложенными пользователями (новый формат отображения)
   const {
@@ -391,7 +396,7 @@ export default function PaymentsPage() {
         workId: w.workId,
         userId,
         amount: Math.max(w.totalDebt || 0, 0),
-        paymentDate: managementPeriodDate,
+        calculationDate: managementPeriodDate,
         description: `Мультивыплата по общему расчету (${w.workName})`,
       }));
       await bulkCreateAndClose({ items }).unwrap();
@@ -420,11 +425,11 @@ export default function PaymentsPage() {
   const handlePaymentSubmit = async (data: PaymentModalData) => {
     try {
       // Используем новый эндпоинт create-payment-and-close
-      const result = await createPaymentAndClose({
+      await createPaymentAndClose({
         workId: selectedPayment?.workId || '',
         userId: selectedPayment?.userId || '',
         amount: Math.round(data.amount), // Конвертируем в копейки
-        paymentDate: data.date, // Текущая дата
+        calculationDate: selectedPayment?.calculationDate || managementPeriodDate,
         description: data.description,
       }).unwrap();
 
@@ -602,6 +607,9 @@ export default function PaymentsPage() {
           isUserCalculation={isUserCalculation}
           showPaymentHistory={calculationModalShowPaymentHistory}
           onBulkPayAllWorks={handleBulkPayAllWorks}
+          paymentDate={
+            selectedCalculation ? getClosingPaymentDate(managementPeriodDate) : undefined
+          }
           initialCurrency={defaultCalculationCurrency}
         />
 
@@ -613,12 +621,17 @@ export default function PaymentsPage() {
           }}
           payment={selectedPayment}
           paymentDate={
-            selectedPayment?.calculationDate ?? (selectedCalculation ? managementPeriodDate : null)
+            selectedPayment?.calculationDate
+              ? getClosingPaymentDate(selectedPayment.calculationDate)
+              : selectedCalculation
+                ? getClosingPaymentDate(managementPeriodDate)
+                : null
           }
           onSubmit={handlePaymentSubmit}
           periods={selectedCalculation?.periods?.map((p) => ({
             startDate: p.startDate,
             endDate: p.endDate,
+            days: p.days,
           }))}
           calculationDate={
             selectedPayment?.calculationDate ??

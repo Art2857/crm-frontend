@@ -100,7 +100,7 @@ export interface WorkDutiesGroup {
 
 export interface PeriodCalculation {
   startDate: string; // ISO Date
-  endDate: string; // ISO Date
+  endDate: string; // ISO Date, верхняя граница периода (дата не включается)
   days: number; // Количество рабочих дней в периоде
   monthDays: number; // Количество рабочих дней в месяце
   duties: Array<{
@@ -150,14 +150,13 @@ export interface PaymentFormData {
   userName: string;
   workName: string;
   avatarUrl?: string | null;
-  calculationDate?: string; // Дата расчета "до", по которую выполняется выплата/закрытие
+  calculationDate?: string; // Верхняя граница расчета; сама дата не входит в оплачиваемый интервал
 }
 
 export interface PaymentModalData {
   amount: number;
   type: string;
   description: string;
-  date: string;
 }
 
 export interface CustomPaymentFormData {

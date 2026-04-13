@@ -6,9 +6,6 @@ import { useRouter } from 'next/navigation';
 import Layout from '../../../components/layout/Layout';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
-import Input from '../../../components/ui/Input';
-import Select from '../../../components/ui/Select';
-import CurrencySwitch from '../../../components/ui/CurrencySwitch';
 import { createWork } from '../../../store/slices/works';
 import { fetchAllUsers } from '../../../store/slices/users';
 import { CreateWorkDto } from '../../../types/work';
@@ -110,123 +107,184 @@ export default function CreateWorkPage() {
   };
 
   // Создаем список опций для выбора ответственного
-  const userOptions = users.map((user) => ({
-    value: user.id,
-    label: `${user.lastName} ${user.firstName} ${user.middleName || ''} (${user.email})`,
-  }));
+  const userOptions = users.map((user) => {
+    const fullName =
+      `${user.lastName || ''} ${user.firstName || ''} ${user.middleName || ''}`.trim();
+    return {
+      value: user.id,
+      label: fullName !== '' ? `${fullName} (${user.email})` : user.email,
+    };
+  });
+
+  const getFieldClasses = (hasError: boolean, extraClasses = '') =>
+    `w-full rounded-xl border-2 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-all focus:bg-white focus:outline-none focus:ring-2 ${
+      hasError
+        ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+        : 'border-gray-200 focus:border-primary-500 focus:ring-primary-100'
+    } ${extraClasses}`;
 
   return (
     <Layout>
       <div className="py-6">
-        <div className="mx-auto max-w-3xl sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-6">Создание новой работы</h1>
+        <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
+          <h1 className="mb-6 text-2xl font-semibold text-gray-900">Создание новой работы</h1>
 
-          <Card>
+          <Card className="border border-gray-100 shadow-sm" bodyClassName="px-6 py-6 sm:px-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Название работы
-                </label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="mt-1"
-                  placeholder="Введите название работы"
-                  error={formErrors.name}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="responsibleUserId"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Ответственный
-                </label>
-                {users.length > 0 ? (
-                  <Select
-                    id="responsibleUserId"
-                    name="responsibleUserId"
-                    value={formData.responsibleUserId}
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(240px,0.8fr)]">
+                <div className="space-y-2">
+                  <label htmlFor="name" className="block text-sm font-semibold text-gray-700">
+                    Название работы
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={formData.name}
                     onChange={handleChange}
-                    className="mt-1"
-                    error={formErrors.responsibleUserId}
-                  >
-                    <option value="">Выберите ответственного</option>
-                    {userOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  <div className="text-gray-500 italic">Загрузка списка пользователей...</div>
-                )}
-              </div>
+                    placeholder="Введите название работы"
+                    className={getFieldClasses(Boolean(formErrors.name))}
+                  />
+                  {formErrors.name && <p className="text-sm text-red-600">{formErrors.name}</p>}
+                </div>
 
-              <div>
-                <div className="flex items-center mb-1">
-                  <label htmlFor="salary" className="block text-sm font-medium text-gray-700 mr-4">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="releaseDate"
+                    className="block text-sm font-semibold text-gray-700"
+                  >
+                    Дата выхода
+                  </label>
+                  <input
+                    id="releaseDate"
+                    name="releaseDate"
+                    type="date"
+                    value={formData.releaseDate || ''}
+                    onChange={handleChange}
+                    className={getFieldClasses(Boolean(formErrors.releaseDate))}
+                  />
+                  {formErrors.releaseDate && (
+                    <p className="text-sm text-red-600">{formErrors.releaseDate}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="responsibleUserId"
+                    className="block text-sm font-semibold text-gray-700"
+                  >
+                    Ответственный
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="responsibleUserId"
+                      name="responsibleUserId"
+                      value={formData.responsibleUserId}
+                      onChange={handleChange}
+                      disabled={users.length === 0}
+                      className={getFieldClasses(
+                        Boolean(formErrors.responsibleUserId),
+                        'appearance-none pr-11',
+                      )}
+                    >
+                      <option value="">
+                        {users.length > 0
+                          ? 'Выберите ответственного'
+                          : 'Загрузка списка ответственных...'}
+                      </option>
+                      {userOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400">
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  {formErrors.responsibleUserId && (
+                    <p className="text-sm text-red-600">{formErrors.responsibleUserId}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="salary" className="block text-sm font-semibold text-gray-700">
                     Бюджет проекта
                   </label>
-                  <CurrencySwitch
-                    value={formData.currency as 'RUB' | 'USD'}
-                    onChange={(val) => setFormData((p) => ({ ...p, currency: val }))}
-                    size="sm"
-                  />
-                </div>
-
-                <div className="relative">
-                  <Input
-                    id="salary"
-                    name="salary"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={formData.salary || ''}
-                    onChange={handleChange}
-                    className=" pl-8 "
-                    placeholder="Введите бюджет"
-                    error={formErrors.salary}
-                  />
-                  <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 pl-4 flex items-center transform">
-                    <span className="text-gray-500 text-sm">
-                      {formData.currency === 'USD' ? '$' : '₽'}
-                    </span>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                      <span className="text-base text-gray-500">
+                        {formData.currency === 'USD' ? '$' : '₽'}
+                      </span>
+                    </div>
+                    <input
+                      id="salary"
+                      name="salary"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={formData.salary || ''}
+                      onChange={handleChange}
+                      placeholder="Введите бюджет"
+                      className={getFieldClasses(
+                        Boolean(formErrors.salary),
+                        'pl-9 pr-28 text-base',
+                      )}
+                    />
+                    <div className="absolute inset-y-0 right-2 flex items-center">
+                      <div className="inline-flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                        {(['RUB', 'USD'] as const).map((currency) => (
+                          <button
+                            key={currency}
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, currency }))}
+                            className={`px-3 py-1.5 text-[11px] font-medium transition-colors ${
+                              formData.currency === currency
+                                ? 'bg-primary-200 text-gray-900'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                            aria-pressed={formData.currency === currency}
+                          >
+                            {currency}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
+                  {formErrors.salary && <p className="text-sm text-red-600">{formErrors.salary}</p>}
                 </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="releaseDate"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Дата выхода
-                </label>
-                <Input
-                  id="releaseDate"
-                  name="releaseDate"
-                  type="date"
-                  value={formData.releaseDate || ''}
-                  onChange={handleChange}
-                  className="mt-1"
-                  placeholder="Выберите дату выхода"
-                  error={formErrors.releaseDate}
-                />
               </div>
 
               {error && <Alert type="error">{error}</Alert>}
               {success && <Alert type="success">{success}</Alert>}
 
-              <div className="flex justify-end space-x-4">
-                <Button type="button" variant="outline" onClick={() => router.push('/works')}>
+              <div className="flex justify-end gap-3 border-t border-gray-100 pt-5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push('/works')}
+                  disabled={isLoading}
+                >
                   Отмена
                 </Button>
-                <Button type="submit" isLoading={isLoading} disabled={isLoading}>
+                <Button
+                  type="submit"
+                  isLoading={isLoading}
+                  disabled={isLoading}
+                  className="bg-primary-600 hover:bg-primary-700"
+                >
                   Создать работу
                 </Button>
               </div>
