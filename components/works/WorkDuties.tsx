@@ -4,12 +4,13 @@ import { User } from '../../types/user';
 import { formatDateForDisplay } from '../../utils/date';
 import { formatAmountWithCurrency, formatPaymentWithCurrency } from '../../utils/currency';
 import { useUsersMap } from '../../hooks/shared/useUsersMap';
-import { getLatestDistribution } from '../../utils/distributions';
+import { getDistributionByWorkHistoryId, getLatestDistribution } from '../../utils/distributions';
 
 interface WorkDutiesProps {
   distributions: DistributionWithDetails[] | null;
   users: User[];
   workSalary: string;
+  currentWorkHistoryId?: string;
   currentUserId?: string;
   showOnlyCurrentUser?: boolean;
   canEdit?: boolean;
@@ -23,6 +24,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   distributions,
   users,
   workSalary,
+  currentWorkHistoryId,
   currentUserId,
   showOnlyCurrentUser = false,
   canEdit = false,
@@ -34,8 +36,12 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   // Получаем последнее распределение (самое актуальное)
   // Всегда берём первое (самое свежее) - даже если оно пустое (обнулено при архивации)
   const latestDistribution = useMemo<DistributionWithDetails | undefined>(() => {
+    if (currentWorkHistoryId) {
+      return getDistributionByWorkHistoryId(distributions, currentWorkHistoryId) ?? undefined;
+    }
+
     return getLatestDistribution(distributions) ?? undefined;
-  }, [distributions]);
+  }, [currentWorkHistoryId, distributions]);
 
   // Фильтруем детали распределения по текущему пользователю, если нужно
   const filteredDetails = useMemo(() => {

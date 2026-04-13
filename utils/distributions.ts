@@ -44,3 +44,16 @@ export const getLatestDistribution = (
   const sortedDistributions = sortDistributionsByActuality(distributions);
   return sortedDistributions[0] ?? null;
 };
+
+export const getDistributionByWorkHistoryId = (
+  distributions: DistributionWithDetails[] | null | undefined,
+  workHistoryId?: string | null,
+): DistributionWithDetails | null => {
+  if (!workHistoryId || !distributions || distributions.length === 0) {
+    return null;
+  }
+
+  return (
+    distributions.find((distribution) => distribution.workHistory.id === workHistoryId) ?? null
+  );
+};
