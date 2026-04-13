@@ -154,7 +154,7 @@ export const useWorkData = ({
     try {
       if (!id) return;
       setIsLoading(true);
-      const updatedWorkData = await dispatch(fetchWorkById({ role, workId: id })).unwrap();
+      const updatedWorkData = await dispatch(fetchWorkById({ workId: id })).unwrap();
       setIsLoading(false);
       return updatedWorkData;
     } catch (error) {
@@ -164,7 +164,7 @@ export const useWorkData = ({
     }
 
     return undefined;
-  }, [id, role, dispatch, showError, handleError]);
+  }, [id, dispatch, showError, handleError]);
 
   // Обработчик отправки формы
   const handleSubmit = useCallback(
@@ -178,7 +178,7 @@ export const useWorkData = ({
           ...formData,
         };
 
-        const updatedWork = await dispatch(updateWork({ role, id, data: dataToSubmit })).unwrap();
+        const updatedWork = await dispatch(updateWork({ id, data: dataToSubmit })).unwrap();
 
         showSuccess('Работа успешно обновлена');
         setIsEditing(false);
@@ -192,7 +192,7 @@ export const useWorkData = ({
         setIsLoading(false);
       }
     },
-    [formData, id, role, dispatch, showSuccess, showError, handleError, reload],
+    [formData, id, dispatch, showSuccess, showError, handleError, reload],
   );
 
   return {

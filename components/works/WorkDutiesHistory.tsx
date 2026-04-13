@@ -23,24 +23,30 @@ interface WorkDutiesHistoryProps {
   isConfidential?: boolean; // Финансовые данные скрыты для текущего пользователя
 }
 
+interface TimelineHistoryItem {
+  id: string;
+  workHistory: WorkHistory;
+  distribution: DistributionWithDetails | null;
+  createdAt: string;
+  effectiveDate: string;
+  effectiveDateForGrouping: string;
+}
+
 interface GroupedHistoryItem {
   date: string; // Дата в формате YYYY-MM-DD
   formattedDate: string; // Форматированная дата
-  items: Array<{
-    type: 'workHistory' | 'distribution';
-    data: WorkHistory | DistributionWithDetails;
-    createdAt: string;
-  }>;
-  // Новые поля для группировки изменений одного типа
+  primaryItem: TimelineHistoryItem;
+  items: TimelineHistoryItem[];
   collapsibleGroups?: Array<{
     groupKey: string; // Уникальный ключ группы (например, название объекта)
     groupName: string; // Отображаемое название группы
-    items: Array<{
-      type: 'workHistory' | 'distribution';
-      data: WorkHistory | DistributionWithDetails;
-      createdAt: string;
-    }>;
+    items: TimelineHistoryItem[];
   }>;
+}
+
+interface HistoryCardRenderOptions {
+  tone?: 'primary' | 'secondary';
+  compareWith?: TimelineHistoryItem | null;
 }
 
 /**
@@ -59,8 +65,6 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   canEdit = false,
   isConfidential = false,
 }) => {
-  const { user } = useAppSelector((state) => state.auth);
-
   // Создаем карту пользователей для быстрого поиска по id
   const usersMap = useUsersMap(users);
   const { convertSync } = useCurrencyConversion({ date: releaseDate });
@@ -163,68 +167,80 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     });
   }, [distributions, showOnlyCurrentUser, currentUserId]);
 
-  // Объединяем историю работы и распределения обязанностей
+  const distributionByHistoryId = useMemo(() => {
+    const distributionMap = new Map<string, DistributionWithDetails>();
+
+    validDistributions.forEach((distribution) => {
+      distributionMap.set(distribution.workHistory.id, distribution);
+    });
+
+    return distributionMap;
+  }, [validDistributions]);
+
+  // Объединяем историю работы и распределения обязанностей в единые снимки состояния
   const groupedHistory = useMemo(() => {
-    const allHistoryItems: Array<{
-      type: 'workHistory' | 'distribution';
-      data: WorkHistory | DistributionWithDetails;
-      createdAt: string;
-      effectiveDate: string;
-      effectiveDateForGrouping: string; // Дата для группировки
-    }> = [];
+    const timelineItems: TimelineHistoryItem[] = [];
+    const seenHistoryIds = new Set<string>();
 
-    // Создаем множество ID workHistory, которые уже представлены в распределениях
-    const distributionWorkHistoryIds = new Set<string>();
-    if (validDistributions.length > 0) {
-      validDistributions.forEach((item) => {
-        distributionWorkHistoryIds.add(item.workHistory.id);
-      });
-    }
-
-    // Добавляем элементы истории работы (исключая те, что уже есть в распределениях)
     if (workHistory && workHistory.length > 0) {
       workHistory.forEach((item) => {
-        // Пропускаем записи workHistory, которые уже отображаются как распределения
-        if (distributionWorkHistoryIds.has(item.id)) {
+        const relatedDistribution = distributionByHistoryId.get(item.id) ?? null;
+        const createdAt = relatedDistribution?.createdAt || item.updatedAt || item.createdAt;
+        const effectiveDate =
+          relatedDistribution?.workHistory.effectiveDate || item.effectiveDate || createdAt;
+
+        if (!createdAt || !effectiveDate) {
           return;
         }
 
-        const createdAt = item.updatedAt || item.createdAt;
-        const effectiveDate = item.effectiveDate || createdAt; // Используем effectiveDate или fallback на createdAt
-
-        if (createdAt && effectiveDate) {
-          allHistoryItems.push({
-            type: 'workHistory',
-            data: item,
-            createdAt,
-            effectiveDate,
-            effectiveDateForGrouping: effectiveDate.split('T')[0],
-          });
-        }
+        timelineItems.push({
+          id: item.id,
+          workHistory: item,
+          distribution: relatedDistribution,
+          createdAt,
+          effectiveDate,
+          effectiveDateForGrouping: effectiveDate.split('T')[0],
+        });
+        seenHistoryIds.add(item.id);
       });
     }
 
-    // Добавляем элементы распределений
+    // На случай рассинхронизации данных добавляем распределения, которых нет в workHistory
     if (validDistributions.length > 0) {
       validDistributions.forEach((item) => {
-        if (item.createdAt) {
-          const effectiveDate = item.workHistory.effectiveDate || item.createdAt; // Используем effectiveDate или fallback на createdAt
-
-          if (effectiveDate) {
-            allHistoryItems.push({
-              type: 'distribution',
-              data: item,
-              createdAt: item.createdAt,
-              effectiveDate,
-              effectiveDateForGrouping: effectiveDate.split('T')[0],
-            });
-          }
+        if (seenHistoryIds.has(item.workHistory.id)) {
+          return;
         }
+
+        const effectiveDate = item.workHistory.effectiveDate || item.createdAt;
+
+        if (!effectiveDate || !item.createdAt) {
+          return;
+        }
+
+        timelineItems.push({
+          id: item.workHistory.id,
+          workHistory: {
+            id: item.workHistory.id,
+            workId: item.workHistory.workId,
+            name: item.workHistory.name,
+            responsibleUserId: item.workHistory.responsibleUserId,
+            salary: String(item.workHistory.salary),
+            currency: item.workHistory.currency,
+            effectiveDate: item.workHistory.effectiveDate,
+            createdAt: item.createdAt,
+            updatedAt: item.createdAt,
+          },
+          distribution: item,
+          createdAt: item.createdAt,
+          effectiveDate,
+          effectiveDateForGrouping: effectiveDate.split('T')[0],
+        });
       });
     }
 
     // Сортируем все элементы сначала по effectiveDate (новые в начале), потом по createdAt
-    allHistoryItems.sort((a, b) => {
+    timelineItems.sort((a, b) => {
       const effectiveDateA = new Date(a.effectiveDate).getTime();
       const effectiveDateB = new Date(b.effectiveDate).getTime();
 
@@ -243,22 +259,19 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     const groups: GroupedHistoryItem[] = [];
     const dateMap: Record<string, GroupedHistoryItem> = {};
 
-    allHistoryItems.forEach((item) => {
+    timelineItems.forEach((item) => {
       if (!dateMap[item.effectiveDateForGrouping]) {
         const newGroup: GroupedHistoryItem = {
           date: item.effectiveDateForGrouping,
           formattedDate: formatDateForDisplay(item.effectiveDateForGrouping),
+          primaryItem: item,
           items: [],
         };
         dateMap[item.effectiveDateForGrouping] = newGroup;
         groups.push(newGroup);
       }
 
-      dateMap[item.effectiveDateForGrouping].items.push({
-        type: item.type,
-        data: item.data,
-        createdAt: item.createdAt,
-      });
+      dateMap[item.effectiveDateForGrouping].items.push(item);
     });
 
     // Сортируем элементы внутри группы по времени создания (новые в начале)
@@ -268,6 +281,8 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
         const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA;
       });
+
+      group.primaryItem = group.items[0];
 
       // Если в группе больше одного элемента, создаем одну сворачиваемую группу
       if (group.items.length > 1) {
@@ -285,7 +300,27 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     });
 
     return groups;
-  }, [validDistributions, workHistory]);
+  }, [distributionByHistoryId, validDistributions, workHistory]);
+
+  const visibleTimelineComparisons = useMemo(() => {
+    const comparisonMap = new Map<string, TimelineHistoryItem | null>();
+
+    groupedHistory.forEach((group, index) => {
+      const currentVisibleItem = group.primaryItem;
+      let previousVisibleItem: TimelineHistoryItem | null = null;
+      for (let nextIndex = index + 1; nextIndex < groupedHistory.length; nextIndex += 1) {
+        const candidate = groupedHistory[nextIndex].primaryItem;
+        if (candidate) {
+          previousVisibleItem = candidate;
+          break;
+        }
+      }
+
+      comparisonMap.set(currentVisibleItem.id, previousVisibleItem);
+    });
+
+    return comparisonMap;
+  }, [groupedHistory]);
 
   if (groupedHistory.length === 0) {
     return (
@@ -296,61 +331,107 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     );
   }
 
-  // Находит различия между двумя распределениями
-  const getDifferences = (
-    current: DistributionWithDetails,
-    previous: DistributionWithDetails | null,
+  const buildDetailComparisonKey = (detail: DistributionWithDetails['details'][number]) => {
+    return `${detail.dutyId}-${detail.userId}`;
+  };
+
+  const getDistributionDiff = (
+    currentItem: TimelineHistoryItem,
+    previousItem: TimelineHistoryItem | null,
+    currentDistribution: DistributionWithDetails | null,
+    previousDistribution: DistributionWithDetails | null,
   ) => {
-    if (!previous) return {};
+    const result = {
+      rowStates: {} as Record<string, 'added' | 'changed'>,
+      addedCount: 0,
+      changedCount: 0,
+      removedCount: 0,
+      salaryChanged: false,
+      responsibleChanged: false,
+      workNameChanged: false,
+    };
 
-    const diffMap: Record<string, { duty: string; changed: boolean }> = {};
+    if (!previousItem) {
+      return result;
+    }
 
-    // Создаем карту текущих деталей
-    current.details.forEach((detail) => {
-      if (!detail.dutyId || !detail.userId) return;
+    result.salaryChanged =
+      previousItem.workHistory.salary !== currentItem.workHistory.salary ||
+      previousItem.workHistory.currency !== currentItem.workHistory.currency;
+    result.responsibleChanged =
+      previousItem.workHistory.responsibleUserId !== currentItem.workHistory.responsibleUserId;
+    result.workNameChanged = previousItem.workHistory.name !== currentItem.workHistory.name;
 
-      diffMap[`${detail.dutyId}-${detail.userId}`] = {
-        duty: detail.duty?.name || 'Неизвестная обязанность',
-        changed: false,
-      };
-    });
+    if (!currentDistribution || !previousDistribution) {
+      return result;
+    }
 
-    // Проверяем изменения
-    current.details.forEach((currentDetail) => {
-      if (!currentDetail.dutyId || !currentDetail.userId) return;
+    const previousDetailsMap = new Map(
+      previousDistribution.details.map((detail) => [buildDetailComparisonKey(detail), detail]),
+    );
+    const currentDetailKeys = new Set<string>();
 
-      const key = `${currentDetail.dutyId}-${currentDetail.userId}`;
+    currentDistribution.details.forEach((detail) => {
+      const key = buildDetailComparisonKey(detail);
+      currentDetailKeys.add(key);
 
-      // Ищем соответствующую запись в предыдущем распределении
-      const prevDetail = previous.details.find(
-        (d) => d.dutyId === currentDetail.dutyId && d.userId === currentDetail.userId,
-      );
+      const previousDetail = previousDetailsMap.get(key);
+      if (!previousDetail) {
+        result.rowStates[key] = 'added';
+        result.addedCount += 1;
+        return;
+      }
 
-      if (prevDetail) {
-        const priceChanged =
-          currentDetail.price !== prevDetail.price ||
-          currentDetail.percentage !== prevDetail.percentage;
+      const isChanged =
+        previousDetail.price !== detail.price ||
+        previousDetail.percentage !== detail.percentage ||
+        previousDetail.currency !== detail.currency ||
+        previousDetail.calculatedValue !== detail.calculatedValue;
 
-        diffMap[key].changed = priceChanged;
-      } else {
-        // Новая запись, которой не было в предыдущем распределении
-        diffMap[key].changed = true;
+      if (isChanged) {
+        result.rowStates[key] = 'changed';
+        result.changedCount += 1;
       }
     });
 
-    return diffMap;
+    previousDistribution.details.forEach((detail) => {
+      const key = buildDetailComparisonKey(detail);
+      if (!currentDetailKeys.has(key)) {
+        result.removedCount += 1;
+      }
+    });
+
+    return result;
   };
 
   const getDateInputValue = (value?: string | null) => {
     return formatDateToISO(value);
   };
 
-  const getEffectiveDateDraft = (workHistoryId: string, currentValue?: string | null) => {
-    return effectiveDateDrafts[workHistoryId] ?? getDateInputValue(currentValue);
+  const getResolvedEffectiveDateValue = (
+    currentValue?: string | null,
+    fallbackValue?: string | null,
+  ) => {
+    return getDateInputValue(currentValue) || getDateInputValue(fallbackValue);
   };
 
-  const hasPendingEffectiveDateChange = (workHistoryId: string, currentValue?: string | null) => {
-    const currentDate = getDateInputValue(currentValue);
+  const getEffectiveDateDraft = (
+    workHistoryId: string,
+    currentValue?: string | null,
+    fallbackValue?: string | null,
+  ) => {
+    return (
+      effectiveDateDrafts[workHistoryId] ??
+      getResolvedEffectiveDateValue(currentValue, fallbackValue)
+    );
+  };
+
+  const hasPendingEffectiveDateChange = (
+    workHistoryId: string,
+    currentValue?: string | null,
+    fallbackValue?: string | null,
+  ) => {
+    const currentDate = getResolvedEffectiveDateValue(currentValue, fallbackValue);
     const draftValue = effectiveDateDrafts[workHistoryId];
 
     if (draftValue === undefined || draftValue === '') {
@@ -367,9 +448,15 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     }));
   };
 
-  const saveEffectiveDateChange = async (workHistoryId: string, currentValue?: string | null) => {
-    const nextDate = effectiveDateDrafts[workHistoryId] ?? getDateInputValue(currentValue);
-    const currentDate = getDateInputValue(currentValue);
+  const saveEffectiveDateChange = async (
+    workHistoryId: string,
+    currentValue?: string | null,
+    fallbackValue?: string | null,
+  ) => {
+    const nextDate =
+      effectiveDateDrafts[workHistoryId] ??
+      getResolvedEffectiveDateValue(currentValue, fallbackValue);
+    const currentDate = getResolvedEffectiveDateValue(currentValue, fallbackValue);
 
     if (!nextDate || nextDate === currentDate) {
       return;
@@ -398,15 +485,19 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     }
   };
 
-  const renderEffectiveDateControl = (workHistoryId: string, currentValue?: string | null) => {
-    const currentDate = getDateInputValue(currentValue);
-    const draftDate = getEffectiveDateDraft(workHistoryId, currentValue);
-    const isChanged = hasPendingEffectiveDateChange(workHistoryId, currentValue);
+  const renderEffectiveDateControl = (
+    workHistoryId: string,
+    currentValue?: string | null,
+    fallbackValue?: string | null,
+  ) => {
+    const resolvedDate = getResolvedEffectiveDateValue(currentValue, fallbackValue);
+    const draftDate = getEffectiveDateDraft(workHistoryId, currentValue, fallbackValue);
+    const isChanged = hasPendingEffectiveDateChange(workHistoryId, currentValue, fallbackValue);
 
     if (!canEdit) {
       return (
         <span className="font-semibold text-gray-900">
-          {currentValue ? formatDateForDisplay(currentValue) : 'Не указано'}
+          {resolvedDate ? formatDateForDisplay(resolvedDate) : 'Не указано'}
         </span>
       );
     }
@@ -423,7 +514,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
         {isChanged && (
           <button
             type="button"
-            onClick={() => saveEffectiveDateChange(workHistoryId, currentDate)}
+            onClick={() => saveEffectiveDateChange(workHistoryId, currentValue, fallbackValue)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isUpdating}
             title="Подтвердить дату вступления в силу"
@@ -442,141 +533,147 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     );
   };
 
-  // Рендерим элемент истории работы
-  const renderWorkHistoryItem = (workHistoryItem: WorkHistory) => {
+  const getCardAppearance = (tone: HistoryCardRenderOptions['tone'] = 'primary') => {
+    if (tone === 'secondary') {
+      return {
+        container:
+          'overflow-hidden rounded-xl border border-slate-200 border-l-4 border-l-slate-300 bg-slate-50/70 shadow-none',
+        section: 'border-b border-slate-200 bg-slate-50/80 px-6 py-4',
+        footer: 'border-t border-slate-200 bg-slate-100/80 px-6 py-3',
+        tableHead: 'bg-slate-100/80',
+      };
+    }
+
+    return {
+      container:
+        'overflow-hidden rounded-xl border border-slate-200 border-l-4 border-l-primary-400 bg-white shadow-sm',
+      section: 'border-b border-slate-200 bg-white px-6 py-4',
+      footer: 'border-t border-slate-100 bg-slate-50/80 px-6 py-3',
+      tableHead: 'bg-slate-50',
+    };
+  };
+
+  const renderDistributionChangeSummary = (
+    diff: ReturnType<typeof getDistributionDiff>,
+    tone: HistoryCardRenderOptions['tone'] = 'primary',
+  ) => {
+    const chips = [
+      diff.salaryChanged
+        ? {
+            key: 'salary',
+            label: 'Изменен бюджет',
+            className: 'border-blue-100 bg-blue-50 text-blue-700',
+          }
+        : null,
+      diff.responsibleChanged
+        ? {
+            key: 'responsible',
+            label: 'Сменился ответственный',
+            className: 'border-violet-100 bg-violet-50 text-violet-700',
+          }
+        : null,
+      diff.workNameChanged
+        ? {
+            key: 'work',
+            label: 'Изменено название',
+            className: 'border-slate-200 bg-slate-100 text-slate-700',
+          }
+        : null,
+      diff.addedCount > 0
+        ? {
+            key: 'added',
+            label: `Добавлено обязанностей: ${diff.addedCount}`,
+            className: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+          }
+        : null,
+      diff.changedCount > 0
+        ? {
+            key: 'changed',
+            label: `Обновлено обязанностей: ${diff.changedCount}`,
+            className: 'border-amber-100 bg-amber-50 text-amber-700',
+          }
+        : null,
+      diff.removedCount > 0
+        ? {
+            key: 'removed',
+            label: `Снято обязанностей: ${diff.removedCount}`,
+            className: 'border-rose-100 bg-rose-50 text-rose-700',
+          }
+        : null,
+    ].filter((chip): chip is { key: string; label: string; className: string } => chip !== null);
+
+    if (chips.length === 0) {
+      return null;
+    }
+
     return (
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-        {/* Главный заголовок с типом изменения */}
-        <div className="px-6 py-4 bg-blue-50 border-b border-blue-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 text-sm font-medium">⚙️</span>
-                </div>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900">Изменение работы</h4>
-                <p className="text-sm text-blue-600 font-medium">{workHistoryItem.name}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Зарплата</div>
-              <div className="text-lg font-semibold text-gray-900">
-                {formatAmountWithCurrency(
-                  Number(workHistoryItem.salary || 0),
-                  (workHistoryItem.currency as 'RUB' | 'USD') || workCurrency || 'RUB',
-                  isConfidential,
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-b border-gray-200 bg-white px-6 py-4">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500">Зарплата:</span>
-              <span className="font-semibold text-gray-900">
-                {formatAmountWithCurrency(
-                  Number(workHistoryItem.salary || 0),
-                  (workHistoryItem.currency as 'RUB' | 'USD') || workCurrency || 'RUB',
-                  isConfidential,
-                )}
-              </span>
-            </div>
-
-            {workHistoryItem.responsibleUserId && usersMap[workHistoryItem.responsibleUserId] && (
-              <div className="min-w-0 flex items-center gap-2 text-sm">
-                <span className="text-gray-500">Ответственный:</span>
-                <span className="max-w-[220px] truncate font-semibold text-gray-900">
-                  {`${usersMap[workHistoryItem.responsibleUserId].lastName || ''} ${usersMap[workHistoryItem.responsibleUserId].firstName || ''}`.trim() ||
-                    usersMap[workHistoryItem.responsibleUserId].email}
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-gray-500">Вступило в силу:</span>
-              {renderEffectiveDateControl(workHistoryItem.id, workHistoryItem.effectiveDate)}
-            </div>
-          </div>
-        </div>
-
-        {/* Техническая информация */}
-        <div className="px-6 py-3 bg-gray-50">
-          <div className="text-xs text-gray-500">
-            <span className="font-medium">Дата создания изменения:</span>{' '}
-            {formatDateForDisplay(workHistoryItem.updatedAt || workHistoryItem.createdAt, true)}
-          </div>
-        </div>
+      <div className={`mt-3 flex flex-wrap gap-2 ${tone === 'secondary' ? 'opacity-80' : ''}`}>
+        {chips.map((chip) => (
+          <span
+            key={chip.key}
+            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${chip.className}`}
+          >
+            {chip.label}
+          </span>
+        ))}
       </div>
     );
   };
 
-  // Рендерим элемент распределения обязанностей
-  const renderDistributionItem = (
-    distribution: DistributionWithDetails,
-    index: number,
-    groupIndex: number,
+  const renderTimelineCard = (
+    item: TimelineHistoryItem,
+    options: HistoryCardRenderOptions = {},
   ) => {
-    // Находим предыдущее распределение для сравнения
-    const getNextDistributionItem = () => {
-      // В текущей группе
-      const groupItems = groupedHistory[groupIndex].items;
-      let nextItemIndex = -1;
+    const appearance = getCardAppearance(options.tone);
+    const workHistoryItem = item.workHistory;
+    const distribution = item.distribution;
+    const comparison =
+      options.tone !== 'secondary'
+        ? getDistributionDiff(
+            item,
+            options.compareWith ?? null,
+            distribution,
+            options.compareWith?.distribution ?? null,
+          )
+        : null;
 
-      // Ищем следующее распределение в текущей группе
-      for (let i = index + 1; i < groupItems.length; i++) {
-        if (groupItems[i].type === 'distribution') {
-          nextItemIndex = i;
-          break;
-        }
-      }
-
-      if (nextItemIndex !== -1) {
-        return groupItems[nextItemIndex].data as DistributionWithDetails;
-      }
-
-      // Если не нашли в текущей группе, ищем в следующих группах
-      for (let g = groupIndex + 1; g < groupedHistory.length; g++) {
-        const nextGroupItems = groupedHistory[g].items;
-        for (let i = 0; i < nextGroupItems.length; i++) {
-          if (nextGroupItems[i].type === 'distribution') {
-            return nextGroupItems[i].data as DistributionWithDetails;
-          }
-        }
-      }
-
-      return null;
-    };
-
-    const prevDistribution = getNextDistributionItem();
-    const differences = getDifferences(distribution, prevDistribution);
-    const responsibleUser = distribution.workHistory.responsibleUserId
-      ? usersMap[distribution.workHistory.responsibleUserId]
+    const responsibleUser = workHistoryItem.responsibleUserId
+      ? usersMap[workHistoryItem.responsibleUserId]
       : null;
     const responsibleUserName = responsibleUser
       ? `${responsibleUser.lastName || ''} ${responsibleUser.firstName || ''}`.trim() ||
         responsibleUser.email ||
         'Не указан'
       : '';
-    // Фильтруем детали: для WORKER (isConfidential) показываем только его обязанности
+
     const filteredDetails =
-      (showOnlyCurrentUser || isConfidential) && currentUserId
+      distribution && (showOnlyCurrentUser || isConfidential) && currentUserId
         ? distribution.details.filter((detail) => detail.user && detail.user.id === currentUserId)
-        : distribution.details;
+        : (distribution?.details ?? []);
 
     return (
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-        <div className="border-b border-gray-200 bg-white px-6 py-4">
+      <div className={appearance.container}>
+        <div className={appearance.section}>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="min-w-0 flex items-center gap-2 text-sm">
+              <span className="text-gray-500">Работа:</span>
+              <span className="max-w-[240px] truncate font-semibold text-gray-900">
+                {workHistoryItem.name}
+              </span>
+            </div>
+
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-500">Зарплата:</span>
-              <span className="font-semibold text-gray-900">
+              <span
+                className={`font-semibold ${
+                  comparison?.salaryChanged && options.tone !== 'secondary'
+                    ? 'text-blue-700'
+                    : 'text-gray-900'
+                }`}
+              >
                 {formatAmountWithCurrency(
-                  Number(distribution.workHistory.salary || 0),
-                  (distribution.workHistory.currency as 'RUB' | 'USD') || workCurrency || 'RUB',
+                  Number(workHistoryItem.salary || 0),
+                  (workHistoryItem.currency as 'RUB' | 'USD') || workCurrency || 'RUB',
                   isConfidential,
                 )}
               </span>
@@ -586,7 +683,11 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
               <div className="min-w-0 flex items-center gap-2 text-sm">
                 <span className="text-gray-500">Ответственный:</span>
                 <span
-                  className="max-w-[220px] truncate font-semibold text-gray-900"
+                  className={`max-w-[220px] truncate font-semibold ${
+                    comparison?.responsibleChanged && options.tone !== 'secondary'
+                      ? 'text-violet-700'
+                      : 'text-gray-900'
+                  }`}
                   title={responsibleUserName || undefined}
                 >
                   {responsibleUserName}
@@ -597,94 +698,118 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             <div className="flex items-center gap-3 text-sm">
               <span className="text-gray-500">Вступило в силу:</span>
               {renderEffectiveDateControl(
-                distribution.workHistory.id,
-                distribution.workHistory.effectiveDate,
+                workHistoryItem.id,
+                workHistoryItem.effectiveDate,
+                item.createdAt,
               )}
             </div>
           </div>
+
+          {comparison !== null && renderDistributionChangeSummary(comparison, options.tone)}
         </div>
 
-        {/* Таблица с обязанностями */}
-        <div className="overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Обязанность
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Ответственный
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Расчет оплаты
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredDetails.map((detail) => {
-                if (!detail || !detail.duty || !detail.user) return null;
+        {distribution && (
+          <div className="overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className={appearance.tableHead}>
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                  >
+                    Обязанность
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                  >
+                    Ответственный
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                  >
+                    Расчет оплаты
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredDetails.map((detail) => {
+                  if (!detail || !detail.duty || !detail.user) return null;
 
-                // Безопасно получаем пользователя
-                const user = detail.user?.id ? usersMap[detail.user.id] : null;
-                const userName = user
-                  ? `${user.lastName || ''} ${user.firstName || ''}`.trim()
-                  : detail.user?.email || (detail.user?.lastName && detail.user?.firstName)
-                    ? `${detail.user?.lastName || ''} ${detail.user?.firstName || ''}`.trim()
-                    : `ID: ${detail.user?.id || 'неизвестно'}`;
+                  const user = detail.user?.id ? usersMap[detail.user.id] : null;
+                  const userName = user
+                    ? `${user.lastName || ''} ${user.firstName || ''}`.trim()
+                    : detail.user?.email || (detail.user?.lastName && detail.user?.firstName)
+                      ? `${detail.user?.lastName || ''} ${detail.user?.firstName || ''}`.trim()
+                      : `ID: ${detail.user?.id || 'неизвестно'}`;
 
-                // Проверяем, изменилась ли эта запись
-                const key = `${detail.dutyId}-${detail.userId}`;
-                const diffInfo = differences[key];
-                const isChanged = diffInfo?.changed;
+                  const rowState =
+                    comparison !== null && options.tone !== 'secondary'
+                      ? comparison.rowStates[buildDetailComparisonKey(detail)]
+                      : undefined;
 
-                // Преобразуем workSalary в число для расчетов
-                const numericSalaryValue =
-                  typeof workSalary === 'string' ? parseFloat(workSalary) : workSalary;
+                  const rowClass =
+                    rowState === 'added'
+                      ? 'bg-emerald-50/70'
+                      : rowState === 'changed'
+                        ? 'bg-amber-50/70'
+                        : options.tone === 'secondary'
+                          ? 'bg-transparent'
+                          : '';
 
-                return (
-                  <tr key={detail.id} className={isChanged ? 'bg-yellow-50' : ''}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <div className="flex items-center space-x-2">
-                        <span>{detail.duty?.name || 'Неизвестная обязанность'}</span>
-                        {isChanged && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Изменено
-                          </span>
+                  const rowBadge =
+                    rowState === 'added'
+                      ? {
+                          label: 'Новое',
+                          className: 'bg-emerald-100 text-emerald-700',
+                        }
+                      : rowState === 'changed'
+                        ? {
+                            label: 'Изменено',
+                            className: 'bg-amber-100 text-amber-700',
+                          }
+                        : null;
+
+                  const numericSalaryValue = Number(workHistoryItem.salary || 0);
+
+                  return (
+                    <tr key={detail.id} className={rowClass}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <div className="flex items-center space-x-2">
+                          <span>{detail.duty?.name || 'Неизвестная обязанность'}</span>
+                          {rowBadge && options.tone !== 'secondary' && (
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${rowBadge.className}`}
+                            >
+                              {rowBadge.label}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {userName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {renderPayment(
+                          detail,
+                          typeof numericSalaryValue === 'number'
+                            ? numericSalaryValue
+                            : Number(numericSalaryValue || 0),
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {userName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {renderPayment(
-                        detail,
-                        typeof numericSalaryValue === 'number'
-                          ? numericSalaryValue
-                          : Number(numericSalaryValue || 0),
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-        {/* Техническая информация */}
-        <div className="px-6 py-3 bg-gray-50">
+        <div className={appearance.footer}>
           <div className="text-xs text-gray-500">
             <span className="font-medium">Дата создания изменения:</span>{' '}
-            {formatDateForDisplay(distribution.createdAt, true)}
+            {formatDateForDisplay(item.createdAt, true)}
           </div>
         </div>
       </div>
@@ -696,44 +821,53 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
     collapsibleGroup: {
       groupKey: string;
       groupName: string;
-      items: Array<{
-        type: 'workHistory' | 'distribution';
-        data: WorkHistory | DistributionWithDetails;
-        createdAt: string;
-      }>;
+      items: TimelineHistoryItem[];
     },
     groupIndex: number,
   ) => {
     const isExpanded = expandedGroups.has(collapsibleGroup.groupKey);
     const hasMultipleItems = collapsibleGroup.items.length > 1;
 
-    // Показываем только самое актуальное изменение (первое в списке)
-    const latestItem = collapsibleGroup.items[0];
-    const hiddenItems = collapsibleGroup.items.slice(1);
+    const latestItem = groupedHistory[groupIndex].primaryItem;
+    const hiddenItems = collapsibleGroup.items.filter(
+      (item) => !(item.id === latestItem.id && item.createdAt === latestItem.createdAt),
+    );
 
     return (
       <div key={collapsibleGroup.groupKey} className="mb-4">
         {/* Самое актуальное изменение (всегда показано) */}
         <div className="history-group">
-          {latestItem.type === 'workHistory'
-            ? renderWorkHistoryItem(latestItem.data as WorkHistory)
-            : renderDistributionItem(latestItem.data as DistributionWithDetails, 0, groupIndex)}
+          {renderTimelineCard(latestItem, {
+            tone: 'primary',
+            compareWith: visibleTimelineComparisons.get(latestItem.id) ?? null,
+          })}
         </div>
 
         {/* Кнопка для показа остальных изменений */}
         {hasMultipleItems && hiddenItems.length > 0 && (
-          <div className="mt-4">
+          <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-3">
             <button
               onClick={() => toggleGroupExpansion(collapsibleGroup.groupKey)}
-              className="w-full flex items-center justify-center px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors duration-200 collapsible-header"
+              className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors duration-200 hover:bg-slate-50 collapsible-header"
               aria-expanded={isExpanded}
               aria-controls={`group-${collapsibleGroup.groupKey}`}
             >
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-slate-100 px-2 text-xs font-semibold text-slate-600">
+                  {hiddenItems.length}
+                </span>
+                <div className="text-left">
+                  <div className="text-sm font-medium text-slate-700">
+                    {isExpanded ? 'Скрыть предыдущие версии' : 'Показать предыдущие версии'}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Старые изменения за {groupedHistory[groupIndex].formattedDate}
+                  </div>
+                </div>
+              </div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-gray-700">
-                  {isExpanded
-                    ? 'Скрыть предыдущие изменения'
-                    : `Показать предыдущие изменения (${hiddenItems.length})`}
+                  {isExpanded ? 'Свернуть' : `Еще ${hiddenItems.length}`}
                 </span>
                 <span
                   className={`transform transition-transform duration-200 text-gray-500 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}
@@ -747,17 +881,13 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
             {isExpanded && (
               <div
                 id={`group-${collapsibleGroup.groupKey}`}
-                className="mt-4 space-y-4 animate-fadeIn"
+                className="mt-4 space-y-3 border-l border-dashed border-slate-200 pl-4 animate-fadeIn"
               >
-                {hiddenItems.map((item, index) => (
-                  <div key={`${item.type}-${item.createdAt}-hidden`} className="history-group">
-                    {item.type === 'workHistory'
-                      ? renderWorkHistoryItem(item.data as WorkHistory)
-                      : renderDistributionItem(
-                          item.data as DistributionWithDetails,
-                          index + 1,
-                          groupIndex,
-                        )}
+                {hiddenItems.map((item) => (
+                  <div key={`${item.id}-${item.createdAt}-hidden`} className="history-group">
+                    {renderTimelineCard(item, {
+                      tone: 'secondary',
+                    })}
                   </div>
                 ))}
               </div>
@@ -773,65 +903,38 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
       <div className="pb-4">
         <div className="flex items-center space-x-3 mb-6">
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 text-lg">📋</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+              <span className="text-slate-600 text-lg">📋</span>
             </div>
           </div>
           <div>
             <h3 className="text-xl font-bold text-gray-900">История изменений</h3>
             <p className="text-sm text-gray-500">
-              Полная история модификаций обязанностей в проекте
+              Актуальные изменения выделены, предыдущие версии можно раскрыть при необходимости
             </p>
           </div>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-4">
           {groupedHistory.length > 0 ? (
             groupedHistory.map((group, groupIndex) => (
-              <div key={group.date} className="relative">
-                {/* Улучшенный заголовок группы */}
-                <div className="sticky top-0 z-10 bg-white border border-gray-200 rounded-lg px-6 py-4 mb-6 shadow-sm">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                        <span className="text-gray-600 text-sm font-medium">📅</span>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900">
-                        Вступили в силу: {group.formattedDate}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {group.items.length}{' '}
-                        {group.items.length === 1
-                          ? 'изменение'
-                          : group.items.length < 5
-                            ? 'изменения'
-                            : 'изменений'}
-                      </p>
-                    </div>
+              <div key={group.date} className="space-y-4">
+                {/* Отображаем сворачиваемые группы, если они есть */}
+                {group.collapsibleGroups && group.collapsibleGroups.length > 0 ? (
+                  group.collapsibleGroups.map((collapsibleGroup) =>
+                    renderCollapsibleGroup(collapsibleGroup, groupIndex),
+                  )
+                ) : (
+                  <div
+                    key={`${group.primaryItem.id}-${group.primaryItem.createdAt}`}
+                    className="mb-4"
+                  >
+                    {renderTimelineCard(group.primaryItem, {
+                      tone: 'primary',
+                      compareWith: visibleTimelineComparisons.get(group.primaryItem.id) ?? null,
+                    })}
                   </div>
-                </div>
-
-                <div className="space-y-4 pl-4">
-                  {/* Отображаем сворачиваемые группы, если они есть */}
-                  {group.collapsibleGroups && group.collapsibleGroups.length > 0
-                    ? group.collapsibleGroups.map((collapsibleGroup) =>
-                        renderCollapsibleGroup(collapsibleGroup, groupIndex),
-                      )
-                    : /* Fallback для старой логики, если нет сворачиваемых групп */
-                      group.items.map((item, index) => (
-                        <div key={`${item.type}-${item.createdAt}`} className="mb-4">
-                          {item.type === 'workHistory'
-                            ? renderWorkHistoryItem(item.data as WorkHistory)
-                            : renderDistributionItem(
-                                item.data as DistributionWithDetails,
-                                index,
-                                groupIndex,
-                              )}
-                        </div>
-                      ))}
-                </div>
+                )}
               </div>
             ))
           ) : (

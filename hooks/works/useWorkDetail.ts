@@ -41,7 +41,7 @@ export function useWorkDetail(id: string) {
     }
 
     try {
-      const work = await dispatch(fetchWorkById({ role: user.role, workId: id })).unwrap();
+      const work = await dispatch(fetchWorkById({ workId: id })).unwrap();
       if (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'WORKER') {
         await Promise.all([
           dispatch(fetchAllUsers({ role: user.role, archivingStatus: 'actual' })).unwrap(),
@@ -266,15 +266,23 @@ export function useWorkDetail(id: string) {
       e.preventDefault();
       try {
         await workManagementHook.handleSubmit(e);
-        setTimeout(() => {
-          reloadWorkData();
-          dutiesManagementHook.forceReload();
-        }, 100);
+        await Promise.all([
+          reloadWorkData(),
+          dutiesManagementHook.forceReload(),
+          loadWorkHistory(),
+          loadArchiveStatus(),
+        ]);
       } catch (error) {
         // отобразится формой
       }
     },
-    [workManagementHook.handleSubmit, reloadWorkData, dutiesManagementHook.forceReload],
+    [
+      workManagementHook.handleSubmit,
+      reloadWorkData,
+      dutiesManagementHook.forceReload,
+      loadWorkHistory,
+      loadArchiveStatus,
+    ],
   );
 
   const canEditWork = useMemo(() => {

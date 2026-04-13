@@ -92,7 +92,7 @@ export default function CreateWorkPage() {
 
     try {
       setSuccess('');
-      const resultAction = await dispatch(createWork({ role: user.role, data: formData }));
+      const resultAction = await dispatch(createWork({ data: formData }));
 
       if (createWork.fulfilled.match(resultAction)) {
         setSuccess('Работа успешно создана');
