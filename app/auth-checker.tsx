@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { getCurrentUser } from '../store/slices/auth';
 import { authService } from '../services/auth';
+import { invalidateCurrentSession } from '../services/authSession';
 import { tokenStorage } from '../services/tokenStorage';
 import { logger } from '../utils/logger';
 import { isJwtExpired, getRoleFromToken } from '../utils/jwt';
@@ -44,7 +45,7 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
           } catch (e) {
             logger.warn('❌ AuthChecker: refresh не удался, выходим');
             // Очистка и редирект
-            tokenStorage.clearAll();
+            invalidateCurrentSession({ reason: 'auth_checker_refresh_failed' });
             if (typeof window !== 'undefined') {
               localStorage.setItem('redirectAfterLogin', window.location.pathname);
               window.location.href = '/login';
@@ -67,12 +68,12 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
           } else {
             // Если не можем определить роль, очищаем состояние
             logger.warn('AuthChecker: не удалось определить роль пользователя');
-            tokenStorage.clearAll();
+            invalidateCurrentSession({ reason: 'missing_role_in_token' });
           }
         } else if (!hasToken && isAuthenticated) {
           // Если токена нет, но состояние показывает аутентификацию - очищаем состояние
           logger.debug('AuthChecker: токен отсутствует, но состояние аутентифицировано - очищаем');
-          tokenStorage.clearAll();
+          invalidateCurrentSession({ reason: 'missing_access_token' });
         }
       } catch (error: any) {
         logger.error('AuthChecker: ошибка при проверке аутентификации:', error);
@@ -84,7 +85,7 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
         }
 
         // Если произошла ошибка при проверке токена, очищаем localStorage
-        tokenStorage.clearAll();
+        invalidateCurrentSession({ reason: 'auth_checker_failed' });
       } finally {
         // Завершаем инициализацию в любом случае
         setIsInitializing(false);
@@ -113,7 +114,7 @@ export default function AuthChecker({ children }: { children: React.ReactNode })
           logger.info('🔄 AuthChecker: вкладка активирована, token истёк — refresh');
           await authService.refreshTokens();
         } catch (e) {
-          tokenStorage.clearAll();
+          invalidateCurrentSession({ reason: 'visibility_refresh_failed' });
           if (typeof window !== 'undefined') {
             localStorage.setItem('redirectAfterLogin', window.location.pathname);
             window.location.href = '/login';

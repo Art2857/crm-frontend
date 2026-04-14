@@ -2,8 +2,12 @@ import { privateApi } from './ApiClient';
 import {
   WorkIncome,
   CreateWorkIncomeRequest,
+  CreateWorkIncomeFixationRequest,
   UpdateWorkIncomeRequest,
   WorkIncomeFilters,
+  WorkIncomeFixation,
+  WorkIncomeFixationPreview,
+  WorkIncomeFixationResult,
   WorkIncomeListResponse,
 } from '../types/work-income';
 import { getCurrentDateISO } from '../utils/date';
@@ -41,6 +45,44 @@ class WorkIncomeService {
    */
   async getWorkIncomesByWorkId(workId: string): Promise<WorkIncome[]> {
     const response = await this.api.get<WorkIncome[]>(`/work-income/work/${workId}`);
+    return response.data;
+  }
+
+  /**
+   * Получить все зафиксированные периоды поступлений для конкретной работы
+   */
+  async getWorkIncomeFixationsByWorkId(workId: string): Promise<WorkIncomeFixation[]> {
+    const response = await this.api.get<WorkIncomeFixation[]>(
+      `/work-income/work/${workId}/fixations`,
+    );
+    return response.data;
+  }
+
+  /**
+   * Построить предпросмотр фиксации поступлений по работе
+   */
+  async previewWorkIncomeFixation(
+    workId: string,
+    data: CreateWorkIncomeFixationRequest,
+  ): Promise<WorkIncomeFixationPreview> {
+    const response = await this.api.post<WorkIncomeFixationPreview>(
+      `/work-income/work/${workId}/fixations/preview`,
+      data,
+    );
+    return response.data;
+  }
+
+  /**
+   * Зафиксировать поступления по работе
+   */
+  async createWorkIncomeFixation(
+    workId: string,
+    data: CreateWorkIncomeFixationRequest,
+  ): Promise<WorkIncomeFixationResult> {
+    const response = await this.api.post<WorkIncomeFixationResult>(
+      `/work-income/work/${workId}/fixations`,
+      data,
+    );
     return response.data;
   }
 

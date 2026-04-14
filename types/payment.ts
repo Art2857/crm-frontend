@@ -82,7 +82,7 @@ export interface CreatePaymentAndCloseDto {
   workId: string;
   userId: string;
   amount: number;
-  paymentDate: string; // YYYY-MM-DD
+  calculationDate: string; // YYYY-MM-DD, верхняя граница расчета (дата не включается)
   description?: string;
   currency?: 'RUB' | 'USD';
 }

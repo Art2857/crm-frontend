@@ -1,20 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Layout from '../../components/layout/Layout';
 import Button from '../../components/ui/Button';
 import Alert from '../../components/ui/Alert';
 import WorkAnalyticsView from '../../components/works/WorkAnalyticsView';
-import WorkList from '../../components/works/WorkList';
-import { useWorksList } from '../../hooks/works/useWorksList';
 import { useWorksAnalytics } from '../../hooks/works/useWorksAnalytics';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { getCurrentUser } from '../../store/slices/auth';
 
 const WorksPage = () => {
   const [showArchived, setShowArchived] = useState(false);
-  const [showWorks, setShowWorks] = useState(false);
-
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { isAuthenticated, user, isLoading: authLoading } = useAppSelector((s) => s.auth);
   React.useEffect(() => {
@@ -24,22 +22,21 @@ const WorksPage = () => {
   }, [authLoading, isAuthenticated, user, dispatch]);
 
   const {
-    isLoading: listLoading,
-    error: listError,
-    displayedWorks,
-    isEmptyWorksList,
-    showArchived: listShowArchived,
-    getResponsibleName,
-    handleCreateWork,
-    handleViewWork,
-    handleToggleArchived: toggleListArchived,
-  } = useWorksList();
-
-  const {
     grouped,
     isLoading: analyticsLoading,
     error: analyticsError,
   } = useWorksAnalytics(showArchived);
+
+  const handleCreateWork = useCallback(() => {
+    router.push('/works/create');
+  }, [router]);
+
+  const handleViewWork = useCallback(
+    (id: string) => {
+      router.push(`/works/${id}`);
+    },
+    [router],
+  );
 
   // Показываем индикатор загрузки если аутентификация еще проверяется
   if (authLoading) {
@@ -63,46 +60,6 @@ const WorksPage = () => {
       </Layout>
     );
   }
-
-  const renderWorksSection = () => (
-    <>
-      {listError && (
-        <div className="mb-6">
-          <Alert type="error">{listError}</Alert>
-        </div>
-      )}
-      {listLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-600"></div>
-        </div>
-      ) : isEmptyWorksList ? (
-        <div className="bg-white rounded-xl shadow-md overflow-hidden p-10 text-center">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-            />
-          </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">
-            {listShowArchived ? 'Нет архивных работ' : 'Нет доступных работ'}
-          </h3>
-        </div>
-      ) : (
-        <WorkList
-          works={displayedWorks}
-          getResponsibleName={getResponsibleName}
-          onViewWork={handleViewWork}
-        />
-      )}
-    </>
-  );
 
   const renderAnalyticsSection = () => (
     <>
@@ -168,21 +125,12 @@ const WorksPage = () => {
           </div>
           <div className="flex space-x-3">
             <Button
-              variant={showWorks ? 'primary' : 'secondary'}
-              onClick={() => setShowWorks((v) => !v)}
+              variant={showArchived ? 'primary' : 'secondary'}
+              onClick={() => setShowArchived(!showArchived)}
               className="rounded-lg px-4 py-2 shadow-sm"
+              disabled={analyticsLoading}
             >
-              {showWorks ? 'Показать по сотрудникам' : 'Показать все работы'}
-            </Button>
-            <Button
-              variant={(showWorks ? listShowArchived : showArchived) ? 'primary' : 'secondary'}
-              onClick={() => (showWorks ? toggleListArchived() : setShowArchived(!showArchived))}
-              className="rounded-lg px-4 py-2 shadow-sm"
-              disabled={showWorks ? listLoading : analyticsLoading}
-            >
-              {(showWorks ? listShowArchived : showArchived)
-                ? 'Показать активные'
-                : 'Показать архив'}
+              {showArchived ? 'Показать активные' : 'Показать архив'}
             </Button>
             <Button
               onClick={handleCreateWork}
@@ -193,7 +141,7 @@ const WorksPage = () => {
           </div>
         </div>
 
-        {showWorks ? renderWorksSection() : renderAnalyticsSection()}
+        {renderAnalyticsSection()}
       </div>
     </Layout>
   );

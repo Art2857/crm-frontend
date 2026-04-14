@@ -6,11 +6,7 @@ import { useAppSelector, useAppDispatch } from '../../../../../store';
 import Card from '../../../../../components/ui/Card';
 import Button from '../../../../../components/ui/Button';
 import { Role } from '../../../../../types/user';
-import {
-  fetchUserById,
-  fetchUserHistory,
-  clearCurrentUser,
-} from '../../../../../store/slices/users';
+import { fetchUserHistory, clearCurrentUser } from '../../../../../store/slices/users';
 import { formatDateForDisplay } from '../../../../../utils/date';
 import { toDateObject } from '../../../../../utils/date';
 import { normalizeBirthday } from '../../../../../utils/birthday';
@@ -35,7 +31,7 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
 
     try {
       setRefreshing(true);
-      await dispatch(fetchUserHistory({ role: user.role, userId }));
+      await dispatch(fetchUserHistory({ userId }));
     } catch (error) {
       console.error('Ошибка при обновлении истории:', error);
       setError(error instanceof Error ? error.message : 'Произошла ошибка при обновлении истории');
@@ -62,7 +58,7 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
     }, 5000); // 5 секунд таймаут
 
     // Загрузка истории пользователя
-    dispatch(fetchUserHistory({ role: user.role, userId }))
+    dispatch(fetchUserHistory({ userId }))
       .then(() => {
         setHasLoaded(true);
       })
@@ -78,12 +74,6 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
       clearTimeout(timer);
     };
   }, [dispatch, isAuthenticated, router, user, userId]);
-
-  // Добавляем логирование истории для отладки
-  useEffect(() => {
-    if (currentUser?.history) {
-    }
-  }, [currentUser]);
 
   if (!user) {
     return null;
@@ -133,7 +123,7 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
                 onClick={() => {
                   setHasLoaded(false);
                   setLoadingTimeout(false);
-                  dispatch(fetchUserHistory({ role: user.role, userId }))
+                  dispatch(fetchUserHistory({ userId }))
                     .then(() => setHasLoaded(true))
                     .catch(() => setHasLoaded(true));
                 }}
@@ -190,6 +180,21 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
   const formatSalaryDays = (salaryDays: number[] | undefined): string => {
     if (!salaryDays || salaryDays.length === 0) return '-';
     return salaryDays.map((d) => `${d} число`).join(', ');
+  };
+
+  const getRoleBadge = (role: Role): { className: string; label: string } => {
+    switch (role) {
+      case Role.ADMIN:
+        return { className: 'bg-green-100 text-green-800', label: 'Администратор' };
+      case Role.MANAGER:
+        return { className: 'bg-blue-100 text-blue-800', label: 'Менеджер' };
+      case Role.WORKER:
+        return { className: 'bg-slate-100 text-slate-800', label: 'Работник' };
+      case Role.HR:
+        return { className: 'bg-violet-100 text-violet-800', label: 'HR' };
+      default:
+        return { className: 'bg-gray-100 text-gray-800', label: role };
+    }
   };
 
   return (
@@ -318,12 +323,10 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            historyItem.role === Role.ADMIN
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-blue-100 text-blue-800'
+                            getRoleBadge(historyItem.role).className
                           }`}
                         >
-                          {historyItem.role === Role.ADMIN ? 'Администратор' : 'Работник'}
+                          {getRoleBadge(historyItem.role).label}
                         </span>
                       </td>
                     </tr>
@@ -339,7 +342,6 @@ export default function UserHistoryPage({ params }: { params: { id: string } }) 
                   onClick={() =>
                     dispatch(
                       fetchUserHistory({
-                        role: user.role,
                         userId: currentUser.id,
                       }),
                     )

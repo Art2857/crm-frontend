@@ -9,7 +9,8 @@ import { useWorkData } from '../useWorkData';
 import { useWorkDuties } from '../useWorkDuties';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useModal } from '../../contexts/ModalContext';
-import { WorkHistory } from '../../types/work';
+import { useErrorHandler } from '../useErrorHandler';
+import { WorkArchiveStatus, WorkHistory } from '../../types/work';
 import { workService } from '../../services/work';
 import { privateApi } from '../../services/ApiClient';
 import { logger } from '../../utils/logger';
@@ -22,6 +23,7 @@ export function useWorkDetail(id: string) {
   const dispatch = useAppDispatch();
   const notification = useNotification();
   const { confirm } = useModal();
+  const { handleError } = useErrorHandler();
 
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { users } = useAppSelector((state) => state.users);
@@ -30,6 +32,8 @@ export function useWorkDetail(id: string) {
   const [workHistory, setWorkHistory] = useState<WorkHistory[] | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const [responsibleUserData, setResponsibleUserData] = useState<User | null>(null);
+  const [archiveStatus, setArchiveStatus] = useState<WorkArchiveStatus | null>(null);
+  const [isLoadingArchiveStatus, setIsLoadingArchiveStatus] = useState<boolean>(false);
 
   const loadAllData = useCallback(async () => {
     if (!user?.role) {
@@ -37,14 +41,14 @@ export function useWorkDetail(id: string) {
     }
 
     try {
-      const work = await dispatch(fetchWorkById({ role: user.role, workId: id })).unwrap();
+      const work = await dispatch(fetchWorkById({ workId: id })).unwrap();
       if (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'WORKER') {
         await Promise.all([
-          dispatch(fetchAllUsers({ role: user.role, archivingStatus: 'actual' })).unwrap(),
-          dispatch(fetchAllDuties({ role: user.role })).unwrap(),
+          dispatch(fetchAllUsers({ archivingStatus: 'actual' })).unwrap(),
+          dispatch(fetchAllDuties()).unwrap(),
         ]);
       } else {
-        await dispatch(fetchAllDuties({ role: user.role })).unwrap();
+        await dispatch(fetchAllDuties()).unwrap();
       }
       return work;
     } catch (error) {
@@ -78,8 +82,6 @@ export function useWorkDetail(id: string) {
     return {
       name: workData.name,
       responsibleUserId: workData.responsibleUserId,
-      salary: workData.salary,
-      currency: workData.currency || 'RUB',
       releaseDate: releaseDateFormatted,
     };
   }, [workData]);
@@ -88,21 +90,64 @@ export function useWorkDetail(id: string) {
     id,
     initialData: initialWorkData,
     isAuthenticated,
-    role: user?.role as any, // Добавляем role parameter
   });
 
   const dutiesManagementHook = useWorkDuties({
     workId: id,
     workSalary: workData?.salary.toString(),
-    role: user?.role as any, // Добавляем role parameter
   });
+
+  const canManageArchive = useMemo(() => {
+    return user?.role === 'ADMIN' || user?.role === 'MANAGER';
+  }, [user?.role]);
+
+  const loadArchiveStatus = useCallback(async () => {
+    if (!canManageArchive || workData?.isArchived) {
+      setArchiveStatus(null);
+      return null;
+    }
+
+    try {
+      setIsLoadingArchiveStatus(true);
+      const status = await workService.getArchiveStatus(id);
+      setArchiveStatus(status);
+      return status;
+    } catch (error) {
+      logger.error('Error loading archive status:', error);
+      const fallbackStatus = {
+        canArchive: false,
+        reasons: [
+          'Не удалось проверить условия архивации. Обновите страницу или попробуйте позже.',
+        ],
+        activeAssignmentsCount: 0,
+        unpaidDutyDebtsCount: 0,
+      };
+      setArchiveStatus(fallbackStatus);
+      return fallbackStatus;
+    } finally {
+      setIsLoadingArchiveStatus(false);
+    }
+  }, [canManageArchive, id, workData?.isArchived]);
+
+  useEffect(() => {
+    if (!workData) return;
+    void loadArchiveStatus();
+  }, [workData, loadArchiveStatus]);
 
   const handleArchiveWork = useCallback(async () => {
     try {
+      const latestArchiveStatus = await workService.getArchiveStatus(id);
+      setArchiveStatus(latestArchiveStatus);
+
+      if (!latestArchiveStatus.canArchive) {
+        notification.showError(latestArchiveStatus.reasons.join(' '), 10000);
+        return;
+      }
+
       const confirmed = await confirm({
         title: 'Архивация работы',
         message:
-          'Все пользователи будут сняты с обязанностей, и начисления по ним прекратятся. Работу можно восстановить, но распределение обязанностей потребуется настроить заново.',
+          'Работа будет отправлена в архив. Перед этим вы уже должны снять все обязанности в последнем распределении и полностью погасить выплаты по работе.',
         confirmText: 'Архивировать',
         cancelText: 'Отмена',
         variant: 'danger',
@@ -115,9 +160,17 @@ export function useWorkDetail(id: string) {
       await dutiesManagementHook.forceReload();
     } catch (error) {
       logger.error('Error archiving work:', error);
-      notification.showError('Не удалось архивировать работу');
+      notification.showError(handleError(error).message, 10000);
     }
-  }, [id, dispatch, notification, confirm, reloadWorkData, dutiesManagementHook.forceReload]);
+  }, [
+    id,
+    dispatch,
+    notification,
+    confirm,
+    reloadWorkData,
+    dutiesManagementHook.forceReload,
+    handleError,
+  ]);
 
   const handleRestoreWork = useCallback(async () => {
     try {
@@ -136,9 +189,17 @@ export function useWorkDetail(id: string) {
       await dutiesManagementHook.forceReload();
     } catch (error) {
       logger.error('Error restoring work:', error);
-      notification.showError('Не удалось восстановить работу');
+      notification.showError(handleError(error).message, 10000);
     }
-  }, [id, dispatch, notification, confirm, reloadWorkData, dutiesManagementHook.forceReload]);
+  }, [
+    id,
+    dispatch,
+    notification,
+    confirm,
+    reloadWorkData,
+    dutiesManagementHook.forceReload,
+    handleError,
+  ]);
 
   const loadWorkHistory = useCallback(async () => {
     try {
@@ -188,11 +249,12 @@ export function useWorkDetail(id: string) {
 
       if (result !== null) {
         await reloadWorkData();
+        await loadArchiveStatus();
       }
 
       return result;
     },
-    [dutiesManagementHook.createDistribution, reloadWorkData],
+    [dutiesManagementHook.createDistribution, reloadWorkData, loadArchiveStatus],
   );
 
   const handleFormSubmit = useCallback(
@@ -200,16 +262,33 @@ export function useWorkDetail(id: string) {
       e.preventDefault();
       try {
         await workManagementHook.handleSubmit(e);
-        setTimeout(() => {
-          reloadWorkData();
-          dutiesManagementHook.forceReload();
-        }, 100);
+        await Promise.all([
+          reloadWorkData(),
+          dutiesManagementHook.forceReload(),
+          loadWorkHistory(),
+          loadArchiveStatus(),
+        ]);
       } catch (error) {
         // отобразится формой
       }
     },
-    [workManagementHook.handleSubmit, reloadWorkData, dutiesManagementHook.forceReload],
+    [
+      workManagementHook.handleSubmit,
+      reloadWorkData,
+      dutiesManagementHook.forceReload,
+      loadWorkHistory,
+      loadArchiveStatus,
+    ],
   );
+
+  const refreshAfterIncomeFixation = useCallback(async () => {
+    await Promise.all([
+      reloadWorkData(),
+      dutiesManagementHook.forceReload(),
+      loadWorkHistory(),
+      loadArchiveStatus(),
+    ]);
+  }, [reloadWorkData, dutiesManagementHook.forceReload, loadWorkHistory, loadArchiveStatus]);
 
   const canEditWork = useMemo(() => {
     if (!user || !workData) return false;
@@ -321,5 +400,9 @@ export function useWorkDetail(id: string) {
     // actions
     handleArchiveWork,
     handleRestoreWork,
+    refreshAfterIncomeFixation,
+    canManageArchive,
+    archiveStatus,
+    isLoadingArchiveStatus,
   };
 }

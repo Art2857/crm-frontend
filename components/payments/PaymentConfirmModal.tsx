@@ -5,6 +5,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { formatCurrency, CurrencyType } from '../../utils/payments';
 import { useDateManager } from '../../hooks/useDateManager';
+import { formatDateToISO, shiftDateISOByDays } from '../../utils/date';
 import { ExclamationTriangleIcon, BanknotesIcon, CalendarIcon } from '@heroicons/react/24/outline';
 
 interface PaymentConfirmModalProps {
@@ -13,9 +14,10 @@ interface PaymentConfirmModalProps {
   onConfirm: () => void;
   amount: number;
   currency: CurrencyType;
-  periods: Array<{ startDate: string; endDate: string }>;
+  periods: Array<{ startDate: string; endDate: string; days: number }>;
   workNames: string[];
   calculationDate?: string;
+  paymentDate?: string;
   isBulk?: boolean;
 }
 
@@ -28,6 +30,7 @@ export default function PaymentConfirmModal({
   periods,
   workNames,
   calculationDate,
+  paymentDate,
   isBulk = false,
 }: PaymentConfirmModalProps) {
   const { formatRussian } = useDateManager();
@@ -36,7 +39,13 @@ export default function PaymentConfirmModal({
   const isMultipleWorks = workNames.length > 1;
 
   const formattedPeriods = periods
-    .map((p) => `${formatRussian(p.startDate)} — ${formatRussian(p.endDate)}`)
+    .map((p) => {
+      const displayEnd =
+        formatDateToISO(p.startDate) < formatDateToISO(p.endDate)
+          ? shiftDateISOByDays(p.endDate, -1)
+          : formatDateToISO(p.endDate);
+      return `${formatRussian(p.startDate)} — ${formatRussian(displayEnd)}`;
+    })
     .join(', ');
 
   const formattedWorks = workNames.join(', ');
@@ -86,10 +95,20 @@ export default function PaymentConfirmModal({
                     <span className="font-semibold">{formattedWorks}</span>
                     {formattedCalculationDate && (
                       <>
-                        <span> с закрытием периодов до </span>
+                        <span> с закрытием периодов по дате </span>
                         <span className="font-semibold text-blue-700">
                           {formattedCalculationDate}
                         </span>
+                        <span> (сама дата не оплачивается)</span>
+                      </>
+                    )}
+                    {paymentDate && (
+                      <>
+                        <span> Выплата будет создана датой </span>
+                        <span className="font-semibold text-emerald-700">
+                          {formatRussian(paymentDate)}
+                        </span>
+                        .
                       </>
                     )}
                   </>
@@ -98,10 +117,11 @@ export default function PaymentConfirmModal({
                     <span>Будет произведено закрытие периодов</span>
                     {formattedCalculationDate && (
                       <>
-                        <span> до </span>
+                        <span> по дате </span>
                         <span className="font-semibold text-blue-700">
                           {formattedCalculationDate}
                         </span>
+                        <span> (сама дата не оплачивается)</span>
                       </>
                     )}
                     <span> по {isMultipleWorks ? 'работам' : 'работе'} </span>

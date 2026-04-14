@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { userService } from '../../services/user';
-import { Role, User, UserWithHistory } from '../../types/user';
+import { User, UserWithHistory } from '../../types/user';
 
 interface UsersState {
   users: User[];
@@ -30,7 +30,7 @@ interface GetAllUsersParams {
 export const fetchAllUsers = createAsyncThunk(
   'users/fetchAll',
   async (
-    { role, roleFilter, ...restParams }: { role: Role; roleFilter?: string } & GetAllUsersParams,
+    { roleFilter, ...restParams }: { roleFilter?: string } & GetAllUsersParams,
     { rejectWithValue },
   ) => {
     try {
@@ -52,7 +52,7 @@ export const fetchAllUsers = createAsyncThunk(
 
 export const fetchUserById = createAsyncThunk(
   'users/fetchById',
-  async ({ role, id }: { role: Role; id: string }, { rejectWithValue }) => {
+  async ({ id }: { id: string }, { rejectWithValue }) => {
     try {
       return await userService.getById(id);
     } catch (error: any) {
@@ -69,10 +69,7 @@ export const fetchUserById = createAsyncThunk(
 
 export const updateUserProfile = createAsyncThunk(
   'users/updateProfile',
-  async (
-    { role, userId, data }: { role: Role; userId: string; data: any },
-    { rejectWithValue },
-  ) => {
+  async ({ userId, data }: { userId: string; data: any }, { rejectWithValue }) => {
     try {
       const user = await userService.updateProfile(userId, data);
       return user;
@@ -89,10 +86,7 @@ export const updateUserProfile = createAsyncThunk(
 
 export const updateUserSensitiveData = createAsyncThunk(
   'users/updateSensitiveData',
-  async (
-    { role, userId, data }: { role: Role; userId: string; data: any },
-    { rejectWithValue },
-  ) => {
+  async ({ userId, data }: { userId: string; data: any }, { rejectWithValue }) => {
     try {
       const user = await userService.updateSensitiveData(userId, data);
       return user;
@@ -179,7 +173,7 @@ export const createUser = createAsyncThunk(
 
 export const fetchUserHistory = createAsyncThunk(
   'users/fetchHistory',
-  async ({ role, userId }: { role: Role; userId: string }, { rejectWithValue }) => {
+  async ({ userId }: { userId: string }, { rejectWithValue }) => {
     try {
       const userWithHistory = await userService.getUserHistory(userId);
       return userWithHistory;

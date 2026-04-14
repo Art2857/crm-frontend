@@ -46,7 +46,6 @@ export default function AdminUsersPage() {
     }
 
     return {
-      role: user.role,
       archivingStatus: showArchived ? 'archived' : 'actual',
       search: search || undefined,
       roleFilter: roleFilter || undefined,

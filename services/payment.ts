@@ -101,7 +101,7 @@ export const getClosureDate = async (workId: string, userId: string): Promise<st
 export const closePeriod = async (params: {
   workId: string;
   userId: string;
-  closureDate: string; // YYYY-MM-DD — дата «расчёт до» и новая дата закрытия периода
+  closureDate: string; // YYYY-MM-DD — дата «расчёт до», сама дата не входит в оплачиваемый интервал
 }) => {
   const { data } = await privateApi.post(`${PAYMENTS_ENDPOINTS.base}/close-period`, {
     workId: params.workId,
@@ -116,7 +116,7 @@ export const bulkCreateAndClose = async (
     workId: string;
     userId: string;
     amount: number; // 0 — только закрытие
-    paymentDate: string; // YYYY-MM-DD
+    calculationDate: string; // YYYY-MM-DD
     description?: string;
   }>,
 ) => {

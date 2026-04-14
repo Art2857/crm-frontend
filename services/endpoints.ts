@@ -27,6 +27,7 @@ export const USERS_ENDPOINTS = {
 export const WORKS_ENDPOINTS = {
   base: '/works',
   byId: (id: string) => `/works/${id}`,
+  archiveStatus: (id: string) => `/works/${id}/archive-status`,
   responsible: (userId: string) => `/works/responsible/${userId}`,
   byDuties: (userId: string) => `/works/duties/${userId}`,
   executers: (workId: string) => `/works/${workId}/executers`,

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { env } from '../config/env';
 import { AuthResponse } from '../types/auth';
 import { authApi } from './ApiClient';
+import { invalidateCurrentSession } from './authSession';
 import { AUTH_ENDPOINTS } from './endpoints';
 import { tokenStorage } from './tokenStorage';
 
@@ -121,7 +122,7 @@ async function performRefresh(): Promise<string | null> {
 
     return access_token || null;
   } catch {
-    tokenStorage.clearAll();
+    invalidateCurrentSession({ reason: 'refresh_failed' });
     return null;
   }
 }

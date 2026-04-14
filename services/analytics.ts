@@ -3,7 +3,6 @@ import { ANALYTICS_ENDPOINTS } from './endpoints';
 import { logger } from '../utils/logger';
 import { getCurrentDateISO } from '../utils/date';
 import { ResponsibleUser, WorkDetail, DetailedCalculation } from '../types/payments';
-import { Role } from '../types/user';
 
 // ==========================
 // Types for My Debts
@@ -71,7 +70,6 @@ export const analyticsService = {
    * Возвращает уже готовые ResponsibleUser[]
    */
   async getPaymentsManagement(
-    _role: Role,
     endDate?: string,
     worksIds?: string[],
     targetUserId?: string,
@@ -190,32 +188,26 @@ export const analyticsService = {
 
   /** Получить детальный расчёт по работе/пользователю для модалки */
   async getPaymentsCalculation(params: {
-    role: Role;
     userId: string;
     workId: string;
     endDate: string;
     dutyId?: string;
   }): Promise<DetailedCalculation> {
-    // Убираем role из query параметров - роль должна браться из JWT!
-    const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
       ANALYTICS_ENDPOINTS.paymentsCalculation,
-      { params: queryParams },
+      { params },
     );
     return data;
   },
 
   /** Получить общий детальный расчёт по пользователю (все работы) */
   async getPaymentsCalculationUser(params: {
-    role: Role;
     userId: string;
     endDate: string;
   }): Promise<DetailedCalculation> {
-    // Убираем role из query параметров - роль должна браться из JWT!
-    const { role, ...queryParams } = params;
     const { data } = await privateApi.get<DetailedCalculation>(
       ANALYTICS_ENDPOINTS.paymentsCalculationUser,
-      { params: queryParams },
+      { params },
     );
     return data;
   },

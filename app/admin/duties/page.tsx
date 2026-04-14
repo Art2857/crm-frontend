@@ -31,7 +31,7 @@ export default function AdminDutiesPage() {
     }
 
     // Загрузка данных об обязанностях
-    dispatch(fetchAllDuties({ role: user.role }));
+    dispatch(fetchAllDuties());
   }, [canManageDuties, dispatch, isAuthenticated, router, user]);
 
   const filteredDuties = useMemo(() => {

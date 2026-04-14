@@ -49,6 +49,10 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     users,
     handleArchiveWork,
     handleRestoreWork,
+    refreshAfterIncomeFixation,
+    canManageArchive,
+    archiveStatus,
+    isLoadingArchiveStatus,
   } = useWorkDetail(id);
 
   const salaryCurrency: 'RUB' | 'USD' = workData?.currency === 'USD' ? 'USD' : 'RUB';
@@ -154,7 +158,7 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
     !isSalaryConfidential
       ? {
           key: 'budget',
-          label: 'Общий бюджет',
+          label: 'Текущий бюджет',
           value: formatAmountWithCurrency(displaySalary, salaryCurrency),
         }
       : null,
@@ -162,6 +166,14 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
       key: 'releaseDate',
       label: 'Дата выхода',
       value: workData.releaseDate ? formatDateForDisplay(workData.releaseDate) : 'Не указана',
+    },
+    {
+      key: 'incomeFixationDate',
+      label: 'Дата фиксации',
+      value:
+        workData.incomeFixationDate || workData.releaseDate
+          ? formatDateForDisplay(workData.incomeFixationDate || workData.releaseDate)
+          : 'Не указана',
     },
     {
       key: 'responsible',
@@ -308,14 +320,40 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
               <WorkForm
                 formData={formData}
                 users={users}
+                currentSalary={workData.salary}
+                currentCurrency={salaryCurrency}
+                incomeFixationDate={workData.incomeFixationDate || workData.releaseDate}
                 onChange={handleChange}
                 onSubmit={handleFormSubmit}
                 onCancel={() => {
                   setIsEditing(false);
                 }}
-                onArchiveAction={workData.isArchived ? handleRestoreWork : handleArchiveWork}
-                archiveActionLabel={workData.isArchived ? 'Восстановить' : 'Архивировать'}
+                onArchiveAction={
+                  canManageArchive
+                    ? workData.isArchived
+                      ? handleRestoreWork
+                      : handleArchiveWork
+                    : undefined
+                }
+                archiveActionLabel={
+                  canManageArchive
+                    ? workData.isArchived
+                      ? 'Восстановить'
+                      : 'Архивировать'
+                    : undefined
+                }
                 archiveActionVariant={workData.isArchived ? 'restore' : 'archive'}
+                archiveActionDisabled={
+                  !workData.isArchived &&
+                  (isLoadingArchiveStatus || archiveStatus?.canArchive === false)
+                }
+                archiveActionReasons={
+                  !workData.isArchived
+                    ? isLoadingArchiveStatus
+                      ? ['Проверяем условия архивирования...']
+                      : archiveStatus?.reasons || []
+                    : []
+                }
                 isLoading={isLoading}
               />
             </div>
@@ -556,7 +594,14 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
 
               <div style={{ display: activeTab === 'income' ? 'block' : 'none' }}>
                 {!visitedTabs.has('income') ? null : (
-                  <WorkIncomeManagement workId={id} canEdit={canEdit} />
+                  <WorkIncomeManagement
+                    workId={id}
+                    canEdit={canEdit && !workData.isArchived}
+                    workCurrency={salaryCurrency}
+                    currentSalary={Number(workData.salary || 0)}
+                    incomeFixationDate={workData.incomeFixationDate || workData.releaseDate}
+                    onFixationCreated={refreshAfterIncomeFixation}
+                  />
                 )}
               </div>
 

@@ -1,22 +1,17 @@
-import { Work, CreateWorkDto, UpdateWorkDto, WorkHistory, WorkWithHistory } from '../types/work';
+import {
+  Work,
+  CreateWorkDto,
+  UpdateWorkDto,
+  WorkHistory,
+  WorkWithHistory,
+  WorkArchiveStatus,
+} from '../types/work';
 import { privateApi } from './ApiClient';
 import { WORKS_ENDPOINTS, WORK_HISTORY_ENDPOINTS } from './endpoints';
-import { workAnalyticsService } from './workAnalytics';
 import { logger } from '../utils/logger';
 
 // Сервис для работы с работами
 export const workService = {
-  // Получить все работы
-  getAll: async (): Promise<Work[]> => {
-    try {
-      const response = await privateApi.get<Work[]>(WORKS_ENDPOINTS.base);
-      return response.data;
-    } catch (error) {
-      logger.error('Error fetching works:', error);
-      throw error;
-    }
-  },
-
   // Получить работы по пользователю (где пользователь является ответственным)
   getByUserId: async (userId: string): Promise<Work[]> => {
     try {
@@ -24,17 +19,6 @@ export const workService = {
       return response.data;
     } catch (error) {
       logger.error(`Error fetching works for user ${userId}:`, error);
-      throw error;
-    }
-  },
-
-  // Получить работы, связанные с пользователем (ответственный или есть обязанности)
-  getByUserDuties: async (userId: string): Promise<Work[]> => {
-    try {
-      const response = await privateApi.get<Work[]>(WORKS_ENDPOINTS.byDuties(userId));
-      return response.data;
-    } catch (error) {
-      logger.error(`Error fetching works by duties for user ${userId}:`, error);
       throw error;
     }
   },
@@ -72,6 +56,16 @@ export const workService = {
     }
   },
 
+  getArchiveStatus: async (id: string): Promise<WorkArchiveStatus> => {
+    try {
+      const response = await privateApi.get<WorkArchiveStatus>(WORKS_ENDPOINTS.archiveStatus(id));
+      return response.data;
+    } catch (error) {
+      logger.error(`Error fetching archive status for work ${id}:`, error);
+      throw error;
+    }
+  },
+
   // Восстановить работу
   restore: async (id: string): Promise<Work> => {
     try {
@@ -79,29 +73,6 @@ export const workService = {
       return response.data;
     } catch (error) {
       logger.error(`Error restoring work ${id}:`, error);
-      throw error;
-    }
-  },
-
-  // Список архивных работ
-  getArchived: async (): Promise<Work[]> => {
-    try {
-      const analytics = await workAnalyticsService.getAnalytics(true);
-      const list: Work[] = analytics.grouped.flatMap((group) =>
-        group.works.map((w) => ({
-          id: w.id,
-          name: w.name,
-          responsibleUserId: w.responsibleUserId,
-          salary: String(w.salary),
-          releaseDate: w.releaseDate || undefined,
-          createdAt: w.createdAt,
-          updatedAt: w.updatedAt,
-          isArchived: true,
-        })),
-      );
-      return list;
-    } catch (error) {
-      logger.error('Error fetching archived works:', error);
       throw error;
     }
   },
@@ -120,9 +91,9 @@ export const workService = {
   },
 
   // Обновить работу
-  update: async (id: string, data: UpdateWorkDto): Promise<WorkHistory> => {
+  update: async (id: string, data: UpdateWorkDto): Promise<Work> => {
     try {
-      const response = await privateApi.patch<WorkHistory>(WORKS_ENDPOINTS.byId(id), data);
+      const response = await privateApi.patch<Work>(WORKS_ENDPOINTS.byId(id), data);
       return response.data;
     } catch (error) {
       logger.error(`Error updating work ${id}:`, error);

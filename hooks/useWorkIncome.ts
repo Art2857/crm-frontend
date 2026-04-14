@@ -3,6 +3,9 @@ import { workIncomeService } from '../services/workIncome';
 import {
   WorkIncome,
   CreateWorkIncomeRequest,
+  CreateWorkIncomeFixationRequest,
+  WorkIncomeFixationPreview,
+  WorkIncomeFixationResult,
   UpdateWorkIncomeRequest,
   WorkIncomeFilters,
   WorkIncomeState,
@@ -52,10 +55,14 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
           workId,
         };
 
-        const incomes = await workIncomeService.getWorkIncomesByWorkId(workId);
+        const [incomes, fixations] = await Promise.all([
+          workIncomeService.getWorkIncomesByWorkId(workId),
+          workIncomeService.getWorkIncomeFixationsByWorkId(workId),
+        ]);
 
         updateState({
           incomes,
+          fixations,
           filters: mergedFilters,
           isLoading: false,
         });
@@ -171,6 +178,62 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
     [updateState, setState],
   );
 
+  // Предпросмотр фиксации поступлений
+  const previewIncomeFixation = useCallback(
+    async (data: CreateWorkIncomeFixationRequest): Promise<WorkIncomeFixationPreview | null> => {
+      if (!workId) return null;
+
+      try {
+        updateState({ isSubmitting: true, error: null });
+
+        const preview = await workIncomeService.previewWorkIncomeFixation(workId, data);
+
+        updateState({
+          isSubmitting: false,
+          error: null,
+        });
+
+        return preview;
+      } catch (error: any) {
+        updateState({
+          error: error.message || 'Ошибка при расчёте периода фиксации',
+          isSubmitting: false,
+        });
+        return null;
+      }
+    },
+    [workId, updateState],
+  );
+
+  // Создание фиксации поступлений
+  const createIncomeFixation = useCallback(
+    async (data: CreateWorkIncomeFixationRequest): Promise<WorkIncomeFixationResult | null> => {
+      if (!workId) return null;
+
+      try {
+        updateState({ isSubmitting: true, error: null });
+
+        const result = await workIncomeService.createWorkIncomeFixation(workId, data);
+        await loadWorkIncomes();
+
+        updateState({
+          isSubmitting: false,
+          successMessage: 'Поступления за период успешно зафиксированы',
+          error: null,
+        });
+
+        return result;
+      } catch (error: any) {
+        updateState({
+          error: error.message || 'Ошибка при фиксации поступлений',
+          isSubmitting: false,
+        });
+        return null;
+      }
+    },
+    [workId, loadWorkIncomes, updateState],
+  );
+
   // Выбор дохода
   const selectIncome = useCallback(
     (income: WorkIncome | null) => {
@@ -262,6 +325,8 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
     createIncome,
     updateIncome,
     deleteIncome,
+    previewIncomeFixation,
+    createIncomeFixation,
     selectIncome,
     getIncomeById,
     updateFilters,

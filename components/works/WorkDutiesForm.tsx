@@ -5,7 +5,7 @@ import Tooltip from '../ui/Tooltip';
 import { Duty, DistributionWithDetails } from '../../types/duty';
 import { User } from '../../types/user';
 import { formatAmountWithCurrency } from '../../utils/currency';
-import { getCurrentDateISO, formatDateForDisplay } from '../../utils/date';
+import { formatDateForDisplay, formatDateToISO, getCurrentDateISO } from '../../utils/date';
 import CurrencySwitch from '../ui/CurrencySwitch';
 import { useCurrencyConversion } from '../../hooks/useCurrencyConversion';
 
@@ -34,6 +34,17 @@ const isEmpty = (v?: string | null) => v == null || v.trim() === '';
 const toIntString = (value: number): string => {
   if (value === null || value === undefined || isNaN(Number(value))) return '';
   return String(Math.round(Number(value)));
+};
+
+const normalizeDateForInput = (value?: string | null): string | undefined => {
+  if (!value) return undefined;
+  const normalized = formatDateToISO(value);
+  return normalized || undefined;
+};
+
+const getInitialEffectiveDate = (minDate?: string): string => {
+  const today = getCurrentDateISO();
+  return minDate && today < minDate ? minDate : today;
 };
 
 interface DutyFormItem {
@@ -117,14 +128,15 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
     let minDate: string | undefined;
 
     // Ограничение 1: дата выхода на проект
-    if (releaseDate) {
-      minDate = releaseDate;
+    const normalizedReleaseDate = normalizeDateForInput(releaseDate);
+    if (normalizedReleaseDate) {
+      minDate = normalizedReleaseDate;
     }
 
     // Ограничение 2: max effectiveDate среди распределений, уже вступивших в силу
     if (distributions.length > 0) {
       const activeEffectiveDates = distributions
-        .map((d) => d.workHistory.effectiveDate)
+        .map((d) => normalizeDateForInput(d.workHistory.effectiveDate))
         .filter((d): d is string => !!d && d <= today);
 
       if (activeEffectiveDates.length > 0) {
@@ -138,13 +150,25 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
     return minDate;
   }, [releaseDate, distributions]);
 
-  const [effectiveDate, setEffectiveDate] = useState<string>(() => {
-    const today = getCurrentDateISO();
-    if (minEffectiveDate && today < minEffectiveDate) {
-      return minEffectiveDate;
-    }
-    return today;
-  });
+  const [effectiveDate, setEffectiveDate] = useState<string>(() =>
+    getInitialEffectiveDate(minEffectiveDate),
+  );
+
+  useEffect(() => {
+    setEffectiveDate((prev) => {
+      const normalizedPrev = normalizeDateForInput(prev);
+
+      if (!normalizedPrev) {
+        return getInitialEffectiveDate(minEffectiveDate);
+      }
+
+      if (minEffectiveDate && normalizedPrev < minEffectiveDate) {
+        return minEffectiveDate;
+      }
+
+      return normalizedPrev;
+    });
+  }, [minEffectiveDate]);
 
   const {
     convert,
@@ -1184,8 +1208,20 @@ const WorkDutiesForm: React.FC<WorkDutiesFormProps> = ({
                 className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 value={effectiveDate}
                 onChange={(e) => {
-                  setEffectiveDate(e.target.value);
-                  if (validationError) setValidationError(null);
+                  const nextValue = normalizeDateForInput(e.target.value) || '';
+
+                  if (minEffectiveDate && nextValue && nextValue < minEffectiveDate) {
+                    setEffectiveDate(minEffectiveDate);
+                    setValidationError(
+                      `Дата вступления в силу не может быть раньше ${formatDateForDisplay(minEffectiveDate)}`,
+                    );
+                    return;
+                  }
+
+                  setEffectiveDate(nextValue);
+                  if (validationError) {
+                    setValidationError(null);
+                  }
                 }}
                 min={minEffectiveDate || undefined}
                 disabled={isLoading || isSubmitting}

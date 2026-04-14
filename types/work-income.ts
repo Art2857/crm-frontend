@@ -1,6 +1,7 @@
 export interface WorkIncome {
   id: string;
   workId: string;
+  fixationId?: string | null;
   amount: number;
   currency: 'RUB' | 'USD';
   receivedDate: string; // YYYY-MM-DD format
@@ -25,6 +26,34 @@ export interface UpdateWorkIncomeRequest {
   currency?: 'RUB' | 'USD';
   receivedDate?: string; // YYYY-MM-DD format
   description?: string;
+}
+
+export interface WorkIncomeFixation {
+  id: string;
+  workId: string;
+  startDate: string;
+  endDate: string;
+  fixedAmount: number;
+  currency: 'RUB' | 'USD';
+  createdAt: string;
+}
+
+export interface CreateWorkIncomeFixationRequest {
+  endDate: string; // YYYY-MM-DD format
+}
+
+export interface WorkIncomeFixationPreview {
+  workId: string;
+  startDate: string;
+  endDate: string;
+  fixationDate: string;
+  fixedAmount: number;
+  currency: 'RUB' | 'USD';
+  incomes: WorkIncome[];
+}
+
+export interface WorkIncomeFixationResult extends WorkIncomeFixationPreview {
+  fixation: WorkIncomeFixation;
 }
 
 export interface WorkIncomeFilters {
@@ -107,6 +136,7 @@ export const EMPTY_WORK_INCOME_FORM: WorkIncomeFormData = {
 
 export interface WorkIncomeState {
   incomes: WorkIncome[];
+  fixations: WorkIncomeFixation[];
   selectedIncome: WorkIncome | null;
   filters: WorkIncomeFilters;
   isLoading: boolean;
@@ -117,6 +147,7 @@ export interface WorkIncomeState {
 
 export const INITIAL_WORK_INCOME_STATE: WorkIncomeState = {
   incomes: [],
+  fixations: [],
   selectedIncome: null,
   filters: DEFAULT_WORK_INCOME_FILTERS,
   isLoading: false,

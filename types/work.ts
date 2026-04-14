@@ -38,6 +38,7 @@ export interface Work {
   salary: string; // Decimal represented as string (in base RUB for analytics)
   currency?: 'RUB' | 'USD'; // Сохраненная валюта работы
   releaseDate?: string; // Date as ISO string
+  incomeFixationDate?: string; // Date as ISO string
   isArchived?: boolean; // Архивный статус работы
   createdAt: string;
   updatedAt: string;
@@ -55,6 +56,13 @@ export interface WorkHistory {
   updatedAt: string;
   createdAt?: string; // Добавляем поле для совместимости с бэкендом
   details?: DistributionDetail[]; // Соответствие бэкенду
+}
+
+export interface WorkArchiveStatus {
+  canArchive: boolean;
+  reasons: string[];
+  activeAssignmentsCount: number;
+  unpaidDutyDebtsCount: number;
 }
 
 /**
@@ -99,9 +107,7 @@ export interface CreateWorkExtendedDto {
 export interface UpdateWorkDto {
   name?: string;
   responsibleUserId?: string;
-  salary?: string; // Decimal represented as string
   releaseDate?: string; // Date as ISO string
-  currency?: 'RUB' | 'USD';
 }
 
 /**

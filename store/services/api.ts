@@ -84,7 +84,7 @@ export const api = createApi({
           workId: string;
           userId: string;
           amount: number;
-          paymentDate: string;
+          calculationDate: string;
           description?: string;
         }>;
       }
