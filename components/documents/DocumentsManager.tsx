@@ -183,8 +183,17 @@ export default function DocumentsManager({
           return;
         }
 
-        const { url } = await documentsService.getPreviewUrl(doc.id);
-        window.open(url, '_blank', 'noopener,noreferrer');
+        const blob = await documentsService.getPreviewBlob(doc.id);
+        const objectUrl = URL.createObjectURL(blob);
+        const previewTab = window.open(objectUrl, '_blank', 'noopener,noreferrer');
+
+        if (!previewTab) {
+          URL.revokeObjectURL(objectUrl);
+          notification.showError('Разрешите открытие новой вкладки для предпросмотра документа');
+          return;
+        }
+
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
       } catch (err: any) {
         if (previewWindow && !previewWindow.closed) {
           previewWindow.close();
@@ -203,13 +212,15 @@ export default function DocumentsManager({
   const downloadDocument = useCallback(
     async (doc: UserDocument) => {
       try {
-        const { url, filename } = await documentsService.getDownloadUrl(doc.id);
+        const blob = await documentsService.download(doc.id);
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = filename || doc.originalName;
+        link.download = doc.originalName || doc.name || 'document';
         document.body.appendChild(link);
         link.click();
         link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
       } catch (err: any) {
         const msg = err?.originalData?.message || err?.message || 'Не удалось скачать документ';
         notification.showError(msg, 8000);
