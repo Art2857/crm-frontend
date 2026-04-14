@@ -16,8 +16,6 @@ import { privateApi } from '../../services/ApiClient';
 import { logger } from '../../utils/logger';
 import { User } from '../../types/user';
 import { toDateObject, formatDateToISO } from '../../utils/date';
-import { getDistributionByWorkHistoryId } from '../../utils/distributions';
-
 export function useWorkDetail(id: string) {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -301,26 +299,17 @@ export function useWorkDetail(id: string) {
     return false;
   }, [user, workData]);
 
+  /** Как редактирование работы: только админ/менеджер или ответственный за эту работу (не просто исполнитель) */
   const canDistributeDuties = useMemo(() => {
     if (!user || !workData) return false;
     if (user.role === 'ADMIN' || user.role === 'MANAGER') return true;
 
     if (user.role === 'WORKER') {
-      const isResponsibleForWork = workData.responsibleUserId === user.id;
-      const latestWorkHistoryId = workData.history?.[0]?.id;
-      // Проверяем, есть ли пользователь в последнем (актуальном) распределении обязанностей
-      const latestDist = getDistributionByWorkHistoryId(
-        dutiesManagementHook.distributions,
-        latestWorkHistoryId,
-      );
-      const isParticipant =
-        latestDist?.details.some((detail) => detail.user.id === user.id) ?? false;
-
-      return isResponsibleForWork || isParticipant;
+      return workData.responsibleUserId === user.id;
     }
 
     return false;
-  }, [user, workData, dutiesManagementHook.distributions]);
+  }, [user, workData]);
 
   const isResponsible = useMemo(() => {
     if (!user || !workData) return false;

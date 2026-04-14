@@ -8,7 +8,7 @@ interface DutyRow {
   price?: number | string | null;
   percentage?: number | string | null;
   calculatedValue: number;
-  assignedAt?: string | null;
+  effectiveDate?: string | null;
   currency?: string;
 }
 
@@ -80,7 +80,7 @@ export default function WorkDutiesTable({
                     Сумма
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Дата назначения
+                    Дата вступления в силу обязанности
                   </th>
                 </tr>
               </thead>
@@ -128,7 +128,7 @@ export default function WorkDutiesTable({
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {formatDateToISO(duty.assignedAt)}
+                        {formatDateToISO(duty.effectiveDate)}
                       </td>
                     </tr>
                   );
