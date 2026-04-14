@@ -74,12 +74,6 @@ export default function MyDebtsTab({ myDebts, currentUserId, onShowCalculation }
                   </div>
                 </div>
               </div>
-
-              {debt.isPaymentDue && (
-                <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">
-                  Просрочено
-                </div>
-              )}
             </div>
 
             {/* Информация о сроках */}
