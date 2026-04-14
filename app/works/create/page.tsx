@@ -33,7 +33,7 @@ export default function CreateWorkPage() {
       return;
     }
 
-    dispatch(fetchAllUsers({ role: user.role }));
+    dispatch(fetchAllUsers({}));
   }, [dispatch, user?.role]);
 
   // Обработчик изменения полей формы

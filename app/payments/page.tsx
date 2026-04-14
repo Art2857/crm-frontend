@@ -143,7 +143,6 @@ export default function PaymentsPage() {
       try {
         setLoading(true);
         const calc = await analyticsService.getPaymentsCalculation({
-          role: user.role,
           userId,
           workId,
           endDate: managementPeriodDate,
@@ -228,7 +227,6 @@ export default function PaymentsPage() {
       try {
         setLoading(true);
         const detailedCalc = await analyticsService.getPaymentsCalculationUser({
-          role: user.role,
           userId,
           endDate: managementPeriodDate,
         });

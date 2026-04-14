@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { dutyService } from '../../services/duty';
 import { Duty, Distribution, DistributionWithDetails } from '../../types/duty';
-import { Role } from '../../types/user';
 import { sortDistributionsByActuality } from '../../utils/distributions';
 
 interface DutiesState {
@@ -27,7 +26,7 @@ const initialState: DutiesState = {
 // Асинхронные thunks для обязанностей
 export const fetchAllDuties = createAsyncThunk(
   'duties/fetchAll',
-  async ({ role }: { role: Role }, { rejectWithValue }) => {
+  async (_: void, { rejectWithValue }) => {
     try {
       const duties = await dutyService.getAll();
       return duties;
@@ -43,7 +42,7 @@ export const fetchAllDuties = createAsyncThunk(
 
 export const fetchDutyById = createAsyncThunk(
   'duties/fetchById',
-  async ({ role, dutyId }: { role: Role; dutyId: string }, { rejectWithValue }) => {
+  async ({ dutyId }: { dutyId: string }, { rejectWithValue }) => {
     try {
       const duty = await dutyService.getById(dutyId);
       return duty;
@@ -59,14 +58,13 @@ export const fetchDutyById = createAsyncThunk(
 
 export const createDuty = createAsyncThunk(
   'duties/create',
-  async ({ role, data }: { role: Role; data: any }, { rejectWithValue }) => {
+  async ({ data }: { data: any }, { rejectWithValue }) => {
     try {
       const duty = await dutyService.create(data);
       return duty;
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос создания обязанности был отменен, игнорируем ошибку');
         return null;
       }
       return rejectWithValue(error.message || 'Не удалось создать обязанность');
@@ -76,13 +74,12 @@ export const createDuty = createAsyncThunk(
 
 export const updateDuty = createAsyncThunk(
   'duties/update',
-  async ({ role, id, data }: { role: Role; id: string; data: any }, { rejectWithValue }) => {
+  async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
     try {
       return await dutyService.update(id, data);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос обновления обязанности был отменен, игнорируем ошибку');
         return null;
       }
       return rejectWithValue(error.message || 'Не удалось обновить обязанность');
@@ -93,7 +90,7 @@ export const updateDuty = createAsyncThunk(
 // Удаление обязанности
 export const deleteDuty = createAsyncThunk(
   'duties/delete',
-  async ({ role, id }: { role: Role; id: string }, { rejectWithValue }) => {
+  async ({ id }: { id: string }, { rejectWithValue }) => {
     try {
       await dutyService.delete(id);
       return id;
@@ -127,13 +124,12 @@ export const deleteDuty = createAsyncThunk(
 // Асинхронные thunks для распределений
 export const fetchAllDistributions = createAsyncThunk(
   'duties/fetchAllDistributions',
-  async ({ role }: { role: Role }, { rejectWithValue }) => {
+  async (_: void, { rejectWithValue }) => {
     try {
       return await dutyService.getAllDistributions();
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос распределений был отменен, игнорируем ошибку');
         return [];
       }
       return rejectWithValue(error.message || 'Не удалось загрузить распределения');
@@ -143,7 +139,7 @@ export const fetchAllDistributions = createAsyncThunk(
 
 export const fetchWorkDistributions = createAsyncThunk(
   'duties/fetchWorkDistributions',
-  async ({ role, workHistoryId }: { role: Role; workHistoryId: string }, { rejectWithValue }) => {
+  async ({ workHistoryId }: { workHistoryId: string }, { rejectWithValue }) => {
     try {
       const distribution = await dutyService.getDistributionsByWorkHistoryId(workHistoryId);
       // Возвращаем массив с одним элементом или пустой массив
@@ -151,7 +147,6 @@ export const fetchWorkDistributions = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос распределений работы был отменен, игнорируем ошибку');
         return [];
       }
       return rejectWithValue(error.message || 'Не удалось загрузить распределения для работы');
@@ -161,13 +156,12 @@ export const fetchWorkDistributions = createAsyncThunk(
 
 export const fetchDistributionById = createAsyncThunk(
   'duties/fetchDistributionById',
-  async ({ role, id }: { role: Role; id: string }, { rejectWithValue }) => {
+  async ({ id }: { id: string }, { rejectWithValue }) => {
     try {
       return await dutyService.getDistributionById(id);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос распределения по ID был отменен, игнорируем ошибку');
         return null;
       }
       return rejectWithValue(error.message || 'Не удалось загрузить распределение');
@@ -178,15 +172,7 @@ export const fetchDistributionById = createAsyncThunk(
 export const createDistribution = createAsyncThunk(
   'duties/createDistribution',
   async (
-    {
-      role,
-      ...data
-    }: {
-      role: Role;
-      workHistoryId: string;
-      details: any[];
-      effectiveDate?: string;
-    },
+    data: { workHistoryId: string; details: any[]; effectiveDate?: string },
     { rejectWithValue },
   ) => {
     try {
@@ -194,7 +180,6 @@ export const createDistribution = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос создания распределения был отменен, игнорируем ошибку');
         return null;
       }
 
@@ -241,16 +226,10 @@ export const updateDistribution = createAsyncThunk(
   'duties/updateDistribution',
   async (
     {
-      role,
       workHistoryId,
       details,
       effectiveDate,
-    }: {
-      role: Role;
-      workHistoryId: string;
-      details: any[];
-      effectiveDate?: string;
-    },
+    }: { workHistoryId: string; details: any[]; effectiveDate?: string },
     { rejectWithValue },
   ) => {
     try {
@@ -261,7 +240,6 @@ export const updateDistribution = createAsyncThunk(
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос обновления распределения был отменен, игнорируем ошибку');
         return null;
       }
 
@@ -307,13 +285,12 @@ export const updateDistribution = createAsyncThunk(
 // Новый thunk для загрузки всех распределений по workId
 export const fetchDistributionsByWorkId = createAsyncThunk(
   'duties/fetchDistributionsByWorkId',
-  async ({ role, workId }: { role: Role; workId: string }, { rejectWithValue }) => {
+  async ({ workId }: { workId: string }, { rejectWithValue }) => {
     try {
       return await dutyService.getDistributionsByWorkId(workId);
     } catch (error: any) {
       // Игнорируем отмененные запросы
       if (error.message === 'REQUEST_CANCELLED') {
-        console.log('Запрос распределений по работе был отменен, игнорируем ошибку');
         return [];
       }
       return rejectWithValue(error.message || 'Не удалось загрузить распределения для работы');

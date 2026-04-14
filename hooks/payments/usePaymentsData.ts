@@ -127,7 +127,7 @@ export function usePaymentsData() {
 
   const getWorksData = useCallback(
     async (data: LoadParams = {}) => {
-      if (!user?.role) {
+      if (!user) {
         throw new Error('Пользователь не аутентифицирован');
       }
 
@@ -135,7 +135,6 @@ export function usePaymentsData() {
       const referenceDateIso = endDate ?? getCurrentDateISO();
 
       const mappedUsers = await analyticsService.getPaymentsManagement(
-        user.role,
         endDate,
         targetWorkId ? [targetWorkId] : undefined,
         targetUserId,
@@ -143,7 +142,7 @@ export function usePaymentsData() {
 
       return sortUsersForPayments(mappedUsers, referenceDateIso);
     },
-    [user?.role],
+    [user],
   );
 
   const fetchWorksData = useCallback(

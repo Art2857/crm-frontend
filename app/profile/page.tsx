@@ -322,9 +322,7 @@ export default function ProfilePage() {
         data.timezone = currentTimezone;
       }
 
-      const resultAction = await dispatch(
-        updateUserProfile({ role: user.role, userId: user.id, data }),
-      );
+      const resultAction = await dispatch(updateUserProfile({ userId: user.id, data }));
 
       if (updateUserProfile.fulfilled.match(resultAction)) {
         let passwordChanged = false;

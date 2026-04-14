@@ -100,7 +100,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     try {
       await privateApi.patch(`/users/${id}/archive`);
       notification.showSuccess('Пользователь успешно архивирован');
-      await dispatch(fetchUserById({ role: user.role, id }));
+      await dispatch(fetchUserById({ id }));
     } catch (error: any) {
       let errorMessage = '';
       const errorPayload = error instanceof Promise ? await error : error;
@@ -124,7 +124,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     try {
       await privateApi.patch(`/users/${id}/restore`);
       notification.showSuccess('Пользователь восстановлен из архива');
-      await dispatch(fetchUserById({ role: user.role, id }));
+      await dispatch(fetchUserById({ id }));
     } catch (error: any) {
       let errorMessage = '';
       const errorPayload = error instanceof Promise ? await error : error;
@@ -264,7 +264,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     // eslint-disable-next-line no-console
 
     // Загрузка данных пользователя
-    dispatch(fetchUserById({ role: user.role, id: userId }));
+    dispatch(fetchUserById({ id: userId }));
 
     // Очистка данных при размонтировании компонента
     return () => {
@@ -407,9 +407,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       // Отправляем запрос на обновление профиля
       // eslint-disable-next-line no-console
 
-      const resultAction = await dispatch(
-        updateUserProfile({ userId, role: user.role, data: updatedData }),
-      );
+      const resultAction = await dispatch(updateUserProfile({ userId, data: updatedData }));
 
       if (updateUserProfile.fulfilled.match(resultAction)) {
         setSuccess('Профиль успешно обновлен');
@@ -417,7 +415,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         // Обновляем данные пользователя и историю после успешного обновления
         // eslint-disable-next-line no-console
 
-        await dispatch(fetchUserById({ role: user.role, id: userId }));
+        await dispatch(fetchUserById({ id: userId }));
 
         // После успешного обновления базовой информации сбрасываем форму конфиденциальных данных
         if (currentUser) {
@@ -482,15 +480,13 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       }
 
       // Отправляем запрос на обновление чувствительных данных
-      const resultAction = await dispatch(
-        updateUserSensitiveData({ userId, role: user.role, data: updatedData }),
-      );
+      const resultAction = await dispatch(updateUserSensitiveData({ userId, data: updatedData }));
 
       if (updateUserSensitiveData.fulfilled.match(resultAction)) {
         setSuccess('Данные успешно обновлены');
 
         // Обновляем данные пользователя и историю после успешного обновления
-        await dispatch(fetchUserById({ role: user.role, id: userId }));
+        await dispatch(fetchUserById({ id: userId }));
 
         // После успешного обновления конфиденциальных данных сбрасываем форму базовой информации
         if (currentUser) {
@@ -842,7 +838,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
               {(user?.role === Role.ADMIN || user?.role === Role.MANAGER) && (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Характеристика (видно только ADMIN/MANAGER/HR)
+                    Характеристика (видно только ADMIN/MANAGER)
                   </label>
                   <textarea
                     name="characteristics"

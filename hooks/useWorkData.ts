@@ -5,7 +5,6 @@ import { updateWork, fetchWorkById } from '../store/slices/works';
 import { UpdateWorkDto } from '../types/work';
 import { useNotification } from '../contexts/NotificationContext';
 import { useErrorHandler } from './useErrorHandler';
-import { Role } from '../types/user';
 
 interface UseWorkDataParams {
   id: string;
@@ -17,7 +16,6 @@ interface UseWorkDataParams {
     releaseDate?: string;
   };
   isAuthenticated: boolean;
-  role: Role; // Добавляем параметр role
 }
 
 /**
@@ -55,7 +53,6 @@ export const useWorkData = ({
     releaseDate: '',
   },
   isAuthenticated,
-  role,
 }: UseWorkDataParams) => {
   const dispatch = useAppDispatch();
   const router = useRouter();

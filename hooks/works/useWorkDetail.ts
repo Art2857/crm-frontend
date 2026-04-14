@@ -44,11 +44,11 @@ export function useWorkDetail(id: string) {
       const work = await dispatch(fetchWorkById({ workId: id })).unwrap();
       if (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'WORKER') {
         await Promise.all([
-          dispatch(fetchAllUsers({ role: user.role, archivingStatus: 'actual' })).unwrap(),
-          dispatch(fetchAllDuties({ role: user.role })).unwrap(),
+          dispatch(fetchAllUsers({ archivingStatus: 'actual' })).unwrap(),
+          dispatch(fetchAllDuties()).unwrap(),
         ]);
       } else {
-        await dispatch(fetchAllDuties({ role: user.role })).unwrap();
+        await dispatch(fetchAllDuties()).unwrap();
       }
       return work;
     } catch (error) {
@@ -92,13 +92,11 @@ export function useWorkDetail(id: string) {
     id,
     initialData: initialWorkData,
     isAuthenticated,
-    role: user?.role as any, // Добавляем role parameter
   });
 
   const dutiesManagementHook = useWorkDuties({
     workId: id,
     workSalary: workData?.salary.toString(),
-    role: user?.role as any, // Добавляем role parameter
   });
 
   const canManageArchive = useMemo(() => {

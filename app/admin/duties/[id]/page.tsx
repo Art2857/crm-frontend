@@ -40,12 +40,12 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
 
     // Загружаем данные обязанности один раз (даже при двойном монтировании)
     if (!loadedDutyRef.current && !isLoading && currentDuty?.id !== dutyId) {
-      dispatch(fetchDutyById({ role: user.role, dutyId }));
+      dispatch(fetchDutyById({ dutyId }));
       loadedDutyRef.current = true;
     }
     // Загружаем распределения один раз (избегаем дубликатов в strict mode)
     if (!loadedDistributionsRef.current && distributionsCount === 0) {
-      dispatch(fetchAllDistributions({ role: user.role }));
+      dispatch(fetchAllDistributions());
       loadedDistributionsRef.current = true;
     }
   }, [
@@ -107,9 +107,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
       maxValue: formatNumberValue(formData.maxValue),
     };
 
-    const resultAction = await dispatch(
-      updateDuty({ role: user.role, id: dutyId, data: dutyData }),
-    );
+    const resultAction = await dispatch(updateDuty({ id: dutyId, data: dutyData }));
     if (updateDuty.fulfilled.match(resultAction)) {
       router.push('/admin/duties');
     }
@@ -123,7 +121,7 @@ export default function EditDutyPage({ params }: { params: { id: string } }) {
 
   const handleDelete = async () => {
     if (!currentDuty || !user) return;
-    const result = await dispatch(deleteDuty({ role: user.role, id: dutyId }));
+    const result = await dispatch(deleteDuty({ id: dutyId }));
     if (deleteDuty.fulfilled.match(result)) {
       router.push('/admin/duties');
     }
