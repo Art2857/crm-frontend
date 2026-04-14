@@ -1,4 +1,5 @@
 import { User } from '../types/user';
+import { invalidateCurrentSession } from './authSession';
 import { tokenStorage } from './tokenStorage';
 import { isAccessTokenExpired, isRefreshTokenExpired, refreshTokens } from './tokenRefresh';
 
@@ -485,6 +486,8 @@ export const accountManagerService = {
           return updatedAccount;
         } catch (error) {
           console.error('Failed to refresh tokens during account switch:', error);
+          this.setCurrentAccountId(account.id);
+          invalidateCurrentSession({ reason: 'account_switch_refresh_failed' });
           // If refresh fails, emit re-auth event
           if (typeof window !== 'undefined') {
             const event = new CustomEvent('refreshTokenExpired', {

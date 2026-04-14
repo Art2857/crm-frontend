@@ -9,6 +9,7 @@ import axios, {
 import https from 'https';
 import { env, isDevelopment } from '../config/env';
 import { isJwtExpired } from '../utils/jwt';
+import { invalidateCurrentSession } from './authSession';
 import { tokenStorage } from './tokenStorage';
 import { sharedRefreshAccessToken } from './tokenRefresh';
 import { logger } from '../utils/logger';
@@ -396,8 +397,7 @@ export class ApiClient {
     // Очищаем данные авторизации
     if (typeof window !== 'undefined') {
       try {
-        tokenStorage.clearAll();
-        // user/account список оставляем — это ответственность accountManager
+        invalidateCurrentSession({ reason: 'unauthorized_response' });
       } catch {}
 
       // Перенаправление на страницу входа, если не на странице авторизации
