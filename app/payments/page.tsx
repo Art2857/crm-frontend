@@ -10,6 +10,7 @@ import CalculationModal from '../../components/payments/CalculationModal';
 import PaymentModal from '../../components/payments/PaymentModal';
 import CustomPaymentModal from '../../components/payments/CustomPaymentModal';
 import PaymentsManagementToolbar from '../../components/payments/PaymentsManagementToolbar';
+import PaymentsDateCalculationPanel from '../../components/payments/PaymentsDateCalculationPanel';
 import UserCard from '../../components/payments/UserCard';
 import WorkCard from '../../components/payments/WorkCard';
 import DutyCard from '../../components/payments/DutyCard';
@@ -43,6 +44,10 @@ export default function PaymentsPage() {
   // Валюта отображения итогов
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>('RUB');
   const [managementPeriodDate, setManagementPeriodDate] = useState(getCurrentDateISO());
+  /** Верхняя граница расчёта на вкладке «Предстоящая выручка» (независимо от управления выплатами) */
+  const [debtsPeriodDate, setDebtsPeriodDate] = useState(getCurrentDateISO());
+  /** Дата, с которой открыт текущий детальный расчёт (модалки выплат и закрытия периода) */
+  const [calculationEndDateContext, setCalculationEndDateContext] = useState(getCurrentDateISO());
 
   const [activeTab, setActiveTab] = useState<'management' | 'debts' | 'history'>('management');
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
@@ -82,6 +87,7 @@ export default function PaymentsPage() {
     fetchWorksData: fetchWorksDataRaw,
     updateWorksData: updateWorksDataRaw,
     fetchMyDebtsData: fetchMyDebtsDataRaw,
+    debtsLoading,
   } = usePaymentsData();
 
   // summary берём из хука
@@ -96,6 +102,14 @@ export default function PaymentsPage() {
 
     return closureDates.at(-1);
   }, [usersData]);
+
+  const debtsToolbarMinDate = useMemo(() => {
+    const dates = myDebts
+      .map((d) => formatDateToISO(d.lastClosureDate))
+      .filter((d): d is string => Boolean(d))
+      .sort();
+    return dates.at(-1);
+  }, [myDebts]);
 
   const fetchWorksData = useCallback(
     async (
@@ -135,18 +149,21 @@ export default function PaymentsPage() {
 
   // Обработчик показа детального расчета
   const handleShowCalculation = useCallback(
-    async (userId: string, workId: string, dutyId?: string) => {
+    async (userId: string, workId: string, dutyId?: string, endDateOverride?: string) => {
       if (!user?.role) {
         logger.error('Пользователь не авторизован');
         return;
       }
 
+      const resolvedEnd = endDateOverride ?? managementPeriodDate;
+
       try {
         setCalculationLoading(true);
+        setCalculationEndDateContext(resolvedEnd);
         const calc = await analyticsService.getPaymentsCalculation({
           userId,
           workId,
-          endDate: managementPeriodDate,
+          endDate: resolvedEnd,
           dutyId,
         });
 
@@ -180,7 +197,7 @@ export default function PaymentsPage() {
       logger.error('Ошибка инициализации выплат', err);
       showError('Не удалось загрузить данные по выплатам');
     });
-    fetchMyDebtsDataRaw().catch((err) => {
+    fetchMyDebtsDataRaw(getCurrentDateISO()).catch((err) => {
       logger.error('Ошибка загрузки моих задолженностей', err);
       showError('Не удалось загрузить данные о задолженностях');
     });
@@ -206,6 +223,7 @@ export default function PaymentsPage() {
           targetWorkId: workId,
           targetUserId: userId,
         });
+        await fetchMyDebtsDataRaw(debtsPeriodDate);
       } catch (err) {
         logger.error('Не удалось закрыть период', err);
         showError('Не удалось закрыть период');
@@ -213,8 +231,7 @@ export default function PaymentsPage() {
     };
     window.addEventListener('close-period', onClosePeriod as any);
     return () => window.removeEventListener('close-period', onClosePeriod as any);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [debtsPeriodDate, fetchMyDebtsDataRaw, showError, showSuccess, updateWorksData]);
 
   // Загрузка данных о задолженностях текущего пользователя теперь в хуке usePaymentsData
 
@@ -228,6 +245,7 @@ export default function PaymentsPage() {
 
       try {
         setCalculationLoading(true);
+        setCalculationEndDateContext(managementPeriodDate);
         const detailedCalc = await analyticsService.getPaymentsCalculationUser({
           userId,
           endDate: managementPeriodDate,
@@ -323,6 +341,20 @@ export default function PaymentsPage() {
     }
   };
 
+  const handleDebtsPeriodDateChange = async (date: string) => {
+    const previousDate = debtsPeriodDate;
+    if (previousDate === date) return;
+
+    setDebtsPeriodDate(date);
+
+    try {
+      await fetchMyDebtsDataRaw(date);
+    } catch {
+      setDebtsPeriodDate(previousDate);
+      showError('Не удалось пересчитать предстоящую выручку');
+    }
+  };
+
   /**
    * Обновляет данные после успешной выплаты: перезапрашивает данные по работе
    * и, если открыт модал расчёта, обновляет его содержимое.
@@ -334,7 +366,7 @@ export default function PaymentsPage() {
       // Если модальное окно детального расчёта открыто – обновим данные в нём
       if (calculationModalOpen) {
         if (calculationType === 'work') {
-          await handleShowCalculation(userId, workId, dutyId);
+          await handleShowCalculation(userId, workId, dutyId, calculationEndDateContext);
         } else {
           await handleShowUserCalculation(userId);
         }
@@ -344,7 +376,7 @@ export default function PaymentsPage() {
     }
 
     // Обновляем данные о задолженностях текущего пользователя
-    await fetchMyDebtsDataRaw();
+    await fetchMyDebtsDataRaw(debtsPeriodDate);
   };
 
   // Функция для обновления данных после выплаты через общий расчет пользователя
@@ -362,7 +394,12 @@ export default function PaymentsPage() {
             // то нужно найти эту работу и обновить расчет
             const currentUserData = usersData.find((u) => u.userId === userId);
             if (currentUserData && selectedCalculation.workId) {
-              await handleShowCalculation(userId, selectedCalculation.workId, selectedDutyId);
+              await handleShowCalculation(
+                userId,
+                selectedCalculation.workId,
+                selectedDutyId,
+                calculationEndDateContext,
+              );
             }
           }
         }
@@ -371,11 +408,13 @@ export default function PaymentsPage() {
       }
 
       // Обновляем данные о задолженностях текущего пользователя
-      await fetchMyDebtsDataRaw();
+      await fetchMyDebtsDataRaw(debtsPeriodDate);
     },
     [
+      calculationEndDateContext,
       calculationModalOpen,
       calculationType,
+      debtsPeriodDate,
       fetchMyDebtsDataRaw,
       handleShowCalculation,
       handleShowUserCalculation,
@@ -432,7 +471,7 @@ export default function PaymentsPage() {
         workId: selectedPayment?.workId || '',
         userId: selectedPayment?.userId || '',
         amount: Math.round(data.amount), // Конвертируем в копейки
-        calculationDate: selectedPayment?.calculationDate || managementPeriodDate,
+        calculationDate: selectedPayment?.calculationDate ?? calculationEndDateContext,
         description: data.description,
       }).unwrap();
 
@@ -585,11 +624,22 @@ export default function PaymentsPage() {
         )}
 
         {activeTab === 'debts' && (
-          <MyDebtsTab
-            myDebts={myDebts}
-            currentUserId={user?.id}
-            onShowCalculation={handleShowCalculation}
-          />
+          <div className="space-y-6">
+            <PaymentsDateCalculationPanel
+              label="Расчёт предстоящей выручки до даты (дата не включается):"
+              selectedDate={debtsPeriodDate}
+              minDate={debtsToolbarMinDate}
+              isLoading={debtsLoading}
+              onCalculate={handleDebtsPeriodDateChange}
+            />
+            <MyDebtsTab
+              myDebts={myDebts}
+              currentUserId={user?.id}
+              onShowCalculation={(userId, workId, dutyId) =>
+                handleShowCalculation(userId, workId, dutyId, debtsPeriodDate)
+              }
+            />
+          </div>
         )}
 
         {activeTab === 'history' && <PaymentHistoryTab key={user?.id} currentUserId={user?.id} />}
@@ -606,12 +656,12 @@ export default function PaymentsPage() {
           calculation={selectedCalculation}
           onCreatePayment={handleCreatePayment}
           isDebtsView={myDebts.some((debt) => debt.workId === selectedCalculation?.workId)}
-          calculationDate={selectedCalculation ? managementPeriodDate : undefined}
+          calculationDate={selectedCalculation ? calculationEndDateContext : undefined}
           isUserCalculation={isUserCalculation}
           showPaymentHistory={calculationModalShowPaymentHistory}
           onBulkPayAllWorks={handleBulkPayAllWorks}
           paymentDate={
-            selectedCalculation ? getClosingPaymentDate(managementPeriodDate) : undefined
+            selectedCalculation ? getClosingPaymentDate(calculationEndDateContext) : undefined
           }
           initialCurrency={defaultCalculationCurrency}
         />
@@ -627,7 +677,7 @@ export default function PaymentsPage() {
             selectedPayment?.calculationDate
               ? getClosingPaymentDate(selectedPayment.calculationDate)
               : selectedCalculation
-                ? getClosingPaymentDate(managementPeriodDate)
+                ? getClosingPaymentDate(calculationEndDateContext)
                 : null
           }
           onSubmit={handlePaymentSubmit}
@@ -638,7 +688,7 @@ export default function PaymentsPage() {
           }))}
           calculationDate={
             selectedPayment?.calculationDate ??
-            (selectedCalculation ? managementPeriodDate : undefined)
+            (selectedCalculation ? calculationEndDateContext : undefined)
           }
         />
 

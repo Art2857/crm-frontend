@@ -214,9 +214,11 @@ export const analyticsService = {
   /**
    * Получить задолженности текущего пользователя
    */
-  async getMyDebts(): Promise<MyDebtsResponse> {
+  async getMyDebts(endDate?: string): Promise<MyDebtsResponse> {
     try {
-      const response = await privateApi.get<MyDebtsResponse>(ANALYTICS_ENDPOINTS.myDebts);
+      const response = await privateApi.get<MyDebtsResponse>(ANALYTICS_ENDPOINTS.myDebts, {
+        params: endDate !== undefined ? { endDate } : {},
+      });
       return response.data;
     } catch (error) {
       logger.error('Error fetching my debts:', error);

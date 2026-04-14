@@ -124,6 +124,7 @@ export function usePaymentsData() {
 
   const [usersData, setUsersData] = useState<ResponsibleUser[]>([]);
   const [myDebts, setMyDebts] = useState<MyDebt[]>([]);
+  const [debtsLoading, setDebtsLoading] = useState(false);
 
   const getWorksData = useCallback(
     async (data: LoadParams = {}) => {
@@ -197,15 +198,21 @@ export function usePaymentsData() {
     [getWorksData],
   );
 
-  const fetchMyDebtsData = useCallback(async () => {
-    try {
-      const myDebtsData = await analyticsService.getMyDebts();
-      setMyDebts(myDebtsData.debts);
-    } catch (error) {
-      logger.error('Ошибка загрузки моих задолженностей:', error);
-      showError('Не удалось загрузить данные о задолженностях');
-    }
-  }, [showError]);
+  const fetchMyDebtsData = useCallback(
+    async (endDate?: string) => {
+      setDebtsLoading(true);
+      try {
+        const myDebtsData = await analyticsService.getMyDebts(endDate);
+        setMyDebts(myDebtsData.debts);
+      } catch (error) {
+        logger.error('Ошибка загрузки моих задолженностей:', error);
+        showError('Не удалось загрузить данные о задолженностях');
+      } finally {
+        setDebtsLoading(false);
+      }
+    },
+    [showError],
+  );
 
   return {
     // state
@@ -213,6 +220,7 @@ export function usePaymentsData() {
     setUsersData,
     myDebts,
     setMyDebts,
+    debtsLoading,
     // actions
     fetchWorksData,
     updateWorksData,
