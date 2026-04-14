@@ -5,7 +5,7 @@ import { logger } from '../utils/logger';
 export interface DutyData {
   name: string;
   calculatedValue: number;
-  assignedAt: string;
+  effectiveDate: string;
   currency?: string;
   // Опциональные поля, доступные только для ответственного
   price?: string | null;
