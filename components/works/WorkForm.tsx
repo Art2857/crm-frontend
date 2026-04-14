@@ -2,14 +2,18 @@ import React from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import CurrencySwitch from '../ui/CurrencySwitch';
 import Tooltip from '../ui/Tooltip';
 import { UpdateWorkDto } from '../../types/work';
 import { User } from '../../types/user';
+import { formatAmountWithCurrency } from '../../utils/currency';
+import { formatDateForDisplay } from '../../utils/date';
 
 interface WorkFormProps {
   formData: UpdateWorkDto;
   users: User[];
+  currentSalary?: string | number;
+  currentCurrency?: 'RUB' | 'USD';
+  incomeFixationDate?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
@@ -27,6 +31,9 @@ interface WorkFormProps {
 const WorkForm: React.FC<WorkFormProps> = ({
   formData,
   users,
+  currentSalary = 0,
+  currentCurrency = 'RUB',
+  incomeFixationDate,
   onChange,
   onSubmit,
   onCancel,
@@ -53,14 +60,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
   });
 
   // Проверяем валидность данных формы
-  const isFormValid =
-    formData.name &&
-    formData.name.trim().length > 0 &&
-    formData.responsibleUserId &&
-    (typeof formData.salary === 'number' ||
-      (typeof formData.salary === 'string' && !isNaN(parseFloat(formData.salary))));
-
-  const selectedCurrency = formData.currency || 'RUB';
+  const isFormValid = Boolean(
+    formData.name && formData.name.trim().length > 0 && formData.responsibleUserId,
+  );
   const isArchiveButtonDisabled = isLoading || archiveActionDisabled;
   const showArchiveTooltip =
     archiveActionVariant === 'archive' &&
@@ -145,40 +147,29 @@ const WorkForm: React.FC<WorkFormProps> = ({
             </div>
 
             <div className="space-y-4">
-              <div>
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <label htmlFor="salary" className="block text-sm font-medium text-gray-700">
-                    Бюджет
-                  </label>
-                  <CurrencySwitch
-                    value={selectedCurrency as 'RUB' | 'USD'}
-                    onChange={(val) => {
-                      const fakeEvent = {
-                        target: { name: 'currency', value: val, type: 'text' },
-                      } as unknown as React.ChangeEvent<HTMLInputElement>;
-                      onChange(fakeEvent);
-                    }}
-                    size="sm"
-                  />
-                </div>
-                <div className="relative">
-                  <Input
-                    id="salary"
-                    name="salary"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={formData.salary ?? ''}
-                    onChange={onChange}
-                    required
-                    className="w-full pl-8 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
-                    placeholder="0"
-                  />
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-sm text-gray-500">
-                      {selectedCurrency === 'USD' ? '$' : '₽'}
-                    </span>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                <div className="mb-3 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-emerald-900">Текущий бюджет</p>
+                    <p className="mt-1 text-2xl font-semibold text-emerald-950">
+                      {formatAmountWithCurrency(Number(currentSalary || 0), currentCurrency)}
+                    </p>
                   </div>
+                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-emerald-800">
+                    {currentCurrency}
+                  </span>
+                </div>
+                <div className="rounded-lg border border-white/70 bg-white/70 px-3 py-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                    Дата фиксации
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">
+                    {incomeFixationDate ? formatDateForDisplay(incomeFixationDate) : 'Не указана'}
+                  </p>
+                  <p className="mt-2 text-xs text-gray-600">
+                    Бюджет больше не редактируется вручную. Он обновляется после фиксации
+                    поступлений за период.
+                  </p>
                 </div>
               </div>
 

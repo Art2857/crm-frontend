@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAppDispatch } from '../store';
 import { useRouter } from 'next/navigation';
 import { updateWork, fetchWorkById } from '../store/slices/works';
@@ -11,35 +11,10 @@ interface UseWorkDataParams {
   initialData?: {
     name: string;
     responsibleUserId: string;
-    salary: string | number;
-    currency?: 'RUB' | 'USD';
     releaseDate?: string;
   };
   isAuthenticated: boolean;
 }
-
-/**
- * Функция для глубокого сравнения объектов
- */
-const isEqual = (obj1: any, obj2: any): boolean => {
-  if (obj1 === obj2) return true;
-
-  if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
-    return obj1 === obj2;
-  }
-
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
-
-  if (keys1.length !== keys2.length) return false;
-
-  for (const key of keys1) {
-    if (!keys2.includes(key)) return false;
-    if (!isEqual(obj1[key], obj2[key])) return false;
-  }
-
-  return true;
-};
 
 /**
  * Хук для управления данными работы
@@ -49,7 +24,6 @@ export const useWorkData = ({
   initialData = {
     name: '',
     responsibleUserId: '',
-    salary: '',
     releaseDate: '',
   },
   isAuthenticated,
@@ -65,8 +39,6 @@ export const useWorkData = ({
     const defaultData = {
       name: '',
       responsibleUserId: '',
-      salary: '',
-      currency: 'RUB' as const,
       releaseDate: '',
     };
 
@@ -75,13 +47,8 @@ export const useWorkData = ({
     return {
       ...defaultData,
       ...initialData,
-      salary:
-        typeof initialData.salary === 'number' ? initialData.salary.toString() : initialData.salary,
     };
   });
-
-  // Используем ref для отслеживания, был ли уже инициализирован formData
-  const initializedRef = useRef(false);
 
   // Обновляем formData всякий раз, когда приходят новые initialData
   useEffect(() => {
@@ -89,22 +56,12 @@ export const useWorkData = ({
       const processedData: UpdateWorkDto = {
         name: initialData.name,
         responsibleUserId: initialData.responsibleUserId,
-        salary:
-          typeof initialData.salary === 'number'
-            ? initialData.salary.toString()
-            : initialData.salary,
-        currency: initialData.currency || 'RUB',
         releaseDate: initialData.releaseDate || '',
       };
 
       setFormData(processedData);
     }
   }, [initialData]);
-
-  // Отслеживаем режим редактирования для сброса флага инициализации
-  useEffect(() => {
-    initializedRef.current = isEditing;
-  }, [isEditing]);
 
   // Перенаправляем неавторизованных пользователей
   useEffect(() => {
@@ -115,18 +72,12 @@ export const useWorkData = ({
 
   // Обработчик изменения полей формы
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
 
     setFormData((prev) => {
       const newData = { ...prev };
 
       switch (name) {
-        case 'salary':
-          newData.salary = String(value === '' ? 0 : Number(value));
-          break;
-        case 'currency':
-          newData.currency = value === 'USD' ? 'USD' : 'RUB';
-          break;
         case 'name':
           newData.name = value;
           break;
@@ -137,9 +88,7 @@ export const useWorkData = ({
           newData.releaseDate = value;
           break;
         default:
-          if (type === 'number') {
-            newData.salary = String(value === '' ? 0 : Number(value));
-          }
+          break;
       }
 
       return newData;
@@ -175,7 +124,7 @@ export const useWorkData = ({
           ...formData,
         };
 
-        const updatedWork = await dispatch(updateWork({ id, data: dataToSubmit })).unwrap();
+        await dispatch(updateWork({ id, data: dataToSubmit })).unwrap();
 
         showSuccess('Работа успешно обновлена');
         setIsEditing(false);

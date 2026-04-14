@@ -221,7 +221,7 @@ export default function CreateWorkPage() {
 
                 <div className="space-y-2">
                   <label htmlFor="salary" className="block text-sm font-semibold text-gray-700">
-                    Бюджет проекта
+                    Стартовый бюджет работы
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -263,6 +263,10 @@ export default function CreateWorkPage() {
                       </div>
                     </div>
                   </div>
+                  <p className="text-xs text-gray-500">
+                    После создания сумма будет обновляться через фиксацию поступлений, а не через
+                    редактирование работы.
+                  </p>
                   {formErrors.salary && <p className="text-sm text-red-600">{formErrors.salary}</p>}
                 </div>
               </div>

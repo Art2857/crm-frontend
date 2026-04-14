@@ -16,6 +16,7 @@ import { getCurrentDateISO } from '../../utils/date';
 interface WorkIncomeFormProps {
   workId: string;
   income?: WorkIncome; // Для редактирования
+  minReceivedDate?: string;
   isSubmitting?: boolean;
   onSubmit: (data: CreateWorkIncomeRequest | UpdateWorkIncomeRequest) => Promise<void>;
   onCancel: () => void;
@@ -24,6 +25,7 @@ interface WorkIncomeFormProps {
 const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
   workId,
   income,
+  minReceivedDate,
   isSubmitting = false,
   onSubmit,
   onCancel,
@@ -94,6 +96,8 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
       const date = new Date(formData.receivedDate);
       if (isNaN(date.getTime())) {
         newErrors.receivedDate = 'Некорректная дата';
+      } else if (minReceivedDate && formData.receivedDate < minReceivedDate) {
+        newErrors.receivedDate = 'Дата поступления не может быть раньше начала открытого периода';
       } else if (formData.receivedDate > getCurrentDateISO()) {
         newErrors.receivedDate = 'Дата не может быть в будущем';
       }
@@ -211,6 +215,7 @@ const WorkIncomeForm: React.FC<WorkIncomeFormProps> = ({
           id="receivedDate"
           value={formData.receivedDate}
           onChange={(e) => handleChange('receivedDate', e.target.value)}
+          min={minReceivedDate}
           max={getCurrentDateISO()}
           className={`w-full rounded-lg border-2 bg-white px-3 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
             errors.receivedDate

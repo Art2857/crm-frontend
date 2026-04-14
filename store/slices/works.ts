@@ -5,7 +5,7 @@ import {
   ActionReducerMapBuilder,
 } from '@reduxjs/toolkit';
 import { workService } from '../../services/work';
-import { Work, WorkWithHistory, CreateWorkDto, UpdateWorkDto, WorkHistory } from '../../types/work';
+import { Work, WorkWithHistory, CreateWorkDto, UpdateWorkDto } from '../../types/work';
 
 // Типы состояния
 interface WorksState {
@@ -172,25 +172,11 @@ const worksSlice = createSlice({
     });
 
     // Обработчики для обновления работы
-    addLoadingStateHandlers<WorkHistory>(builder, updateWork, (state, action) => {
-      const workFromHistory: Work = {
-        id: action.payload.workId,
-        name: action.payload.name,
-        responsibleUserId: action.payload.responsibleUserId,
-        salary: action.payload.salary,
-        currency: action.payload.currency || 'RUB',
-        releaseDate: action.payload.effectiveDate,
-        createdAt: action.payload.createdAt || new Date().toISOString(),
-        updatedAt: action.payload.updatedAt,
-      };
-
-      if (state.currentWork && state.currentWork.id === workFromHistory.id) {
+    addLoadingStateHandlers<Work>(builder, updateWork, (state, action) => {
+      if (state.currentWork && state.currentWork.id === action.payload.id) {
         state.currentWork = {
           ...state.currentWork,
-          name: workFromHistory.name,
-          responsibleUserId: workFromHistory.responsibleUserId,
-          salary: workFromHistory.salary,
-          updatedAt: workFromHistory.updatedAt,
+          ...action.payload,
         };
       }
     });

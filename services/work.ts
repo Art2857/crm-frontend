@@ -91,9 +91,9 @@ export const workService = {
   },
 
   // Обновить работу
-  update: async (id: string, data: UpdateWorkDto): Promise<WorkHistory> => {
+  update: async (id: string, data: UpdateWorkDto): Promise<Work> => {
     try {
-      const response = await privateApi.patch<WorkHistory>(WORKS_ENDPOINTS.byId(id), data);
+      const response = await privateApi.patch<Work>(WORKS_ENDPOINTS.byId(id), data);
       return response.data;
     } catch (error) {
       logger.error(`Error updating work ${id}:`, error);

@@ -82,8 +82,6 @@ export function useWorkDetail(id: string) {
     return {
       name: workData.name,
       responsibleUserId: workData.responsibleUserId,
-      salary: workData.salary,
-      currency: workData.currency || 'RUB',
       releaseDate: releaseDateFormatted,
     };
   }, [workData]);
@@ -283,6 +281,15 @@ export function useWorkDetail(id: string) {
     ],
   );
 
+  const refreshAfterIncomeFixation = useCallback(async () => {
+    await Promise.all([
+      reloadWorkData(),
+      dutiesManagementHook.forceReload(),
+      loadWorkHistory(),
+      loadArchiveStatus(),
+    ]);
+  }, [reloadWorkData, dutiesManagementHook.forceReload, loadWorkHistory, loadArchiveStatus]);
+
   const canEditWork = useMemo(() => {
     if (!user || !workData) return false;
     if (user.role === 'ADMIN' || user.role === 'MANAGER') return true;
@@ -393,6 +400,7 @@ export function useWorkDetail(id: string) {
     // actions
     handleArchiveWork,
     handleRestoreWork,
+    refreshAfterIncomeFixation,
     canManageArchive,
     archiveStatus,
     isLoadingArchiveStatus,

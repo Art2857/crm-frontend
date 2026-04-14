@@ -16,6 +16,7 @@ interface WorkIncomeModalProps {
   onClose: () => void;
   workId: string;
   income?: WorkIncome; // Для редактирования
+  minReceivedDate?: string;
   isSubmitting?: boolean;
   error?: string | null;
   successMessage?: string | null;
@@ -28,6 +29,7 @@ const WorkIncomeModal: React.FC<WorkIncomeModalProps> = ({
   onClose,
   workId,
   income,
+  minReceivedDate,
   isSubmitting = false,
   error,
   successMessage,
@@ -95,6 +97,7 @@ const WorkIncomeModal: React.FC<WorkIncomeModalProps> = ({
           <WorkIncomeForm
             workId={workId}
             income={income}
+            minReceivedDate={minReceivedDate}
             isSubmitting={isSubmitting}
             onSubmit={onSubmit}
             onCancel={onClose}

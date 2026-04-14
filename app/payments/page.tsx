@@ -47,7 +47,8 @@ export default function PaymentsPage() {
   const [activeTab, setActiveTab] = useState<'management' | 'debts' | 'history'>('management');
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [expandedWorks, setExpandedWorks] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(false);
+  const [managementLoading, setManagementLoading] = useState(false);
+  const [, setCalculationLoading] = useState(false);
 
   const [makePayment] = useCreatePaymentMutation();
   const [createPaymentAndClose] = useCreatePaymentAndCloseMutation();
@@ -104,11 +105,11 @@ export default function PaymentsPage() {
         targetUserId?: string;
       } = {},
     ) => {
-      setLoading(true);
+      setManagementLoading(true);
       try {
         await fetchWorksDataRaw(data);
       } finally {
-        setLoading(false);
+        setManagementLoading(false);
       }
     },
     [fetchWorksDataRaw],
@@ -122,11 +123,11 @@ export default function PaymentsPage() {
         targetUserId?: string;
       } = {},
     ) => {
-      setLoading(true);
+      setManagementLoading(true);
       try {
         await updateWorksDataRaw(data);
       } finally {
-        setLoading(false);
+        setManagementLoading(false);
       }
     },
     [updateWorksDataRaw],
@@ -141,7 +142,7 @@ export default function PaymentsPage() {
       }
 
       try {
-        setLoading(true);
+        setCalculationLoading(true);
         const calc = await analyticsService.getPaymentsCalculation({
           userId,
           workId,
@@ -158,11 +159,12 @@ export default function PaymentsPage() {
         setCalculationModalShowPaymentHistory(!dutyId);
       } catch (error) {
         logger.error('Ошибка при загрузке расчета', error);
+        showError(error instanceof Error ? error.message : 'Не удалось загрузить детализацию');
       } finally {
-        setLoading(false);
+        setCalculationLoading(false);
       }
     },
-    [managementPeriodDate, user?.role],
+    [managementPeriodDate, showError, user?.role],
   );
 
   // Инициализация данных один раз на монтировании
@@ -225,7 +227,7 @@ export default function PaymentsPage() {
       }
 
       try {
-        setLoading(true);
+        setCalculationLoading(true);
         const detailedCalc = await analyticsService.getPaymentsCalculationUser({
           userId,
           endDate: managementPeriodDate,
@@ -239,11 +241,14 @@ export default function PaymentsPage() {
         setCalculationModalShowPaymentHistory(true);
       } catch (error) {
         logger.error('Ошибка при загрузке расчета пользователя:', error);
+        showError(
+          error instanceof Error ? error.message : 'Не удалось загрузить детализацию пользователя',
+        );
       } finally {
-        setLoading(false);
+        setCalculationLoading(false);
       }
     },
-    [managementPeriodDate, user?.role],
+    [managementPeriodDate, showError, user?.role],
   );
 
   // Обработчик создания выплаты
@@ -386,7 +391,7 @@ export default function PaymentsPage() {
   const handleBulkPayAllWorks = useCallback(async () => {
     if (!selectedCalculation || !isUserCalculation) return;
     try {
-      setLoading(true);
+      setCalculationLoading(true);
       const userId = selectedCalculation.userId;
       const userData = usersData.find((u) => u.userId === userId);
       if (!userData) return;
@@ -406,7 +411,7 @@ export default function PaymentsPage() {
       logger.error('Мультивыплата не выполнена', e);
       showError('Не удалось выполнить мультивыплату');
     } finally {
-      setLoading(false);
+      setCalculationLoading(false);
     }
   }, [
     bulkCreateAndClose,
@@ -517,7 +522,7 @@ export default function PaymentsPage() {
             <PaymentsManagementToolbar
               selectedDate={managementPeriodDate}
               minDate={globalMinCalculationDate}
-              isLoading={loading}
+              isLoading={managementLoading}
               onCalculate={handleManagementPeriodDateChange}
               onCreatePayment={handleCreateCustomPayment}
             />
