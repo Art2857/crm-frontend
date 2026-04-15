@@ -9,12 +9,15 @@ import WorkAnalyticsView from '../../components/works/WorkAnalyticsView';
 import { useWorksAnalytics } from '../../hooks/works/useWorksAnalytics';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { getCurrentUser } from '../../store/slices/auth';
+import { Role } from '../../types/user';
 
 const WorksPage = () => {
   const [showArchived, setShowArchived] = useState(false);
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { isAuthenticated, user, isLoading: authLoading } = useAppSelector((s) => s.auth);
+  const canCreateWork = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
+
   React.useEffect(() => {
     if (!authLoading && (!isAuthenticated || !user)) {
       dispatch(getCurrentUser()).catch(() => {});
@@ -94,7 +97,7 @@ const WorksPage = () => {
           <p className="mt-2 text-gray-500 mb-6">
             {showArchived ? 'Архивные работы отсутствуют' : 'Создайте новую работу для просмотра'}
           </p>
-          {user?.role === 'ADMIN' && !showArchived && (
+          {canCreateWork && !showArchived && (
             <Button
               onClick={handleCreateWork}
               className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg px-6 py-2 shadow-md hover:from-primary-700 hover:to-primary-800"
@@ -106,7 +109,7 @@ const WorksPage = () => {
       ) : (
         <WorkAnalyticsView
           grouped={grouped}
-          onCreateWork={handleCreateWork}
+          onCreateWork={canCreateWork ? handleCreateWork : undefined}
           onViewWork={handleViewWork}
           userRole={user?.role}
           showArchived={showArchived}
@@ -132,12 +135,14 @@ const WorksPage = () => {
             >
               {showArchived ? 'Показать активные' : 'Показать архив'}
             </Button>
-            <Button
-              onClick={handleCreateWork}
-              className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg px-4 py-2 shadow-sm hover:from-primary-700 hover:to-primary-800"
-            >
-              Создать работу
-            </Button>
+            {canCreateWork && (
+              <Button
+                onClick={handleCreateWork}
+                className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg px-4 py-2 shadow-sm hover:from-primary-700 hover:to-primary-800"
+              >
+                Создать работу
+              </Button>
+            )}
           </div>
         </div>
 

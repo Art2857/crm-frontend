@@ -199,7 +199,7 @@ const WorkIncomeManagement: React.FC<WorkIncomeManagementProps> = ({
             <span className="font-medium text-gray-900">
               {currentFixationDate ? formatDateForDisplay(currentFixationDate) : 'не указано'}
             </span>
-            . Текущий бюджет:{' '}
+            . Текущая зарплата:{' '}
             <span className="font-medium text-gray-900">
               {formatAmountWithCurrency(currentSalary, workCurrency)}
             </span>

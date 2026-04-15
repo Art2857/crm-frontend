@@ -142,6 +142,32 @@ export interface DetailedCalculation {
   }>;
 }
 
+export type CalculationModalMode = 'management-work' | 'management-user' | 'debts-work';
+
+export type ClosedCalculationModalState = {
+  kind: 'closed';
+};
+
+export type WorkCalculationModalState = {
+  kind: 'management-work' | 'debts-work';
+  calculation: DetailedCalculation;
+  calculationDate: string;
+  dutyId?: string;
+  showPaymentHistory: boolean;
+};
+
+export type ManagementUserCalculationModalState = {
+  kind: 'management-user';
+  calculation: DetailedCalculation;
+  calculationDate: string;
+  scopedWorkIds?: string[];
+};
+
+export type CalculationModalState =
+  | ClosedCalculationModalState
+  | WorkCalculationModalState
+  | ManagementUserCalculationModalState;
+
 export interface PaymentFormData {
   userId: string;
   workId: string;

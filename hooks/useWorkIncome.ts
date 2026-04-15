@@ -184,20 +184,16 @@ export const useWorkIncome = (options: UseWorkIncomeOptions = {}) => {
       if (!workId) return null;
 
       try {
-        updateState({ isSubmitting: true, error: null });
+        updateState({ error: null });
 
         const preview = await workIncomeService.previewWorkIncomeFixation(workId, data);
 
-        updateState({
-          isSubmitting: false,
-          error: null,
-        });
+        updateState({ error: null });
 
         return preview;
       } catch (error: any) {
         updateState({
           error: error.message || 'Ошибка при расчёте периода фиксации',
-          isSubmitting: false,
         });
         return null;
       }

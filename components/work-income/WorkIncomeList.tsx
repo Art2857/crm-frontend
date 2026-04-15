@@ -3,7 +3,13 @@
 import React from 'react';
 import { WorkIncome, WorkIncomeFixation, CURRENCY_OPTIONS } from '../../types/work-income';
 import { formatAmountWithCurrency } from '../../utils/currency';
-import { formatDateForDisplay } from '../../utils/date';
+import {
+  DATE_RANGE_SEPARATOR,
+  formatDateForDisplay,
+  getCurrentDateISO,
+  shiftDateISOByDays,
+} from '../../utils/date';
+import { calculateWorkIncomeFixationAmount } from '../../utils/work-income-fixation';
 
 interface WorkIncomeListProps {
   incomes: WorkIncome[];
@@ -63,6 +69,23 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
     () => sortIncomesByDateDesc(incomes.filter((income) => !income.fixationId)),
     [incomes, sortIncomesByDateDesc],
   );
+
+  const openPeriodStartDate = React.useMemo(() => {
+    if (!currentFixationDate) {
+      return undefined;
+    }
+
+    return hasFixations ? shiftDateISOByDays(currentFixationDate, 1) : currentFixationDate;
+  }, [currentFixationDate, hasFixations]);
+
+  const openPeriodAmount = React.useMemo(() => {
+    return calculateWorkIncomeFixationAmount({
+      incomes: openIncomes,
+      workCurrency,
+      startDate: openPeriodStartDate,
+      endDate: getCurrentDateISO(),
+    });
+  }, [openIncomes, openPeriodStartDate, workCurrency]);
 
   const fixedSections = React.useMemo(() => {
     return [...fixations]
@@ -308,7 +331,7 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
           subtitle: currentFixationDate
             ? `${hasFixations ? 'После' : 'С'} ${formatDateForDisplay(currentFixationDate)} по текущий момент`
             : 'Текущие поступления, которые еще не были зафиксированы',
-          amount: calculateOpenPeriodAmount(openIncomes, workCurrency),
+          amount: openPeriodAmount,
           amountCurrency: workCurrency,
           incomes: openIncomes,
           isFixedSection: false,
@@ -319,7 +342,7 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
         <React.Fragment key={fixation.id}>
           {renderSection({
             title: 'Зафиксированный период',
-            subtitle: `${formatDateForDisplay(fixation.startDate)} - ${formatDateForDisplay(fixation.endDate)}`,
+            subtitle: `${formatDateForDisplay(fixation.startDate)}${DATE_RANGE_SEPARATOR}${formatDateForDisplay(fixation.endDate)}`,
             amount: fixation.fixedAmount,
             amountCurrency: fixation.currency,
             incomes: sectionIncomes,
@@ -331,15 +354,5 @@ const WorkIncomeList: React.FC<WorkIncomeListProps> = ({
     </div>
   );
 };
-
-function calculateOpenPeriodAmount(incomes: WorkIncome[], workCurrency: 'RUB' | 'USD'): number {
-  return incomes.reduce((sum, income) => {
-    if (income.currency === workCurrency) {
-      return sum + income.amount;
-    }
-
-    return sum + (income.convertedAmount ?? 0);
-  }, 0);
-}
 
 export default WorkIncomeList;

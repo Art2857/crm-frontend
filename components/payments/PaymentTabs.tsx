@@ -11,6 +11,8 @@ interface PaymentTabsProps {
   setActiveTab: (tab: 'management' | 'debts' | 'history') => void;
   responsibleUsers: ResponsibleUser[];
   myDebts: MyDebt[];
+  /** Показывать вкладку «Управление выплатами» (есть работы, где пользователь ответственный) */
+  showManagementTab: boolean;
 }
 
 export default function PaymentTabs({
@@ -18,25 +20,28 @@ export default function PaymentTabs({
   setActiveTab,
   responsibleUsers,
   myDebts,
+  showManagementTab,
 }: PaymentTabsProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm border mb-8">
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8 px-6">
-          <button
-            onClick={() => setActiveTab('management')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'management'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } flex items-center space-x-2`}
-          >
-            <BuildingOfficeIcon className="h-5 w-5" />
-            <span>Управление выплатами</span>
-            <Badge className="bg-red-100 text-red-800 ml-2">
-              {responsibleUsers.filter((u) => u.isPaymentDue).length}
-            </Badge>
-          </button>
+          {showManagementTab && (
+            <button
+              onClick={() => setActiveTab('management')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'management'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } flex items-center space-x-2`}
+            >
+              <BuildingOfficeIcon className="h-5 w-5" />
+              <span>Управление выплатами</span>
+              <Badge className="bg-red-100 text-red-800 ml-2">
+                {responsibleUsers.filter((u) => u.isPaymentDue).length}
+              </Badge>
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab('debts')}

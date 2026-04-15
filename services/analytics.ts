@@ -73,7 +73,7 @@ export const analyticsService = {
     endDate?: string,
     worksIds?: string[],
     targetUserId?: string,
-  ): Promise<ResponsibleUser[]> {
+  ): Promise<{ users: ResponsibleUser[]; hasResponsibleWorks: boolean }> {
     // дата по умолчанию — сегодня
     if (!endDate) {
       endDate = getCurrentDateISO();
@@ -81,6 +81,7 @@ export const analyticsService = {
 
     const { data } = await privateApi.get<{
       endDate: string; // Российский формат DD.MM.YYYY
+      hasResponsibleWorks: boolean;
       users: Array<{
         userId: string;
         login: string;
@@ -116,6 +117,8 @@ export const analyticsService = {
     }>(ANALYTICS_ENDPOINTS.paymentsManagement, {
       params: { endDate, worksId: worksIds, workerId: targetUserId },
     });
+
+    const hasResponsibleWorks = data.hasResponsibleWorks === true;
 
     // Преобразуем к ResponsibleUser[], без перерасчётов — только переименование полей
     const users: ResponsibleUser[] = data.users.map((u) => {
@@ -183,7 +186,7 @@ export const analyticsService = {
       } as ResponsibleUser;
     });
 
-    return users;
+    return { users, hasResponsibleWorks };
   },
 
   /** Получить детальный расчёт по работе/пользователю для модалки */
@@ -204,6 +207,7 @@ export const analyticsService = {
   async getPaymentsCalculationUser(params: {
     userId: string;
     endDate: string;
+    worksId?: string[];
   }): Promise<DetailedCalculation> {
     const { data } = await privateApi.get<DetailedCalculation>(
       ANALYTICS_ENDPOINTS.paymentsCalculationUser,
