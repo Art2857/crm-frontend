@@ -6,6 +6,7 @@ import { formatCurrency, getPaymentTypeColor } from '../../utils/payments';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { Payment } from '../../types/payment';
 import { useDateManager } from '../../hooks/useDateManager';
+import { DATE_RANGE_SEPARATOR } from '../../utils/date';
 
 interface PaymentHistoryItemProps {
   payment: Payment;
@@ -113,7 +114,8 @@ export default function PaymentHistoryItem({
           </p>
           {payment.periodStart && payment.periodEnd && (
             <p className="text-xs text-gray-500">
-              {formatRussian(payment.periodStart) || 'Неизвестная дата'} -{' '}
+              {formatRussian(payment.periodStart) || 'Неизвестная дата'}
+              {DATE_RANGE_SEPARATOR}
               {formatRussian(payment.periodEnd) || 'Неизвестная дата'}
             </p>
           )}

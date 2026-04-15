@@ -225,3 +225,36 @@ export function formatPaymentWithCurrency(
     return 'Ошибка расчета';
   }
 }
+
+/**
+ * Для исполнителей: только итоговая сумма по обязанности, без формулы (без «% + … = …»).
+ * «Остаточная» — как в полном формате, если не заданы ни фикс, ни процент.
+ */
+export function formatDutyPaymentAmountOnly(
+  price: number | null | undefined,
+  percentage: number | null | undefined,
+  calculatedValue: number | null | undefined,
+  currency: 'RUB' | 'USD',
+): string {
+  try {
+    if (price === null && percentage === null) {
+      return 'Остаточная';
+    }
+    if (calculatedValue !== null && calculatedValue !== undefined) {
+      const calc = Number(calculatedValue);
+      if (!Number.isNaN(calc)) {
+        return formatAmountWithCurrency(calc, currency);
+      }
+    }
+    if (price !== null && price !== undefined) {
+      const p = Number(price);
+      if (!Number.isNaN(p)) {
+        return formatAmountWithCurrency(p, currency);
+      }
+    }
+    return formatPaymentWithCurrency(price, percentage, calculatedValue, currency);
+  } catch (error) {
+    console.error('Ошибка при форматировании суммы оплаты:', error);
+    return 'Ошибка расчета';
+  }
+}

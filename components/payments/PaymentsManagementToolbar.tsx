@@ -23,7 +23,7 @@ export default function PaymentsManagementToolbar({
 }: PaymentsManagementToolbarProps) {
   return (
     <PaymentsDateCalculationPanel
-      label="Расчет задолженности до даты (дата не включается):"
+      label="Расчет задолженности до даты (дата не включается): "
       selectedDate={selectedDate}
       minDate={minDate}
       isLoading={isLoading}

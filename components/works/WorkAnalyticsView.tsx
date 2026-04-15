@@ -5,6 +5,7 @@ import { WorkAnalyticsByResponsible } from '../../types/workAnalytics';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import ResponsibleWorkGroup from './ResponsibleWorkGroup';
+import { Role } from '../../types/user';
 
 interface WorkAnalyticsViewProps {
   grouped: WorkAnalyticsByResponsible[];
@@ -74,7 +75,7 @@ export default function WorkAnalyticsView({
             <p className="text-gray-500 mb-6">
               Создайте работы и назначьте ответственных для просмотра аналитической информации
             </p>
-            {userRole === 'ADMIN' && (
+            {(userRole === Role.ADMIN || userRole === Role.MANAGER) && onCreateWork && (
               <Button
                 onClick={onCreateWork}
                 className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg px-6 py-3 shadow-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200"

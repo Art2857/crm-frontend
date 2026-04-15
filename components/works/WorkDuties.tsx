@@ -1,8 +1,12 @@
 import React, { useMemo } from 'react';
 import { DistributionWithDetails } from '../../types/duty';
-import { User } from '../../types/user';
+import { Role, User } from '../../types/user';
 import { formatDateForDisplay } from '../../utils/date';
-import { formatAmountWithCurrency, formatPaymentWithCurrency } from '../../utils/currency';
+import {
+  formatAmountWithCurrency,
+  formatDutyPaymentAmountOnly,
+  formatPaymentWithCurrency,
+} from '../../utils/currency';
 import { useUsersMap } from '../../hooks/shared/useUsersMap';
 import { getDistributionByWorkHistoryId, getLatestDistribution } from '../../utils/distributions';
 
@@ -12,6 +16,10 @@ interface WorkDutiesProps {
   workSalary: string;
   currentWorkHistoryId?: string;
   currentUserId?: string;
+  /** Ответственный за работу — для строки «Расходы на обслуживание проекта» */
+  workResponsibleUserId?: string | null;
+  /** Роль текущего пользователя — аналитика расходов только у ADMIN/MANAGER/ответственного */
+  viewerRole?: Role;
   showOnlyCurrentUser?: boolean;
   canEdit?: boolean;
   onEditDuties?: () => void;
@@ -26,6 +34,8 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
   workSalary,
   currentWorkHistoryId,
   currentUserId,
+  workResponsibleUserId,
+  viewerRole,
   showOnlyCurrentUser = false,
   canEdit = false,
   onEditDuties,
@@ -86,6 +96,16 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
 
     return segments.join(' + ');
   }, [totalsByCurrency]);
+
+  /** Подробный расчёт оплаты и строка «Расходы на обслуживание» — только ADMIN/MANAGER/ответственный */
+  const viewerSeesPaymentBreakdown = useMemo(() => {
+    if (viewerRole === Role.ADMIN || viewerRole === Role.MANAGER) {
+      return true;
+    }
+    return (
+      Boolean(currentUserId && workResponsibleUserId) && currentUserId === workResponsibleUserId
+    );
+  }, [viewerRole, currentUserId, workResponsibleUserId]);
 
   if (!latestDistribution) {
     return (
@@ -203,7 +223,7 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Расчет оплаты
+                  {viewerSeesPaymentBreakdown ? 'Расчет оплаты' : 'Оплата'}
                 </th>
               </tr>
             </thead>
@@ -235,27 +255,36 @@ const WorkDuties: React.FC<WorkDutiesProps> = ({
                       {userName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatPaymentWithCurrency(
-                        numericPrice,
-                        numericPercentage,
-                        numericCalculatedValue,
-                        detailCurrency,
-                      )}
+                      {viewerSeesPaymentBreakdown
+                        ? formatPaymentWithCurrency(
+                            numericPrice,
+                            numericPercentage,
+                            numericCalculatedValue,
+                            detailCurrency,
+                          )
+                        : formatDutyPaymentAmountOnly(
+                            numericPrice,
+                            numericPercentage,
+                            numericCalculatedValue,
+                            detailCurrency,
+                          )}
                     </td>
                   </tr>
                 );
               })}
-              <tr className="bg-gray-50">
-                <td
-                  colSpan={2}
-                  className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900"
-                >
-                  Расходы на обслуживание проекта
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  {totalsSummary || '0 ₽'}
-                </td>
-              </tr>
+              {viewerSeesPaymentBreakdown && (
+                <tr className="bg-gray-50">
+                  <td
+                    colSpan={2}
+                    className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900"
+                  >
+                    Расходы на обслуживание проекта
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    {totalsSummary || '0 ₽'}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

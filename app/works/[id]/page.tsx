@@ -558,6 +558,8 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     workSalary={workData.salary}
                     currentWorkHistoryId={currentWorkHistoryId}
                     currentUserId={user?.id}
+                    workResponsibleUserId={workData.responsibleUserId}
+                    viewerRole={user?.role}
                     showOnlyCurrentUser={showOnlyCurrentUserDuties}
                     canEdit={canDistributeDuties && !isEditingDuties}
                     onEditDuties={() => setIsEditingDuties(true)}
@@ -584,6 +586,8 @@ export default function WorkDetailPage({ params }: { params: { id: string } }) {
                     workCurrency={salaryCurrency}
                     releaseDate={workData.releaseDate}
                     currentUserId={user?.id}
+                    workResponsibleUserId={workData.responsibleUserId}
+                    viewerRole={user?.role}
                     showOnlyCurrentUser={showOnlyCurrentUserDuties}
                     onUpdate={() => loadDutiesHistory(true)}
                     canEdit={canDistributeDuties}

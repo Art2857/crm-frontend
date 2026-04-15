@@ -123,6 +123,8 @@ export function usePaymentsData() {
   const { user } = useAppSelector((state) => state.auth);
 
   const [usersData, setUsersData] = useState<ResponsibleUser[]>([]);
+  /** Есть неархивные работы, где пользователь ответственный — показывать вкладку «Управление выплатами» */
+  const [hasResponsibleWorks, setHasResponsibleWorks] = useState<boolean | undefined>(undefined);
   const [myDebts, setMyDebts] = useState<MyDebt[]>([]);
   const [debtsLoading, setDebtsLoading] = useState(false);
 
@@ -135,11 +137,14 @@ export function usePaymentsData() {
       const { endDate, targetWorkId, targetUserId } = data;
       const referenceDateIso = endDate ?? getCurrentDateISO();
 
-      const mappedUsers = await analyticsService.getPaymentsManagement(
-        endDate,
-        targetWorkId ? [targetWorkId] : undefined,
-        targetUserId,
-      );
+      const { users: mappedUsers, hasResponsibleWorks: scope } =
+        await analyticsService.getPaymentsManagement(
+          endDate,
+          targetWorkId ? [targetWorkId] : undefined,
+          targetUserId,
+        );
+
+      setHasResponsibleWorks(scope);
 
       return sortUsersForPayments(mappedUsers, referenceDateIso);
     },
@@ -218,6 +223,7 @@ export function usePaymentsData() {
     // state
     usersData,
     setUsersData,
+    hasResponsibleWorks,
     myDebts,
     setMyDebts,
     debtsLoading,

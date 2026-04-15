@@ -6,7 +6,8 @@ import { useAppSelector } from '../../store';
 import PaymentTabs from '../../components/payments/PaymentTabs';
 import MyDebtsTab from '../../components/payments/MyDebtsTab';
 import PaymentHistoryTab from '../../components/payments/PaymentHistoryTab';
-import CalculationModal from '../../components/payments/CalculationModal';
+import ManagementCalculationModal from '../../components/payments/ManagementCalculationModal';
+import DebtsCalculationModal from '../../components/payments/DebtsCalculationModal';
 import PaymentModal from '../../components/payments/PaymentModal';
 import CustomPaymentModal from '../../components/payments/CustomPaymentModal';
 import PaymentsManagementToolbar from '../../components/payments/PaymentsManagementToolbar';
@@ -17,6 +18,7 @@ import DutyCard from '../../components/payments/DutyCard';
 
 // Импорт типов и данных
 import {
+  CalculationModalState,
   DetailedCalculation,
   PaymentFormData,
   PaymentModalData,
@@ -36,20 +38,19 @@ import { formatDateToISO, getCurrentDateISO, shiftDateISOByDays } from '../../ut
 import { usePaymentsData } from '../../hooks/payments/usePaymentsData';
 import { DisplayCurrency } from '../../hooks/useCurrencyConversion';
 
+type PaymentsTab = 'management' | 'debts' | 'history';
+type WorkCalculationSource = 'management' | 'debts';
+
+const CLOSED_CALCULATION_MODAL_STATE: CalculationModalState = { kind: 'closed' };
+
 export default function PaymentsPage() {
-  // Получаем данные текущего пользователя из Redux store
   const { user } = useAppSelector((state) => state.auth);
   const { showError, showSuccess } = useNotification();
 
-  // Валюта отображения итогов
-  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>('RUB');
+  const displayCurrency: DisplayCurrency = 'RUB';
   const [managementPeriodDate, setManagementPeriodDate] = useState(getCurrentDateISO());
-  /** Верхняя граница расчёта на вкладке «Предстоящая выручка» (независимо от управления выплатами) */
   const [debtsPeriodDate, setDebtsPeriodDate] = useState(getCurrentDateISO());
-  /** Дата, с которой открыт текущий детальный расчёт (модалки выплат и закрытия периода) */
-  const [calculationEndDateContext, setCalculationEndDateContext] = useState(getCurrentDateISO());
-
-  const [activeTab, setActiveTab] = useState<'management' | 'debts' | 'history'>('management');
+  const [activeTab, setActiveTab] = useState<PaymentsTab>('management');
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [expandedWorks, setExpandedWorks] = useState<Set<string>>(new Set());
   const [managementLoading, setManagementLoading] = useState(false);
@@ -59,28 +60,24 @@ export default function PaymentsPage() {
   const [createPaymentAndClose] = useCreatePaymentAndCloseMutation();
   const [bulkCreateAndClose] = useBulkCreateAndCloseMutation();
 
-  // Модальные окна
-
   const [defaultCalculationCurrency, setDefaultCalculationCurrency] =
     useState<DisplayCurrency>('RUB');
-  const [calculationModalOpen, setCalculationModalOpen] = useState(false);
+  const [calculationModalState, setCalculationModalState] = useState<CalculationModalState>(
+    CLOSED_CALCULATION_MODAL_STATE,
+  );
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [customPaymentModalOpen, setCustomPaymentModalOpen] = useState(false);
-  const [selectedCalculation, setSelectedCalculation] = useState<DetailedCalculation | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PaymentFormData | null>(null);
-  const [isUserCalculation, setIsUserCalculation] = useState(false);
-  const [calculationType, setCalculationType] = useState<'work' | 'user'>('work');
-  const [isDutyCalculation, setIsDutyCalculation] = useState(false);
-  const [selectedDutyId, setSelectedDutyId] = useState<string | undefined>();
-  const [calculationModalShowPaymentHistory, setCalculationModalShowPaymentHistory] =
-    useState(true);
 
   const getClosingPaymentDate = useCallback(
     (calculationDate: string) => shiftDateISOByDays(calculationDate, -1),
     [],
   );
 
-  // Данные работ с вложенными пользователями (новый формат отображения)
+  const closeCalculationModal = useCallback(() => {
+    setCalculationModalState(CLOSED_CALCULATION_MODAL_STATE);
+  }, []);
+
   const {
     usersData,
     myDebts,
@@ -88,9 +85,18 @@ export default function PaymentsPage() {
     updateWorksData: updateWorksDataRaw,
     fetchMyDebtsData: fetchMyDebtsDataRaw,
     debtsLoading,
+    hasResponsibleWorks,
   } = usePaymentsData();
 
-  // summary берём из хука
+  const managementScopePending = managementLoading && hasResponsibleWorks === undefined;
+  const showManagementTab = hasResponsibleWorks === true;
+  const effectiveTab = useMemo<PaymentsTab>(() => {
+    if (activeTab === 'management' && hasResponsibleWorks === false) {
+      return 'debts';
+    }
+
+    return activeTab;
+  }, [activeTab, hasResponsibleWorks]);
 
   const globalMinCalculationDate = useMemo(() => {
     const closureDates = usersData
@@ -110,6 +116,18 @@ export default function PaymentsPage() {
       .sort();
     return dates.at(-1);
   }, [myDebts]);
+
+  const managedWorkIdsByUser = useMemo(() => {
+    return new Map(
+      usersData.map((userData) => [userData.userId, userData.works.map((work) => work.workId)]),
+    );
+  }, [usersData]);
+
+  const selectedCalculation: DetailedCalculation | null =
+    calculationModalState.kind === 'closed' ? null : calculationModalState.calculation;
+  const calculationDateContext =
+    calculationModalState.kind === 'closed' ? undefined : calculationModalState.calculationDate;
+  const calculationModalOpen = calculationModalState.kind !== 'closed';
 
   const fetchWorksData = useCallback(
     async (
@@ -147,33 +165,57 @@ export default function PaymentsPage() {
     [updateWorksDataRaw],
   );
 
-  // Обработчик показа детального расчета
-  const handleShowCalculation = useCallback(
-    async (userId: string, workId: string, dutyId?: string, endDateOverride?: string) => {
+  const refreshManagementData = useCallback(
+    async (data: { targetWorkId?: string; targetUserId?: string } = {}) => {
+      if (data.targetWorkId !== undefined || data.targetUserId !== undefined) {
+        await updateWorksData({
+          endDate: managementPeriodDate,
+          targetWorkId: data.targetWorkId,
+          targetUserId: data.targetUserId,
+        });
+        return;
+      }
+
+      await fetchWorksData({ endDate: managementPeriodDate });
+    },
+    [fetchWorksData, managementPeriodDate, updateWorksData],
+  );
+
+  const refreshDebtsData = useCallback(async () => {
+    await fetchMyDebtsDataRaw(debtsPeriodDate);
+  }, [debtsPeriodDate, fetchMyDebtsDataRaw]);
+
+  const handleOpenWorkCalculation = useCallback(
+    async (
+      userId: string,
+      workId: string,
+      dutyId?: string,
+      calculationDate?: string,
+      source: WorkCalculationSource = 'management',
+    ) => {
       if (!user?.role) {
         logger.error('Пользователь не авторизован');
         return;
       }
 
-      const resolvedEnd = endDateOverride ?? managementPeriodDate;
+      const resolvedDate = calculationDate ?? managementPeriodDate;
 
       try {
         setCalculationLoading(true);
-        setCalculationEndDateContext(resolvedEnd);
         const calc = await analyticsService.getPaymentsCalculation({
           userId,
           workId,
-          endDate: resolvedEnd,
+          endDate: resolvedDate,
           dutyId,
         });
 
-        setSelectedCalculation(calc);
-        setIsUserCalculation(false);
-        setCalculationType('work');
-        setIsDutyCalculation(!!dutyId);
-        setSelectedDutyId(dutyId);
-        setCalculationModalOpen(true);
-        setCalculationModalShowPaymentHistory(!dutyId);
+        setCalculationModalState({
+          kind: source === 'debts' ? 'debts-work' : 'management-work',
+          calculation: calc,
+          calculationDate: resolvedDate,
+          dutyId,
+          showPaymentHistory: !dutyId,
+        });
       } catch (error) {
         logger.error('Ошибка при загрузке расчета', error);
         showError(error instanceof Error ? error.message : 'Не удалось загрузить детализацию');
@@ -184,11 +226,67 @@ export default function PaymentsPage() {
     [managementPeriodDate, showError, user?.role],
   );
 
-  // Инициализация данных один раз на монтировании
-  // Инициализация данных — запускаем один раз
+  const handleOpenUserCalculation = useCallback(
+    async (
+      userId: string,
+      scopedWorkIds?: string[],
+      calculationDate: string = managementPeriodDate,
+    ) => {
+      if (!user?.role) {
+        logger.error('Пользователь не авторизован');
+        return;
+      }
+
+      try {
+        setCalculationLoading(true);
+        const detailedCalc = await analyticsService.getPaymentsCalculationUser({
+          userId,
+          endDate: calculationDate,
+          worksId: scopedWorkIds,
+        });
+
+        setCalculationModalState({
+          kind: 'management-user',
+          calculation: detailedCalc,
+          calculationDate,
+          scopedWorkIds,
+        });
+      } catch (error) {
+        logger.error('Ошибка при загрузке расчета пользователя:', error);
+        showError(
+          error instanceof Error ? error.message : 'Не удалось загрузить детализацию пользователя',
+        );
+      } finally {
+        setCalculationLoading(false);
+      }
+    },
+    [managementPeriodDate, showError, user?.role],
+  );
+
+  const reloadOpenCalculation = useCallback(async () => {
+    if (calculationModalState.kind === 'closed') {
+      return;
+    }
+
+    if (calculationModalState.kind === 'management-user') {
+      await handleOpenUserCalculation(
+        calculationModalState.calculation.userId,
+        calculationModalState.scopedWorkIds,
+        calculationModalState.calculationDate,
+      );
+      return;
+    }
+
+    await handleOpenWorkCalculation(
+      calculationModalState.calculation.userId,
+      calculationModalState.calculation.workId,
+      calculationModalState.dutyId,
+      calculationModalState.calculationDate,
+      calculationModalState.kind === 'debts-work' ? 'debts' : 'management',
+    );
+  }, [calculationModalState, handleOpenUserCalculation, handleOpenWorkCalculation]);
+
   useEffect(() => {
-    // Предотвращаем API вызовы если пользователь не аутентифицирован
-    // (например, во время logout или при переходе на страницу входа)
     if (!user?.id || !user.role) {
       return;
     }
@@ -203,73 +301,32 @@ export default function PaymentsPage() {
     });
   }, [fetchMyDebtsDataRaw, fetchWorksData, showError, user?.id, user?.role]);
 
-  // Слушатель события закрытия периода (подписка/отписка один раз)
-  // Слушатель закрытия периода — регистрируем один раз
-  useEffect(() => {
-    const onClosePeriod = async (e: any) => {
+  const handleClosePeriod = useCallback(
+    async (payload: { userId: string; workId: string; calculationDate: string }) => {
       try {
-        const { userId, workId, calculationDate } = e.detail || {};
-        if (!userId || !workId || !calculationDate) return;
         await closePeriod({
-          workId,
-          userId,
-          closureDate: calculationDate,
+          workId: payload.workId,
+          userId: payload.userId,
+          closureDate: payload.calculationDate,
         });
-        setCalculationModalOpen(false);
-        setSelectedCalculation(null);
+
+        closeCalculationModal();
         showSuccess('Период успешно закрыт');
-        await updateWorksData({
-          endDate: calculationDate,
-          targetWorkId: workId,
-          targetUserId: userId,
-        });
-        await fetchMyDebtsDataRaw(debtsPeriodDate);
-      } catch (err) {
-        logger.error('Не удалось закрыть период', err);
+        await Promise.all([
+          refreshManagementData({
+            targetWorkId: payload.workId,
+            targetUserId: payload.userId,
+          }),
+          refreshDebtsData(),
+        ]);
+      } catch (error) {
+        logger.error('Не удалось закрыть период', error);
         showError('Не удалось закрыть период');
       }
-    };
-    window.addEventListener('close-period', onClosePeriod as any);
-    return () => window.removeEventListener('close-period', onClosePeriod as any);
-  }, [debtsPeriodDate, fetchMyDebtsDataRaw, showError, showSuccess, updateWorksData]);
-
-  // Загрузка данных о задолженностях текущего пользователя теперь в хуке usePaymentsData
-
-  // Функция для показа общего расчета пользователя по всем работам
-  const handleShowUserCalculation = useCallback(
-    async (userId: string) => {
-      if (!user?.role) {
-        logger.error('Пользователь не авторизован');
-        return;
-      }
-
-      try {
-        setCalculationLoading(true);
-        setCalculationEndDateContext(managementPeriodDate);
-        const detailedCalc = await analyticsService.getPaymentsCalculationUser({
-          userId,
-          endDate: managementPeriodDate,
-        });
-        setSelectedCalculation(detailedCalc);
-        setIsUserCalculation(true);
-        setCalculationType('user');
-        setIsDutyCalculation(false);
-        setSelectedDutyId(undefined);
-        setCalculationModalOpen(true);
-        setCalculationModalShowPaymentHistory(true);
-      } catch (error) {
-        logger.error('Ошибка при загрузке расчета пользователя:', error);
-        showError(
-          error instanceof Error ? error.message : 'Не удалось загрузить детализацию пользователя',
-        );
-      } finally {
-        setCalculationLoading(false);
-      }
     },
-    [managementPeriodDate, showError, user?.role],
+    [closeCalculationModal, refreshDebtsData, refreshManagementData, showError, showSuccess],
   );
 
-  // Обработчик создания выплаты
   const handleCreatePayment = (
     userId: string,
     workId: string,
@@ -293,14 +350,6 @@ export default function PaymentsPage() {
     setPaymentModalOpen(true);
   };
 
-  // состояние для предзаполнения произвольной выплаты
-  const [customPaymentPrefill, setCustomPaymentPrefill] = useState<{
-    workId: string;
-    userId: string;
-    amount: number;
-  } | null>(null);
-
-  // Обработчики раскрытия/скрытия
   const toggleUserExpanded = (userId: string) => {
     const newExpanded = new Set(expandedUsers);
     if (newExpanded.has(userId)) {
@@ -321,7 +370,6 @@ export default function PaymentsPage() {
     setExpandedWorks(newExpanded);
   };
 
-  // Обработчики для дат и произвольных выплат
   const handleCreateCustomPayment = () => {
     setCustomPaymentModalOpen(true);
   };
@@ -355,145 +403,112 @@ export default function PaymentsPage() {
     }
   };
 
-  /**
-   * Обновляет данные после успешной выплаты: перезапрашивает данные по работе
-   * и, если открыт модал расчёта, обновляет его содержимое.
-   */
-  const refreshAfterPayment = async (workId: string, userId: string, dutyId?: string) => {
-    try {
-      await fetchWorksData({ endDate: managementPeriodDate });
-
-      // Если модальное окно детального расчёта открыто – обновим данные в нём
-      if (calculationModalOpen) {
-        if (calculationType === 'work') {
-          await handleShowCalculation(userId, workId, dutyId, calculationEndDateContext);
-        } else {
-          await handleShowUserCalculation(userId);
-        }
+  const refreshAfterWorkPayment = useCallback(
+    async (workId: string, userId: string) => {
+      try {
+        await Promise.all([
+          refreshManagementData({ targetWorkId: workId, targetUserId: userId }),
+          refreshDebtsData(),
+        ]);
+        await reloadOpenCalculation();
+      } catch (error) {
+        logger.error('Не удалось обновить данные после выплаты', error);
       }
-    } catch (err) {
-      console.error('Не удалось обновить данные после выплаты', err);
-    }
+    },
+    [refreshDebtsData, refreshManagementData, reloadOpenCalculation],
+  );
 
-    // Обновляем данные о задолженностях текущего пользователя
-    await fetchMyDebtsDataRaw(debtsPeriodDate);
-  };
-
-  // Функция для обновления данных после выплаты через общий расчет пользователя
   const refreshAfterUserPayment = useCallback(
     async (userId: string) => {
       try {
-        await updateWorksData({ endDate: managementPeriodDate, targetUserId: userId });
-
-        // Если модальное окно детального расчёта открыто – обновим данные в нём
-        if (calculationModalOpen && selectedCalculation) {
-          if (calculationType === 'user') {
-            await handleShowUserCalculation(userId);
-          } else {
-            // Если это был расчет конкретной работы, но мы обновляем пользователя,
-            // то нужно найти эту работу и обновить расчет
-            const currentUserData = usersData.find((u) => u.userId === userId);
-            if (currentUserData && selectedCalculation.workId) {
-              await handleShowCalculation(
-                userId,
-                selectedCalculation.workId,
-                selectedDutyId,
-                calculationEndDateContext,
-              );
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Не удалось обновить данные после выплаты пользователя', err);
+        await Promise.all([refreshManagementData({ targetUserId: userId }), refreshDebtsData()]);
+        await reloadOpenCalculation();
+      } catch (error) {
+        logger.error('Не удалось обновить данные после выплаты пользователя', error);
       }
-
-      // Обновляем данные о задолженностях текущего пользователя
-      await fetchMyDebtsDataRaw(debtsPeriodDate);
     },
-    [
-      calculationEndDateContext,
-      calculationModalOpen,
-      calculationType,
-      debtsPeriodDate,
-      fetchMyDebtsDataRaw,
-      handleShowCalculation,
-      handleShowUserCalculation,
-      managementPeriodDate,
-      selectedCalculation,
-      selectedDutyId,
-      updateWorksData,
-      usersData,
-    ],
+    [refreshDebtsData, refreshManagementData, reloadOpenCalculation],
   );
 
-  // Мульти-выплата/закрытие по всем работам из общего расчёта
   const handleBulkPayAllWorks = useCallback(async () => {
-    if (!selectedCalculation || !isUserCalculation) return;
+    if (calculationModalState.kind !== 'management-user') {
+      return;
+    }
+
     try {
       setCalculationLoading(true);
-      const userId = selectedCalculation.userId;
-      const userData = usersData.find((u) => u.userId === userId);
-      if (!userData) return;
-      const items = userData.works.map((w) => ({
-        workId: w.workId,
-        userId,
-        amount: Math.max(w.totalDebt || 0, 0),
-        calculationDate: managementPeriodDate,
-        description: `Мультивыплата по общему расчету (${w.workName})`,
+
+      const { calculation, scopedWorkIds, calculationDate } = calculationModalState;
+      const userData = usersData.find((entry) => entry.userId === calculation.userId);
+
+      if (!userData) {
+        return;
+      }
+
+      const worksForBulkPayment =
+        scopedWorkIds !== undefined
+          ? userData.works.filter((work) => scopedWorkIds.includes(work.workId))
+          : userData.works;
+
+      const items = worksForBulkPayment.map((work) => ({
+        workId: work.workId,
+        userId: calculation.userId,
+        amount: Math.max(work.totalDebt || 0, 0),
+        calculationDate,
+        description: `Мультивыплата по общему расчету (${work.workName})`,
       }));
+
       await bulkCreateAndClose({ items }).unwrap();
-      await refreshAfterUserPayment(userId);
-      setCalculationModalOpen(false);
-      setSelectedCalculation(null);
+      await refreshAfterUserPayment(calculation.userId);
+      closeCalculationModal();
       showSuccess('Мультивыплата выполнена');
-    } catch (e) {
-      logger.error('Мультивыплата не выполнена', e);
+    } catch (error) {
+      logger.error('Мультивыплата не выполнена', error);
       showError('Не удалось выполнить мультивыплату');
     } finally {
       setCalculationLoading(false);
     }
   }, [
     bulkCreateAndClose,
-    isUserCalculation,
-    managementPeriodDate,
+    calculationModalState,
+    closeCalculationModal,
     refreshAfterUserPayment,
-    selectedCalculation,
     showError,
     showSuccess,
     usersData,
   ]);
 
-  // Обработчики модальных окон
   const handlePaymentSubmit = async (data: PaymentModalData) => {
     try {
-      // Используем новый эндпоинт create-payment-and-close
+      const resolvedCalculationDate = selectedPayment?.calculationDate ?? calculationDateContext;
+      if (!resolvedCalculationDate) {
+        showError('Не удалось определить дату расчёта для выплаты');
+        return;
+      }
+
       await createPaymentAndClose({
         workId: selectedPayment?.workId || '',
         userId: selectedPayment?.userId || '',
-        amount: Math.round(data.amount), // Конвертируем в копейки
-        calculationDate: selectedPayment?.calculationDate ?? calculationEndDateContext,
+        amount: Math.round(data.amount),
+        calculationDate: resolvedCalculationDate,
         description: data.description,
       }).unwrap();
 
       if (selectedPayment?.workId && selectedPayment?.userId) {
-        await refreshAfterPayment(
-          selectedPayment.workId,
-          selectedPayment.userId,
-          selectedPayment?.dutyId,
-        );
+        await refreshAfterWorkPayment(selectedPayment.workId, selectedPayment.userId);
       }
 
       setPaymentModalOpen(false);
       setSelectedPayment(null);
       showSuccess('Выплата создана, период закрыт');
-    } catch (e: any) {
-      logger.error('Ошибка создания выплаты', e);
-      const serverErrors = e?.data?.errors;
+    } catch (error: any) {
+      logger.error('Ошибка создания выплаты', error);
+      const serverErrors = error?.data?.errors;
       if (Array.isArray(serverErrors) && serverErrors.length > 0) {
-        const messages = serverErrors.flatMap((err: any) => err.messages ?? []);
+        const messages = serverErrors.flatMap((serverError: any) => serverError.messages ?? []);
         showError(messages.join('; ') || 'Не удалось создать выплату');
       } else {
-        showError(e?.data?.message || 'Не удалось создать выплату');
+        showError(error?.data?.message || 'Не удалось создать выплату');
       }
       setPaymentModalOpen(false);
       setSelectedPayment(null);
@@ -514,31 +529,16 @@ export default function PaymentsPage() {
 
       setDefaultCalculationCurrency(data.currency as DisplayCurrency);
 
-      // Определяем, нужно ли обновлять данные для всех работ пользователя
-      // Если это выплата через общий расчет пользователя
-      const isUserCalculation = calculationType === 'user';
-
-      if (isUserCalculation) {
-        // Обновляем данные для всех работ пользователя
+      if (calculationModalState.kind === 'management-user') {
         await refreshAfterUserPayment(data.userId);
       } else {
-        // Обновляем данные только для конкретной работы
-        await refreshAfterPayment(data.workId, data.userId);
+        await refreshAfterWorkPayment(data.workId, data.userId);
       }
 
-      if (calculationModalOpen && selectedCalculation) {
-        if (calculationType === 'user') {
-          await handleShowUserCalculation(selectedCalculation.userId);
-        } else {
-          await handleShowCalculation(
-            selectedCalculation.userId,
-            selectedCalculation.workId,
-            selectedDutyId,
-          );
-        }
-      }
-    } catch (e) {
-      logger.error('Ошибка создания произвольной выплаты', e);
+      showSuccess('Выплата создана');
+    } catch (error) {
+      logger.error('Ошибка создания произвольной выплаты', error);
+      showError('Не удалось создать произвольную выплату');
     } finally {
       setCustomPaymentModalOpen(false);
     }
@@ -547,162 +547,181 @@ export default function PaymentsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Навигация по вкладкам */}
-        <PaymentTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          responsibleUsers={usersData}
-          myDebts={myDebts}
-        />
-
-        {/* Содержимое вкладок */}
-        {activeTab === 'management' && (
-          <div className="space-y-6">
-            <PaymentsManagementToolbar
-              selectedDate={managementPeriodDate}
-              minDate={globalMinCalculationDate}
-              isLoading={managementLoading}
-              onCalculate={handleManagementPeriodDateChange}
-              onCreatePayment={handleCreateCustomPayment}
-            />
-
-            {usersData.map((user) => {
-              const userAccrued = user.works?.reduce((s, w) => s + (w.totalAccrued ?? 0), 0) || 0;
-              return (
-                <UserCard
-                  currency={displayCurrency === 'USD' ? 'USD' : 'RUB'}
-                  key={user.userId}
-                  user={user}
-                  isExpanded={expandedUsers.has(user.userId)}
-                  onToggleExpanded={toggleUserExpanded}
-                  onShowCalculation={(userId) => {
-                    handleShowUserCalculation(userId);
-                  }}
-                  accruedOverride={userAccrued}
-                >
-                  <div className="space-y-4">
-                    {user.works?.map((work) => (
-                      <WorkCard
-                        currency={displayCurrency === 'USD' ? 'USD' : 'RUB'}
-                        key={work.workId}
-                        work={work}
-                        isExpanded={expandedWorks.has(work.workId)}
-                        onToggleExpanded={toggleWorkExpanded}
-                        onShowCalculation={(workId) => {
-                          handleShowCalculation(user.userId, workId);
-                        }}
-                      >
-                        <div className="space-y-4">
-                          {/* Обязанности пользователя */}
-                          <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2">
-                              Обязанности:
-                            </h5>
-                            <div className="space-y-2">
-                              {work.users
-                                ?.find((u) => u.userId === user.userId)
-                                ?.duties.map((duty, index) => (
-                                  <DutyCard
-                                    key={duty.dutyId}
-                                    duty={duty}
-                                    index={index}
-                                    onShowCalculation={(dutyId) => {
-                                      handleShowCalculation(user.userId, work.workId, dutyId);
-                                    }}
-                                  />
-                                ))}
-                            </div>
-                          </div>
-                        </div>
-                      </WorkCard>
-                    ))}
-                  </div>
-                </UserCard>
-              );
-            })}
+        {managementScopePending ? (
+          <div className="bg-white rounded-lg shadow-sm border p-8 text-center text-gray-600">
+            Загрузка данных по выплатам...
           </div>
-        )}
-
-        {activeTab === 'debts' && (
-          <div className="space-y-6">
-            <PaymentsDateCalculationPanel
-              label="Расчёт предстоящей выручки до даты (дата не включается):"
-              selectedDate={debtsPeriodDate}
-              minDate={debtsToolbarMinDate}
-              isLoading={debtsLoading}
-              onCalculate={handleDebtsPeriodDateChange}
-            />
-            <MyDebtsTab
+        ) : (
+          <>
+            {/* Навигация по вкладкам */}
+            <PaymentTabs
+              activeTab={effectiveTab}
+              setActiveTab={setActiveTab}
+              responsibleUsers={usersData}
               myDebts={myDebts}
-              currentUserId={user?.id}
-              onShowCalculation={(userId, workId, dutyId) =>
-                handleShowCalculation(userId, workId, dutyId, debtsPeriodDate)
-              }
+              showManagementTab={showManagementTab}
             />
-          </div>
+
+            {/* Содержимое вкладок */}
+            {effectiveTab === 'management' && (
+              <div className="space-y-6">
+                <PaymentsManagementToolbar
+                  selectedDate={managementPeriodDate}
+                  minDate={globalMinCalculationDate}
+                  isLoading={managementLoading}
+                  onCalculate={handleManagementPeriodDateChange}
+                  onCreatePayment={handleCreateCustomPayment}
+                />
+
+                {usersData.map((user) => {
+                  const userAccrued =
+                    user.works?.reduce((s, w) => s + (w.totalAccrued ?? 0), 0) || 0;
+                  return (
+                    <UserCard
+                      currency={displayCurrency}
+                      key={user.userId}
+                      user={user}
+                      isExpanded={expandedUsers.has(user.userId)}
+                      onToggleExpanded={toggleUserExpanded}
+                      onShowCalculation={(userId) => {
+                        handleOpenUserCalculation(userId, managedWorkIdsByUser.get(userId));
+                      }}
+                      accruedOverride={userAccrued}
+                    >
+                      <div className="space-y-4">
+                        {user.works?.map((work) => (
+                          <WorkCard
+                            currency={displayCurrency}
+                            key={work.workId}
+                            work={work}
+                            isExpanded={expandedWorks.has(work.workId)}
+                            onToggleExpanded={toggleWorkExpanded}
+                            onShowCalculation={(workId) => {
+                              handleOpenWorkCalculation(user.userId, workId);
+                            }}
+                          >
+                            <div className="space-y-4">
+                              {/* Обязанности пользователя */}
+                              <div>
+                                <h5 className="text-sm font-semibold text-gray-700 mb-2">
+                                  Обязанности:
+                                </h5>
+                                <div className="space-y-2">
+                                  {work.users
+                                    ?.find((u) => u.userId === user.userId)
+                                    ?.duties.map((duty, index) => (
+                                      <DutyCard
+                                        key={duty.dutyId}
+                                        duty={duty}
+                                        index={index}
+                                        onShowCalculation={(dutyId) => {
+                                          handleOpenWorkCalculation(
+                                            user.userId,
+                                            work.workId,
+                                            dutyId,
+                                          );
+                                        }}
+                                      />
+                                    ))}
+                                </div>
+                              </div>
+                            </div>
+                          </WorkCard>
+                        ))}
+                      </div>
+                    </UserCard>
+                  );
+                })}
+              </div>
+            )}
+
+            {effectiveTab === 'debts' && (
+              <div className="space-y-6">
+                <PaymentsDateCalculationPanel
+                  label="Расчёт предстоящей выручки до даты (дата не включается): "
+                  selectedDate={debtsPeriodDate}
+                  minDate={debtsToolbarMinDate}
+                  isLoading={debtsLoading}
+                  onCalculate={handleDebtsPeriodDateChange}
+                />
+                <MyDebtsTab
+                  myDebts={myDebts}
+                  currentUserId={user?.id}
+                  onShowCalculation={(userId, workId, dutyId) =>
+                    handleOpenWorkCalculation(userId, workId, dutyId, debtsPeriodDate, 'debts')
+                  }
+                />
+              </div>
+            )}
+
+            {effectiveTab === 'history' && (
+              <PaymentHistoryTab key={user?.id} currentUserId={user?.id} />
+            )}
+
+            {(calculationModalState.kind === 'management-work' ||
+              calculationModalState.kind === 'management-user') &&
+              calculationDateContext && (
+                <ManagementCalculationModal
+                  isOpen={calculationModalOpen}
+                  onClose={closeCalculationModal}
+                  calculation={selectedCalculation}
+                  calculationDate={calculationDateContext}
+                  isUserCalculation={calculationModalState.kind === 'management-user'}
+                  showPaymentHistory={
+                    calculationModalState.kind === 'management-user'
+                      ? true
+                      : calculationModalState.showPaymentHistory
+                  }
+                  onCreatePayment={handleCreatePayment}
+                  onClosePeriod={handleClosePeriod}
+                  onBulkPayAllWorks={handleBulkPayAllWorks}
+                  paymentDate={getClosingPaymentDate(calculationDateContext)}
+                  initialCurrency={defaultCalculationCurrency}
+                />
+              )}
+
+            {calculationModalState.kind === 'debts-work' && calculationDateContext && (
+              <DebtsCalculationModal
+                isOpen={calculationModalOpen}
+                onClose={closeCalculationModal}
+                calculation={selectedCalculation}
+                calculationDate={calculationDateContext}
+                initialCurrency={defaultCalculationCurrency}
+              />
+            )}
+
+            <PaymentModal
+              isOpen={paymentModalOpen}
+              onClose={() => {
+                setPaymentModalOpen(false);
+                setSelectedPayment(null);
+              }}
+              payment={selectedPayment}
+              paymentDate={
+                selectedPayment?.calculationDate
+                  ? getClosingPaymentDate(selectedPayment.calculationDate)
+                  : calculationDateContext
+                    ? getClosingPaymentDate(calculationDateContext)
+                    : null
+              }
+              onSubmit={handlePaymentSubmit}
+              periods={selectedCalculation?.periods?.map((p) => ({
+                startDate: p.startDate,
+                endDate: p.endDate,
+                days: p.days,
+              }))}
+              calculationDate={selectedPayment?.calculationDate ?? calculationDateContext}
+            />
+
+            <CustomPaymentModal
+              isOpen={customPaymentModalOpen}
+              onClose={() => {
+                setCustomPaymentModalOpen(false);
+              }}
+              onSubmit={handleCustomPaymentSubmit}
+            />
+          </>
         )}
-
-        {activeTab === 'history' && <PaymentHistoryTab key={user?.id} currentUserId={user?.id} />}
-
-        {/* Модальные окна */}
-        <CalculationModal
-          isOpen={calculationModalOpen}
-          onClose={() => {
-            setCalculationModalOpen(false);
-            setSelectedCalculation(null);
-            setIsDutyCalculation(false);
-            setSelectedDutyId(undefined);
-          }}
-          calculation={selectedCalculation}
-          onCreatePayment={handleCreatePayment}
-          isDebtsView={myDebts.some((debt) => debt.workId === selectedCalculation?.workId)}
-          calculationDate={selectedCalculation ? calculationEndDateContext : undefined}
-          isUserCalculation={isUserCalculation}
-          showPaymentHistory={calculationModalShowPaymentHistory}
-          onBulkPayAllWorks={handleBulkPayAllWorks}
-          paymentDate={
-            selectedCalculation ? getClosingPaymentDate(calculationEndDateContext) : undefined
-          }
-          initialCurrency={defaultCalculationCurrency}
-        />
-
-        <PaymentModal
-          isOpen={paymentModalOpen}
-          onClose={() => {
-            setPaymentModalOpen(false);
-            setSelectedPayment(null);
-          }}
-          payment={selectedPayment}
-          paymentDate={
-            selectedPayment?.calculationDate
-              ? getClosingPaymentDate(selectedPayment.calculationDate)
-              : selectedCalculation
-                ? getClosingPaymentDate(calculationEndDateContext)
-                : null
-          }
-          onSubmit={handlePaymentSubmit}
-          periods={selectedCalculation?.periods?.map((p) => ({
-            startDate: p.startDate,
-            endDate: p.endDate,
-            days: p.days,
-          }))}
-          calculationDate={
-            selectedPayment?.calculationDate ??
-            (selectedCalculation ? calculationEndDateContext : undefined)
-          }
-        />
-
-        <CustomPaymentModal
-          isOpen={customPaymentModalOpen}
-          onClose={() => {
-            setCustomPaymentModalOpen(false);
-            setCustomPaymentPrefill(null);
-          }}
-          onSubmit={handleCustomPaymentSubmit}
-          defaultWorkId={customPaymentPrefill?.workId}
-          defaultUserId={customPaymentPrefill?.userId}
-          defaultAmount={customPaymentPrefill?.amount}
-        />
       </div>
     </div>
   );

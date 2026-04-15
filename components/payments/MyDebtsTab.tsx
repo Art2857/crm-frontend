@@ -26,8 +26,10 @@ export default function MyDebtsTab({ myDebts, currentUserId, onShowCalculation }
     return (
       <Card className="p-12 text-center">
         <CheckCircleIcon className="h-16 w-16 text-green-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Долгов нет</h3>
-        <p className="text-gray-600">У вас нет невыплаченных задолженностей</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Ожидаемых выплат нет</h3>
+        <p className="text-gray-600">
+          На выбранную дату не осталось непогашенных начислений по оплате вашего труда
+        </p>
       </Card>
     );
   }
@@ -119,6 +121,7 @@ export default function MyDebtsTab({ myDebts, currentUserId, onShowCalculation }
                       <Button
                         onClick={() => handleShowCalculation(debt.workId, duty.id)}
                         size="sm"
+                        disabled={!currentUserId}
                         className="bg-green-100 text-green-600 hover:bg-green-200 border border-green-200"
                       >
                         <EyeIcon className="h-4 w-4" />
@@ -136,6 +139,7 @@ export default function MyDebtsTab({ myDebts, currentUserId, onShowCalculation }
                 <Button
                   onClick={() => handleShowCalculation(debt.workId)}
                   size="sm"
+                  disabled={!currentUserId}
                   className="bg-blue-100 text-blue-600 hover:bg-blue-200 border border-blue-200"
                 >
                   <EyeIcon className="h-4 w-4 mr-1" />

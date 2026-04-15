@@ -20,6 +20,10 @@ import {
   getCurrentDateISO,
   shiftDateISOByDays,
 } from '../../utils/date';
+import {
+  calculatePeriodAmountInWorkCurrency,
+  calculateWorkingDaysInInclusivePeriod,
+} from '../../utils/work-income-fixation';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import Notification from '../ui/Notification';
@@ -81,42 +85,65 @@ const WorkIncomeFixationModal: React.FC<WorkIncomeFixationModalProps> = ({
   }, [isOpen, maxDate, minEndDate, normalizedDefaultEndDate]);
 
   useEffect(() => {
-    if (!isOpen || !endDate || !hasAvailableFixationRange) {
+    if (!isOpen || !endDate || !hasAvailableFixationRange || !isCompleteIsoDate(endDate)) {
+      setIsPreviewLoading(false);
       return;
     }
 
     let isCancelled = false;
+    const previewTimeout = window.setTimeout(() => {
+      const loadPreview = async () => {
+        setIsPreviewLoading(true);
+        const nextPreview = await onPreview({ endDate });
+        if (!isCancelled) {
+          setPreview(nextPreview);
+          setIsPreviewLoading(false);
+        }
+      };
 
-    const loadPreview = async () => {
-      setIsPreviewLoading(true);
-      const nextPreview = await onPreview({ endDate });
-      if (!isCancelled) {
-        setPreview(nextPreview);
-        setIsPreviewLoading(false);
-      }
-    };
-
-    void loadPreview();
+      void loadPreview();
+    }, 250);
 
     return () => {
       isCancelled = true;
+      window.clearTimeout(previewTimeout);
     };
   }, [endDate, hasAvailableFixationRange, isOpen, onPreview]);
+
+  const periodTotalAmount = useMemo(() => {
+    if (!preview) {
+      return 0;
+    }
+
+    return calculatePeriodAmountInWorkCurrency(preview.incomes, workCurrency);
+  }, [preview, workCurrency]);
+
+  const workingDaysInPeriod = useMemo(() => {
+    if (!preview) {
+      return null;
+    }
+
+    return calculateWorkingDaysInInclusivePeriod(preview.startDate, preview.endDate);
+  }, [preview]);
 
   const expression = useMemo(() => {
     if (!preview) {
       return '';
     }
 
-    if (preview.incomes.length === 0) {
-      return formatAmountWithCurrency(0, workCurrency);
+    if (periodTotalAmount === 0) {
+      return `${formatAmountWithCurrency(0, workCurrency)} -> ${formatAmountWithCurrency(
+        preview.fixedAmount,
+        preview.currency,
+      )}`;
     }
 
-    const terms = preview.incomes.map((income) =>
-      formatAmountWithCurrency(income.amount, income.currency),
-    );
-    return `${terms.join(' + ')} = ${formatAmountWithCurrency(preview.fixedAmount, workCurrency)}`;
-  }, [preview, workCurrency]);
+    if (!workingDaysInPeriod || workingDaysInPeriod <= 0) {
+      return 'В выбранном периоде нет рабочих дней для расчета.';
+    }
+
+    return `${formatAmountWithCurrency(periodTotalAmount, workCurrency)} / ${workingDaysInPeriod} раб. дн. × (365 / 12) = ${formatAmountWithCurrency(preview.fixedAmount, preview.currency)}`;
+  }, [periodTotalAmount, preview, workCurrency, workingDaysInPeriod]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,8 +184,8 @@ const WorkIncomeFixationModal: React.FC<WorkIncomeFixationModalProps> = ({
               <div>
                 <h3 className="text-lg font-bold">Зафиксировать поступления</h3>
                 <p className="mt-1 text-sm text-blue-100">
-                  Период будет закрыт, сумма станет текущим бюджетом работы, а дата фиксации
-                  закрепится на выбранном дне.
+                  Период будет закрыт, а зарплата работы будет пересчитана по рабочим дням и
+                  закреплена на выбранной дате фиксации.
                 </p>
               </div>
             </div>
@@ -199,22 +226,22 @@ const WorkIncomeFixationModal: React.FC<WorkIncomeFixationModalProps> = ({
                   Параметры периода
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
+                  <div className="flex min-h-[92px] flex-col">
+                    <p className="min-h-[32px] text-[11px] font-semibold uppercase leading-4 tracking-wide text-slate-500">
                       Текущая дата фиксации
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                    <div className="mt-2 flex h-11 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900">
                       {normalizedIncomeFixationDate
                         ? formatDateForDisplay(normalizedIncomeFixationDate)
                         : 'Не указана'}
-                    </p>
+                    </div>
                   </div>
 
-                  <div>
+                  <div className="flex min-h-[92px] flex-col">
                     <label
                       htmlFor="income-fixation-end-date"
-                      className="text-xs font-medium uppercase tracking-wide text-slate-500"
+                      className="min-h-[32px] text-[11px] font-semibold uppercase leading-4 tracking-wide text-slate-500"
                     >
                       По дату включительно
                     </label>
@@ -225,7 +252,7 @@ const WorkIncomeFixationModal: React.FC<WorkIncomeFixationModalProps> = ({
                       min={minEndDate || undefined}
                       max={maxDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                      className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                       disabled={isSubmitting || !hasAvailableFixationRange}
                     />
                   </div>
@@ -268,7 +295,7 @@ const WorkIncomeFixationModal: React.FC<WorkIncomeFixationModalProps> = ({
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-                        Новая сумма работы
+                        Новая зарплата работы
                       </p>
                       <p className="mt-1 text-2xl font-bold text-emerald-950">
                         {formatAmountWithCurrency(preview.fixedAmount, preview.currency)}
@@ -280,6 +307,25 @@ const WorkIncomeFixationModal: React.FC<WorkIncomeFixationModalProps> = ({
                         Математика периода
                       </p>
                       <p className="mt-2 text-sm font-semibold text-slate-900">{expression}</p>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl border border-white/80 bg-white/70 p-3">
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                          Сумма периода
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-slate-900">
+                          {formatAmountWithCurrency(periodTotalAmount, workCurrency)}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-white/80 bg-white/70 p-3">
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                          Рабочих дней в периоде
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-slate-900">
+                          {workingDaysInPeriod ?? '—'}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -400,6 +446,10 @@ function resolveInitialEndDate(
   }
 
   return candidate;
+}
+
+function isCompleteIsoDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 export default WorkIncomeFixationModal;

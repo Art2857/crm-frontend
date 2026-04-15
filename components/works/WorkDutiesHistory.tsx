@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { DistributionWithDetails } from '../../types/duty';
-import { User } from '../../types/user';
+import { Role, User } from '../../types/user';
 import { formatDateForDisplay, formatDateToISO } from '../../utils/date';
 import { formatAmountWithCurrency } from '../../utils/currency';
 import { WorkHistory } from '../../types/work';
@@ -17,6 +17,9 @@ interface WorkDutiesHistoryProps {
   workCurrency?: 'RUB' | 'USD';
   releaseDate?: string;
   currentUserId?: string; // Добавляем ID текущего пользователя
+  /** Ответственный за работу — детальный расчёт оплаты в таблице */
+  workResponsibleUserId?: string | null;
+  viewerRole?: Role;
   showOnlyCurrentUser?: boolean; // Флаг для отображения только обязанностей текущего пользователя
   onUpdate?: () => void; // Callback для обновления данных после изменений
   canEdit?: boolean; // Возможность редактирования (для админов)
@@ -60,6 +63,8 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   workCurrency = 'RUB',
   releaseDate,
   currentUserId,
+  workResponsibleUserId,
+  viewerRole,
   showOnlyCurrentUser = false,
   onUpdate,
   canEdit = false,
@@ -68,6 +73,15 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
   // Создаем карту пользователей для быстрого поиска по id
   const usersMap = useUsersMap(users);
   const { convertSync } = useCurrencyConversion({ date: releaseDate });
+
+  const viewerSeesPaymentBreakdown = useMemo(() => {
+    if (viewerRole === Role.ADMIN || viewerRole === Role.MANAGER) {
+      return true;
+    }
+    return (
+      Boolean(currentUserId && workResponsibleUserId) && currentUserId === workResponsibleUserId
+    );
+  }, [viewerRole, currentUserId, workResponsibleUserId]);
 
   const renderPayment = (
     detail: DistributionWithDetails['details'][number],
@@ -89,6 +103,20 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
       const percentAmountWork = (Number(numericPercentage) / 100) * numericSalaryValue;
       const converted = convertSync(percentAmountWork, workCurrency || 'RUB', dutyCurrency);
       percentPartInDuty = converted ?? percentAmountWork;
+    }
+
+    if (!viewerSeesPaymentBreakdown) {
+      if (detail.calculatedValue != null && String(detail.calculatedValue).trim() !== '') {
+        const cv = parseFloat(String(detail.calculatedValue));
+        if (!Number.isNaN(cv)) {
+          return formatAmountWithCurrency(cv, dutyCurrency);
+        }
+      }
+      if (pricePart === null && percentPartInDuty === null) {
+        return 'Нет данных';
+      }
+      const totalSimple = (pricePart ?? 0) + (percentPartInDuty ?? 0);
+      return formatAmountWithCurrency(totalSimple, dutyCurrency);
     }
 
     if (pricePart === null && percentPartInDuty === null) return 'Нет данных';
@@ -729,7 +757,7 @@ const WorkDutiesHistory: React.FC<WorkDutiesHistoryProps> = ({
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                   >
-                    Расчет оплаты
+                    {viewerSeesPaymentBreakdown ? 'Расчет оплаты' : 'Оплата'}
                   </th>
                 </tr>
               </thead>

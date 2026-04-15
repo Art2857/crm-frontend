@@ -8,11 +8,13 @@ import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import { createWork } from '../../../store/slices/works';
 import { fetchAllUsers } from '../../../store/slices/users';
+import { getCurrentUser } from '../../../store/slices/auth';
 import { CreateWorkDto } from '../../../types/work';
+import { Role } from '../../../types/user';
 import Alert from '../../../components/ui/Alert';
 
 export default function CreateWorkPage() {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, isLoading: authLoading, isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { isLoading, error } = useAppSelector((state) => state.works);
@@ -27,14 +29,31 @@ export default function CreateWorkPage() {
   const [success, setSuccess] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Загружаем список пользователей при монтировании компонента
+  const canCreateWork = user?.role === Role.ADMIN || user?.role === Role.MANAGER;
+
+  useEffect(() => {
+    if (!authLoading && (!isAuthenticated || !user)) {
+      dispatch(getCurrentUser()).catch(() => {});
+    }
+  }, [authLoading, isAuthenticated, user, dispatch]);
+
   useEffect(() => {
     if (!user?.role) {
       return;
     }
+    if (!canCreateWork) {
+      router.replace('/works');
+    }
+  }, [user?.role, canCreateWork, router]);
+
+  // Загружаем список пользователей при монтировании компонента
+  useEffect(() => {
+    if (!canCreateWork || !user?.role) {
+      return;
+    }
 
     dispatch(fetchAllUsers({}));
-  }, [dispatch, user?.role]);
+  }, [dispatch, canCreateWork, user?.role]);
 
   // Обработчик изменения полей формы
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -86,7 +105,7 @@ export default function CreateWorkPage() {
       return;
     }
 
-    if (!user?.role) {
+    if (!canCreateWork) {
       return;
     }
 
@@ -122,6 +141,39 @@ export default function CreateWorkPage() {
         ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
         : 'border-gray-200 focus:border-primary-500 focus:ring-primary-100'
     } ${extraClasses}`;
+
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-600"></div>
+          <span className="ml-4 text-gray-600">Проверка аутентификации...</span>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <span className="text-gray-600">Перенаправление на страницу входа...</span>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!canCreateWork) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64 px-4 text-center">
+          <span className="text-gray-600">
+            Создание работ доступно только администраторам и менеджерам. Перенаправление…
+          </span>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
