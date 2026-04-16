@@ -1,7 +1,13 @@
 import { User } from '../types/user';
 import { invalidateCurrentSession } from './authSession';
 import { tokenStorage } from './tokenStorage';
-import { isAccessTokenExpired, isRefreshTokenExpired, refreshTokens } from './tokenRefresh';
+import {
+  applyAuthResponseToStorage,
+  isAccessTokenExpired,
+  isRefreshTokenExpired,
+  isTransientRefreshError,
+  refreshTokens,
+} from './tokenRefresh';
 
 export interface SavedAccount {
   id: string;
@@ -12,6 +18,13 @@ export interface SavedAccount {
   refreshTokenExpiresAt?: string; // ISO timestamp
   lastUsed: string; // ISO timestamp
 }
+
+const syncTokenStorageWithAccount = (account: SavedAccount | null): void => {
+  tokenStorage.setAccessToken(account?.token ?? null);
+  tokenStorage.setRefreshToken(account?.refreshToken ?? null);
+  tokenStorage.setAccessTokenExpiresAt(account?.accessTokenExpiresAt ?? null);
+  tokenStorage.setRefreshTokenExpiresAt(account?.refreshTokenExpiresAt ?? null);
+};
 
 const ACCOUNTS_STORAGE_KEY = 'crm_saved_accounts';
 const CURRENT_ACCOUNT_ID_KEY = 'crm_current_account_id';
@@ -461,7 +474,11 @@ export const accountManagerService = {
       // If access token is expired but refresh token is valid, refresh tokens
       if (accessExpired && account.refreshToken) {
         try {
-          const response = await refreshTokens(account.refreshToken);
+          const response = await refreshTokens(account.refreshToken, {
+            scope: account.id,
+            persistToStorage: false,
+            invalidateSessionOnAuthFailure: false,
+          });
 
           // Update account with new tokens
           // IMPORTANT: Use response.user if available, otherwise fallback to existing account.user
@@ -474,6 +491,7 @@ export const accountManagerService = {
             response.refresh_token_expires_at,
             true,
           );
+          applyAuthResponseToStorage(response);
 
           // Dispatch account switched event
           if (typeof window !== 'undefined') {
@@ -486,17 +504,18 @@ export const accountManagerService = {
           return updatedAccount;
         } catch (error) {
           console.error('Failed to refresh tokens during account switch:', error);
-          this.setCurrentAccountId(account.id);
-          invalidateCurrentSession({ reason: 'account_switch_refresh_failed' });
-          // If refresh fails, emit re-auth event
-          if (typeof window !== 'undefined') {
-            const event = new CustomEvent('refreshTokenExpired', {
-              detail: {
-                login: account.user.login,
-                accountId: account.id,
-              },
-            });
-            window.dispatchEvent(event);
+          if (!isTransientRefreshError(error)) {
+            this.setCurrentAccountId(account.id);
+            invalidateCurrentSession({ reason: 'account_switch_refresh_failed' });
+            if (typeof window !== 'undefined') {
+              const event = new CustomEvent('refreshTokenExpired', {
+                detail: {
+                  login: account.user.login,
+                  accountId: account.id,
+                },
+              });
+              window.dispatchEvent(event);
+            }
           }
           throw new Error('Failed to refresh tokens. Re-authentication required.');
         }
@@ -504,16 +523,7 @@ export const accountManagerService = {
 
       // Tokens are valid, proceed with switch
       this.setCurrentAccountId(accountId);
-      tokenStorage.setAccessToken(account.token);
-      if (account.refreshToken) {
-        tokenStorage.setRefreshToken(account.refreshToken);
-      }
-      if (account.accessTokenExpiresAt) {
-        tokenStorage.setAccessTokenExpiresAt(account.accessTokenExpiresAt);
-      }
-      if (account.refreshTokenExpiresAt) {
-        tokenStorage.setRefreshTokenExpiresAt(account.refreshTokenExpiresAt);
-      }
+      syncTokenStorageWithAccount(account);
 
       // Dispatch a custom event to notify the app that the account has changed
       if (typeof window !== 'undefined') {
@@ -533,6 +543,6 @@ export const accountManagerService = {
   clearAllAccounts(): void {
     localStorage.removeItem(ACCOUNTS_STORAGE_KEY);
     localStorage.removeItem(CURRENT_ACCOUNT_ID_KEY);
-    localStorage.removeItem('token');
+    tokenStorage.clearAll();
   },
 };
