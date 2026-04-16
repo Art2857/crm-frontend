@@ -10,7 +10,22 @@ interface InvalidateSessionOptions {
 
 interface StoredAccount {
   id?: string;
+  token?: string;
+  refreshToken?: string;
+  accessTokenExpiresAt?: string;
+  refreshTokenExpiresAt?: string;
 }
+
+const applyStoredAccountToTokenStorage = (account?: StoredAccount): void => {
+  if (!account) {
+    return;
+  }
+
+  tokenStorage.setAccessToken(account.token ?? null);
+  tokenStorage.setRefreshToken(account.refreshToken ?? null);
+  tokenStorage.setAccessTokenExpiresAt(account.accessTokenExpiresAt ?? null);
+  tokenStorage.setRefreshTokenExpiresAt(account.refreshTokenExpiresAt ?? null);
+};
 
 export const invalidateCurrentSession = ({
   reason,
@@ -37,8 +52,11 @@ export const invalidateCurrentSession = ({
 
     window.localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(nextAccounts));
 
-    if (nextAccounts.length > 0 && typeof nextAccounts[0]?.id === 'string') {
-      window.localStorage.setItem(CURRENT_ACCOUNT_ID_KEY, nextAccounts[0].id);
+    const nextAccount = nextAccounts[0];
+
+    if (nextAccount && typeof nextAccount.id === 'string') {
+      window.localStorage.setItem(CURRENT_ACCOUNT_ID_KEY, nextAccount.id);
+      applyStoredAccountToTokenStorage(nextAccount);
     } else {
       window.localStorage.removeItem(CURRENT_ACCOUNT_ID_KEY);
     }

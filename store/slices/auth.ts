@@ -44,13 +44,19 @@ export const getCurrentUser = createAsyncThunk(
   'auth/getCurrentUser',
   async (_: void, { rejectWithValue }) => {
     try {
-      const token = authService.getToken();
-      if (!token) {
+      const initialToken = authService.getToken();
+      if (!initialToken) {
         return rejectWithValue('Токен не найден');
       }
 
       const user = await authService.getCurrentUser();
-      return { user, token };
+      const actualToken = authService.getToken();
+
+      if (!actualToken) {
+        return rejectWithValue('Токен не найден');
+      }
+
+      return { user, token: actualToken };
     } catch (error: any) {
       // При ошибке получения текущего пользователя, очищаем токен
       // токен будет очищен централизованно через ApiClient/tryRefreshTokens при 401

@@ -11,7 +11,7 @@ import { env, isDevelopment } from '../config/env';
 import { isJwtExpired } from '../utils/jwt';
 import { invalidateCurrentSession } from './authSession';
 import { tokenStorage } from './tokenStorage';
-import { sharedRefreshAccessToken } from './tokenRefresh';
+import { isTransientRefreshError, sharedRefreshAccessToken } from './tokenRefresh';
 import { logger } from '../utils/logger';
 
 // Централизованный baseURL
@@ -319,10 +319,19 @@ export class ApiClient {
               return this.axiosInstance.request(error.config);
             }
           } catch (refreshErr) {
+            if (isTransientRefreshError(refreshErr)) {
+              return Promise.reject(await this.handleError(error as AxiosError));
+            }
             if (isDevelopment) logger.warn('❌ Refresh on 401 failed', refreshErr);
           }
           // Если обновить не удалось — выполняем централизованный выход
           this.handleUnauthorized();
+          return Promise.reject(
+            new ApiError('Сессия истекла. Пожалуйста, войдите снова.', {
+              status: 401,
+              originalError: error,
+            }),
+          );
         }
 
         // Мягкий редирект при 403 для защищённых разделов (напр. /admin)
@@ -349,7 +358,7 @@ export class ApiClient {
    */
   private async tryRefreshTokens(): Promise<string | null> {
     const newToken = await sharedRefreshAccessToken();
-    if (!newToken) {
+    if (!newToken && tokenStorage.getAccessToken()) {
       this.handleUnauthorized();
     }
     return newToken;
